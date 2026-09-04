@@ -10,6 +10,8 @@ lerna-debug.log*
 # Environment files
 .env
 .env.*
+# Template sem segredos (placeholders) para a equipe recriar o .env local.
+!/.env.example
 
 # Dependency directories
 node_modules

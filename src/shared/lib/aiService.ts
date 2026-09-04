@@ -3,6 +3,23 @@ import { StudentMonthlyRecord } from './dropoutRisk';
 import { promptRoteiroAudio, montarPedidoTTS } from './audioPills';
 import { SYSTEM_PROMPT_DESCOMPRESSAO, promptDescompressao } from './decompressionReport';
 import type { MetricasDescompressao } from '../types';
+import {
+  AI_MODEL,
+  AI_PROVIDER,
+  DEEPSEEK_DEV_PROXY_PATH,
+  DEEPSEEK_TIMEOUT_MS,
+  backendDeepSeekAtual,
+  diagnosticarErroRede,
+  erroProxyLocalSemChave,
+  erroSemBackendDeepSeek,
+  fetchDeepSeek,
+  geminiGenConfigToDeepSeek,
+  isDeepSeekProvider,
+  mensagemErroRede,
+  sinalComTimeout,
+  toChatCompletionsMessages,
+  wrapAsGeminiResponse,
+} from './aiProvider';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 const MAX_RETRIES = 3;
@@ -19,13 +36,32 @@ const MAX_RETRIES = 3;
  ============================================================ */
 const PROXY_URL = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
 const PROXY_TOKEN = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
-const PROXY_MODEL = (import.meta.env.VITE_AI_MODEL as string) || 'gemini-2.0-flash';
+const PROXY_MODEL = ((import.meta.env.VITE_AI_MODEL as string) || '').trim() || AI_MODEL;
 
 /** Proxy configurado? (modo "sem chave do usuário"). */
 export const hasProxy = () => PROXY_URL.length > 0;
 
-/** IA está disponível de alguma forma (chave do usuário OU proxy). */
-export const aiAvailable = (apiKey: string) => Boolean(apiKey.trim()) || hasProxy();
+/** Provedor/modelo efetivos (para UI, diagnostico e testes). */
+export const getAIProviderInfo = () => ({ provider: AI_PROVIDER, model: PROXY_MODEL });
+
+/** Mensagem de chave invalida conforme o provedor ativo. */
+function mensagemChaveInvalida(): string {
+  return isDeepSeekProvider()
+    ? 'Chave da IA inválida ou sem permissão. Confira a DEEPSEEK_API_KEY no servidor (.env local ou secret do worker).'
+    : 'API key inválida ou sem permissão. Verifique sua chave do Google AI Studio.';
+}
+
+/**
+ * IA disponivel?
+ *
+ * DeepSeek e 100% back-end (worker ou proxy local): a chave mora no
+ * servidor, entao a chave do usuario nao conta - vale haver back-end.
+ * Gemini mantem o modo direto com a chave do usuario.
+ */
+export const aiAvailable = (apiKey: string) =>
+  isDeepSeekProvider()
+    ? backendDeepSeekAtual(hasProxy()) !== 'nenhum'
+    : Boolean(apiKey.trim()) || hasProxy();
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -65,7 +101,30 @@ async function fetchGemini(url: string, init: RequestInit, signal?: AbortSignal)
   return { ok: false, status: 0, data: null, error: 'Falha na conexão com a IA' };
 }
 
-/* Envia o payload para o proxy (modo serverless) ou direto ao Gemini. */
+/**
+ * Chamada ao worker com timeout + erro de rede classificado.
+ *
+ * fetchGemini puro nao tem timeout e propaga o TypeError cru; aqui o
+ * sinal ganha teto de 30s e a falha vira mensagem acionavel com o
+ * diagnostico seguro no console.debug.
+ */
+async function fetchViaWorker(url: string, init: RequestInit, signal?: AbortSignal): Promise<RetryResult> {
+  try {
+    return await fetchGemini(url, { ...init, signal: sinalComTimeout(signal, DEEPSEEK_TIMEOUT_MS) }, signal);
+  } catch (e) {
+    const diag = diagnosticarErroRede(PROXY_URL || 'worker', e, !!signal?.aborted);
+    console.debug('[ia] falha de rede (worker)', { ...diag });
+    throw new Error(mensagemErroRede(diag), { cause: e });
+  }
+}
+
+/* Envia o payload ao back-end (worker) ou ao Gemini direto.
+ *
+ * DeepSeek NUNCA sai do navegador em cross-origin: a chave mora no
+ * servidor e o front fala sempre com um back-end same-origin ou
+ * permitido (worker publicado ou proxy local do Vite dev). body e
+ * resposta mantem o envelope Gemini; a conversao para chat completions
+ * acontece no back-end (worker) ou antes do envio (proxy local). */
 async function sendToAI(
   body: {
     systemInstruction?: { parts: { text: string }[] };
@@ -78,16 +137,21 @@ async function sendToAI(
   if (hasProxy()) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
-    return fetchGemini(
+    return fetchViaWorker(
       `${PROXY_URL}/generate`,
       {
         method: 'POST',
         headers,
-        signal,
-        body: JSON.stringify({ provider: 'gemini', model: PROXY_MODEL, ...body }),
+        // O worker decide o upstream (Gemini x DeepSeek) por este campo.
+        // Os prompts (systemInstruction/contents) viajam intactos.
+        body: JSON.stringify({ provider: AI_PROVIDER, model: PROXY_MODEL, ...body }),
       },
       signal,
     );
+  }
+  // Sem worker: DeepSeek via proxy local (back-end); Gemini direto via REST.
+  if (isDeepSeekProvider()) {
+    return sendToDeepSeekViaBackend(body, signal);
   }
   return fetchGemini(
     `${GEMINI_URL}?key=${apiKey}`,
@@ -99,6 +163,103 @@ async function sendToAI(
     },
     signal,
   );
+}
+
+/**
+ * DeepSeek 100% via back-end.
+ *
+ *   worker   -> POST /generate (protocolo do worker; ele traduz para chat
+ *               completions com a DEEPSEEK_API_KEY do servidor).
+ *   devProxy -> POST /deepseek-api/chat/completions (same-origin, SEM
+ *               Authorization no navegador: o Vite injeta no servidor).
+ *
+ * A resposta e reembalada no envelope Gemini minimo, de modo que todo o
+ * resto do app (extractGeminiText, JSON das correcoes, testes) continue
+ * funcionando sem alteracao. Sem back-end, erro acionavel em vez de um
+ * cross-origin fadado ao "Failed to fetch".
+ */
+async function sendToDeepSeekViaBackend(
+  body: {
+    systemInstruction?: { parts: { text: string }[] };
+    contents: { parts: any[] }[];
+    generationConfig: Record<string, unknown>;
+  },
+  signal?: AbortSignal,
+): Promise<RetryResult> {
+  const backend = backendDeepSeekAtual(hasProxy());
+
+  if (backend === 'worker') {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+    return fetchViaWorker(
+      `${PROXY_URL}/generate`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ provider: 'deepseek', model: PROXY_MODEL, ...body }),
+      },
+      signal,
+    );
+  }
+
+  if (backend === 'devProxy') {
+    const messages = toChatCompletionsMessages(
+      body.systemInstruction,
+      (body.contents ?? []) as { role?: 'user' | 'model'; parts?: { text?: string }[] }[],
+    );
+    const gen = geminiGenConfigToDeepSeek(body.generationConfig ?? {});
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      let res: Response;
+      try {
+        // Erro de transporte nao e retentado (fail fast); retry fica so
+        // para 429/5xx, que sao transitorios.
+        res = await fetchDeepSeek(
+          `${DEEPSEEK_DEV_PROXY_PATH}/chat/completions`,
+          {
+            method: 'POST',
+            // SEM Authorization de proposito: a chave e injetada pelo Vite no
+            // servidor (vite.config.ts). Nada de segredo no navegador.
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: PROXY_MODEL, messages, ...gen }),
+          },
+          {
+            sinalUsuario: signal,
+            rotuloDestino: 'proxy local (/deepseek-api)',
+            contexto: { model: PROXY_MODEL, mensagens: messages.length, via: 'aiService-devProxy' },
+          },
+        );
+      } catch (e) {
+        throw e instanceof Error ? e : new Error('Falha na conexão com a IA');
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        const text =
+          (data?.choices?.[0]?.message?.content as string) ||
+          (typeof data?.choices?.[0]?.text === 'string' ? (data.choices[0].text as string) : '');
+        return { ok: true, status: res.status, data: wrapAsGeminiResponse(text ?? ''), error: null };
+      }
+      // 404 = rota nao registrada pelo Vite = .env sem DEEPSEEK_API_KEY
+      // (ou dev server nao reiniciado apos adiciona-la).
+      if (res.status === 404) throw erroProxyLocalSemChave();
+      // 401/400/403 do upstream (chave invalida) chegam aqui via proxy.
+      if (res.status === 401 || res.status === 400 || res.status === 403) {
+        throw new Error(mensagemChaveInvalida());
+      }
+      if (res.status === 429 || res.status >= 500) {
+        if (attempt === MAX_RETRIES - 1) {
+          return { ok: false, status: res.status, data: null, error: await res.text() };
+        }
+        await sleep(600 * (attempt + 1));
+        continue;
+      }
+      return { ok: false, status: res.status, data: null, error: await res.text() };
+    }
+    return { ok: false, status: 0, data: null, error: 'Falha na conexão com a IA' };
+  }
+
+  throw erroSemBackendDeepSeek();
 }
 
 function extractGeminiText(data: any): string {
@@ -164,8 +325,8 @@ export async function askGemini(
     if (hasProxy()) {
       throw new Error(`Erro na IA: ${res.error || 'falha do servidor'}`);
     }
-    if (res.status === 403 || res.status === 400) {
-      throw new Error('API key inválida ou sem permissão. Verifique sua chave do Google AI Studio.');
+    if (res.status === 403 || res.status === 400 || res.status === 401) {
+      throw new Error(mensagemChaveInvalida());
     }
     if (res.status === 429) {
       throw new Error('Limite de requisições excedido. Aguarde um momento e tente novamente.');
@@ -405,8 +566,8 @@ export async function sendMessageToGemini(
 
   if (!res.ok) {
     if (hasProxy()) throw new Error(`Erro na IA: ${res.error || 'falha do servidor'}`);
-    if (res.status === 403 || res.status === 400) {
-      throw new Error('API key inválida ou sem permissão. Verifique sua chave do Google AI Studio.');
+    if (res.status === 403 || res.status === 400 || res.status === 401) {
+      throw new Error(mensagemChaveInvalida());
     }
     if (res.status === 429) {
       throw new Error('Limite de requisições excedido. Aguarde um momento e tente novamente.');
@@ -522,8 +683,8 @@ export async function analyzeStudentData(
 
   if (!res.ok) {
     if (hasProxy()) throw new Error(`Erro na IA: ${res.error || 'falha do servidor'}`);
-    if (res.status === 403 || res.status === 400) {
-      throw new Error('API key inválida ou sem permissão. Verifique sua chave do Google AI Studio.');
+    if (res.status === 403 || res.status === 400 || res.status === 401) {
+      throw new Error(mensagemChaveInvalida());
     }
     if (res.status === 429) {
       throw new Error('Limite de requisições excedido. Aguarde um momento e tente novamente.');

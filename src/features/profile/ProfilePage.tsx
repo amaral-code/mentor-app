@@ -5,7 +5,7 @@ import { userRepository } from '../../shared/storage/UserRepository';
 import { getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { AppIcon } from '../../shared/ui/AppIcon';
-import { hasProxy, testGeneration } from '../../shared/lib/aiService';
+import { hasProxy, testGeneration, getAIProviderInfo } from '../../shared/lib/aiService';
 import type { Escola, Turma } from '../../shared/types';
 
 export function ProfilePage() {
@@ -251,9 +251,24 @@ export function ProfilePage() {
           <>
             <div className="flex items-center gap-2 text-xs text-gray-500 bg-amber-500/5 rounded-xl p-3 border border-amber-500/10 mb-4">
               <span className="text-amber-400 shrink-0"><Lightbulb size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
-              <span>Use sua chave <strong className="text-gray-300">Gemini API</strong> (gratuita) do Google AI Studio. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline">Obter chave grátis</a></span>
+              {getAIProviderInfo().provider === 'deepseek' ? (
+                <span>Modelo <strong className="text-gray-300">deepseek-v4-flash</strong> via back-end (chave no servidor, nada no navegador). <strong className="text-gray-300">Não cole sua chave aqui.</strong></span>
+              ) : (
+                <span>Use sua chave <strong className="text-gray-300">Gemini API</strong> (gratuita) do Google AI Studio. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline">Obter chave grátis</a></span>
+              )}
             </div>
 
+            {getAIProviderInfo().provider === 'deepseek' && (
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white/[0.03] rounded-xl p-3 border border-white/5 mb-4">
+                <span className="text-emerald-400 shrink-0"><Check size={16} className="inline-block align-[-0.15em]" /></span>
+                <span>{hasProxy()
+                  ? 'Back-end: worker publicado (produção).'
+                  : 'Back-end: proxy local de desenvolvimento (DEEPSEEK_API_KEY no .env + restart). Em produção, publique o worker e defina VITE_AI_BASE_URL.'}</span>
+              </div>
+            )}
+
+            {getAIProviderInfo().provider !== 'deepseek' ? (
+            <>
             <div className="relative mb-4">
               <input
                 type={showKey ? 'text' : 'password'}
@@ -309,6 +324,30 @@ export function ProfilePage() {
                 )}
               </>
             )}
+            </>
+          ) : (
+            <>
+              <button
+                onClick={runAiTest}
+                disabled={aiTest === 'testing'}
+                className="btn-secondary w-full mt-1 text-center"
+              >
+                {aiTest === 'testing' ? 'Testando conexão…' : ' Testar conexão com a IA'}
+              </button>
+              {aiTest === 'ok' && (
+                <div className="flex items-start gap-2 text-xs text-emerald-300 bg-emerald-500/10 rounded-xl px-3 py-2.5 mt-2 border border-emerald-500/15">
+                  <span className="shrink-0"><CheckCircle2 size={16} className="inline-block align-[-0.15em] text-emerald-400" /></span>
+                  <span>Conexão ok! Resposta: <em className="text-emerald-200">“{aiTestMsg}”</em></span>
+                </div>
+              )}
+              {aiTest === 'error' && (
+                <div className="flex items-start gap-2 text-xs text-red-300 bg-red-500/10 rounded-xl px-3 py-2.5 mt-2 border border-red-500/15">
+                  <span className="shrink-0"><XCircle size={16} className="inline-block align-[-0.15em] text-red-400" /></span>
+                  <span>Falha: <code className="text-red-200 break-all">{aiTestMsg}</code></span>
+                </div>
+              )}
+            </>
+          )}
           </>
         )}
       </div>

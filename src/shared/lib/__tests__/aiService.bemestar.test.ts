@@ -25,6 +25,10 @@ function respostaGemini(texto: string) {
 
 async function carregarAi(proxy = '') {
   vi.resetModules();
+  // Estes testes fixam o envelope Gemini. O caminho DeepSeek tem
+  // cobertura propria em deepseekProvider.test.ts.
+  vi.stubEnv('VITE_AI_PROVIDER', 'gemini');
+  vi.stubEnv('VITE_AI_MODEL', 'gemini-2.0-flash');
   vi.stubEnv('VITE_AI_BASE_URL', proxy);
   vi.stubEnv('VITE_AI_PROXY_TOKEN', proxy ? 'token-de-teste' : '');
   return import('../aiService');

@@ -99,6 +99,12 @@ describe('montarInstrucaoDaPersona', () => {
 
 describe('o que chega ao modelo', () => {
   it('sendMessageToGemini envia o escopo no systemInstruction', async () => {
+    // Fixa o envelope Gemini (o .env do projeto pode apontar para deepseek;
+    // o caminho DeepSeek tem cobertura propria em deepseekProvider.test.ts).
+    vi.resetModules();
+    vi.stubEnv('VITE_AI_PROVIDER', 'gemini');
+    vi.stubEnv('VITE_AI_MODEL', 'gemini-2.0-flash');
+    vi.stubEnv('VITE_AI_BASE_URL', '');
     const { sendMessageToGemini } = await import('../aiService');
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true, status: 200,

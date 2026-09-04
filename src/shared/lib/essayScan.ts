@@ -1,4 +1,5 @@
 import { getSupabase } from './supabase';
+import { isDeepSeekProvider } from './aiProvider';
 import {
   ESQUEMA_CORRECAO,
   COMPETENCIAS,
@@ -93,6 +94,17 @@ async function direto(
 ): Promise<ResultadoCorrecaoFoto> {
   if (!apiKey.trim()) {
     throw new Error('Configure a chave da IA no Perfil para corrigir por foto.');
+  }
+
+  // O DeepSeek-V4-Flash configurado aqui e um modelo de texto (chat
+  // completions): a correcao por FOTO exige visao multimodal via worker
+  // (/api/essays/upload-and-grade, com a foto no bucket privado). Sem
+  // worker, o caminho suportado continua sendo o Gemini vision.
+  if (isDeepSeekProvider()) {
+    throw new Error(
+      'Correção por foto indisponível no modo DeepSeek sem worker (modelo de texto). ' +
+        'Publique o worker e defina VITE_AI_BASE_URL, ou troque VITE_AI_PROVIDER para gemini com VITE_AI_VISION_MODEL.',
+    );
   }
 
   const sb = getSupabase();

@@ -33,9 +33,20 @@ export type ModoChatId = ModoChat['id'];
  * sem fontes - e a interface nao mostra badge de fonte nenhuma.
  */
 
+import {
+  AI_MODEL,
+  DEEPSEEK_DEV_PROXY_PATH,
+  erroProxyLocalSemChave,
+  erroSemBackendDeepSeek,
+  fetchDeepSeek,
+  geminiGenConfigToDeepSeek,
+  isDeepSeekProvider,
+  toChatCompletionsMessages,
+} from './aiProvider';
+
 const PROXY_URL = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
 const PROXY_TOKEN = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
-const MODELO_DIRETO = (import.meta.env.VITE_AI_MODEL as string) || 'gemini-1.5-flash';
+const MODELO_DIRETO = ((import.meta.env.VITE_AI_MODEL as string) || '').trim() || AI_MODEL;
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 export interface MensagemChat {
@@ -107,20 +118,22 @@ async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
   };
 }
 
-/** Caminho 2: Gemini direto, com a chave do aluno. */
+/** Caminho 2 direto: DeepSeek (chat completions) ou Gemini, com a chave do aluno. */
 async function direto(ctx: ContextoChat): Promise<RespostaChat> {
-  const systemInstruction = {
-    parts: [
-      {
-        text: montarSystemInstructionChat({
-          modo: ctx.modo,
-          horaLocal: ctx.horaLocal ?? new Date().getHours(),
-          nomeAluno: ctx.nomeAluno,
-          materiaRecente: ctx.materiaRecente,
-        }),
-      },
-    ],
-  };
+  const systemText = montarSystemInstructionChat({
+    modo: ctx.modo,
+    horaLocal: ctx.horaLocal ?? new Date().getHours(),
+    nomeAluno: ctx.nomeAluno,
+    materiaRecente: ctx.materiaRecente,
+  });
+  const systemInstruction = { parts: [{ text: systemText }] };
+
+  // DeepSeek nao tem grounding do Google e nunca sai do navegador em
+  // cross-origin: sem worker, o back-end e o proxy local (mesmo system
+  // prompt, resposta sem fontes - a interface ja trata esse caso).
+  if (isDeepSeekProvider()) {
+    return viaProxyLocalDeepSeek(ctx, systemText);
+  }
 
   const contents = ctx.mensagens
     .filter((m) => m.text?.trim())
@@ -171,6 +184,67 @@ async function direto(ctx: ContextoChat): Promise<RespostaChat> {
     fontes: grounding.fontes,
     consultas: grounding.consultas,
     groundingUsado: tentouBusca && grounding.groundingUsado,
+    citouProva: detectarCitacaoDeProva(texto),
+    modo: String(ctx.modo),
+    viaWorker: false,
+  };
+}
+
+/**
+ * Caminho 2b: DeepSeek via proxy LOCAL (back-end, sem grounding do Google).
+ *
+ * O system prompt e o mesmo do worker; a resposta volta sem fontes (a
+ * interface ja trata esse caso). A chave NUNCA sai do navegador: o Vite
+ * injeta o Authorization no servidor. Sem proxy local (build sem worker),
+ * erro acionavel em vez de cross-origin fadado ao "Failed to fetch".
+ */
+async function viaProxyLocalDeepSeek(ctx: ContextoChat, systemText: string): Promise<RespostaChat> {
+  if (!import.meta.env.DEV) throw erroSemBackendDeepSeek();
+
+  const contents = ctx.mensagens
+    .filter((m) => m.text?.trim())
+    .map((m) => ({ role: m.role, parts: [{ text: m.text }] }));
+  const messages = toChatCompletionsMessages({ parts: [{ text: systemText }] }, contents);
+  const gen = geminiGenConfigToDeepSeek({ temperature: 0.4, maxOutputTokens: 1024, topP: 0.9 });
+
+  // Timeout + diagnostico dentro do helper (o erro ja vem classificado e
+  // com dica acionavel; o log seguro vai para o console.debug).
+  const resposta = await fetchDeepSeek(
+    `${DEEPSEEK_DEV_PROXY_PATH}/chat/completions`,
+    {
+      method: 'POST',
+      // SEM Authorization de proposito: a chave e injetada pelo Vite no
+      // servidor (vite.config.ts). Nada de segredo no navegador.
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: MODELO_DIRETO, messages, ...gen }),
+    },
+    {
+      sinalUsuario: ctx.signal,
+      rotuloDestino: 'proxy local (/deepseek-api)',
+      contexto: { model: MODELO_DIRETO, mensagens: messages.length, via: 'chatGrounding-devProxy' },
+    },
+  );
+
+  if (!resposta.ok) {
+    // 404 = rota nao registrada pelo Vite = .env sem DEEPSEEK_API_KEY
+    // (ou dev server nao reiniciado apos adiciona-la).
+    if (resposta.status === 404) throw erroProxyLocalSemChave();
+    if (resposta.status === 401 || resposta.status === 403 || resposta.status === 400) {
+      throw new Error('Chave da IA inválida ou sem permissão. Confira a DEEPSEEK_API_KEY no servidor.');
+    }
+    if (resposta.status === 429) {
+      throw new Error('Limite de requisicoes atingido. Tente de novo em instantes.');
+    }
+    throw new Error(`Erro na IA (${resposta.status}).`);
+  }
+
+  const dados = await resposta.json();
+  const texto = String(dados?.choices?.[0]?.message?.content ?? '').trim();
+  return {
+    texto,
+    fontes: [],
+    consultas: [],
+    groundingUsado: false,
     citouProva: detectarCitacaoDeProva(texto),
     modo: String(ctx.modo),
     viaWorker: false,

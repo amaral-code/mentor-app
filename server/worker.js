@@ -16,6 +16,10 @@
  *
  * SEGREDOS a configurar no provedor:
  *   GEMINI_API_KEY        chave do Google AI Studio
+ *   DEEPSEEK_API_KEY      chave da DeepSeek (chat, quiz, redação digitada, roteiros)
+ *   AI_PROVIDER           "deepseek" para usar DeepSeek-V4-Flash; qualquer outro = Gemini
+ *   AI_MODEL              modelo padrao (ex.: deepseek-v4-flash)
+ *   DEEPSEEK_BASE_URL     (opcional) padrao https://api.deepseek.com
  *   API_TOKEN             (opcional) senha para bloquear uso de terceiros
  *   ALLOWED_ORIGIN        (opcional) seu domínio, em vez de "*"
  *   GOOGLE_TTS_KEY        chave do Google Cloud Text-to-Speech
@@ -48,6 +52,9 @@ import {
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = 'gemini-2.0-flash';
+const DEEPSEEK_DEFAULT_MODEL = 'deepseek-v4-flash';
+const DEEPSEEK_DEFAULT_BASE = 'https://api.deepseek.com';
+const MODELOS_PERMITIDOS = new Set(['gemini-2.0-flash', 'gemini-2.0-flash-lite', DEEPSEEK_DEFAULT_MODEL]);
 const TTS_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
 
 /*
@@ -225,6 +232,80 @@ function textoDaResposta(dados) {
   return partes.map((p) => p?.text || '').join('').trim();
 }
 
+/* ===================================================================
+   DeepSeek (chat completions, compativel OpenAI)
+   -------------------------------------------------------------------
+   Os prompts por area viajam INTACTOS: o systemInstruction do Gemini
+   vira a mensagem `system`, e cada content vira `user`/`assistant`.
+   A resposta e reembalada no envelope Gemini minimo, para que o front
+   (extractGeminiText) nao precise saber qual upstream respondeu.
+   =================================================================== */
+
+function provedorEfetivo(payload, env) {
+  const pedido = String(payload?.provider || '').toLowerCase();
+  if (pedido === 'deepseek' || pedido === 'gemini') return pedido;
+  return String(env.AI_PROVIDER || '').toLowerCase() === 'deepseek' ? 'deepseek' : 'gemini';
+}
+
+function modeloEfetivo(payload, env, provedor) {
+  const pedido = String(payload?.model || '').trim();
+  if (pedido && MODELOS_PERMITIDOS.has(pedido)) return pedido;
+  const padraoEnv = String(env.AI_MODEL || '').trim();
+  if (padraoEnv && MODELOS_PERMITIDOS.has(padraoEnv)) return padraoEnv;
+  if (padraoEnv && /^deepseek-/i.test(padraoEnv)) return padraoEnv;
+  return provedor === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_MODEL;
+}
+
+function paraMensagensOpenAI(systemInstruction, contents) {
+  const mensagens = [];
+  const sistema = (systemInstruction?.parts ?? [])
+    .map((p) => (typeof p?.text === 'string' ? p.text : ''))
+    .join('\n\n')
+    .trim();
+  if (sistema) mensagens.push({ role: 'system', content: sistema });
+  for (const c of contents ?? []) {
+    const texto = Array.isArray(c?.parts)
+      ? c.parts.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('').trim()
+      : '';
+    if (!texto) continue;
+    mensagens.push({ role: c?.role === 'model' ? 'assistant' : 'user', content: texto });
+  }
+  return mensagens;
+}
+
+function genParaDeepSeek(generationConfig = {}) {
+  const out = {};
+  const temp = Number(generationConfig.temperature);
+  const maxTokens = Number(generationConfig.maxOutputTokens ?? generationConfig.max_tokens);
+  const topP = Number(generationConfig.topP ?? generationConfig.top_p);
+  if (Number.isFinite(temp)) out.temperature = temp;
+  if (Number.isFinite(maxTokens) && maxTokens > 0) out.max_tokens = Math.floor(maxTokens);
+  if (Number.isFinite(topP)) out.top_p = topP;
+  return out;
+}
+
+function embrulhoGemini(texto) {
+  return { candidates: [{ content: { parts: [{ text: String(texto ?? '') }] } }] };
+}
+
+async function chamarDeepSeek(env, model, messages, generationConfig) {
+  const base = String(env.DEEPSEEK_BASE_URL || DEEPSEEK_DEFAULT_BASE).replace(/\/+$/, '');
+  const resposta = await fetch(`${base}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.DEEPSEEK_API_KEY}` },
+    body: JSON.stringify({ model, messages, ...genParaDeepSeek(generationConfig) }),
+  });
+  const texto = await resposta.text();
+  if (!resposta.ok) return { ok: false, status: resposta.status, texto };
+  try {
+    const dados = JSON.parse(texto);
+    const conteudo = dados?.choices?.[0]?.message?.content ?? '';
+    return { ok: true, status: resposta.status, texto: JSON.stringify(embrulhoGemini(conteudo)) };
+  } catch {
+    return { ok: false, status: 502, texto: 'resposta deepseek nao-json' };
+  }
+}
+
 /** Confere o JWT do usuário que pediu a cobrança (evita pagar pelo agendamento alheio). */
 async function usuarioDoToken(env, request) {
   const jwt = request.headers.get('X-Supabase-Auth');
@@ -291,10 +372,15 @@ export default {
     }
 
     if (request.method === 'GET' && url.pathname === '/health') {
+      const provedor = String(env.AI_PROVIDER || '').toLowerCase() === 'deepseek' ? 'deepseek' : 'gemini';
       return json(
         {
           status: 'ok',
-          model: DEFAULT_MODEL,
+          provider: provedor,
+          model:
+            String(env.AI_MODEL || '').trim() ||
+            (provedor === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_MODEL),
+          deepseek: !!env.DEEPSEEK_API_KEY,
           tts: !!env.GOOGLE_TTS_KEY,
           pagamento: env.MP_ACCESS_TOKEN ? 'mercadopago' : 'simulado',
           email: !!env.RESEND_API_KEY,
@@ -311,9 +397,6 @@ export default {
       if (!tokenValido(request, env)) {
         return json({ error: 'Unauthorized', message: 'API_TOKEN inválido' }, 401, corsHeaders);
       }
-      if (!env.GEMINI_API_KEY) {
-        return json({ error: 'misconfigured', message: 'Defina o secret GEMINI_API_KEY.' }, 500, corsHeaders);
-      }
 
       let payload;
       try {
@@ -323,10 +406,34 @@ export default {
       }
 
       // Evita que o usuário final escolha modelo pago/indesejado
-      const model =
-        payload.model === 'gemini-2.0-flash' || payload.model === 'gemini-2.0-flash-lite'
-          ? payload.model
-          : DEFAULT_MODEL;
+      const provedor = provedorEfetivo(payload, env);
+      const model = modeloEfetivo(payload, env, provedor);
+
+      // ---- DeepSeek-V4-Flash (chat completions) ----
+      if (provedor === 'deepseek' || /^deepseek-/i.test(model)) {
+        if (!env.DEEPSEEK_API_KEY) {
+          return json({ error: 'misconfigured', message: 'Defina o secret DEEPSEEK_API_KEY.' }, 500, corsHeaders);
+        }
+        try {
+          const saida = await chamarDeepSeek(
+            env,
+            model,
+            paraMensagensOpenAI(payload.systemInstruction, payload.contents),
+            payload.generationConfig,
+          );
+          return new Response(saida.texto, {
+            status: saida.status,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' },
+          });
+        } catch (err) {
+          return json({ error: 'upstream_failed', message: String(err && err.message) }, 502, corsHeaders);
+        }
+      }
+
+      // ---- Gemini (padrao) ----
+      if (!env.GEMINI_API_KEY) {
+        return json({ error: 'misconfigured', message: 'Defina o secret GEMINI_API_KEY.' }, 500, corsHeaders);
+      }
 
       try {
         const upstream = await fetch(`${GEMINI_BASE}/${model}:generateContent?key=${env.GEMINI_API_KEY}`, {
@@ -619,9 +726,6 @@ export default {
     // =============================================================
     if (url.pathname === '/api/chat/completions' && request.method === 'POST') {
       if (!tokenValido(request, env)) return json({ error: 'Unauthorized' }, 401, corsHeaders);
-      if (!env.GEMINI_API_KEY) {
-        return json({ error: 'misconfigured', message: 'Defina GEMINI_API_KEY.' }, 500, corsHeaders);
-      }
 
       let corpo;
       try {
@@ -634,7 +738,7 @@ export default {
       if (mensagens.length === 0) return json({ error: 'sem_mensagem' }, 400, corsHeaders);
 
       const modo = modoValido(corpo.modo) ? corpo.modo : MODO_PADRAO;
-      const modelo = env.GEMINI_MODEL_CHAT || MODELO_CHAT_PADRAO;
+      const provedorChat = provedorEfetivo(corpo, env);
 
       const systemInstruction = {
         parts: [
@@ -657,6 +761,46 @@ export default {
         }));
 
       const generationConfig = { temperature: 0.4, maxOutputTokens: 1024, topP: 0.9 };
+
+      // ---- DeepSeek: mesmo system prompt, sem busca do Google ----
+      if (provedorChat === 'deepseek') {
+        if (!env.DEEPSEEK_API_KEY) {
+          return json({ error: 'misconfigured', message: 'Defina DEEPSEEK_API_KEY.' }, 500, corsHeaders);
+        }
+        const modeloDs = modeloEfetivo(corpo, env, 'deepseek');
+        try {
+          const saida = await chamarDeepSeek(
+            env,
+            modeloDs,
+            paraMensagensOpenAI(systemInstruction, contents),
+            generationConfig,
+          );
+          if (!saida.ok) {
+            return json({ error: 'deepseek_falhou', message: saida.texto.slice(0, 400) }, saida.status, corsHeaders);
+          }
+          const texto = textoDaResposta(JSON.parse(saida.texto));
+          return json(
+            {
+              texto,
+              modo,
+              modelo: modeloDs,
+              fontes: [],
+              consultas: [],
+              groundingUsado: false,
+              citouProva: detectarCitacaoDeProva(texto),
+            },
+            200,
+            corsHeaders,
+          );
+        } catch (err) {
+          return json({ error: 'chat_erro', message: String(err && err.message) }, 502, corsHeaders);
+        }
+      }
+
+      if (!env.GEMINI_API_KEY) {
+        return json({ error: 'misconfigured', message: 'Defina GEMINI_API_KEY.' }, 500, corsHeaders);
+      }
+      const modelo = env.GEMINI_MODEL_CHAT || MODELO_CHAT_PADRAO;
 
       const chamarGemini = async (comBusca) => {
         const payload = { systemInstruction, contents, generationConfig };
