@@ -38,10 +38,10 @@ em vez de aparecer um badge mentiroso.
 
 | Modo | Escopo | Bancas de referência |
 |---|---|---|
-| ENEM Geral | todas as áreas + estratégia de prova | ENEM (INEP) |
-| Matemática & Exatas | álgebra, funções, geometria, estatística | ENEM, Fuvest, Unicamp, ITA, IME |
-| Ciências da Natureza | biologia, física, química | ENEM, Fuvest, Unicamp, UFRGS |
-| Humanas & Linguagens | história, geografia, filosofia, sociologia, português | ENEM, Fuvest, Unicamp, UERJ |
+| ENEM Geral | tudo, sem recusar assunto | ENEM (INEP) |
+| Matemática | somente matemática | ENEM, Fuvest, Unicamp |
+| Ciências da Natureza | biologia, física e química | ENEM, Fuvest, Unicamp, UFRGS |
+| Linguagens | português, inglês, espanhol e redação | ENEM, Fuvest, Unicamp |
 | Vestibulares Específicos | estilo de cada banca fora do ENEM | Fuvest, Unicamp, UFRGS, UERJ, UNESP, ITA, IME |
 
 As bancas e as fontes de cada modo entram no prompt para orientar a

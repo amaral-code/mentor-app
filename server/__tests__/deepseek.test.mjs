@@ -155,8 +155,8 @@ describe('deepseek no worker', () => {
 
     const upstream = r.saidas.find((s) => s.url.includes('api.deepseek.com'));
     const system = upstream.body.messages[0].content;
-    expect(system).toContain('MODO ATIVO: Matemática & Exatas');
+    expect(system).toContain('MODO ATIVO: Matemática');
     expect(system).toContain('Responda a duvida de forma COMPLETA');
-    expect(system).toContain('150 palavras');
+    expect(system).toContain('120 palavras');
   });
 });

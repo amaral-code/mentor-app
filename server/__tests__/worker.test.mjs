@@ -295,9 +295,9 @@ describe('/api/chat/completions', () => {
     const system = saidaPara(r, 'generativelanguage').body.systemInstruction.parts[0].text;
 
     // O cliente manda contexto; a INSTRUCAO e do servidor.
-    expect(system).toContain('MODO ATIVO: Matemática & Exatas');
+    expect(system).toContain('MODO ATIVO: Matemática');
     expect(system).toContain('Responda a duvida de forma COMPLETA');
-    expect(system).toContain('150 palavras'); // densidade de madrugada
+    expect(system).toContain('120 palavras'); // densidade de madrugada
   });
 
   it('liga a busca e devolve as fontes que viram badges', async () => {

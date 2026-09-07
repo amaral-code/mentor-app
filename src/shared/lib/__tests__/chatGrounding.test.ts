@@ -56,15 +56,15 @@ describe('densidade por horario', () => {
 
   it('de madrugada, a resposta encolhe e oferece parar', () => {
     const p = montarSystemInstructionChat({ modo: 'exatas', horaLocal: 2 });
-    expect(p).toContain('150 palavras');
+    expect(p).toContain('120 palavras');
     expect(p).toContain('UMA pergunta por mensagem');
     expect(p).toContain('ofereca parar por hoje');
   });
 
   it('de dia, pode desenvolver mais', () => {
     const p = montarSystemInstructionChat({ modo: 'exatas', horaLocal: 15 });
-    expect(p).toContain('400 palavras');
-    expect(p).not.toContain('150 palavras');
+    expect(p).toContain('300 palavras');
+    expect(p).not.toContain('120 palavras');
   });
 
   it('nunca comenta o proprio horario com o aluno', () => {
@@ -181,13 +181,13 @@ describe('modo de resposta (toggle Explicativo/Comunicativo)', () => {
   it('comunicativo pede resposta direta com macetes', () => {
     const p = montarSystemInstructionChat({ modo: 'exatas', horaLocal: 14, modoResposta: 'comunicativo' });
     expect(p).toContain('MODO DE RESPOSTA: comunicativo');
-    expect(p).toContain('macetes rapidos');
+    expect(p).toContain('CONVERSA mais e explica menos');
   });
 
   it('explicativo explicito pede passo a passo', () => {
     const p = montarSystemInstructionChat({ modo: 'exatas', horaLocal: 14, modoResposta: 'explicativo' });
     expect(p).toContain('MODO DE RESPOSTA: explicativo');
-    expect(p).toContain('Passo a passo');
+    expect(p).toContain('Explica MAIS o conteudo');
   });
 
   it('valor invalido e ignorado (sem injecao de instrucao)', () => {

@@ -80,17 +80,8 @@ export function ultimaMateria({ quizResults, logs, persona }: FontesDeContexto):
  */
 export function buildContextGreeting(materia?: string | null): string {
   if (!materia) {
-    return [
-      'Oi! Que bom te ver por aqui.',
-      '',
-      'Me conta o que você quer estudar hoje e eu monto o caminho com você. Se preferir, escolhe um professor ali em cima e a gente começa por uma matéria.',
-    ].join('\n');
+    return 'Olá! Sou seu mentor. O que vamos estudar hoje?';
   }
 
-  return [
-    'Oi! Que bom te ver de novo por aqui.',
-    '',
-    `Lembrei que você estava em **${materia}**. Quer continuar de onde parou?`,
-    'Me conta o que já revisou que eu te guio até o próximo passo.',
-  ].join('\n');
+  return `Olá! Sou seu mentor. Vi que você estava em **${materia}** — bora continuar?`;
 }
