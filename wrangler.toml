@@ -1,0 +1,19 @@
+# Cloudflare Worker - servidor da IA do Midnight Mentor
+# Deploy: npx wrangler deploy server/worker.js --name midnight-mentor-ia
+# Segredos (nunca aqui, só via `wrangler secret put`):
+#   DEEPSEEK_API_KEY, GEMINI_API_KEY, API_TOKEN, SUPABASE_SERVICE_KEY...
+
+name = "midnight-mentor-ia"
+main = "server/worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Provedor padrão quando o app não diz qual usar (o chat agora manda
+# provider+model, mas quiz/redação antigos e chamadas diretas caem aqui).
+# Sem isso o worker assumia Gemini e quebrava tudo sem GEMINI_API_KEY.
+AI_PROVIDER = "deepseek"
+AI_MODEL = "deepseek-v4-flash"
+# Troque pelo endereço final do site para só ele usar sua cota.
+# Enquanto o site não tem endereço fixo, fica "*" (a senha API_TOKEN
+# continua exigida em todas as rotas sensíveis).
+ALLOWED_ORIGIN = "*"

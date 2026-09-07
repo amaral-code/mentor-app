@@ -35,6 +35,7 @@ export type ModoChatId = ModoChat['id'];
 
 import {
   AI_MODEL,
+  AI_PROVIDER,
   DEEPSEEK_DEV_PROXY_PATH,
   DEEPSEEK_TIMEOUT_MS,
   GEMINI_CHAT_CONFIG,
@@ -103,6 +104,8 @@ async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
     headers,
     signal: sinalComTimeout(ctx.signal, DEEPSEEK_TIMEOUT_MS),
     body: JSON.stringify({
+      provider: AI_PROVIDER,
+      model: MODELO_DIRETO,
       modo: ctx.modo,
       mensagens: ctx.mensagens,
       horaLocal: ctx.horaLocal ?? new Date().getHours(),
