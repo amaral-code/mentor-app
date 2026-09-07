@@ -627,7 +627,6 @@ export function ChatPage() {
         <ChatHeader
           titulo={tituloMentor}
           descricao={descMentor}
-          materiaRetomada={materiaRetomada}
           abas={ABAS_MENTOR}
           abaAtivaId={abaAtiva.id}
           onTrocarAba={trocarAbaMentor}

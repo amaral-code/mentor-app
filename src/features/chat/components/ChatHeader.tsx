@@ -11,7 +11,6 @@ export interface AbaMentor {
 interface ChatHeaderProps {
   titulo: string;
   descricao: string;
-  materiaRetomada: string | null;
   abas: readonly AbaMentor[];
   abaAtivaId: string;
   onTrocarAba: (aba: AbaMentor) => void;
@@ -34,7 +33,6 @@ interface ChatHeaderProps {
 export function ChatHeader({
   titulo,
   descricao,
-  materiaRetomada,
   abas,
   abaAtivaId,
   onTrocarAba,
@@ -74,12 +72,6 @@ export function ChatHeader({
           </div>
           <p className="text-[11px] text-slate-400 font-sans hidden sm:block truncate">
             {descricao}
-            {materiaRetomada && (
-              <>
-                <span className="text-gray-600"> · </span>
-                <span className="text-violet-400/90">retomando: {materiaRetomada}</span>
-              </>
-            )}
           </p>
         </div>
       </div>
