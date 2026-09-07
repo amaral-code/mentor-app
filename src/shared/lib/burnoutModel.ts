@@ -25,7 +25,12 @@ import type { ClasseBurnout, EventoTelemetria } from '../types';
  *   f3 quedaRendimento      - inclinacao da acuracia ao longo dos dias
  *   f4 fracaoMadrugada      - proporcao de respostas entre 0h e 5h
  *   f5 horasEstudoDia       - volume medio diario
- *   f6 diasSemPausa         - dias consecutivos estudando
+ *   f6 diasSemPausa         - dias CONSECUTIVOS com atividade, extraidos
+ *                             da telemetria (nunca do streak de acesso:
+ *                             abrir o app todo dia e saudavel e nao pode
+ *                             empurrar o score sozinho). Teto de 7: rotina
+ *                             de semanas seguidas e normal no ENEM, o
+ *                             sinal agudo e uma semana sem descanso.
  *   f7 deficitSono          - horas abaixo de 8 (slider do dashboard)
  */
 
@@ -113,6 +118,26 @@ const ROTULO: Record<NomeFeature, string> = {
   deficitSono: 'poucas horas de sono',
 };
 
+/**
+ * FADIGA DESLIGADA — índice sempre zerado.
+ *
+ * Pedido direto do dono: o número incomodava mais do que ajudava. Com a
+ * flag ligada, o store devolve score 0 / "saudável" em todo lugar (card do
+ * aluno, curva dos pais, bloqueio de conteúdo denso) e nada é gravado no
+ * servidor. O modelo puro (preverBurnout/classificar) continua intacto e
+ * testado — só o consumo é zerado. Para religar, volte para false.
+ */
+export const FADIGA_ZERADA = true;
+
+/** Previsão neutra usada em todo lugar quando FADIGA_ZERADA. */
+export const PREVISAO_ZERADA: PrevisaoBurnout = {
+  probabilidade: 0,
+  score: 0,
+  classe: 'saudavel',
+  contribuicoes: [],
+  motivos: [],
+};
+
 export function classificar(score: number): ClasseBurnout {
   if (score >= 80) return 'esgotamento';
   if (score >= 60) return 'fadiga';
@@ -169,8 +194,31 @@ export const TEMPO_ESPERADO: Record<string, number> = { facil: 60, media: 120, d
 export interface ContextoAluno {
   /** Horas de sono informadas no dashboard (slider). */
   horasSono?: number;
-  /** Dias consecutivos com atividade (streak). */
-  diasSemPausa?: number;
+}
+
+/** Teto de dias sem pausa: rotina longa e normal, o agudo e 1 semana. */
+export const TETO_DIAS_SEM_PAUSA = 7;
+
+const DIA_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Dias consecutivos com atividade, contando para tras a partir de hoje
+ * (ou de ontem, se hoje ainda nao tem evento). Um dia de descanso zera.
+ * As chaves vêm em UTC (mesma base do agrupamento por dia).
+ */
+export function diasConsecutivosComEstudo(diasISO: string[]): number {
+  if (diasISO.length === 0) return 0;
+  const set = new Set(diasISO);
+  const agora = new Date();
+  const hojeUTC = Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate());
+  const chave = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+  let cursor = set.has(chave(hojeUTC)) ? hojeUTC : hojeUTC - DIA_MS;
+  let n = 0;
+  while (set.has(chave(cursor))) {
+    n++;
+    cursor -= DIA_MS;
+  }
+  return Math.min(n, TETO_DIAS_SEM_PAUSA);
 }
 
 /**
@@ -194,7 +242,7 @@ export function extrairFeatures(
       quedaRendimento: 0,
       fracaoMadrugada: 0,
       horasEstudoDia: 0,
-      diasSemPausa: contexto.diasSemPausa ?? 0,
+      diasSemPausa: 0,
       deficitSono: Math.max(0, 8 - (contexto.horasSono ?? 8)),
     };
   }
@@ -240,7 +288,7 @@ export function extrairFeatures(
     quedaRendimento,
     fracaoMadrugada,
     horasEstudoDia,
-    diasSemPausa: contexto.diasSemPausa ?? diasComEstudo,
+    diasSemPausa: diasConsecutivosComEstudo([...porDia.keys()]),
     deficitSono: Math.max(0, 8 - (contexto.horasSono ?? 8)),
   };
 }

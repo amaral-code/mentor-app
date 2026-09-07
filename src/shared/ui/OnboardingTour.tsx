@@ -4,6 +4,7 @@ import { TabId } from '../types';
 import { Mascot } from './Mascot';
 import { AppIcon } from './AppIcon';
 import { supabaseRepository } from '../storage/SupabaseRepository';
+import { safeSet } from '../lib/safeStorage';
 
 interface Step {
   id: string;
@@ -19,7 +20,7 @@ const STEPS: Step[] = [
   { id: 'dashboard', title: 'Central de Estudos', description: 'Seu painel principal. Veja o plano de estudos do dia, registre seu humor, acompanhe seu SSC e gerencie suas tarefas diárias.', icon: 'bussola', tab: 'dashboard', targetSelector: '[data-tab="dashboard"]' },
   { id: 'chat', title: 'Mentor', description: 'Converse com o sagui. Tire dúvidas, receba dicas de estudo e suporte emocional personalizado.', icon: 'marcador', tab: 'chat', targetSelector: '[data-tab="chat"]' },
   { id: 'essay', title: 'Redação 1000', description: 'Pratique redação no formato ENEM. Receba correção automática com nota por cada competência.', icon: 'escrita', tab: 'essay', targetSelector: '[data-tab="essay"]' },
-  { id: 'foco', title: 'Modo Foco', description: 'Use o modo foco para estudar em blocos curtos, manter ritmo e evitar distrações.', icon: '⏱', tab: 'foco', targetSelector: '[data-tab="foco"]' },
+  { id: 'foco', title: 'Modo Foco', description: 'Use o modo foco para estudar em blocos curtos, manter ritmo e evitar distrações.', icon: 'cronometro', tab: 'foco', targetSelector: '[data-tab="foco"]' },
   { id: 'quiz', title: 'Quiz Interativo', description: 'Teste seus conhecimentos com perguntas de múltipla escolha. Ganhe XP e veja seu progresso.', icon: 'alvo', tab: 'quiz', targetSelector: '[data-tab="quiz"]' },
   { id: 'comunidade', title: 'Ligas de estudo', description: 'Entre em ligas da sua turma, complete metas e use o chat focado da sua equipe.', icon: 'trofeu', tab: 'comunidade', targetSelector: '[data-tab="comunidade"]' },
   { id: 'ranking', title: 'Ranking e evolução', description: 'Acompanhe sua posição, evolução e os resultados das suas atividades de estudo.', icon: 'subida', tab: 'ranking', targetSelector: '[data-tab="ranking"]' },
@@ -79,8 +80,11 @@ export function OnboardingTour() {
   const locateTarget = useCallback(() => {
     const step = STEPS[tutorialStep];
     if (!step.targetSelector) { setTargetRect(null); return; }
-    const el = document.querySelector<HTMLElement>(step.targetSelector);
-    if (el && el.offsetParent !== null) {
+    // Primeiro VISÍVEL: no iPhone a sidebar some (drawer fechado) e o
+    // querySelector puro achava o botão escondido — spotlight no vazio.
+    const el = [...document.querySelectorAll<HTMLElement>(step.targetSelector)]
+      .find((c) => c.offsetParent !== null) ?? null;
+    if (el) {
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
       const cardHeight = 340;
@@ -92,12 +96,31 @@ export function OnboardingTour() {
   }, [tutorialStep]);
 
   useEffect(() => {
-    if (!showTutorial) { setTargetRect(null); return; }
+    if (!showTutorial) {
+      setTargetRect(null);
+      // Fecha o menu que o tour pode ter aberto no celular.
+      window.dispatchEvent(new CustomEvent('mm:tour-menu', { detail: { open: false } }));
+      return;
+    }
     const step = STEPS[tutorialStep];
     setActiveTab(step.tab);
-    const id = setTimeout(locateTarget, 100);
+    if (!step.targetSelector) {
+      window.dispatchEvent(new CustomEvent('mm:tour-menu', { detail: { open: false } }));
+    } else if (window.innerWidth < 768) {
+      // Celular: abre o menu ANTES de medir. Medir com o drawer fechado ou
+      // no meio da animação gerava destaque pequeno e fora do lugar — era
+      // o "dourado não preenche o bloco".
+      window.dispatchEvent(new CustomEvent('mm:tour-menu', { detail: { open: true } }));
+    }
+    // Mede DEPOIS da animação (drawer/página lazy): 350ms e 900ms. Medir
+    // cedo demais achava o botão andando e o brilho ficava torto.
+    const t1 = setTimeout(locateTarget, 350);
+    const t2 = setTimeout(locateTarget, 900);
     window.addEventListener('resize', locateTarget);
-    return () => { clearTimeout(id); window.removeEventListener('resize', locateTarget); };
+    return () => {
+      clearTimeout(t1); clearTimeout(t2);
+      window.removeEventListener('resize', locateTarget);
+    };
   }, [showTutorial, tutorialStep, setActiveTab, locateTarget]);
 
   if (!showTutorial) return null;
@@ -106,12 +129,24 @@ export function OnboardingTour() {
   const isFirst = tutorialStep === 0;
   const isLast = tutorialStep === STEPS.length - 1;
   const hasTarget = !!step.targetSelector && !!targetRect;
+  // BUG CORRIGIDO: quando o cartão ficava ACIMA do alvo, o código usava
+  // `bottom: alvo.topo + alvo.altura` — ou seja, media a partir do lado
+  // errado e jogava o cartão para fora da tela, sem botão clicável, e o
+  // tour travava. O certo é medir a partir do rodapé da viewport.
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+  function marcarVisto() {
+    // Servidor + backup local (conta nova sem linha de preferências ou
+    // offline): sem o backup, o tour voltava a cada boot.
+    supabaseRepository.savePreferencias({ tutorial_completo: true }).catch(() => {});
+    safeSet('mm_tour_visto', '1');
+  }
 
   function handleNext() {
     if (isLast) {
       // Silencio proposital: marca que o tour ja foi visto. Falhar so faz
       // o tour reaparecer uma vez, o que nao justifica um aviso de erro.
-      supabaseRepository.savePreferencias({ tutorial_completo: true }).catch(() => {});
+      marcarVisto();
       addXP(50);
       addLog({ timestamp: Date.now(), type: 'tutorial', description: 'Completou o tour guiado', xp: 50 });
       setShowTutorial(false);
@@ -123,7 +158,7 @@ export function OnboardingTour() {
   function handleSkip() {
     // Silencio proposital, mesma razao de handleFinish: falhar so faz o
     // tour reaparecer uma vez, o que nao justifica um aviso de erro.
-    supabaseRepository.savePreferencias({ tutorial_completo: true }).catch(() => {});
+    marcarVisto();
     setShowTutorial(false);
   }
 
@@ -165,14 +200,15 @@ export function OnboardingTour() {
       <div
         ref={cardRef}
         className="fixed z-[201] left-1/2 -translate-x-1/2 w-full max-w-sm px-4 animate-fade-up"
-        style={{
-          [cardPos === 'bottom' ? 'top' : 'bottom']: hasTarget
-            ? targetRect.top + targetRect.height + (cardPos === 'bottom' ? 20 : 0)
-            : '50%',
-          transform: hasTarget && cardPos === 'bottom' ? 'translateX(-50%)' : hasTarget ? 'translateX(-50%)' : 'translate(-50%, -50%)',
-        }}
+        style={
+          hasTarget
+            ? cardPos === 'bottom'
+              ? { top: targetRect.top + targetRect.height + 20, transform: 'translateX(-50%)' }
+              : { bottom: Math.max(12, vh - targetRect.top + 20), transform: 'translateX(-50%)' }
+            : { top: '50%', transform: 'translate(-50%, -50%)' }
+        }
       >
-        <div className="glass-card rounded-3xl p-7 text-center shadow-2xl border border-white/10" style={{ pointerEvents: 'auto' }}>
+        <div className="glass-card rounded-3xl p-7 text-center shadow-2xl border border-white/10" style={{ pointerEvents: 'auto', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto' }}>
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-5 shadow-glow">
             <AppIcon name={step.icon} size={28} className="text-gray-900" />
           </div>
@@ -180,14 +216,16 @@ export function OnboardingTour() {
           <h2 className="text-lg font-bold text-white mb-2">{step.title}</h2>
           <p className="text-sm text-gray-400 leading-relaxed mb-6">{step.description}</p>
 
-          {/* Dots */}
-          <div className="flex items-center justify-center gap-1.5 mb-6">
-            {STEPS.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setTutorialStep(i)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  i === tutorialStep ? 'bg-amber-400 w-5' : 'bg-white/10 hover:bg-white/20'
+          {/* Dots: só indicam a ordem (1..11), sem pulo. Pular de bolinha
+              em bolinha trocava de aba no meio da animação e o destaque
+              quebrava — agora o tour anda só no Próximo/Voltar. */}
+          <div className="flex items-center justify-center gap-1.5 mb-6" aria-label={`Etapa ${tutorialStep + 1} de ${STEPS.length}`}>
+            {STEPS.map((s, i) => (
+              <span
+                key={s.id}
+                aria-hidden="true"
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === tutorialStep ? 'bg-amber-400 w-5' : i < tutorialStep ? 'bg-amber-400/40 w-2' : 'bg-white/10 w-2'
                 }`}
               />
             ))}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { SendHorizontal } from 'lucide-react';
+import { SendHorizontal, X } from 'lucide-react';
 import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '../lib/kbSearch';
 import { getEmpathicPrefix } from '../lib/emotionEngine';
 import { QUIZ_BANK } from '../lib/quizBank';
@@ -143,8 +143,9 @@ export function AssistantWidget() {
                 onClick={() => setOpen(false)}
                 className="ml-auto w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all text-lg"
                 aria-label="Fechar chat"
+                title="Fechar chat"
               >
-                
+                <X size={18} />
               </button>
             </div>
 

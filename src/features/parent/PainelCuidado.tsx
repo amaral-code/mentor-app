@@ -3,7 +3,7 @@ import { Activity, BellRing, HeartPulse, Link2, ShieldCheck, TriangleAlert } fro
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { bemEstarRepository } from '../../shared/storage/BemEstarRepository';
 import { focoOfflineRepository } from '../../shared/storage/FocoOfflineRepository';
-import { COR_CLASSE, ROTULO_CLASSE } from '../../shared/lib/burnoutModel';
+import { COR_CLASSE, ROTULO_CLASSE, FADIGA_ZERADA } from '../../shared/lib/burnoutModel';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
 import type { IndiceBurnout, RelatorioSemanal, SessaoOffline, SeveridadeAlerta } from '../../shared/types';
@@ -63,7 +63,11 @@ export function PainelCuidado() {
   useEffect(() => {
     if (!alunoAtivo) return;
     void carregarAlertas(alunoAtivo.id);
-    void bemEstarRepository.carregarBurnout(30, alunoAtivo.id).then(setBurnout);
+    // Fadiga zerada (ver burnoutModel.FADIGA_ZERADA): a curva nasce e fica
+    // em 0/saudável em vez de refletir o histórico antigo do servidor.
+    void bemEstarRepository.carregarBurnout(30, alunoAtivo.id).then((lista) =>
+      setBurnout(FADIGA_ZERADA ? lista.map((d) => ({ ...d, score: 0, classe: 'saudavel' as const })) : lista),
+    );
     void focoOfflineRepository.listarSessoes(30, alunoAtivo.id).then(setOffline);
     void bemEstarRepository.listarRelatorios(3, alunoAtivo.id).then(setRelatorios);
   }, [alunoAtivo?.id]);

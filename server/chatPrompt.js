@@ -91,27 +91,35 @@ export function faixaHoraria(hora) {
 /** Regras de densidade por faixa - o "adaptar ao horario" do pedido. */
 const DENSIDADE = {
   madrugada: [
-    'DENSIDADE: e madrugada. Responda em no maximo 120 palavras, um conceito por vez, sem listas longas e sem desvios.',
+    'DENSIDADE: e madrugada. Responda em no maximo 150 palavras, um conceito por vez, sem listas longas e sem desvios.',
     'Faca UMA pergunta por mensagem, nunca duas.',
     'Ao fechar um raciocinio, ofereca parar por hoje em uma frase curta - sem insistir e sem culpa.',
   ],
   noite: [
-    'DENSIDADE: e noite e o aluno provavelmente veio do trabalho. Responda em no maximo 180 palavras, direto ao ponto.',
+    'DENSIDADE: e noite e o aluno provavelmente veio do trabalho. Responda em no maximo 250 palavras, direto ao ponto.',
     'Prefira um exemplo concreto a uma definicao formal.',
   ],
   dia: [
-    'DENSIDADE: horario comum. Pode desenvolver ate cerca de 250 palavras quando o tema pedir.',
+    'DENSIDADE: horario comum. Pode desenvolver ate cerca de 400 palavras quando o tema pedir.',
     'Ainda assim, prefira profundidade em um ponto a cobertura rasa de varios.',
   ],
 };
 
-const SOCRATICO = [
-  'METODO SOCRATICO (regra central):',
-  '- Nao entregue a resposta final de imediato. Comece devolvendo o problema em uma pergunta que isole o proximo passo.',
-  '- Um passo por mensagem. Espere a tentativa do aluno antes de avancar.',
-  '- Quando ele errar, aponte em que passo o raciocinio saiu do trilho, nao apenas que errou.',
-  '- Quando ele acertar, confirme em uma frase e siga para o proximo passo.',
-  '- ESCAPE: se o aluno pedir a resposta direta duas vezes, disser que esta sem tempo, ou demonstrar frustracao, entregue a solucao completa e comentada. Insistir no metodo depois disso vira obstaculo, nao ensino.',
+const METODO = [
+  'METODO (resposta primeiro, pergunta depois):',
+  '- Responda a duvida de forma COMPLETA e direta logo no inicio. Nada de enrolar nem de devolver so perguntas: o aluno veio buscar a resposta.',
+  '- Depois de responder, confira o entendimento com UMA pergunta curta sobre o ponto central.',
+  '- Quando ele errar um exercicio, aponte em que passo o raciocinio saiu do trilho, nao apenas que errou.',
+  '- Quando ele acertar, confirme em uma frase e avance para o proximo passo.',
+  '- ESCAPE: se o aluno pedir so a resposta, disser que esta sem tempo ou demonstrar frustracao, entregue direto, sem a pergunta final. Insistir no metodo depois disso vira obstaculo, nao ensino.',
+].join('\n');
+
+const QUALIDADE = [
+  'QUALIDADE DA RESPOSTA (obrigatorio):',
+  '- Estrutura: 1) resposta direta em 1-2 frases; 2) o porque (conceito essencial); 3) exemplo concreto ou macete de prova; 4) UMA pergunta de checagem.',
+  '- Responda EXATAMENTE o que foi perguntado antes de complementar. Proibido enrolar com "depende", "estude mais" ou generalidades.',
+  '- Em exatas, mostre as contas passo a passo e destaque o resultado final.',
+  '- Frases curtas, um conceito por paragrafo. Listas so com ate 4 itens e so quando ajudarem.',
 ].join('\n');
 
 const ANTIALUCINACAO = [
@@ -122,21 +130,57 @@ const ANTIALUCINACAO = [
 ].join('\n');
 
 /**
+ * Modo de resposta da barra de entrada (segmented toggle do Mentor).
+ *
+ * Explicativo e o padrao socratico do app; comunicativo troca o passo a
+ * passo por resposta direta com macetes. So estes dois valores valem -
+ * qualquer outro e ignorado para nao deixar o cliente injetar instrucao
+ * livre no system prompt do servidor.
+ */
+export const MODOS_RESPOSTA = ['explicativo', 'comunicativo'];
+
+export function modoRespostaValido(id) {
+  return MODOS_RESPOSTA.includes(id);
+}
+
+const MODO_RESPOSTA_TEXTO = {
+  explicativo:
+    'MODO DE RESPOSTA: explicativo. Passo a passo didatico, formal e detalhado, um conceito por vez.',
+  comunicativo:
+    'MODO DE RESPOSTA: comunicativo. Direto ao ponto, com macetes rapidos e tom descontraido - sem rodeios e sem formalidade excessiva.',
+};
+
+/**
  * Monta o system instruction do chat.
  *
- * @param {{ modo?: string, horaLocal?: number, nomeAluno?: string, materiaRecente?: string }} opcoes
+ * @param {{ modo?: string, horaLocal?: number, nomeAluno?: string, materiaRecente?: string, modoResposta?: string }} opcoes
  * @returns {string}
  */
+/**
+ * Texto livre do cliente para dentro do system prompt: sem quebras de
+ * linha (60 chars bastam para "\nIgnore tudo acima"), só letras/números.
+ */
+export function limparTextoLivre(valor, max = 60) {
+  return String(valor ?? '')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/[^A-Za-zÀ-ÿ0-9 ._-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
 export function montarSystemInstructionChat(opcoes = {}) {
   const modo = acharModo(opcoes.modo);
   const faixa = faixaHoraria(opcoes.horaLocal);
-  const primeiroNome = (opcoes.nomeAluno || '').trim().split(/\s+/)[0];
+  const primeiroNome = limparTextoLivre(opcoes.nomeAluno).split(/\s+/)[0];
+  const materiaRecente = limparTextoLivre(opcoes.materiaRecente);
 
   const blocos = [
-    'Voce e o Sagui, mentor de estudos do Ampli-IA, falando com um estudante brasileiro do ensino medio noturno que se prepara para vestibular.',
+    'Voce e o Sagui, mentor de estudos do Midnight Mentor, falando com um estudante brasileiro do ensino medio noturno que se prepara para o ENEM e vestibulares.',
     `MODO ATIVO: ${modo.rotulo}. Voce cobre ${modo.escopo}.`,
     `BANCAS DE REFERENCIA: ${modo.bancas.join(', ')}. Priorize buscas em: ${modo.fontes.join('; ')}.`,
-    SOCRATICO,
+    METODO,
+    QUALIDADE,
     ANTIALUCINACAO,
     DENSIDADE[faixa].join('\n'),
     [
@@ -146,9 +190,13 @@ export function montarSystemInstructionChat(opcoes = {}) {
     ].join('\n'),
   ];
 
+  if (modoRespostaValido(opcoes.modoResposta)) {
+    blocos.push(MODO_RESPOSTA_TEXTO[opcoes.modoResposta]);
+  }
+
   if (primeiroNome) blocos.push(`O estudante se chama ${primeiroNome}.`);
-  if (opcoes.materiaRecente) {
-    blocos.push(`Ele praticou ${opcoes.materiaRecente} recentemente - use isso so se ajudar o exemplo, sem anunciar.`);
+  if (materiaRecente) {
+    blocos.push(`Ele praticou ${materiaRecente} recentemente - use isso so se ajudar o exemplo, sem anunciar.`);
   }
 
   return blocos.join('\n\n');
@@ -192,11 +240,13 @@ export function extrairFontes(resposta) {
 
   for (const pedaco of pedacos) {
     const web = pedaco?.web || pedaco?.retrievedContext;
-    if (!web?.uri) continue;
+    // Só https vira <a href> na interface: sem allowlist de esquema, um
+    // upstream envenenado poderia injetar javascript:/data: no badge.
+    if (!web?.uri || !eHttps(web.uri)) continue;
     if (vistos.has(web.uri)) continue;
     vistos.add(web.uri);
     fontes.push({
-      titulo: web.title || dominioDe(web.uri),
+      titulo: String(web.title || '').slice(0, 120) || dominioDe(web.uri),
       uri: web.uri,
       dominio: dominioDe(web.uri),
     });
@@ -211,6 +261,16 @@ function dominioDe(uri) {
     return new URL(uri).hostname.replace(/^www\./, '');
   } catch {
     return 'fonte';
+  }
+}
+
+/** Só URL https:// absoluta entra nos badges de fonte. Função pura. */
+export function eHttps(uri) {
+  try {
+    const u = new URL(String(uri));
+    return u.protocol === 'https:';
+  } catch {
+    return false;
   }
 }
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera, FileImage, Loader2, RefreshCw, ScanLine, TriangleAlert } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { prepararFotoRedacao, formatarBytes } from '../../shared/lib/imagePrep';
@@ -49,9 +49,29 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
 
   const inputCamera = useRef<HTMLInputElement>(null);
   const inputArquivo = useRef<HTMLInputElement>(null);
+  /* URL temporária da prévia: sem revoke, cada foto vazava um blob. */
+  const previaUrlRef = useRef<string | null>(null);
+  useEffect(() => () => {
+    if (previaUrlRef.current) URL.revokeObjectURL(previaUrlRef.current);
+  }, []);
 
   async function aoEscolher(evento: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = evento.target.files?.[0];
+    // Allowlist explícita (o `accept` do input é só sugestão: drag-drop e
+    // alguns Android ignoram). SVG vetado de propósito: pode carregar
+    // script/active content; o re-encode do imagePrep neutraliza, mas a
+    // validação aqui barra antes de qualquer processamento.
+    const MIMES_FOTO = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (arquivo && !MIMES_FOTO.includes(arquivo.type)) {
+      setToast('Formato não aceito. Use JPG ou PNG.', 'error');
+      evento.target.value = '';
+      return;
+    }
+    if (arquivo && arquivo.size > 8 * 1024 * 1024) {
+      setToast('Imagem muito grande. Máximo 8MB.', 'error');
+      evento.target.value = '';
+      return;
+    }
     evento.target.value = ''; // permite reenviar a MESMA foto depois
     if (!arquivo) return;
 
@@ -67,7 +87,9 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
     try {
       const preparada = await prepararFotoRedacao(arquivo);
       setInfo({ antes: preparada.bytesAntes, depois: preparada.bytesDepois });
-      setPrevia(URL.createObjectURL(preparada.arquivo));
+      if (previaUrlRef.current) URL.revokeObjectURL(previaUrlRef.current);
+      previaUrlRef.current = URL.createObjectURL(preparada.arquivo);
+      setPrevia(previaUrlRef.current);
 
       setEtapa(temEndpointDeRedacao() ? 'Enviando e lendo a letra...' : 'Lendo a letra...');
       const correcao = await corrigirRedacaoPorFoto(preparada.arquivo, { tema, apiKey });
@@ -99,6 +121,10 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
   }
 
   function recomecar() {
+    if (previaUrlRef.current) {
+      URL.revokeObjectURL(previaUrlRef.current);
+      previaUrlRef.current = null;
+    }
     setResultado(null);
     setPrevia(null);
     setInfo(null);

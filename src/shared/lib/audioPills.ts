@@ -85,13 +85,19 @@ export function promptRoteiroAudio(materia: string, topico: string, contexto?: s
  * Vozes pt-BR do Google Cloud TTS que soam bem em fone de ouvido.
  * Neural2 custa mais que Standard, mas a diferenca em locucao longa e
  * grande o bastante para ser a escolha padrao.
+ *
+ * Ordem importa: VOZES[0] é a padrão — feminina (Ana, Neural2-A), que é
+ * a voz pedida para as pílulas.
  */
 export const VOZES = [
-  { id: 'pt-BR-Neural2-B', nome: 'Bruno', genero: 'masculina' },
   { id: 'pt-BR-Neural2-A', nome: 'Ana', genero: 'feminina' },
   { id: 'pt-BR-Neural2-C', nome: 'Clara', genero: 'feminina' },
-  { id: 'pt-BR-Wavenet-B', nome: 'Bruno (leve)', genero: 'masculina' },
+  { id: 'pt-BR-Neural2-B', nome: 'Bruno', genero: 'masculina' },
+  { id: 'pt-BR-Wavenet-A', nome: 'Ana (leve)', genero: 'feminina' },
 ];
+
+/** Velocidade padrão da locução: 1.1x — viva e rápida, sem atropelar. */
+export const VELOCIDADE_PADRAO = 1.1;
 
 export interface PedidoTTS {
   texto: string;
@@ -100,12 +106,80 @@ export interface PedidoTTS {
 }
 
 /**
- * Monta o corpo enviado ao worker (/tts). A velocidade fica em 0.98 por
- * padrao: um hair abaixo do natural ajuda quem esta cansado a acompanhar
- * sem soar arrastado.
+ * Monta o corpo enviado ao worker (/tts). Velocidade padrão 1.1x: viva e
+ * rápida, sem atropelar as frases.
  */
-export function montarPedidoTTS(texto: string, voz = VOZES[0].id, velocidade = 0.98): PedidoTTS {
+export function montarPedidoTTS(texto: string, voz = VOZES[0].id, velocidade = VELOCIDADE_PADRAO): PedidoTTS {
   return { texto, voz, velocidade: Math.max(0.5, Math.min(velocidade, 1.6)) };
+}
+
+/**
+ * Escolhe a melhor voz pt-BR feminina entre as instaladas no aparelho
+ * (modo sem servidor). Função pura — recebe a lista e devolve o índice.
+ *
+ * Preferência: pt-BR sobre pt-PT; nomes femininos conhecidos (Google,
+ * Microsoft, Apple, Samsung); Natural/Neural online primeiro; nunca uma
+ * voz de outro idioma.
+ */
+export interface VozDoSistema {
+  name: string;
+  lang: string;
+}
+
+const NOMES_FEMININOS = [
+  'samantha', 'maria', 'francisca', 'helena', 'camila', 'vitoria', 'vitória',
+  'fernanda', 'beatriz', 'luciana', 'patricia', 'patrícia', 'ana', 'clara',
+  'female', 'feminina', 'mulher', 'woman',
+];
+
+export function escolherVozNativa(vozes: VozDoSistema[]): number {
+  if (vozes.length === 0) return -1;
+  const norm = (s: string) =>
+    (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let melhor = -1;
+  let melhorNota = -Infinity;
+  vozes.forEach((v, i) => {
+    const lang = norm(v.lang);
+    const nome = norm(v.name);
+    if (!lang.startsWith('pt')) return;
+    let nota = 0;
+    if (lang.startsWith('pt-br') || lang === 'pt_br') nota += 100;
+    else if (lang.startsWith('pt')) nota += 40;
+    if (NOMES_FEMININOS.some((n) => nome.includes(n))) nota += 50;
+    if (/google|natural|neural|premium|enhanced/.test(nome)) nota += 20;
+    if (/whisper|robot|eSpeak|espeak|compact/.test(nome)) nota -= 60;
+    if (nota > melhorNota) {
+      melhorNota = nota;
+      melhor = i;
+    }
+  });
+  // Sem pt-BR instalado: qualquer pt antes de cair no default do sistema.
+  if (melhor === -1) {
+    const qualquerPt = vozes.findIndex((v) => norm(v.lang).startsWith('pt'));
+    return qualquerPt;
+  }
+  return melhor;
+}
+
+/**
+ * Roteiro curto de bolso, 100% local, para quando a IA está fora do ar.
+ *
+ * Honesto por construção: avisa que é a versão curta e guia uma revisão
+ * rápida usando o resumo na tela — nunca inventa conteúdo de estudo. Faz
+ * TODA pílula tocar mesmo sem internet, sem chave e sem servidor.
+ */
+export function roteiroLocalEmergencia(materia: string, topico: string, resumo?: string): string {
+  const pedacoResumo = resumo?.trim()
+    ? ` O ponto central é este: ${resumo.trim().slice(0, 280)}`
+    : '';
+  return [
+    `Pílula relâmpago de ${topico}, ${materia}.`,
+    'A versão completa de três minutos precisa de internet, então vai aqui a versão de bolso, com a mesma voz.',
+    `Primeiro: respire fundo duas vezes e foque só no essencial.${pedacoResumo}`,
+    'Segundo: repita em voz alta, com suas palavras, a ideia principal que você acabou de ouvir.',
+    'Terceiro: quando chegar em casa, abra este mesmo tema no Quiz e faça três questões para fixar.',
+    'Pílula relâmpago concluída. Constância curta todo dia vale mais que maratona uma vez por mês.',
+  ].join(' ');
 }
 
 export function formatarTempo(segundos: number): string {

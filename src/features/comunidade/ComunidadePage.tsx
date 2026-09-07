@@ -1,16 +1,12 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Check, Sparkles, TriangleAlert, User, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, Sparkles, User, Users } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { getProfile, getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
-import { moderar } from '../../shared/lib/moderationEngine';
-import { getSupabase, isSupabaseConfigured } from '../../shared/lib/supabase';
 import type { CommunityMessage, Escola, Turma } from '../../shared/types';
 import { createStudyLeague, joinLeague, normalizeStudyLeague, canJoinMoreLeagues, type StudyLeague } from '../../shared/lib/ligasEngine';
 import { LeagueDetail } from './LeagueDetail';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-
-function gerarId() { return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
 /*
  * Mural e ligas agora vivem no banco.
@@ -129,16 +125,16 @@ export function ComunidadePage() {
   const { session, addXP, addLog, setToast } = useAppStore();
   const [mensagens, setMensagens] = useState<CommunityMessage[]>([]);
   const [falhaAoCarregar, setFalhaAoCarregar] = useState(false);
-  const [input, setInput] = useState('');
-  const [materia] = useState('Geral');
-  const [modError, setModError] = useState('');
   const [escolas, setEscolas] = useState<Escola[]>([]);
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [ligas, setLigas] = useState<StudyLeague[]>([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [pendingJoinLeagueId, setPendingJoinLeagueId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
-  const msgsEndRef = useRef<HTMLDivElement>(null);
+  const [mostrarFormLiga, setMostrarFormLiga] = useState(false);
+  const [novoTituloLiga, setNovoTituloLiga] = useState('');
+  const [novaDisciplinaLiga, setNovaDisciplinaLiga] = useState('Matemática');
+  const [criandoLiga, setCriandoLiga] = useState(false);
 
   const profile = session ? getProfile(session.uid) : null;
   const escolaAtual = escolas.find(e => e.id === profile?.escolaId);
@@ -181,75 +177,21 @@ export function ComunidadePage() {
     }
   }, [ligas, profile?.uid, selectedLeagueId]);
 
-  useEffect(() => {
-    msgsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [mensagens]);
-
-  // Atualiza o mural periodicamente. A RLS ja limita o retorno a turma do
-  // aluno, entao nao ha filtro de turma a montar aqui.
-  useEffect(() => {
-    if (!isSupabaseConfigured() || !profile?.turmaId) return;
-    const intervalo = setInterval(() => {
-      /*
-       * A atualizacao periodica NAO marca falha: uma oscilacao de rede a
-       * cada 10s nao deve trocar um mural cheio por um aviso de erro. O
-       * que ja esta na tela continua valendo ate a proxima resposta boa.
-       */
-      supabaseRepository
-        .loadMensagensTurma()
-        .then((m) => { setMensagens(m); setFalhaAoCarregar(false); })
-        .catch(() => {});
-    }, 10000);
-    return () => clearInterval(intervalo);
-  }, [profile?.turmaId]);
-
-  const _enviarMensagem = useCallback(async () => {
-    if (!input.trim() || !profile || !profile.turmaId || !profile.escolaId) return;
-
-    const resultado = moderar(input);
-    if (!resultado.aprovado) {
-      setModError(resultado.razao || 'Mensagem rejeitada');
-      setTimeout(() => setModError(''), 4000);
-      return;
-    }
-
-    const novaMsg: CommunityMessage = {
-      id: gerarId(),
-      escolaId: profile.escolaId,
-      turmaId: profile.turmaId,
-      userId: profile.uid,
-      userName: profile.nome || 'Anônimo',
-      text: resultado.textoLimpio,
-      timestamp: Date.now(),
-      moderated: true,
-      materia: materia === 'Geral' ? undefined : materia,
-      likes: 0,
-      likedBy: [],
-    };
-
-    setMensagens([novaMsg, ...mensagens]); // otimista
-    const salva = await supabaseRepository.enviarMensagemTurma(
-      resultado.textoLimpio,
-      profile.turmaId,
-      materia === 'Geral' ? undefined : materia,
-    );
-    if (!salva) {
-      setMensagens(mensagens); // desfaz se o servidor recusou
-      setModError('Nao foi possivel enviar a mensagem.');
-      setTimeout(() => setModError(''), 4000);
-      return;
-    }
-    setMensagens(prev => prev.map(m => (m.id === novaMsg.id ? { ...salva, userName: novaMsg.userName } : m)));
-
-    setInput('');
-  }, [input, profile, mensagens, materia]);
-
+  /* O mural em si ainda nao tem UI de lista/envio: esta tela mostra as
+     ligas e usa a contagem de mensagens só no badge do cabeçalho. Sem
+     polling a cada 10s (tráfego e RLS à toa) e sem função de envio morta —
+     quando o mural ganhar tela própria, o envio volta com rollback
+     funcional (setMensagens(prev => ...)). */
   function aceitarLiga(liga: StudyLeague) {
     if (!profile?.uid) return;
     if (liga.joinedBy.includes(profile.uid)) {
       setViewMode('detail');
       return;
     }
+    // Liga de demonstração (id em texto, sem linha no banco): entra só no
+    // aparelho. Antes o app tentava gravar esse id no banco (coluna UUID)
+    // e o erro desfazia a entrada — parecia que "não tem como acessar".
+    const soLocal = !/^[0-9a-f-]{36}$/i.test(liga.id);
     if (pendingJoinLeagueId && pendingJoinLeagueId !== liga.id) {
       setPendingJoinLeagueId(liga.id);
       return;
@@ -265,12 +207,16 @@ export function ComunidadePage() {
       setLigas(next);
       setSelectedLeagueId(updated.id);
       setPendingJoinLeagueId(null);
-      persistir(supabaseRepository.entrarNaLiga(liga.id), {
-        aoFalhar: () => { setLigas(ligas); setSelectedLeagueId(null); setViewMode('list'); },
-        mensagem: 'Nao foi possivel entrar na liga. Tente de novo.',
-      });
-      addXP(updated.xpReward);
-      addLog({ timestamp: Date.now(), type: 'atividade', description: `Entrou na liga "${updated.title}"`, xp: updated.xpReward });
+      if (!soLocal) {
+        persistir(supabaseRepository.entrarNaLiga(liga.id), {
+          aoFalhar: () => { setLigas(ligas); setSelectedLeagueId(null); setViewMode('list'); },
+          mensagem: 'Nao foi possivel entrar na liga. Tente de novo.',
+        });
+        addXP(updated.xpReward);
+        addLog({ timestamp: Date.now(), type: 'atividade', description: `Entrou na liga "${updated.title}"`, xp: updated.xpReward });
+      } else {
+        setToast('Você entrou na liga de demonstração! Crie uma liga real para valer XP e ranking.', 'info');
+      }
       setViewMode('detail');
       return;
     }
@@ -281,9 +227,59 @@ export function ComunidadePage() {
     setPendingJoinLeagueId(liga.id);
   }
 
+  /* Antes não existia como criar liga no app: o banco ficava vazio para
+     sempre, a tela caía nas demonstrações e a entrada falhava no servidor.
+     Este botão cria a liga de verdade (UUID) e já coloca o criador dentro. */
+  async function criarLiga() {
+    if (!profile?.uid || !novoTituloLiga.trim() || criandoLiga) return;
+    setCriandoLiga(true);
+    try {
+      const rascunho = createStudyLeague({
+        id: `tmp_${Date.now()}`,
+        title: novoTituloLiga.trim().slice(0, 60),
+        prompt: 'Liga criada pelos estudantes: definam a primeira meta juntos na sala.',
+        authorName: profile.nome || 'Anônimo',
+        turma: turmaAtual?.nome || '',
+        escola: escolaAtual?.nome || '',
+        discipline: novaDisciplinaLiga,
+        xpReward: 35,
+        goals: [{
+          id: `g${Date.now()}`,
+          title: 'Definir a primeira meta',
+          description: 'Combinem na sala o primeiro desafio da equipe',
+          target: 1,
+          unit: 'meta',
+        }],
+      });
+      const uuid = await supabaseRepository.saveLiga(rascunho as unknown as Record<string, any>);
+      if (!uuid) throw new Error('sem retorno do banco');
+      await supabaseRepository.entrarNaLiga(uuid);
+      const remotas = await supabaseRepository.loadLigas();
+      const normalizadas = (remotas as unknown as StudyLeague[]).map(l => normalizeStudyLeague(l));
+      const criada = normalizadas.find(l => l.id === uuid);
+      const comMembro = criada
+        ? joinLeague(criada, profile.uid, profile.nome || 'Anônimo')
+        : { ...rascunho, id: uuid } as unknown as StudyLeague;
+      setLigas(criada ? normalizadas.map(l => l.id === uuid ? comMembro : l) : [comMembro, ...ligas]);
+      setSelectedLeagueId(uuid);
+      setMostrarFormLiga(false);
+      setNovoTituloLiga('');
+      addXP(35);
+      addLog({ timestamp: Date.now(), type: 'atividade', description: `Criou a liga "${rascunho.title}"`, xp: 35 });
+      setViewMode('detail');
+      setToast('Liga criada! Chame a galera.', 'success');
+    } catch {
+      setToast('Não foi possível criar a liga. Tente de novo.', 'error');
+    } finally {
+      setCriandoLiga(false);
+    }
+  }
+
   function updateLeague(updated: StudyLeague) {
     const anterior = ligas;
     setLigas(ligas.map(item => item.id === updated.id ? updated : item));
+    // Demonstração não tem linha no banco: salva só no aparelho.
+    if (!/^[0-9a-f-]{36}$/i.test(updated.id)) return;
     persistir(
       supabaseRepository.atualizarLiga(updated.id, updated as unknown as Record<string, unknown>),
       {
@@ -357,8 +353,45 @@ export function ComunidadePage() {
             <div className="flex flex-col gap-2 lg:w-[300px] lg:shrink-0">
               <div className="flex items-center justify-between px-1">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-400">Ligas disponíveis</p>
-                <span className="text-[10px] text-gray-500">{ligas.length} opções</span>
+                <button
+                  onClick={() => setMostrarFormLiga(v => !v)}
+                  className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 hover:brightness-110 min-h-[36px]"
+                >
+                  {mostrarFormLiga ? 'Fechar' : '+ Nova liga'}
+                </button>
               </div>
+
+              {mostrarFormLiga && (
+                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3 space-y-2">
+                  <input
+                    type="text"
+                    value={novoTituloLiga}
+                    onChange={e => setNovoTituloLiga(e.target.value)}
+                    placeholder="Nome da liga (ex: Liga de Matemática 3A)"
+                    maxLength={60}
+                    className="w-full text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={novaDisciplinaLiga}
+                      onChange={e => setNovaDisciplinaLiga(e.target.value)}
+                      className="flex-1 text-sm"
+                      aria-label="Disciplina"
+                    >
+                      {['Português', 'Matemática', 'Física', 'Química', 'Biologia', 'História', 'Geografia'].map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={criarLiga}
+                      disabled={!novoTituloLiga.trim() || criandoLiga}
+                      className="btn-primary text-sm px-4 min-h-[44px] disabled:opacity-40"
+                    >
+                      {criandoLiga ? 'Criando…' : 'Criar'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100dvh-28rem)] lg:max-h-[calc(100dvh-24rem)] pr-1">
                 {ligas.length === 0 && (
@@ -510,12 +543,6 @@ export function ComunidadePage() {
           </div>
         </div>
 
-        {modError && (
-          <div className="text-red-400 text-xs bg-red-500/10 rounded-xl px-4 py-2 border border-red-500/10 mb-2 animate-slide-up flex items-center gap-2">
-            <span><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
-            <span>{modError}</span>
-          </div>
-        )}
       </div>
     </div>
   );

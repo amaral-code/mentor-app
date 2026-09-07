@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw, RotateCw } from 'lucide-react';
-import { formatarTempo, estaConcluido } from '../../shared/lib/audioPills';
+import { formatarTempo, estaConcluido, escolherVozNativa, VELOCIDADE_PADRAO } from '../../shared/lib/audioPills';
 
 interface AudioPlayerProps {
   /** data: URL do mp3 sintetizado, ou null para usar a voz do sistema. */
@@ -40,9 +40,20 @@ export function AudioPlayer({
   const [tocando, setTocando] = useState(false);
   const [posicao, setPosicao] = useState(posicaoInicial);
   const [duracao, setDuracao] = useState(duracaoEstimada);
-  const [velocidade, setVelocidade] = useState(1);
+  const [velocidade, setVelocidade] = useState(VELOCIDADE_PADRAO);
   const ultimoSalvo = useRef(posicaoInicial);
   const inicioFallback = useRef<number | null>(null);
+  /* Vozes do sistema chegam de forma assíncrona (e mudam por idioma
+     instalado): guarda a lista para escolher a melhor pt-BR feminina. */
+  const [vozesSistema, setVozesSistema] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    if (typeof speechSynthesis === 'undefined') return;
+    const carregar = () => setVozesSistema(speechSynthesis.getVoices());
+    carregar();
+    speechSynthesis.addEventListener('voiceschanged', carregar);
+    return () => speechSynthesis.removeEventListener('voiceschanged', carregar);
+  }, []);
 
   const usandoVozNativa = !src;
 
@@ -99,7 +110,13 @@ export function AudioPlayer({
       } else {
         const fala = new SpeechSynthesisUtterance(textoFallback);
         fala.lang = 'pt-BR';
+        // Melhor pt-BR feminina instalada (Google/Microsoft/Apple); sem
+        // isso o navegador pegava a default — muitas vezes masculina ou
+        // até de outro idioma.
+        const indice = escolherVozNativa(vozesSistema);
+        if (indice >= 0 && vozesSistema[indice]) fala.voice = vozesSistema[indice];
         fala.rate = velocidade;
+        fala.pitch = 1.05;
         fala.onend = () => {
           setTocando(false);
           reportar(duracao, true);
@@ -200,7 +217,7 @@ export function AudioPlayer({
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        {[0.85, 1, 1.25, 1.5].map((v) => (
+        {[0.85, 1, VELOCIDADE_PADRAO, 1.25, 1.5].map((v) => (
           <button
             key={v}
             onClick={() => {
@@ -218,8 +235,8 @@ export function AudioPlayer({
 
       {usandoVozNativa && (
         <p className="text-[11px] text-amber-400/70 text-center leading-snug">
-          Tocando com a voz do sistema: funciona sem internet, mas para se a tela apagar. Com o servidor
-          de audio configurado, a pilula vira mp3 e continua no bolso.
+          Voz feminina do próprio aparelho (automática): funciona sem internet, mas para se a tela apagar.
+          Com o servidor de audio configurado, a pilula vira mp3 e continua no bolso.
         </p>
       )}
     </div>

@@ -36,11 +36,15 @@ export type ModoChatId = ModoChat['id'];
 import {
   AI_MODEL,
   DEEPSEEK_DEV_PROXY_PATH,
+  DEEPSEEK_TIMEOUT_MS,
+  GEMINI_CHAT_CONFIG,
   erroProxyLocalSemChave,
   erroSemBackendDeepSeek,
   fetchDeepSeek,
+  garantirTextoResposta,
   geminiGenConfigToDeepSeek,
   isDeepSeekProvider,
+  sinalComTimeout,
   toChatCompletionsMessages,
 } from './aiProvider';
 
@@ -54,12 +58,16 @@ export interface MensagemChat {
   text: string;
 }
 
+export type ModoRespostaChat = 'explicativo' | 'comunicativo';
+
 export interface ContextoChat {
   modo: ModoChatId | string;
   mensagens: MensagemChat[];
   apiKey: string;
   nomeAluno?: string;
   materiaRecente?: string;
+  /** Toggle Explicativo/Comunicativo da barra de entrada do Mentor. */
+  modoResposta?: ModoRespostaChat;
   /** Injetavel para teste; por padrao, a hora do aparelho. */
   horaLocal?: number;
   signal?: AbortSignal;
@@ -88,16 +96,19 @@ async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
 
+  // Timeout de 30s como nos demais caminhos: sem isso, rede que engole
+  // pacote deixava "Sagui está digitando" para sempre.
   const resposta = await fetch(`${PROXY_URL}/api/chat/completions`, {
     method: 'POST',
     headers,
-    signal: ctx.signal,
+    signal: sinalComTimeout(ctx.signal, DEEPSEEK_TIMEOUT_MS),
     body: JSON.stringify({
       modo: ctx.modo,
       mensagens: ctx.mensagens,
       horaLocal: ctx.horaLocal ?? new Date().getHours(),
       nomeAluno: ctx.nomeAluno,
       materiaRecente: ctx.materiaRecente,
+      modoResposta: ctx.modoResposta,
     }),
   });
 
@@ -108,7 +119,9 @@ async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
 
   const dados = await resposta.json();
   return {
-    texto: dados.texto || '',
+    // Resposta vazia vira erro para cair no fallback local com toast,
+    // em vez de bolha vazia que parecia "não respondeu".
+    texto: garantirTextoResposta(dados.texto),
     fontes: dados.fontes ?? [],
     consultas: dados.consultas ?? [],
     groundingUsado: !!dados.groundingUsado,
@@ -125,6 +138,7 @@ async function direto(ctx: ContextoChat): Promise<RespostaChat> {
     horaLocal: ctx.horaLocal ?? new Date().getHours(),
     nomeAluno: ctx.nomeAluno,
     materiaRecente: ctx.materiaRecente,
+    modoResposta: ctx.modoResposta,
   });
   const systemInstruction = { parts: [{ text: systemText }] };
 
@@ -143,14 +157,16 @@ async function direto(ctx: ContextoChat): Promise<RespostaChat> {
     const payload: Record<string, unknown> = {
       systemInstruction,
       contents,
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1024, topP: 0.9 },
+      // Mesmos valores do DeepSeek barato (só muda o nome do campo).
+      generationConfig: { ...GEMINI_CHAT_CONFIG },
     };
     if (comBusca) payload.tools = ferramentasDeBusca(MODELO_DIRETO);
 
-    return fetch(`${GEMINI_URL}/${MODELO_DIRETO}:generateContent?key=${ctx.apiKey}`, {
+    // Chave no header, nunca na URL (?key= vaza em logs de proxy/CDN).
+    return fetch(`${GEMINI_URL}/${MODELO_DIRETO}:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: ctx.signal,
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': ctx.apiKey },
+      signal: sinalComTimeout(ctx.signal, DEEPSEEK_TIMEOUT_MS),
       body: JSON.stringify(payload),
     });
   };
@@ -176,7 +192,7 @@ async function direto(ctx: ContextoChat): Promise<RespostaChat> {
   }
 
   const dados = await resposta.json();
-  const texto = textoDaResposta(dados);
+  const texto = garantirTextoResposta(textoDaResposta(dados));
   const grounding = extrairFontes(dados);
 
   return {
@@ -205,7 +221,8 @@ async function viaProxyLocalDeepSeek(ctx: ContextoChat, systemText: string): Pro
     .filter((m) => m.text?.trim())
     .map((m) => ({ role: m.role, parts: [{ text: m.text }] }));
   const messages = toChatCompletionsMessages({ parts: [{ text: systemText }] }, contents);
-  const gen = geminiGenConfigToDeepSeek({ temperature: 0.4, maxOutputTokens: 1024, topP: 0.9 });
+  // Conversão do config único: mesmo custo/comportamento do worker.
+  const gen = geminiGenConfigToDeepSeek({ ...GEMINI_CHAT_CONFIG });
 
   // Timeout + diagnostico dentro do helper (o erro ja vem classificado e
   // com dica acionavel; o log seguro vai para o console.debug).
@@ -239,7 +256,7 @@ async function viaProxyLocalDeepSeek(ctx: ContextoChat, systemText: string): Pro
   }
 
   const dados = await resposta.json();
-  const texto = String(dados?.choices?.[0]?.message?.content ?? '').trim();
+  const texto = garantirTextoResposta(String(dados?.choices?.[0]?.message?.content ?? ''));
   return {
     texto,
     fontes: [],

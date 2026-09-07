@@ -38,7 +38,7 @@ export class UserRepository {
 
     const { data, error } = await sb
       .from('perfis')
-      .select('id, email, nome, papel, escola_id, turma_id')
+      .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha')
       .eq('id', uid)
       .maybeSingle();
 
@@ -51,6 +51,7 @@ export class UserRepository {
       role: (data.papel as UserRole) ?? 'student',
       escolaId: data.escola_id,
       turmaId: data.turma_id,
+      deveTrocarSenha: !!data.deve_trocar_senha,
     };
   }
 

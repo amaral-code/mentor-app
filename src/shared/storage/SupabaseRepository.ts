@@ -1,9 +1,11 @@
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+import { hashEnunciado } from '../lib/quizHistory';
 import type {
   ChallengeResult,
   ChatMessage,
   ChatPersona,
   CommunityMessage,
+  Conversa,
   DailyPlan,
   EssayCorrection,
   GamificationState,
@@ -50,6 +52,14 @@ function falhou(op: string, error: unknown): void {
 function exigir(op: string, error: unknown): never {
   console.warn(`[supabase] ${op} falhou:`, error);
   throw new Error(`${op} falhou`);
+}
+
+/** Placar de acertos/erros de um topico (tela de Estatisticas). */
+export interface DesempenhoTopico {
+  materia: string;
+  topico: string;
+  acertos: number;
+  erros: number;
 }
 
 export class SupabaseRepository {
@@ -133,9 +143,12 @@ export class SupabaseRepository {
   async loadLogs(limite = 200): Promise<LogEntry[]> {
     if (!this.ativo()) return [];
     const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return [];
     const { data, error } = await sb
       .from('logs')
       .select('tipo, descricao, xp, criado_em')
+      .eq('user_id', uid)
       .order('criado_em', { ascending: false })
       .limit(limite);
 
@@ -158,9 +171,12 @@ export class SupabaseRepository {
   async loadNotas(): Promise<Nota[]> {
     if (!this.ativo()) return [];
     const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return [];
     const { data, error } = await sb
       .from('notas')
       .select('id, texto, tag, criado_em')
+      .eq('user_id', uid)
       .order('criado_em', { ascending: false });
 
     if (error) {
@@ -198,29 +214,39 @@ export class SupabaseRepository {
   async updateNota(id: string, texto: string): Promise<void> {
     if (!this.ativo()) return;
     const sb = getSupabase()!;
-    const { error } = await sb.from('notas').update({ texto }).eq('id', id);
-    exigir('updateNota', error);
+    const uid = await this.uid();
+    if (!uid) return;
+    const { error } = await sb.from('notas').update({ texto }).eq('id', id).eq('user_id', uid);
+    if (error) exigir('updateNota', error);
   }
 
   async deleteNota(id: string): Promise<void> {
     if (!this.ativo()) return;
     const sb = getSupabase()!;
-    const { error } = await sb.from('notas').delete().eq('id', id);
-    exigir('deleteNota', error);
+    const uid = await this.uid();
+    if (!uid) return;
+    const { error } = await sb.from('notas').delete().eq('id', id).eq('user_id', uid);
+    if (error) exigir('deleteNota', error);
   }
 
   // ===================================================================
   // Chat
   // ===================================================================
 
-  async loadChat(limite = 100): Promise<ChatMessage[]> {
+  async loadChat(limite = 100, conversaId?: string | null): Promise<ChatMessage[]> {
     if (!this.ativo()) return [];
     const sb = getSupabase()!;
-    const { data, error } = await sb
+    const uid = await this.uid();
+    if (!uid) return [];
+    let q = sb
       .from('chat_mensagens')
       .select('id, papel, texto, humor, imagem, criado_em')
+      .eq('user_id', uid)
       .order('criado_em', { ascending: true })
       .limit(limite);
+    // conversaId ausente/null = fluxo legado anterior as threads.
+    q = conversaId ? q.eq('conversa_id', conversaId) : q.is('conversa_id', null);
+    const { data, error } = await q;
 
     if (error) {
       falhou('loadChat', error);
@@ -236,7 +262,7 @@ export class SupabaseRepository {
     }));
   }
 
-  async saveChatMessage(msg: ChatMessage): Promise<void> {
+  async saveChatMessage(msg: ChatMessage, conversaId?: string | null): Promise<void> {
     if (!this.ativo()) return;
     const sb = getSupabase()!;
     const uid = await this.uid();
@@ -248,8 +274,91 @@ export class SupabaseRepository {
       texto: msg.text,
       humor: msg.mood ?? null,
       imagem: msg.image ?? null,
+      // tmp_ = conversa so-local (offline): cai no balde legado, sem
+      // quebrar a FK. Ao voltar, a thread sincronizada recebe as novas.
+      conversa_id: conversaId && !conversaId.startsWith('tmp_') ? conversaId : null,
     });
-    exigir('saveChatMessage', error);
+    if (error) exigir('saveChatMessage', error);
+
+    // Mantem a thread no topo do historico. Best-effort de proposito:
+    // se falhar, a mensagem JA foi salva - reclamar aqui mostraria um
+    // erro falso ("nao salvou") para algo que salvou.
+    const cid = String(conversaId ?? '');
+    if (cid !== '' && !cid.startsWith('tmp_')) {
+      const alvo: string = cid;
+      const { error: touchError } = await sb
+        .from('conversas_chat')
+        .update({ atualizado_em: new Date().toISOString() })
+        .eq('id', alvo)
+        .eq('user_id', uid);
+      falhou('touchConversa', touchError);
+    }
+  }
+
+  // ===================================================================
+  // Conversas do Mentor (tabela conversas_chat, migration 016)
+  // ===================================================================
+
+  async loadConversas(): Promise<Conversa[]> {
+    if (!this.ativo()) return [];
+    const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return [];
+    const { data, error } = await sb
+      .from('conversas_chat')
+      .select('id, titulo, modo, criado_em')
+      .eq('user_id', uid)
+      .order('atualizado_em', { ascending: false });
+    if (error) {
+      falhou('loadConversas', error);
+      return [];
+    }
+    return (data ?? []).map((r) => ({
+      id: String(r.id),
+      titulo: r.titulo,
+      modo: r.modo,
+      criadoEm: new Date(r.criado_em).getTime(),
+    }));
+  }
+
+  /** Cria a thread e devolve o id definitivo do banco. */
+  async createConversa(titulo = 'Nova conversa', modo = 'enem_geral'): Promise<Conversa | null> {
+    if (!this.ativo()) return null;
+    const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return null;
+    const { data, error } = await sb
+      .from('conversas_chat')
+      .insert({ user_id: uid, titulo, modo })
+      .select('id, titulo, modo, criado_em')
+      .single();
+    if (error || !data) exigir('createConversa', error ?? 'sem retorno');
+    const row = data as { id: string; titulo: string; modo: string; criado_em: string };
+    return {
+      id: String(row.id),
+      titulo: row.titulo,
+      modo: row.modo,
+      criadoEm: new Date(row.criado_em).getTime(),
+    };
+  }
+
+  async renameConversa(id: string, titulo: string): Promise<void> {
+    if (!this.ativo() || id.startsWith('tmp_')) return;
+    const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return;
+    const { error } = await sb.from('conversas_chat').update({ titulo }).eq('id', id).eq('user_id', uid);
+    if (error) exigir('renameConversa', error);
+  }
+
+  /** Apaga a thread; as mensagens caem juntas pelo cascade do banco. */
+  async deleteConversa(id: string): Promise<void> {
+    if (!this.ativo() || id.startsWith('tmp_')) return;
+    const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return;
+    const { error } = await sb.from('conversas_chat').delete().eq('id', id).eq('user_id', uid);
+    if (error) exigir('deleteConversa', error);
   }
 
   async clearChat(): Promise<void> {
@@ -268,7 +377,9 @@ export class SupabaseRepository {
   async loadPersonas(): Promise<ChatPersona[]> {
     if (!this.ativo()) return [];
     const sb = getSupabase()!;
-    const { data, error } = await sb.from('personas').select('id, nome, icone, cor, instrucao, criado_em');
+    const uid = await this.uid();
+    if (!uid) return [];
+    const { data, error } = await sb.from('personas').select('id, nome, icone, cor, instrucao, criado_em').eq('user_id', uid);
 
     if (error) {
       falhou('loadPersonas', error);
@@ -316,7 +427,7 @@ export class SupabaseRepository {
     if (!/^\d+$/.test(id)) return;
     const sb = getSupabase()!;
     const { error } = await sb.from('personas').delete().eq('id', id);
-    exigir('deletePersona', error);
+    if (error) exigir('deletePersona', error);
   }
 
   // ===================================================================
@@ -326,9 +437,12 @@ export class SupabaseRepository {
   async loadQuizResults(): Promise<QuizResult[]> {
     if (!this.ativo()) return [];
     const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return [];
     const { data, error } = await sb
       .from('quiz_resultados')
       .select('materia, acertos, total, xp_ganho, criado_em')
+      .eq('user_id', uid)
       .order('criado_em', { ascending: false });
 
     if (error) {
@@ -356,7 +470,97 @@ export class SupabaseRepository {
       total: r.total,
       xp_ganho: r.xpGanho,
     });
-    exigir('saveQuizResult', error);
+    if (error) exigir('saveQuizResult', error);
+  }
+
+  // ===================================================================
+  // Quiz antirrepeticao (tabela quiz_questoes_exibidas, migration 014)
+  // ===================================================================
+
+  /** Hashes + previews recentes da materia, para o prompt e o filtro. */
+  async loadHistoricoQuiz(
+    materia: string,
+    limite = 30,
+  ): Promise<{ hash: string; preview: string }[]> {
+    if (!this.ativo()) return [];
+    const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid) return [];
+    const { data, error } = await sb
+      .from('quiz_questoes_exibidas')
+      .select('enunciado_hash, enunciado_preview')
+      .eq('user_id', uid)
+      .eq('materia', materia)
+      .order('criado_em', { ascending: false })
+      .limit(limite);
+    if (error) {
+      falhou('loadHistoricoQuiz', error);
+      return [];
+    }
+    return (data ?? []).map((r) => ({ hash: r.enunciado_hash, preview: r.enunciado_preview }));
+  }
+
+  /**
+   * Registra as questoes exibidas. Upsert pelo conflito
+   * (user_id, enunciado_hash): duplo-clique, retry ou duas abas nao
+   * duplicam nem falham - a unique do banco decide.
+   */
+  async saveQuestoesExibidas(
+    materia: string,
+    questoes: { topico?: string; enunciado: string; dificuldade?: string }[],
+  ): Promise<void> {
+    if (!this.ativo()) return;
+    const sb = getSupabase()!;
+    const uid = await this.uid();
+    if (!uid || questoes.length === 0) return;
+    const linhas = questoes.map((q) => ({
+      user_id: uid,
+      materia,
+      topico: q.topico ?? null,
+      enunciado_hash: hashEnunciado(q.enunciado),
+      enunciado_preview: q.enunciado.slice(0, 160),
+      dificuldade: q.dificuldade ?? 'media',
+    }));
+    const { error } = await sb
+      .from('quiz_questoes_exibidas')
+      .upsert(linhas, { onConflict: 'user_id,enunciado_hash' });
+    if (error) exigir('saveQuestoesExibidas', error);
+  }
+
+  // ===================================================================
+  // Quiz desempenho por topico (tabela quiz_desempenho_topicos, migration 015)
+  // ===================================================================
+
+  /** Soma 1 no placar do topico via RPC (atomico, dono pelo JWT). */
+  async registrarDesempenhoTopico(materia: string, topico: string, acertou: boolean): Promise<void> {
+    if (!this.ativo()) return;
+    const sb = getSupabase()!;
+    const { error } = await sb.rpc('registrar_desempenho_topico', {
+      p_materia: materia,
+      p_topico: topico,
+      p_acertou: acertou,
+    });
+    if (error) exigir('registrarDesempenhoTopico', error);
+  }
+
+  /** Placar por topico do dono, para a tela de Estatisticas. */
+  async loadDesempenhoTopicos(): Promise<DesempenhoTopico[]> {
+    if (!this.ativo()) return [];
+    const sb = getSupabase()!;
+    const { data, error } = await sb
+      .from('quiz_desempenho_topicos')
+      .select('materia, topico, acertos, erros')
+      .order('atualizado_em', { ascending: false });
+    if (error) {
+      falhou('loadDesempenhoTopicos', error);
+      return [];
+    }
+    return (data ?? []).map((r) => ({
+      materia: r.materia,
+      topico: r.topico,
+      acertos: r.acertos,
+      erros: r.erros,
+    }));
   }
 
   // ===================================================================
@@ -381,7 +585,7 @@ export class SupabaseRepository {
       pontos_melhorar: c.pontosMelhorar,
       texto_original: c.originalText,
     });
-    exigir('saveRedacao', error);
+    if (error) exigir('saveRedacao', error);
   }
 
   async loadDesafios(): Promise<ChallengeResult[]> {
@@ -431,7 +635,7 @@ export class SupabaseRepository {
       tempo_usado_segundos: r.tempoUsadoSegundos,
       finalizado: r.finalizado,
     });
-    exigir('saveDesafio', error);
+    if (error) exigir('saveDesafio', error);
   }
 
   // ===================================================================
@@ -444,7 +648,7 @@ export class SupabaseRepository {
     const uid = await this.uid();
     if (!uid) return;
     const { error } = await sb.from('humor_historico').insert({ user_id: uid, humor, texto: texto ?? null });
-    exigir('saveHumor', error);
+    if (error) exigir('saveHumor', error);
   }
 
   async loadHumor(limite = 24): Promise<{ mood: MoodType; timestamp: number }[]> {
@@ -471,7 +675,7 @@ export class SupabaseRepository {
     const uid = await this.uid();
     if (!uid) return;
     const { error } = await sb.from('sessoes_foco').insert({ user_id: uid, tipo, duracao_minutos: minutos });
-    exigir('saveSessaoFoco', error);
+    if (error) exigir('saveSessaoFoco', error);
   }
 
   async loadSessoesFoco(): Promise<{ tipo: string; minutos: number; data: string }[]> {
@@ -526,7 +730,7 @@ export class SupabaseRepository {
         { user_id: uid, data: plano.date, humor: plano.mood, tarefas: plano.tasks },
         { onConflict: 'user_id,data' },
       );
-    exigir('savePlano', error);
+    if (error) exigir('savePlano', error);
   }
 
   /**
@@ -643,17 +847,17 @@ export class SupabaseRepository {
     const { error } = await sb
       .from('preferencias')
       .upsert({ user_id: uid, ...patch }, { onConflict: 'user_id' });
-    exigir('savePreferencias', error);
+    if (error) exigir('savePreferencias', error);
   }
 
   // ===================================================================
   // Escolas e turmas
   // ===================================================================
 
-  async loadEscolas(): Promise<{ id: string; nome: string; cidade?: string; cor?: string }[]> {
+  async loadEscolas(): Promise<{ id: string; nome: string; cidade?: string; cor?: string; codigo_instituicao?: string }[]> {
     if (!this.ativo()) return [];
     const sb = getSupabase()!;
-    const { data, error } = await sb.from('escolas').select('id, nome, cidade, cor').order('nome');
+    const { data, error } = await sb.from('escolas').select('id, nome, cidade, cor, codigo_instituicao').order('nome');
     if (error) {
       falhou('loadEscolas', error);
       return [];
@@ -661,10 +865,10 @@ export class SupabaseRepository {
     return data ?? [];
   }
 
-  async loadTurmas(): Promise<{ id: string; nome: string; escolaId: string; ano?: string }[]> {
+  async loadTurmas(): Promise<{ id: string; nome: string; escolaId: string; ano?: string; codigo?: string }[]> {
     if (!this.ativo()) return [];
     const sb = getSupabase()!;
-    const { data, error } = await sb.from('turmas').select('id, nome, escola_id, ano').order('nome');
+    const { data, error } = await sb.from('turmas').select('id, nome, escola_id, ano, codigo').order('nome');
     if (error) {
       falhou('loadTurmas', error);
       return [];
@@ -674,6 +878,7 @@ export class SupabaseRepository {
       nome: r.nome,
       escolaId: r.escola_id,
       ano: r.ano ?? undefined,
+      codigo: r.codigo ?? undefined,
     }));
   }
 
@@ -698,6 +903,118 @@ export class SupabaseRepository {
       };
     }
     return { ok: true };
+  }
+
+  /**
+   * Vincula a escola pelo CODIGO DA INSTITUICAO (8 letras, confidencial).
+   *
+   * A turma entra depois, pelo codigo da turma. Mesma regra: o servidor
+   * confere e associa; o app nunca grava escola direto.
+   */
+  async vincularInstituicao(codigo: string): Promise<{ ok: boolean; erro?: string }> {
+    if (!this.ativo()) return { ok: false, erro: 'Sem conexao com o banco.' };
+    const sb = getSupabase()!;
+    const { error } = await sb.rpc('vincular_instituicao', { p_codigo: codigo });
+    if (error) {
+      falhou('vincular_instituicao', error);
+      return {
+        ok: false,
+        erro: /codigo invalido/i.test(error.message)
+          ? 'Código inválido. Confira com a secretaria.'
+          : 'Não foi possível vincular. Tente de novo.',
+      };
+    }
+    return { ok: true };
+  }
+
+  /** Apaga a flag de troca obrigatoria apos a senha definitiva. */
+  async limparTrocaSenha(): Promise<void> {
+    if (!this.ativo()) return;
+    const sb = getSupabase()!;
+    const uid = (await sb.auth.getUser()).data.user?.id;
+    if (!uid) return;
+    const { error } = await sb.from('perfis').update({ deve_trocar_senha: false }).eq('id', uid);
+    if (error) exigir('limparTrocaSenha', error);
+  }
+
+  /**
+   * Secretaria: invalida um codigo de turma vazado e gera outro.
+   * O servidor confere se a turma e da sua escola.
+   */
+  async regenerarCodigoTurma(turmaId: string): Promise<string> {
+    if (!this.ativo()) throw new Error('Sem conexao com o banco.');
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('regenerar_codigo_turma', { p_turma_id: turmaId });
+    if (error || !data) {
+      falhou('regenerar_codigo_turma', error);
+      throw new Error('Não foi possível gerar um novo código.');
+    }
+    return String(data);
+  }
+
+  /** Secretaria: invalida o codigo da instituicao e gera outro. */
+  async regenerarCodigoInstituicao(escolaId: string): Promise<string> {
+    if (!this.ativo()) throw new Error('Sem conexao com o banco.');
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('regenerar_codigo_instituicao', { p_escola_id: escolaId });
+    if (error || !data) {
+      falhou('regenerar_codigo_instituicao', error);
+      throw new Error('Não foi possível gerar um novo código.');
+    }
+    return String(data);
+  }
+
+  // ===================================================================
+  // Importacao de turma (secretaria, pos-pagamento no site)
+  // ===================================================================
+
+  /**
+   * Envia a lista ao worker, que normaliza com IA, cria as contas
+   * (aluno/responsavel/docente) e dispara os convites por email.
+   *
+   * Exige o worker publicado (VITE_AI_BASE_URL): as senhas temporarias
+   * e os links magicos so nascem no servidor, nunca no navegador.
+   */
+  async importarTurma(alunos: {
+    nome: string;
+    sala: string;
+    email: string;
+    telefone: string;
+    tipo?: 'student' | 'teacher';
+  }[]): Promise<{
+    ok: boolean;
+    escola?: string;
+    codigoInstituicao?: string;
+    criados?: number;
+    emailsEnviados?: number;
+    emailConfigurado?: boolean;
+    normalizadoPorIA?: boolean;
+    resultados?: { linha: number; nome: string; tipo: string; ok: boolean; login?: string; turma?: string | null; codigoTurma?: string | null; erro?: string; emailEnviado?: boolean; senhaTemporaria?: string; loginResponsavel?: string; senhaResponsavel?: string }[];
+    erro?: string;
+  }> {
+    const base = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
+    if (!base) return { ok: false, erro: 'Importação automática indisponível: publique o worker e defina VITE_AI_BASE_URL.' };
+    if (!this.ativo()) return { ok: false, erro: 'Sem conexao com o banco.' };
+    const sb = getSupabase()!;
+    const { data: sessao } = await sb.auth.getSession();
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (sessao?.session?.access_token) headers['X-Supabase-Auth'] = sessao.session.access_token;
+
+    try {
+      const resposta = await fetch(`${base}/api/turmas/import`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ alunos }),
+      });
+      const dados = await resposta.json();
+      if (!resposta.ok) return { ok: false, erro: dados?.message || dados?.error || `Falha na importação (${resposta.status}).` };
+      return { ok: true, ...dados };
+    } catch (e: any) {
+      return { ok: false, erro: e?.message || 'Falha de rede na importação.' };
+    }
   }
 
   // ===================================================================
@@ -762,15 +1079,15 @@ export class SupabaseRepository {
     const uid = await this.uid();
     if (!uid) return false;
     const { error } = await sb.from('liga_membros').insert({ liga_id: ligaId, user_id: uid });
-    exigir('entrarNaLiga', error);
-    return !error;
+    if (error) exigir('entrarNaLiga', error);
+    return true;
   }
 
   async atualizarLiga(ligaId: string, dados: Record<string, unknown>): Promise<void> {
     if (!this.ativo()) return;
     const sb = getSupabase()!;
     const { error } = await sb.from('ligas').update({ dados }).eq('id', ligaId);
-    exigir('atualizarLiga', error);
+    if (error) exigir('atualizarLiga', error);
   }
 
   // ===================================================================

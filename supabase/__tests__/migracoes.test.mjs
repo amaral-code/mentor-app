@@ -39,6 +39,11 @@ const ARQUIVOS = [
   '011_bemestar_funcoes_rls.sql',
   '012_persona_ativa_texto.sql',
   '013_redacao_por_foto.sql',
+  '014_quiz_antirrepeticao.sql',
+  '015_quiz_desempenho.sql',
+  '016_conversas_chat.sql',
+  '017_reiniciar_indice.sql',
+  '018_instituicao_convites.sql',
 ];
 
 let db;
@@ -358,6 +363,16 @@ describe('burnout, alertas e privacidade', () => {
     expect(await linhas(estranho, 'select * from public.telemetria_estudo')).toHaveLength(0);
     expect(await linhas(aluno, 'select * from public.telemetria_estudo')).toHaveLength(1);
   });
+
+  it('reiniciar_indice apaga telemetria e serie de quem chamou, sem tocar nos outros', async () => {
+    await comoUsuario(estranho,
+      `insert into public.telemetria_estudo (user_id, question_id, tempo_gasto_segundos, acertou)
+       values ($1,'qx',60,true)`, [estranho]);
+    await comoUsuario(aluno, `select public.reiniciar_indice()`);
+    expect(await linhas(aluno, 'select * from public.telemetria_estudo')).toHaveLength(0);
+    expect(await linhas(aluno, 'select * from public.indice_burnout')).toHaveLength(0);
+    expect(await linhas(estranho, 'select * from public.telemetria_estudo')).toHaveLength(1);
+  });
 });
 
 describe('revisao espacada', () => {
@@ -374,7 +389,9 @@ describe('revisao espacada', () => {
     expect(baixa.revisoes_feitas).toBe(2);
 
     const data = await primeira(aluno,
-      'select proxima_revisao = current_date + 1 as amanha from public.revisoes_espacadas');
+      // A função usa o dia de São Paulo, não current_date (UTC): perto da
+      // meia-noite os dois diferem em 1 dia e o teste quebra sem motivo.
+      `select proxima_revisao = (now() at time zone 'America/Sao_Paulo')::date + 1 as amanha from public.revisoes_espacadas`);
     expect(data.amanha).toBe(true);
   });
 });
@@ -399,5 +416,207 @@ describe('intervencao e relatorio semanal', () => {
 
     const avisos = await db.query(`select count(*)::int n from public.notificacoes where tipo='relatorio_semanal'`);
     expect(avisos.rows[0].n).toBe(3);
+  });
+});
+
+describe('quiz antirrepeticao', () => {
+  const inserir = (uid, materia, hash) =>
+    comoUsuario(uid,
+      `insert into public.quiz_questoes_exibidas
+         (user_id, materia, topico, enunciado_hash, enunciado_preview, dificuldade)
+       values ($1, $2, 'Funções', $3, 'preview do enunciado...', 'media')`,
+      [uid, materia, hash]);
+
+  it('registra a questao exibida do dono', async () => {
+    await inserir(aluno, 'Matemática', 'hash-a1');
+    const linhasAluno = await linhas(aluno,
+      'select * from public.quiz_questoes_exibidas where user_id=$1', [aluno]);
+    expect(linhasAluno.length).toBeGreaterThanOrEqual(1);
+    expect(linhasAluno[0].materia).toBe('Matemática');
+  });
+
+  it('o mesmo hash nao entra duas vezes para a mesma conta', async () => {
+    await inserir(aluno, 'Matemática', 'hash-dup');
+    await expect(inserir(aluno, 'Matemática', 'hash-dup')).rejects.toThrow();
+  });
+
+  it('o mesmo hash vale para outra conta (unicidade e por usuario)', async () => {
+    await inserir(estranho, 'Matemática', 'hash-dup');
+    const rows = await linhas(estranho,
+      'select * from public.quiz_questoes_exibidas where user_id=$1', [estranho]);
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('estranho nao le nem apaga o historico alheio', async () => {
+    const antes = await linhas(aluno,
+      'select * from public.quiz_questoes_exibidas where user_id=$1', [aluno]);
+    // RLS: sem policy de leitura cruzada, o select alheio volta vazio...
+    const alheias = await linhas(estranho,
+      'select * from public.quiz_questoes_exibidas where user_id=$1', [aluno]);
+    expect(alheias).toHaveLength(0);
+    // ...e o delete alheio nao remove nada.
+    await comoUsuario(estranho,
+      'delete from public.quiz_questoes_exibidas where user_id=$1', [aluno]);
+    const depois = await linhas(aluno,
+      'select * from public.quiz_questoes_exibidas where user_id=$1', [aluno]);
+    expect(depois.length).toBe(antes.length);
+  });
+});
+
+describe('quiz desempenho por topico', () => {
+  it('o RPC soma acertos e erros atomicamente no mesmo topico', async () => {
+    await comoUsuario(aluno,
+      `select * from public.registrar_desempenho_topico('Matemática','Funções',true)`);
+    await comoUsuario(aluno,
+      `select * from public.registrar_desempenho_topico('Matemática','Funções',false)`);
+    await comoUsuario(aluno,
+      `select * from public.registrar_desempenho_topico('Matemática','Funções',false)`);
+
+    const rows = await linhas(aluno,
+      `select * from public.quiz_desempenho_topicos where user_id=$1`, [aluno]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].acertos).toBe(1);
+    expect(rows[0].erros).toBe(2);
+  });
+
+  it('topico vazio soma na mesma linha em vez de duplicar', async () => {
+    await comoUsuario(aluno,
+      `select * from public.registrar_desempenho_topico('Biologia','',true)`);
+    await comoUsuario(aluno,
+      `select * from public.registrar_desempenho_topico('Biologia',null,true)`);
+
+    const rows = await linhas(aluno,
+      `select * from public.quiz_desempenho_topicos where user_id=$1 and materia='Biologia'`, [aluno]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].acertos).toBe(2);
+  });
+
+  it('sem sessao o RPC recusa; escrita direta e bloqueada', async () => {
+    await expect(db.query(
+      `select * from public.registrar_desempenho_topico('Física','Mecânica',true)`)).rejects.toThrow();
+    // Sem policy de insert, o insert direto cai na RLS mesmo autenticado.
+    await expect(comoUsuario(aluno,
+      `insert into public.quiz_desempenho_topicos (user_id, materia, topico, acertos, erros)
+       values ($1,'Física','Mecânica',9,9)`, [aluno])).rejects.toThrow();
+  });
+
+  it('estranho nao le o placar alheio', async () => {
+    const alheias = await linhas(estranho,
+      'select * from public.quiz_desempenho_topicos where user_id=$1', [aluno]);
+    expect(alheias).toHaveLength(0);
+  });
+});
+
+describe('conversas do chat', () => {
+  it('cria conversa do dono e amarra mensagens a ela', async () => {
+    const conv = await primeira(aluno,
+      `insert into public.conversas_chat (user_id, titulo, modo)
+       values ($1, 'Dúvidas de TRI', 'enem_geral') returning id`, [aluno]);
+
+    await comoUsuario(aluno,
+      `insert into public.chat_mensagens (user_id, papel, texto, conversa_id)
+       values ($1, 'user', 'Como pontuar?', $2)`, [aluno, conv.id]);
+
+    const msgs = await linhas(aluno,
+      'select * from public.chat_mensagens where user_id=$1 and conversa_id=$2', [aluno, conv.id]);
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].texto).toContain('pontuar');
+  });
+
+  it('mensagem legada sem conversa continua valida', async () => {
+    await comoUsuario(aluno,
+      `insert into public.chat_mensagens (user_id, papel, texto, conversa_id)
+       values ($1, 'user', 'legada', null)`, [aluno]);
+    const rows = await linhas(aluno,
+      `select * from public.chat_mensagens where user_id=$1 and conversa_id is null`, [aluno]);
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('apagar a conversa apaga as mensagens juntas (cascade)', async () => {
+    const conv = await primeira(aluno,
+      `insert into public.conversas_chat (user_id, titulo) values ($1, 'temp') returning id`, [aluno]);
+    await comoUsuario(aluno,
+      `insert into public.chat_mensagens (user_id, papel, texto, conversa_id)
+       values ($1, 'user', 'x', $2)`, [aluno, conv.id]);
+    await comoUsuario(aluno, 'delete from public.conversas_chat where id=$1', [conv.id]);
+
+    const sobra = await linhas(aluno,
+      'select * from public.chat_mensagens where conversa_id=$1', [conv.id]);
+    expect(sobra).toHaveLength(0);
+  });
+
+  it('estranho nao ve nem apaga conversa alheia', async () => {
+    const alheias = await linhas(estranho,
+      'select * from public.conversas_chat where user_id=$1', [aluno]);
+    expect(alheias).toHaveLength(0);
+
+    const antes = await linhas(aluno, 'select id from public.conversas_chat where user_id=$1', [aluno]);
+    await comoUsuario(estranho, 'delete from public.conversas_chat where user_id=$1', [aluno]);
+    const depois = await linhas(aluno, 'select id from public.conversas_chat where user_id=$1', [aluno]);
+    expect(depois.length).toBe(antes.length);
+  });
+});
+
+describe('codigo da instituicao e convites (018)', () => {
+  let escolaId;
+  let turmaId;
+  let codigoEscola;
+  let codigoTurma;
+  let educ;
+
+  beforeAll(async () => {
+    const e = await db.query(
+      `insert into public.escolas (nome, cidade) values ('Escola Teste 018', 'Recife') returning id, codigo_instituicao`);
+    escolaId = e.rows[0].id;
+    codigoEscola = e.rows[0].codigo_instituicao;
+    const t = await db.query(
+      `insert into public.turmas (escola_id, nome, ano) values ($1, '3A', '2026') returning id, codigo`,
+      [escolaId]);
+    turmaId = t.rows[0].id;
+    codigoTurma = t.rows[0].codigo;
+    educ = (await db.query(
+      `insert into auth.users (email) values ('secretaria@test.br') returning id`)).rows[0].id;
+    await db.query(`update public.perfis set papel='educator', escola_id=$1 where id=$2`, [escolaId, educ]);
+  });
+
+  it('escola ganha codigo de 8 letras e turma mantem o de 6', () => {
+    expect(codigoEscola).toMatch(/^[A-Z0-9]{8}$/);
+    expect(codigoTurma).toMatch(/^[A-Z0-9]{6}$/);
+  });
+
+  it('aluno vincula a escola pelo codigo da instituicao', async () => {
+    await primeira(aluno, `select public.vincular_instituicao('${codigoEscola}')`);
+    const p = await primeira(aluno, 'select escola_id from public.perfis where id=$1', [aluno]);
+    expect(p.escola_id).toBe(escolaId);
+  });
+
+  it('codigo errado nao revela nada util', async () => {
+    await expect(primeira(estranho, `select public.vincular_instituicao('ZZZZZZZZ')`))
+      .rejects.toThrow(/codigo invalido/);
+  });
+
+  it('aluno nao regenera codigo de turma (so secretaria)', async () => {
+    await expect(primeira(aluno, 'select public.regenerar_codigo_turma($1::uuid)', [turmaId]))
+      .rejects.toThrow(/sem permissao/);
+  });
+
+  it('secretaria regenera o codigo da turma e o antigo morre', async () => {
+    const r = await primeira(educ, 'select public.regenerar_codigo_turma($1::uuid) as novo', [turmaId]);
+    expect(r.novo).toMatch(/^[A-Z0-9]{6}$/);
+    expect(r.novo).not.toBe(codigoTurma);
+    codigoTurma = r.novo;
+  });
+
+  it('secretaria de outra escola nao toca na turma alheia', async () => {
+    const outra = (await db.query(
+      `insert into auth.users (email) values ('outra-secretaria@test.br') returning id`)).rows[0].id;
+    await db.query(`update public.perfis set papel='educator' where id=$1`, [outra]);
+    await expect(primeira(outra, 'select public.regenerar_codigo_turma($1::uuid)', [turmaId]))
+      .rejects.toThrow(/turma nao encontrada/);
+  });
+
+  it('conta nova nasce sem troca obrigatoria', async () => {
+    const p = await primeira(aluno, 'select deve_trocar_senha from public.perfis where id=$1', [aluno]);
+    expect(p.deve_trocar_senha).toBe(false);
   });
 });

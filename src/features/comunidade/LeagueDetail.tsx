@@ -72,6 +72,8 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  /* Cooldown do XP por mensagem (anti-farm): 60s por liga. */
+  const ultimoXpLigaRef = useRef(0);
 
   const profile = session ? { uid: session.uid, nome: session.nome } : null;
 
@@ -86,20 +88,29 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
   const timer = getNextChallengeUpdate();
   const dailyPrompt = generateDailyPrompt(league);
 
-  function sendMessage() {
-    if (!profile?.uid || !message.trim()) return;
+  /* Guarda real contra duplo-envio + anti-farm de XP: a mensagem sempre
+     vai, mas o +5 XP só credita 1x a cada 60s por liga (spam não gera XP). */
+  async function sendMessage() {
+    if (!profile?.uid || !message.trim() || sending) return;
     setSending(true);
-    const updated = postLeagueMessage(league, {
-      id: gerarId(),
-      userId: profile.uid,
-      userName: profile.nome || 'Anônimo',
-      text: message.trim(),
-    });
-    onUpdateLeague(updated);
-    setMessage('');
-    setSending(false);
-    addXP(5);
-    addLog({ timestamp: Date.now(), type: 'atividade', description: `Mensagem na liga "${league.title}"`, xp: 5 });
+    try {
+      const updated = postLeagueMessage(league, {
+        id: gerarId(),
+        userId: profile.uid,
+        userName: profile.nome || 'Anônimo',
+        text: message.trim(),
+      });
+      onUpdateLeague(updated);
+      setMessage('');
+      const agora = Date.now();
+      if (agora - ultimoXpLigaRef.current >= 60_000) {
+        ultimoXpLigaRef.current = agora;
+        addXP(5);
+        addLog({ timestamp: agora, type: 'atividade', description: `Mensagem na liga "${league.title}"`, xp: 5 });
+      }
+    } finally {
+      setSending(false);
+    }
   }
 
   const messages = league.messages || [];

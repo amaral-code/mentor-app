@@ -93,10 +93,11 @@ describe('preverBurnout', () => {
 
 describe('extrairFeatures', () => {
   it('devolve vetor neutro sem eventos', () => {
-    const f = extrairFeatures([], { horasSono: 8, diasSemPausa: 0 });
+    const f = extrairFeatures([], { horasSono: 8 });
     expect(f.taxaErro).toBe(0);
     expect(f.excessoTempoFacil).toBe(1);
     expect(f.deficitSono).toBe(0);
+    expect(f.diasSemPausa).toBe(0);
   });
 
   it('calcula taxa de erro e fracao de madrugada', () => {
@@ -137,6 +138,39 @@ describe('extrairFeatures', () => {
       evento({ timestamp: agora - dia, acertou: false }),
     ];
     expect(extrairFeatures(eventos).quedaRendimento).toBeGreaterThan(0);
+  });
+
+  it('conta dias consecutivos com estudo a partir da telemetria', () => {
+    const dia = 24 * HORA;
+    const agora = Date.now();
+    const tresDias = [0, 1, 2].map((d) => evento({ timestamp: agora - d * dia }));
+    expect(extrairFeatures(tresDias).diasSemPausa).toBe(3);
+  });
+
+  it('um dia de descanso zera a contagem', () => {
+    const dia = 24 * HORA;
+    const agora = Date.now();
+    // Hoje + 3 dias atras (ontem e anteontem sem nada).
+    const comFolga = [evento({ timestamp: agora }), evento({ timestamp: agora - 3 * dia })];
+    expect(extrairFeatures(comFolga).diasSemPausa).toBe(1);
+  });
+
+  it('rotina longa nao explode: teto de 7 dias', () => {
+    const dia = 24 * HORA;
+    const agora = Date.now();
+    const mes = Array.from({ length: 20 }, (_, d) => evento({ timestamp: agora - d * dia }));
+    expect(extrairFeatures(mes).diasSemPausa).toBe(7);
+  });
+
+  it('consistencia diaria sozinha nao gera esgotamento', () => {
+    const dia = 24 * HORA;
+    const agora = Date.now();
+    // 20 dias seguidos, tudo certo, de dia, dormindo 8h: rotina exemplar.
+    const rotina = Array.from({ length: 20 }, (_, d) =>
+      evento({ timestamp: agora - d * dia, horaLocal: 20 }),
+    );
+    const f = extrairFeatures(rotina, { horasSono: 8 });
+    expect(preverBurnout(f).classe).not.toBe('esgotamento');
   });
 });
 

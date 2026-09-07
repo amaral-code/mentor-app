@@ -1,38 +1,31 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { BadgeCheck, Brain, Camera, Link2, Mic, SendHorizontal, Sparkles, TriangleAlert, Users, Volume2, VolumeX } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { PanelRightOpen } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '../../shared/lib/kbSearch';
 import { getEmpathicPrefix } from '../../shared/lib/emotionEngine';
 import { QUIZ_BANK } from '../../shared/lib/quizBank';
 import { ENEM_KB } from '../../shared/lib/kbEnem';
 import { sendMessageToGemini, aiAvailable } from '../../shared/lib/aiService';
+import { isCancelamentoUsuario } from '../../shared/lib/aiProvider';
+import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import {
-  MODOS_CHAT,
   MODO_PADRAO,
-  acharModo,
   conversarComMentor,
-  temEndpointDeChat,
 } from '../../shared/lib/chatGrounding';
-import { ChatMessage, Nota, ChatPersona } from '../../shared/types';
+import { ChatMessage, ChatPersona } from '../../shared/types';
 import { playClick, speak, stopSpeech } from '../../shared/lib/sfx';
 import { buildContextGreeting, ultimaMateria } from '../../shared/lib/contextMemory';
 import { PersonaManager } from '../../shared/ui/PersonaManager';
-import { AppIcon } from '../../shared/ui/AppIcon';
-import { TextoFormatado } from '../../shared/ui/TextoFormatado';
+import { ChatHeader, type AbaMentor } from './components/ChatHeader';
+import { HeroWelcome } from './components/HeroWelcome';
+import { ChatMessages } from './components/ChatMessages';
+import { PremiumInput, type ModoRespostaUI } from './components/PremiumInput';
+import { HistoryPanel } from './components/HistoryPanel';
 
 const QUIZ_KB = buildKBFromQuiz(QUIZ_BANK);
 const ALL_KB = [...ENEM_KB, ...QUIZ_KB];
 
 function generateId() { return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
-
-function getSubjectName(persona: ChatPersona | null): string {
-  if (!persona || persona.id === 'mentor_enem') return 'geral';
-  if (persona.id === 'prof_matematica') return 'Matemática';
-  if (persona.id === 'prof_portugues') return 'Português';
-  if (persona.id === 'prof_ciencias') return 'Ciências da Natureza';
-  if (persona.id === 'prof_humanas') return 'Ciências Humanas';
-  return persona.name;
-}
 
 function getBotReply(userMessage: string, mood: string, persona: ChatPersona | null): string {
   const lower = userMessage.trim().toLowerCase();
@@ -68,9 +61,6 @@ function getBotReply(userMessage: string, mood: string, persona: ChatPersona | n
   const keywords = extractKeywords(userMessage);
   const prefix = getEmpathicPrefix(mood as any);
   if (persona && !isMentor) {
-    /* Sem IA, o limite da persona tambem precisa aparecer - mas pelo
-       ESCOPO, nao pela instrucao: a instrucao e escrita em segunda
-       pessoa ("Voce ensina...") e ficava esquisita como fala do bot. */
     const especialidade = persona.escopo ?? persona.name;
     const fallback = `Não encontrei informações específicas sobre "${keywords.join(', ') || 'isso'}" na minha base local. Minha especialidade é ${especialidade}. Que tal reformular dentro dessa área?`;
     return prefix ? `${prefix}\n\n${fallback}` : fallback;
@@ -80,14 +70,8 @@ function getBotReply(userMessage: string, mood: string, persona: ChatPersona | n
 }
 
 /**
- * Modo tematico -> professor embutido.
- *
- * Os dois eixos ja existiam separados no app (persona = quem fala) e o
- * pedido trouxe um novo (modo = de onde vem o conteudo). Deixar os dois
- * soltos permitiria a combinacao sem sentido "Prof. Matematica no modo
- * Humanas". Aqui o modo manda: escolher um modo troca o professor junto.
- * Persona CRIADA PELO USUARIO continua no comando dela mesma - ver
- * handleSend.
+ * Modo temático -> professor embutido (modo manda, persona acompanha).
+ * Persona criada pelo usuário continua no comando dela mesma.
  */
 const PERSONA_DO_MODO: Record<string, string> = {
   enem_geral: 'mentor_enem',
@@ -97,16 +81,23 @@ const PERSONA_DO_MODO: Record<string, string> = {
   vestibulares: 'mentor_enem',
 };
 
-const PERSONAS_EMBUTIDAS = Object.values(PERSONA_DO_MODO);
-const CHAVE_MODO = 'mm_modo_chat';
+/* Abas da barra segmentada (protótipo: Geral, Exatas, Linguagens,
+   Natureza). Cada aba fixa MODO + PROFESSOR juntos. Linguagens usa o
+   backend de Humanas; a voz é a do Prof. Português. */
+const ABAS_MENTOR = [
+  { id: 'geral', label: 'Geral', modo: 'enem_geral', persona: 'mentor_enem', desc: 'Especialista TRI, redação e estratégia global' },
+  { id: 'exatas', label: 'Exatas', modo: 'exatas', persona: 'prof_matematica', desc: 'Mestre em Funções, Geometria e Macetes Rápidos' },
+  { id: 'linguagens', label: 'Linguagens', modo: 'humanas', persona: 'prof_portugues', desc: 'Especialista em Redação Nota 1000 e Interpretação' },
+  { id: 'natureza', label: 'Natureza', modo: 'natureza', persona: 'prof_ciencias', desc: 'Física, Química e Biologia interdisciplinar' },
+] as const;
 
-const personaBorderColors: Record<string, string> = {
-  mentor_enem: 'border-l-amber-500/50',
-  prof_matematica: 'border-l-blue-500/50',
-  prof_portugues: 'border-l-emerald-500/50',
-  prof_ciencias: 'border-l-purple-500/50',
-  prof_humanas: 'border-l-pink-500/50',
-};
+const PERSONAS_EMBUTIDAS = [...Object.values(PERSONA_DO_MODO), 'prof_portugues'];
+/* Linguagens fala com a voz do Prof. Português (backend de Humanas cobre a
+   área): ele é persona embutida, NÃO customizada — sem isso a abaAtiva caía
+   de volta para Geral ao clicar em Linguagens. */
+const CHAVE_MODO = 'mm_modo_chat';
+const CHAVE_MODO_RESPOSTA = 'mm_modo_resposta';
+const CHAVE_HISTORICO_ABERTO = 'mm_historico_aberto';
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -119,63 +110,215 @@ function readFileAsBase64(file: File): Promise<string> {
 
 function autoResize(el: HTMLTextAreaElement) {
   el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+  el.style.height = Math.min(el.scrollHeight, 128) + 'px';
 }
 
 export function ChatPage() {
   const { chatMessages, addChatMessage, detectAndSetMood, isMuted, setIsMuted, addNota, setToast,
     personas, activePersonaId, setActivePersonaId, setShowPersonaManager, apiKey,
-    quizResults, logs } = useAppStore();
+    quizResults, logs, session } = useAppStore();
   const [input, setInput] = useState('');
-  /* Modo tematico do mentor. Fica no localStorage porque e preferencia de
-     uso, nao dado de conta: quem estuda exatas nao quer reescolher o modo
-     a cada visita. */
-  const [modo, setModo] = useState<string>(() => localStorage.getItem(CHAVE_MODO) || MODO_PADRAO);
+  const [modo, setModo] = useState<string>(() => {
+    const salvo = safeGet(CHAVE_MODO) || MODO_PADRAO;
+    return ABAS_MENTOR.some((t) => t.modo === salvo) ? salvo : MODO_PADRAO;
+  });
+  const [modoResposta, setModoResposta] = useState<ModoRespostaUI>(() =>
+    safeGet(CHAVE_MODO_RESPOSTA) === 'comunicativo' ? 'comunicativo' : 'explicativo',
+  );
   const [isListening, setIsListening] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
+  const [historicoAberto, setHistoricoAberto] = useState<boolean>(() =>
+    safeGet(CHAVE_HISTORICO_ABERTO) !== '0',
+  );
+  const [buscaHistorico, setBuscaHistorico] = useState('');
+  const [criandoConversa, setCriandoConversa] = useState(false);
+  const [trocandoConversaId, setTrocandoConversaId] = useState<string | null>(null);
+  const [apagandoConversaId, setApagandoConversaId] = useState<string | null>(null);
+  const [confirmarApagarId, setConfirmarApagarId] = useState<string | null>(null);
+  /* Streaming da resposta: texto parcial renderizado no balão do Mentor. */
+  const [streamingText, setStreamingText] = useState<string | null>(null);
+  /* Flash neon da borda ao preencher via card (input-flash do protótipo). */
+  const [flashKey, setFlashKey] = useState(0);
+  const conversaAtivaId = useAppStore((s) => s.conversaAtivaId);
+  const conversas = useAppStore((s) => s.conversas);
+
+  function trocarModoResposta(m: ModoRespostaUI) {
+    playClick();
+    setModoResposta(m);
+    safeSet(CHAVE_MODO_RESPOSTA, m);
+  }
+
+  function alternarHistorico() {
+    playClick();
+    setHistoricoAberto((v) => {
+      safeSet(CHAVE_HISTORICO_ABERTO, v ? '0' : '1');
+      return !v;
+    });
+  }
+
+  async function criarConversa() {
+    if (criandoConversa) return;
+    playClick();
+    setCriandoConversa(true);
+    try {
+      await useAppStore.getState().novaConversa();
+    } finally {
+      setCriandoConversa(false);
+    }
+  }
+
+  async function trocarConversa(id: string) {
+    if (trocandoConversaId || id === conversaAtivaId) return;
+    playClick();
+    setTrocandoConversaId(id);
+    try {
+      await useAppStore.getState().selecionarConversa(id);
+    } finally {
+      setTrocandoConversaId(null);
+    }
+  }
+
+  async function apagarConversa(id: string) {
+    if (confirmarApagarId !== id) {
+      setConfirmarApagarId(id);
+      window.setTimeout(() => {
+        setConfirmarApagarId((atual) => (atual === id ? null : atual));
+      }, 4000);
+      return;
+    }
+    setConfirmarApagarId(null);
+    if (apagandoConversaId) return;
+    setApagandoConversaId(id);
+    try {
+      await useAppStore.getState().apagarConversa(id);
+    } finally {
+      setApagandoConversaId(null);
+    }
+  }
+
+  const chatAreaRef = useRef<HTMLElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const streamTimerRef = useRef<number | null>(null);
+  /* Id da requisição em voo: troca de conversa ou novo envio invalida a
+     anterior, para a resposta nunca cair na thread errada nem travar. */
+  const requisicaoIdRef = useRef(0);
+  const isGeneratingRef = useRef(false);
 
   const activePersona = useMemo(() => personas.find(p => p.id === activePersonaId) || null, [personas, activePersonaId]);
-
-  /* Professor criado pelo usuario tem instrucao propria: nesse caso o
-     modo tematico sai de cena e o caminho antigo (persona) prevalece. */
   const personaCustomizada = useMemo(
     () => (activePersona && !PERSONAS_EMBUTIDAS.includes(activePersona.id) ? activePersona : null),
     [activePersona],
   );
-
-  const modoAtivo = useMemo(() => acharModo(modo), [modo]);
-
   function trocarModo(id: string) {
     setModo(id);
-    localStorage.setItem(CHAVE_MODO, id);
+    safeSet(CHAVE_MODO, id);
     setActivePersonaId(PERSONA_DO_MODO[id] ?? 'mentor_enem');
   }
 
-  /* Materia retomada: sai do historico real do aluno (ultimo quiz, depois
-     registros de atividade) e so cai na persona como ultimo recurso. */
+  function trocarAbaMentor(aba: AbaMentor) {
+    playClick();
+    const original = ABAS_MENTOR.find((t) => t.id === aba.id);
+    if (!original) return;
+    trocarModo(original.modo);
+    setActivePersonaId(original.persona);
+  }
+
+  const abaAtiva = ABAS_MENTOR.find((t) => t.modo === modo && !personaCustomizada) ?? ABAS_MENTOR[0];
+
+  /* Glider das abas (protótipo: updateGliderPosition via getBoundingClientRect). */
+  const topicTabsRef = useRef<HTMLDivElement>(null);
+  const topicBtnRefs = useRef(new Map<string, HTMLButtonElement>());
+  const [topicPill, setTopicPill] = useState({ left: 0, width: 0 });
+
+  const registrarBotaoAba = useCallback((id: string, el: HTMLButtonElement | null) => {
+    if (el) topicBtnRefs.current.set(id, el);
+    else topicBtnRefs.current.delete(id);
+  }, []);
+
+  const atualizarTopicPill = useCallback(() => {
+    const cont = topicTabsRef.current;
+    const el = topicBtnRefs.current.get(abaAtiva.id);
+    if (!cont || !el) return;
+    const c = cont.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    setTopicPill({ left: r.left - c.left, width: r.width });
+  }, [abaAtiva.id]);
+
+  /* Pílula do modo Explicativo/Comunicativo (mesma técnica do glider). */
+  const modeContainerRef = useRef<HTMLDivElement>(null);
+  const modeBtnRefs = useRef(new Map<string, HTMLButtonElement>());
+  const [modePill, setModePill] = useState({ left: 0, width: 0 });
+
+  const registrarBotaoModo = useCallback((id: ModoRespostaUI, el: HTMLButtonElement | null) => {
+    if (el) modeBtnRefs.current.set(id, el);
+    else modeBtnRefs.current.delete(id);
+  }, []);
+
+  const atualizarModePill = useCallback(() => {
+    const cont = modeContainerRef.current;
+    const el = modeBtnRefs.current.get(modoResposta);
+    if (!cont || !el) return;
+    const c = cont.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    setModePill({ left: r.left - c.left, width: r.width });
+  }, [modoResposta]);
+
+  useLayoutEffect(() => {
+    const medir = () => { atualizarTopicPill(); atualizarModePill(); };
+    const t = window.setTimeout(medir, 150);
+    /* A webfont (Plus Jakarta Sans) troca a largura dos rótulos depois da
+       primeira pintura: remede após o load da fonte e em 2 frames para o
+       glider e a pílula nascerem já no lugar certo. */
+    const raf = window.requestAnimationFrame(() => window.requestAnimationFrame(medir));
+    if (document.fonts) {
+      document.fonts.ready.then(medir).catch(() => {});
+    }
+    window.addEventListener('resize', atualizarTopicPill);
+    window.addEventListener('resize', atualizarModePill);
+    /* No mobile as abas rolam na horizontal: o glider é absoluto e não
+       acompanha o scroll sozinho, então remede a cada rolagem. */
+    const tabsEl = topicTabsRef.current;
+    tabsEl?.addEventListener('scroll', atualizarTopicPill, { passive: true });
+    return () => {
+      window.clearTimeout(t);
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', atualizarTopicPill);
+      window.removeEventListener('resize', atualizarModePill);
+      tabsEl?.removeEventListener('scroll', atualizarTopicPill);
+    };
+  }, [atualizarTopicPill, atualizarModePill]);
+
+  const tituloMentor = personaCustomizada
+    ? (activePersona?.name ?? 'Mentor')
+    : abaAtiva.id === 'geral' ? 'Mentor ENEM' : `Mentor ${abaAtiva.label}`;
+  const descMentor = personaCustomizada
+    ? (activePersona?.instruction ?? '')
+    : abaAtiva.desc;
+  const tituloBoasVindas = 'Fale com Mentor ENEM';
+  const subtituloBoasVindas = `${abaAtiva.desc}. Peça macetes, resolução de questões ou cronogramas focados.`;
+
   const materiaRetomada = useMemo(
     () => ultimaMateria({ quizResults, logs, persona: activePersona }),
     [quizResults, logs, activePersona],
   );
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
+  function rolarParaFim(suave = false) {
+    const area = chatAreaRef.current;
+    if (!area) return;
+    if (suave) area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' });
+    else area.scrollTop = area.scrollHeight;
+  }
+
+  useEffect(() => { rolarParaFim(true); }, [chatMessages]);
 
   const saudacaoEnviada = useRef(false);
 
   useEffect(() => {
-    // O historico ja foi carregado do banco no boot (App.tsx). Se mesmo
-    // assim estiver vazio, e a primeira conversa: monta a saudacao.
-    //
-    // A guarda por ref existe porque o StrictMode roda o efeito duas vezes
-    // em desenvolvimento e o estado ainda nao atualizou entre as duas
-    // chamadas: sem ela, a saudacao aparecia repetida E era gravada duas
-    // vezes no banco.
     if (chatMessages.length === 0 && !saudacaoEnviada.current) {
       saudacaoEnviada.current = true;
       const greeting: ChatMessage = {
@@ -186,51 +329,133 @@ export function ChatPage() {
       };
       addChatMessage(greeting);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (inputRef.current) autoResize(inputRef.current);
   }, [input]);
 
+  useEffect(() => () => {
+    // Desmonte invalida a requisição: o intervalo é limpo e a resposta em
+    // voo é salva sem animação (ver handleSend), nunca perdida em silêncio.
+    requisicaoIdRef.current += 1;
+    if (streamTimerRef.current !== null) window.clearInterval(streamTimerRef.current);
+    if (typingRef.current !== null) window.clearInterval(typingRef.current);
+    abortRef.current?.abort();
+  }, []);
+
+  /* Troca de conversa no meio do streaming: cancela a animação da thread
+     antiga sem travar o envio (isGenerating volta a false). A resposta em
+     voo é salva na thread de origem pelo addChatMessage com conversaId. */
+  useEffect(() => {
+    requisicaoIdRef.current += 1;
+    if (streamTimerRef.current !== null) {
+      window.clearInterval(streamTimerRef.current);
+      streamTimerRef.current = null;
+    }
+    setStreamingText(null);
+    isGeneratingRef.current = false;
+    setIsGenerating(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversaAtivaId]);
+
+  /**
+   * Streaming da resposta no balão do Mentor: revela a resposta pronta em
+   * palavras (o backend devolve o texto fechado) e só commita no store ao
+   * final — mesma estrutura HTML do protótipo durante todo o efeito.
+   * O `requisicaoId` invalida a animação se outra requisição ou troca de
+   * conversa acontecer no meio: sem isso o commit ia para a thread errada
+   * e o isGenerating ficava preso em true (causa principal do "não
+   * aparece resposta" nos envios seguintes).
+   */
+  function revelarStreaming(textoCheio: string, requisicaoId: number, aoConcluir: () => void) {
+    if (streamTimerRef.current !== null) window.clearInterval(streamTimerRef.current);
+    const palavras = textoCheio.split(/(\s+)/);
+    let i = 0;
+    setStreamingText('');
+    streamTimerRef.current = window.setInterval(() => {
+      if (requisicaoId !== requisicaoIdRef.current) {
+        if (streamTimerRef.current !== null) window.clearInterval(streamTimerRef.current);
+        streamTimerRef.current = null;
+        return;
+      }
+      i += 4;
+      const parcial = palavras.slice(0, i).join('');
+      setStreamingText(parcial);
+      rolarParaFim();
+      if (i >= palavras.length) {
+        if (streamTimerRef.current !== null) window.clearInterval(streamTimerRef.current);
+        streamTimerRef.current = null;
+        setStreamingText(null);
+        aoConcluir();
+      }
+    }, 24);
+  }
+
   const handleSend = useCallback(async (text: string, image?: string) => {
     if (!text.trim() && !image) return;
+    // Antes: return silencioso — o aluno clicava e nada acontecia, sem
+    // "digitando", sem toast, parecendo bug de resposta sumida.
+    if (isGeneratingRef.current) {
+      setToast('Aguarde a resposta atual terminar…', 'info');
+      return;
+    }
     playClick();
+    isGeneratingRef.current = true;
+    const requisicaoId = ++requisicaoIdRef.current;
+    const conversaIdNoEnvio = useAppStore.getState().conversaAtivaId;
     const userMsg: ChatMessage = { id: generateId(), role: 'user', text: text.trim(), timestamp: Date.now(), image };
-    const newMsgs = [...chatMessages, userMsg];
-    addChatMessage(userMsg);
+    addChatMessage(userMsg, conversaIdNoEnvio);
     setInput('');
     if (inputRef.current) { inputRef.current.style.height = 'auto'; }
+    window.setTimeout(() => rolarParaFim(), 30);
+    // Histórico lido do store na hora (sem closure stale do useCallback).
+    const montarHistorico = () =>
+      useAppStore.getState().chatMessages.map(m => ({
+        role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
+        text: m.text || (m.image ? '[Anexo de imagem]' : ''),
+      }));
+    const finalizar = (msg: ChatMessage, falar = true) => {
+      // Resposta que chegou após troca de conversa/novo envio: salva na
+      // thread de origem (banco) sem poluir a tela atual e sem animação.
+      if (requisicaoId !== requisicaoIdRef.current) {
+        useAppStore.getState().addChatMessage(msg, conversaIdNoEnvio);
+        return;
+      }
+      revelarStreaming(msg.text, requisicaoId, () => {
+        if (requisicaoId !== requisicaoIdRef.current) return;
+        useAppStore.getState().addChatMessage(msg, conversaIdNoEnvio);
+        rolarParaFim(true);
+        if (falar && !useAppStore.getState().isMuted) { stopSpeech(); speak(msg.text); }
+        isGeneratingRef.current = false;
+        setIsGenerating(false);
+      });
+    };
+    const falharComFallback = (motivo: string, textoOriginal: string, moodAtual: string) => {
+      if (requisicaoId !== requisicaoIdRef.current) return;
+      setStreamingText(null);
+      setToast(motivo, 'error');
+      const fallback = getBotReply(textoOriginal, moodAtual, useAppStore.getState().personas.find(p => p.id === useAppStore.getState().activePersonaId) || null);
+      finalizar({
+        id: generateId(), role: 'assistant', text: fallback, timestamp: Date.now(),
+        mood: moodAtual as ChatMessage['mood'], modoResposta,
+      }, false);
+    };
     const mood = await detectAndSetMood(text);
 
     if (aiAvailable(apiKey)) {
       setIsGenerating(true);
       try {
         abortRef.current = new AbortController();
-        const history = chatMessages.map(m => ({
-          role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
-          text: m.text || (m.image ? '[Anexo de imagem]' : ''),
-        }));
-        /*
-         * Duas rotas de conversa:
-         *
-         * - MODO TEMATICO (padrao): vai para /api/chat/completions, que
-         *   monta o prompt socratico no servidor e liga a busca. E o unico
-         *   caminho que devolve fontes para os badges.
-         * - PERSONA CUSTOMIZADA: o professor que o proprio aluno criou tem
-         *   instrucao dele; sobrepor um modo tematico ali seria ignorar o
-         *   que ele escreveu.
-         *
-         * Mensagem com imagem tambem segue o caminho antigo: a rota
-         * tematica e de texto, e a leitura de foto de exercicio ja
-         * existia aqui.
-         */
+        const history = montarHistorico();
+
         let reply: string;
         let extras: Partial<ChatMessage> = {};
-
         if (personaCustomizada || image) {
           reply = await sendMessageToGemini(
             text || (image ? 'Analise esta imagem de estudo' : 'Olá!'),
-            { apiKey, persona: activePersona, history, imageBase64: image, signal: abortRef.current.signal },
+            { apiKey, persona: activePersona, history, imageBase64: image, signal: abortRef.current.signal, modoResposta },
           );
         } else {
           const resposta = await conversarComMentor({
@@ -238,6 +463,7 @@ export function ChatPage() {
             mensagens: [...history, { role: 'user', text: text || 'Olá!' }],
             apiKey,
             materiaRecente: materiaRetomada || undefined,
+            modoResposta,
             signal: abortRef.current.signal,
           });
           reply = resposta.texto;
@@ -248,34 +474,65 @@ export function ChatPage() {
             modoChat: resposta.modo,
           };
         }
+        if (!reply?.trim()) throw new Error('A IA devolveu uma resposta vazia. Tente de novo com outras palavras.');
 
         const botMsg: ChatMessage = {
-          id: generateId(), role: 'assistant', text: reply, timestamp: Date.now(), mood, ...extras,
+          id: generateId(), role: 'assistant', text: reply.trim(), timestamp: Date.now(), mood,
+          modoResposta, ...extras,
         };
-        addChatMessage(botMsg);
-        if (!isMuted) { stopSpeech(); speak(reply); }
+        finalizar(botMsg);
       } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          setToast(err.message || 'Erro ao conectar com a IA. Usando modo local.', 'error');
-          const fallback = getBotReply(text, mood, activePersona);
-          const botMsg: ChatMessage = { id: generateId(), role: 'assistant', text: fallback, timestamp: Date.now(), mood };
-          addChatMessage(botMsg);
-          if (!isMuted) { stopSpeech(); speak(fallback); }
+        // Cancelamento explícito do usuário: sem toast de erro e sem
+        // fallback (o usuário interrompeu de propósito). Timeout/erro de
+        // rede: toast + fallback local para a resposta SEMPRE aparecer.
+        if (isCancelamentoUsuario(err, abortRef.current?.signal)) {
+          if (requisicaoId === requisicaoIdRef.current) {
+            setStreamingText(null);
+            isGeneratingRef.current = false;
+            setIsGenerating(false);
+          }
+          return;
         }
+        falharComFallback(err?.message || 'Erro ao conectar com a IA. Usando modo local.', text, mood);
       }
-      setIsGenerating(false);
     } else {
-      setTimeout(() => {
+      setIsGenerating(true);
+      window.setTimeout(() => {
+        if (requisicaoId !== requisicaoIdRef.current) return;
         const reply = getBotReply(text, mood, activePersona);
-        const botMsg: ChatMessage = { id: generateId(), role: 'assistant', text: reply, timestamp: Date.now(), mood };
-        addChatMessage(botMsg);
-        if (!isMuted) { stopSpeech(); speak(reply); }
+        finalizar({ id: generateId(), role: 'assistant', text: reply, timestamp: Date.now(), mood, modoResposta }, false);
       }, 400 + Math.random() * 600);
     }
-  }, [chatMessages, addChatMessage, detectAndSetMood, isMuted, activePersona, apiKey, modo, personaCustomizada, materiaRetomada]);
+  }, [addChatMessage, detectAndSetMood, activePersona, apiKey, modo, modoResposta, personaCustomizada, materiaRetomada, setToast]);
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(input); }
+  /* Ctrl/Cmd+Enter envia; Enter sozinho quebra linha (spec da barra). */
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSend(input);
+    }
+  }
+
+  /* Digitação do prompt no input (protótipo: fillPrompt + flash neon). */
+  const typingRef = useRef<number | null>(null);
+
+  function insertPrompt(prompt: string) {
+    playClick();
+    if (typingRef.current !== null) window.clearInterval(typingRef.current);
+    setInput('');
+    setFlashKey((k) => k + 1);
+    inputRef.current?.focus();
+    let i = 0;
+    typingRef.current = window.setInterval(() => {
+      if (i < prompt.length) {
+        i++;
+        setInput(prompt.slice(0, i));
+        if (inputRef.current) inputRef.current.scrollTop = inputRef.current.scrollHeight;
+      } else if (typingRef.current !== null) {
+        window.clearInterval(typingRef.current);
+        typingRef.current = null;
+      }
+    }, 12);
   }
 
   function handleVoice() {
@@ -305,6 +562,13 @@ export function ChatPage() {
   async function handleFileCapture(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Mesmo allowlist da redação: SVG vetado, só foto real.
+    const MIMES_CHAT = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (!MIMES_CHAT.includes(file.type)) {
+      setToast('Formato não aceito. Use JPG ou PNG.', 'error');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       setToast('Imagem muito grande. Máximo 5MB.', 'error');
       return;
@@ -320,327 +584,152 @@ export function ChatPage() {
 
   function saveToNotebook(msg: ChatMessage) {
     const text = msg.image ? `[Imagem] ${msg.text || 'Foto de lição'}` : msg.text;
-    // addNota persiste no banco e troca o id provisorio pelo definitivo.
     addNota({ id: `tmp_${Date.now()}`, text, data: new Date().toISOString(), tag: 'chat' });
     setToast('Salva no Caderno!', 'success');
   }
 
+  const userInicial = (session?.nome?.charAt(0)?.toUpperCase()) || 'M';
+  const vazio = chatMessages.length === 0;
+
   return (
-    <div className="flex flex-col h-[calc(100dvh-10rem)] md:h-[calc(100dvh-8rem)] animate-fade-up">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 mb-3 min-w-0">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-all"
-            style={{ backgroundColor: activePersona ? activePersona.color + '20' : '#f59e0b20' }}
-          >
-            <Brain size={20} style={{ color: activePersona?.color || '#f59e0b' }} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <h1 className="text-lg md:text-xl font-bold text-white truncate">{activePersona?.name || 'Mentor'}</h1>
-              {/* Antes era um selo "brilho + IA", exatamente o clichê que a
-                  regra 5 proibe. O que interessa ao aluno nao e a
-                  tecnologia, e se o mentor esta disponivel agora. */}
-              {aiAvailable(apiKey) && (
-                <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/15 flex items-center gap-1.5 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse-subtle" />
-                  online
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 truncate">
-              {getSubjectName(activePersona)}
-              {materiaRetomada && (
-                <>
-                  <span className="text-gray-600"> · </span>
-                  <span className="text-violet-400/90">
-                    <Brain size={13} className="inline-block align-[-0.15em] text-violet-400" /> retomando: {materiaRetomada}
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={() => setShowPersonaManager(true)}
-            className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 transition-all"
-            title="Gerenciar Personas"
-          >
-            <Users size={18} />
-          </button>
-          <button
-            onClick={() => { setIsMuted(!isMuted); if (!isMuted) stopSpeech(); }}
-            className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
-              isMuted ? 'text-red-400 hover:bg-red-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-            }`}
-            title={isMuted ? 'Som ativado' : 'Som desativado'}
-          >
-            {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-          </button>
-        </div>
-      </div>
-
-      {/* ============================================================
-          Seletor de modo tematico.
-          Fica ACIMA da fileira de professores porque e ele que decide o
-          que a IA vai buscar; a fileira de baixo passou a servir aos
-          professores que o proprio aluno cria.
-          ============================================================ */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Modo do mentor">
-        {MODOS_CHAT.map((m) => {
-          const ativo = modo === m.id && !personaCustomizada;
-          return (
-            <button
-              key={m.id}
-              role="tab"
-              aria-selected={ativo}
-              onClick={() => trocarModo(m.id)}
-              title={`${m.escopo}. Bancas: ${m.bancas.join(', ')}`}
-              className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
-                ativo ? 'text-white' : 'glass-light text-gray-400 border-white/[0.04] hover:text-gray-200'
-              }`}
-              style={ativo ? { borderColor: `${m.cor}66`, background: `${m.cor}1a`, color: m.cor } : undefined}
-            >
-              {m.rotulo}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Uma linha honesta sobre a procedencia das respostas neste modo. */}
-      <p className="text-[11px] text-gray-600 -mt-2">
-        {personaCustomizada ? (
-          <>Falando com o seu professor <strong className="text-gray-400">{personaCustomizada.name}</strong> - o modo tematico volta ao escolher um professor da lista.</>
-        ) : temEndpointDeChat() ? (
-          <>Busca ativa em provas oficiais: {modoAtivo.bancas.join(', ')}.</>
-        ) : (
-          <>Sem servidor de busca configurado: as respostas saem do conhecimento do modelo, sem consultar provas. Fontes nao serao exibidas.</>
-        )}
-      </p>
-
-      {/* Persona selector cards */}
-      <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 scrollbar-none">
-        {personas.map(p => {
-          const isActive = activePersonaId === p.id;
-          return (
-            <button
-              key={p.id}
-              onClick={() => setActivePersonaId(p.id)}
-              className={`flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-xs font-medium whitespace-nowrap transition-all shrink-0 ${
-                isActive
-                  ? 'text-white shadow-sm border'
-                  : 'text-gray-400 hover:text-gray-200 bg-white/[0.02] border border-white/5'
-              }`}
-              style={isActive ? { backgroundColor: p.color + '18', borderColor: p.color + '35' } : {}}
-            >
-              <AppIcon name={p.icon} size={17} className="text-amber-300" />
-              <span className="font-semibold">{p.name}</span>
-              {isActive && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />}
-            </button>
-          );
-        })}
+    <div className="flex gap-2 md:gap-3 h-[calc(100dvh-6rem)] md:h-[calc(100dvh-2rem)] animate-fade-up relative">
+      {historicoAberto && (
         <button
-          onClick={() => setShowPersonaManager(true)}
-          className="flex items-center gap-1 px-3 py-2 min-h-[44px] rounded-xl text-xs font-medium text-gray-500 hover:text-gray-300 bg-white/[0.02] border border-white/5 border-dashed shrink-0"
-        >
-          + Nova
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-4 scroll-smooth">
-        {chatMessages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-sm"
-              style={{ backgroundColor: activePersona ? activePersona.color + '12' : '#f59e0b12' }}
-            >
-              <Brain size={32} style={{ color: activePersona?.color || '#f59e0b' }} />
-            </div>
-            <p className="text-gray-400 font-medium">
-              {activePersona ? `Fale com ${activePersona.name}` : 'Comece uma conversa!'}
-            </p>
-            <p className="text-sm text-gray-500 mt-1 max-w-xs leading-relaxed">
-              {activePersona ? activePersona.instruction.slice(0, 100) + '...' : 'Pergunte sobre matérias, dicas de estudo, ou desabafe.'}
-            </p>
-            <div className="flex gap-2 mt-5">
-              <button onClick={() => handleSend('Dicas de estudo para o ENEM')} className="btn-secondary text-xs px-4 py-2"> Dicas ENEM
-              </button>
-              <button onClick={() => handleSend('Como fazer uma redação nota 1000?')} className="btn-secondary text-xs px-4 py-2"> Redação
-              </button>
-              <button onClick={() => handleSend('Matemática básica para o ENEM')} className="btn-secondary text-xs px-4 py-2"> Matemática
-              </button>
-            </div>
-          </div>
-        )}
-        {chatMessages.map(msg => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}
-            onMouseEnter={() => setHoveredMsg(msg.id)}
-            onMouseLeave={() => setHoveredMsg(null)}
-          >
-            <div
-              className={`max-w-[88%] md:max-w-[72%] min-w-0 rounded-2xl p-4 ${
-                msg.role === 'user'
-                  ? 'bg-gradient-to-br from-amber-500/15 to-orange-600/10 border border-amber-500/10'
-                  : `glass border-l-4 ${personaBorderColors[activePersonaId || 'mentor_enem'] || 'border-l-amber-500/50'}`
-              }`}
-            >
-              {msg.image && (
-                <div className="mb-3 rounded-xl overflow-hidden border border-white/5">
-                  <img src={msg.image} alt="Foto" className="w-full h-auto max-h-64 object-cover" />
-                </div>
-              )}
-              {msg.text && (
-                <TextoFormatado texto={msg.text} className="text-sm text-gray-200 leading-relaxed" />
-              )}
-              {/* ==================================================
-                  Procedencia da resposta.
-                  Verde = a IA abriu a fonte. Ambar = ela citou banca e
-                  ano sem ter consultado nada, que e exatamente o caso em
-                  que o aluno precisa desconfiar. Sem os dois sinais, nada
-                  aparece - badge em toda mensagem viraria ruido.
-                  ================================================== */}
-              {msg.role === 'assistant' && (msg.fontes?.length || msg.citouProva) && (
-                <div className="mt-3 pt-3 border-t border-white/[0.04] space-y-2">
-                  {msg.citouProva && (
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        msg.groundingUsado
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : 'bg-amber-500/10 text-amber-400'
-                      }`}
-                    >
-                      {msg.groundingUsado ? <BadgeCheck size={11} /> : <TriangleAlert size={11} />}
-                      {msg.groundingUsado ? 'Questão conferida na fonte' : 'Citou prova sem fonte verificada'}
-                    </span>
-                  )}
-
-                  {!!msg.fontes?.length && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {msg.fontes.slice(0, 4).map((f) => (
-                        <a
-                          key={f.uri}
-                          href={f.uri}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={f.titulo}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.04] text-[10px] text-gray-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors max-w-[190px]"
-                        >
-                          <Link2 size={10} className="shrink-0" />
-                          <span className="truncate">{f.dominio}</span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-[10px] text-gray-600">{new Date(msg.timestamp).toLocaleTimeString()}</span>
-                <button
-                  onClick={() => saveToNotebook(msg)}
-                  className={`text-xs px-2 py-1 rounded-lg transition-all duration-200 ${
-                    hoveredMsg === msg.id
-                      ? 'text-amber-400 bg-amber-500/10'
-                      : 'text-gray-500'
-                  }`}
-                  title="Salvar no Caderno"
-                >
-                  
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-        {isGenerating && (
-          <div className="flex justify-start animate-slide-up">
-            <div className="glass border-l-4 border-l-amber-500/50 rounded-2xl px-4 py-3 flex items-center gap-2.5">
-              <img loading="lazy"
-                src="/assets/sagui_estudando_2.png"
-                alt="Sagui digitando"
-                draggable={false}
-                className="w-8 h-8 rounded-full object-cover border border-white/10 mascot-assist-idle shrink-0"
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">Sagui está digitando</span>
-                <span className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="glass rounded-2xl p-1.5 flex items-end gap-1.5">
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={e => {
-            setInput(e.target.value);
-            if (inputRef.current) autoResize(inputRef.current);
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder="Digite sua mensagem..."
-          rows={1}
-          className="flex-1 resize-none bg-transparent border-0 focus:ring-0 text-sm py-2.5 px-3 scrollbar-none"
-          style={{ background: 'transparent', boxShadow: 'none', maxHeight: '200px' }}
+          aria-hidden="true"
+          tabIndex={-1}
+          onClick={alternarHistorico}
+          className="md:hidden absolute inset-0 z-20 bg-black/50 backdrop-blur-[1px]"
         />
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileCapture}
-          className="hidden"
+      )}
+
+      {/* Workspace do Mentor (protótipo: <main data-purpose="mentor-chat-workspace">).
+          A sidebar global do AppShell cobre a #sidebarNav do protótipo
+          (mesmos links, card Sagui e XP — com dados reais). */}
+      <div
+        className="flex-1 flex flex-col min-w-0 relative overflow-hidden rounded-2xl bg-[#060913] border border-white/10"
+        data-purpose="mentor-chat-workspace"
+      >
+        {/* Atmosfera cósmica */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+          <div className="absolute -top-20 left-[22%] w-[560px] h-[560px] rounded-full bg-gradient-to-br from-amber-500/22 via-amber-600/12 to-transparent blur-[100px] animate-orb-1" />
+          <div className="absolute top-[26%] right-[8%] w-[520px] h-[520px] rounded-full bg-gradient-to-tr from-indigo-600/22 via-purple-600/15 to-transparent blur-[115px] animate-orb-2" />
+          <div className="absolute bottom-[-10%] left-[16%] w-[580px] h-[580px] rounded-full bg-gradient-to-tr from-emerald-500/18 via-teal-500/12 to-cyan-500/12 blur-[105px] animate-orb-3" />
+          <div className="absolute top-[42%] left-[42%] w-[420px] h-[420px] rounded-full bg-cyan-500/12 blur-[95px] animate-orb-2" style={{ animationDelay: '2.5s' }} />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,#060913_88%)] opacity-85" />
+          <div className="absolute top-16 left-[28%] w-2 h-2 bg-amber-300 rounded-full twinkle-star-fast shadow-[0_0_8px_#fde047]" />
+          <div className="absolute top-40 right-[32%] w-2.5 h-2.5 bg-cyan-200 rounded-full twinkle-star-slow shadow-[0_0_10px_#67e8f9]" style={{ animationDelay: '1.2s' }} />
+          <div className="absolute bottom-44 left-[35%] w-1.5 h-1.5 bg-amber-200 rounded-full twinkle-star-fast" style={{ animationDelay: '2.1s' }} />
+          <div className="absolute top-32 left-[58%] w-2 h-2 bg-emerald-300 rounded-full twinkle-star-slow shadow-[0_0_8px_#6ee7b7]" style={{ animationDelay: '0.7s' }} />
+          <div className="absolute bottom-28 right-[24%] w-2 h-2 bg-purple-300 rounded-full twinkle-star-fast" style={{ animationDelay: '1.8s' }} />
+          <div className="absolute top-[68%] left-[22%] w-1.5 h-1.5 bg-amber-100 rounded-full twinkle-star-slow" style={{ animationDelay: '3s' }} />
+        </div>
+
+        <ChatHeader
+          titulo={tituloMentor}
+          descricao={descMentor}
+          materiaRetomada={materiaRetomada}
+          abas={ABAS_MENTOR}
+          abaAtivaId={abaAtiva.id}
+          onTrocarAba={trocarAbaMentor}
+          topicTabsRef={topicTabsRef}
+          registrarBotaoAba={registrarBotaoAba}
+          glider={topicPill}
+          gliderEmerald={abaAtiva.id === 'natureza'}
+          historicoAberto={historicoAberto}
+          onToggleHistorico={alternarHistorico}
+          isMuted={isMuted}
+          onToggleMute={() => { setIsMuted(!isMuted); if (!isMuted) stopSpeech(); }}
+          onOpenPersonas={() => setShowPersonaManager(true)}
         />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 transition-all relative group shrink-0"
-          title="Tirar foto"
+
+        {personaCustomizada && (
+          <p className="relative z-10 text-[11px] text-gray-500 px-4 pt-1.5 shrink-0">
+            Falando com o seu professor <strong className="text-gray-300">{personaCustomizada.name}</strong> — volte às categorias acima para o modo temático.
+          </p>
+        )}
+
+        <section
+          ref={chatAreaRef as any}
+          className="relative z-10 flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center"
+          data-purpose="chat-scroll-container"
+          id="chatArea"
         >
-          <Camera size={18} />
-          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-[10px] text-gray-300 px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"> Foto
-          </span>
-        </button>
-        <button
-          onClick={handleVoice}
-          className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all relative group shrink-0 ${
-            isListening
-              ? 'bg-red-500/15 text-red-400 shadow-[0_0_16px_rgba(239,68,68,0.2)]'
-              : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-          }`}
-          title={isListening ? 'Gravando...' : 'Voz'}
-        >
-          {isListening ? (
-            <Mic size={18} className="animate-pulse" />
+          {vazio && !isGenerating && streamingText === null ? (
+            <HeroWelcome
+              titulo={tituloBoasVindas}
+              subtitulo={subtituloBoasVindas}
+              onPrompt={insertPrompt}
+            />
           ) : (
-            <Mic size={18} />
+            <ChatMessages
+              messages={chatMessages}
+              streamingText={streamingText}
+              streamingModo={modoResposta}
+              isGenerating={isGenerating}
+              userInicial={userInicial}
+              messagesEndRef={messagesEndRef}
+              onSaveNota={saveToNotebook}
+              hoveredId={hoveredMsg}
+              onHover={setHoveredMsg}
+            />
           )}
-          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-[10px] text-gray-300 px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            {isListening ? 'Gravando...' : 'Voz'}
-          </span>
-        </button>
-        <button
-          onClick={() => handleSend(input)}
-          disabled={!input.trim()}
-          className="h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-gray-900 font-bold shadow-[0_4px_14px_rgba(245,158,11,0.25)] hover:shadow-[0_6px_20px_rgba(245,158,11,0.35)] hover:brightness-110 active:brightness-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:brightness-100 shrink-0"
-        >
-          <SendHorizontal size={16} />
-        </button>
+        </section>
+
+        <PremiumInput
+          input={input}
+          onChange={(v) => { setInput(v); if (inputRef.current) autoResize(inputRef.current); }}
+          onSend={() => handleSend(input)}
+          onKeyDown={handleKeyDown}
+          inputRef={inputRef}
+          fileInputRef={fileInputRef}
+          onCamera={() => fileInputRef.current?.click()}
+          onFileChange={handleFileCapture}
+          onVoice={handleVoice}
+          isListening={isListening}
+          modoResposta={modoResposta}
+          onTrocarModo={trocarModoResposta}
+          modeContainerRef={modeContainerRef}
+          registrarBotaoModo={registrarBotaoModo}
+          modePill={modePill}
+          flashKey={flashKey}
+        />
       </div>
+
+      <HistoryPanel
+        aberto={historicoAberto}
+        onFechar={alternarHistorico}
+        conversas={conversas}
+        conversaAtivaId={conversaAtivaId}
+        onNova={criarConversa}
+        onTrocar={trocarConversa}
+        onApagar={apagarConversa}
+        busca={buscaHistorico}
+        onBusca={setBuscaHistorico}
+        criando={criandoConversa}
+        trocandoId={trocandoConversaId}
+        apagandoId={apagandoConversaId}
+        confirmarApagarId={confirmarApagarId}
+      />
+
+      {/* Trilho para reabrir o histórico no desktop quando recolhido. */}
+      {!historicoAberto && (
+        <div className="hidden md:flex flex-col items-center pt-1 shrink-0">
+          <button
+            onClick={alternarHistorico}
+            title="Expandir histórico"
+            aria-label="Mostrar histórico"
+            aria-expanded={false}
+            className="p-2 rounded-xl bg-white/5 hover:bg-amber-500/15 border border-white/10 hover:border-amber-500/40 text-slate-400 hover:text-amber-300 transition-all active:scale-95"
+          >
+            <PanelRightOpen size={16} />
+          </button>
+          <span className="mt-2 text-[9px] font-bold uppercase tracking-widest text-slate-600 [writing-mode:vertical-lr]">
+            Histórico
+          </span>
+        </div>
+      )}
 
       <PersonaManager />
     </div>
   );
 }
-
-

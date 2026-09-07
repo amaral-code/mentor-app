@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem, springTap } from '../../shared/lib/motionPresets';
 import { useAppStore } from '../../stores/appStore';
@@ -16,6 +16,7 @@ export function StudentStore() {
   const { gamification, setToast } = useAppStore();
   const { inventory, buyItem, equipItem } = useStoreStore();
   const reduzir = useReducedMotion();
+  const [operando, setOperando] = useState<string | null>(null);
   const { level } = calcLevel(gamification.xp);
 
   // A vitrine depende so de saldo e inventario. Sem isto, cada toque em
@@ -32,13 +33,26 @@ export function StudentStore() {
   );
 
   // A compra e assincrona: quem valida o preco e o saldo e o servidor.
-  // O proprio store ja emite o toast de sucesso ou o motivo da recusa.
+  // Trava por item para evitar duplo-toque (o banco também é idempotente,
+  // mas sem isto o segundo clique mostra erro em vez de espera).
   async function handleBuy(itemId: string) {
-    await buyItem(itemId);
+    if (operando) return;
+    setOperando(itemId);
+    try {
+      await buyItem(itemId);
+    } finally {
+      setOperando(null);
+    }
   }
 
   async function handleEquip(itemId: string) {
-    await equipItem(itemId);
+    if (operando) return;
+    setOperando(itemId);
+    try {
+      await equipItem(itemId);
+    } finally {
+      setOperando(null);
+    }
     const item = SHOP_ITEMS.find(i => i.id === itemId);
     if (item) setToast(`Acessório ${item.name} equipado no Sagui!`, 'success');
   }
@@ -132,10 +146,13 @@ export function StudentStore() {
                   {!purchased ? (
                     <button
                       onClick={() => handleBuy(item.id)}
-                      disabled={!affordable}
+                      disabled={!affordable || operando !== null}
+                      aria-busy={operando === item.id}
                       className={`btn w-full ${affordable ? 'btn-primary' : '!bg-white/[0.03] !text-gray-500 border border-white/5'}`}
                     >
-                      {affordable ? (
+                      {operando === item.id ? (
+                        <>Processando…</>
+                      ) : affordable ? (
                         <><Gift size={16} className="inline-block align-[-0.15em] text-violet-400" /> Comprar</>
                       ) : (
                         <><Lock size={16} className="inline-block align-[-0.15em] text-gray-500" /> {item.price - gamification.xp} XP restantes</>
@@ -148,7 +165,7 @@ export function StudentStore() {
                     > Equipado
                     </button>
                   ) : (
-                    <button onClick={() => handleEquip(item.id)} className="btn w-full btn-secondary border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/10"> Equipar
+                    <button onClick={() => handleEquip(item.id)} disabled={operando !== null} aria-busy={operando === item.id} className="btn w-full btn-secondary border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/10">{operando === item.id ? 'Equipando…' : 'Equipar'}
                     </button>
                   )}
                 </div>

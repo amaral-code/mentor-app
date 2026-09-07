@@ -5,7 +5,7 @@ import { Modal } from '../../shared/ui/Modal';
 import { GlassCard } from '../../shared/ui/GlassCard';
 import { AppIcon } from '../../shared/ui/AppIcon';
 import { QuizQuestion } from '../../shared/types';
-import { askGemini, aiAvailable } from '../../shared/lib/aiService';
+import { askGemini, aiAvailable, gerarMapaMental, buildMindmapMermaid, sanitizarRotuloMermaid } from '../../shared/lib/aiService';
 
 /*
  * mermaid entra por import dinamico.
@@ -122,16 +122,25 @@ export function NotebookStudioModal() {
       return;
     }
 
+    /*
+     * Mapa via DeepSeek Flash em duas etapas: a IA devolve DADOS em JSON
+     * (titulo + ramos) e o CODIGO Mermaid (mindmap) e montado aqui com
+     * sanitizacao total. Pedir o codigo pronto ao modelo quebrava a
+     * renderizacao com aspas e prosa ao redor - agora o diagrama sai
+     * valido por construcao.
+     */
     if (aiAvailable(apiKey)) {
       try {
-        const notasText = notasList.slice(-10).map(n => `• ${n.text}`).join('\n');
-        const prompt = `Com base nestas anotações, crie um mapa mental no formato Mermaid (graph TD). Inclua pelo menos 8-12 nós conectados hierarquicamente. Mostre APENAS o código Mermaid, sem explicações:\n\n${notasText}`;
-        const raw = await callGemini(prompt, apiKey);
-        const mermaidCode = raw.replace(/```mermaid\s*/gi, '').replace(/```\s*$/gm, '').trim();
-        await renderMermaid(mermaidCode);
-        setResult(' Mapa mental gerado por IA');
+        const dados = await gerarMapaMental(notasList.slice(-10).map(n => n.text), apiKey);
+        if (dados && await renderMermaid(buildMindmapMermaid(dados))) {
+          setResult(` Mapa mental gerado por IA: ${dados.titulo}`);
+          return;
+        }
+        setResult('A IA não devolveu um mapa válido. Tentando montagem local...');
+      } catch (e: any) {
+        setResult(`Erro: ${e?.message || 'Falha ao processar'}`);
         return;
-      } catch {}
+      }
     }
 
     const wordFreq: Record<string, number> = {};
@@ -143,7 +152,10 @@ export function NotebookStudioModal() {
     const topWords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([w]) => w);
     let mermaidCode = 'graph TD\n  A[" Meus Estudos"]\n';
     topWords.forEach((w, i) => {
-      mermaidCode += `  N${i}["${w.charAt(0).toUpperCase() + w.slice(1)}"]\n  A --> N${i}\n`;
+      // Sanitiza como o caminho IA: palavra do usuário crua quebra o
+      // diagrama (aspas/colchetes) ou injeta nó no SVG via innerHTML.
+      const rotulo = sanitizarRotuloMermaid(w.charAt(0).toUpperCase() + w.slice(1)) || `Conceito ${i + 1}`;
+      mermaidCode += `  N${i}["${rotulo}"]\n  A --> N${i}\n`;
     });
     await renderMermaid(mermaidCode);
     setResult(` Mapa mental com ${topWords.length} conceitos principais`);
@@ -163,19 +175,36 @@ export function NotebookStudioModal() {
         const raw = await callGemini(prompt, apiKey);
         const jsonMatch = raw.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
-          const cards = JSON.parse(jsonMatch[0]);
-          const questions: QuizQuestion[] = cards.map((c: any, i: number) => ({
-            id: `flash_ai_${Date.now()}_${i}`,
-            materia: 'Flashcards IA',
-            enunciado: c.pergunta,
-            alternativas: [c.resposta, 'Revise a anotação original', 'Consulte o material de apoio', 'Pergunte ao Mentor'],
-            correta: 0,
-            explicacao: c.resposta,
-          }));
-          (window as any).__flashcardQuiz = questions;
-          setFlashcards(questions);
-          setResult(`${questions.length} flashcards gerados por IA!`);
-          return;
+          let cards: unknown;
+          try {
+            cards = JSON.parse(jsonMatch[0]);
+          } catch {
+            cards = null;
+          }
+          // Valida campo a campo: sem isso, objeto/string do modelo gerava
+          // QuizQuestion com enunciado undefined e quebrava o QuizPage.
+          const validos = Array.isArray(cards) ? cards.filter(
+            (c): c is { pergunta: string; resposta: string } =>
+              !!c && typeof c === 'object' &&
+              typeof (c as { pergunta?: unknown }).pergunta === 'string' &&
+              (c as { pergunta: string }).pergunta.trim().length > 0 &&
+              typeof (c as { resposta?: unknown }).resposta === 'string' &&
+              (c as { resposta: string }).resposta.trim().length > 0,
+          ) : [];
+          if (validos.length > 0) {
+            const questions: QuizQuestion[] = validos.map((c, i) => ({
+              id: `flash_ai_${Date.now()}_${i}`,
+              materia: 'Flashcards IA',
+              enunciado: c.pergunta.trim().slice(0, 500),
+              alternativas: [c.resposta.trim().slice(0, 300), 'Revise a anotação original', 'Consulte o material de apoio', 'Pergunte ao Mentor'],
+              correta: 0,
+              explicacao: c.resposta.trim().slice(0, 500),
+            }));
+            (window as any).__flashcardQuiz = questions;
+            setFlashcards(questions);
+            setResult(`${questions.length} flashcards gerados por IA!`);
+            return;
+          }
         }
       } catch {}
     }
@@ -249,19 +278,19 @@ export function NotebookStudioModal() {
     return askGemini(prompt, null, key);
   }
 
-  async function renderMermaid(code: string) {
+  async function renderMermaid(code: string): Promise<boolean> {
     try {
       const mermaid = await carregarMermaid();
       const { svg } = await mermaid.render('mmd_' + Date.now(), code);
       if (svg.includes('class="error"') || svg.includes('>Error<') || svg.includes('>error<') || svg.includes('flowchart-error')) {
         setMermaidSvg('');
-        setResult('O diagrama gerado pela IA não pôde ser renderizado. Tente novamente ou com menos notas.');
-        return;
+        return false;
       }
       setMermaidSvg(svg);
+      return true;
     } catch {
       setMermaidSvg('');
-      setResult('Não foi possível renderizar o mapa mental. Tente novamente com menos notas.');
+      return false;
     }
   }
 

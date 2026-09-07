@@ -16,6 +16,8 @@ import {
   extrairFeatures,
   preverBurnout,
   deveBloquearConteudoDenso,
+  FADIGA_ZERADA,
+  PREVISAO_ZERADA,
   type PrevisaoBurnout,
 } from '../shared/lib/burnoutModel';
 import { calcularMoedas, moedasDeHoje } from '../shared/lib/focusShield';
@@ -32,8 +34,29 @@ import { useAppStore, persistir } from './appStore';
  * passa pelo servidor e o retorno SUBSTITUI o palpite local.
  */
 
-/** Quantos eventos acumulam antes de ir para o banco. */
+/** Lote de telemetria antes de ir para o banco. */
 const LOTE_TELEMETRIA = 10;
+
+/**
+ * Recalculo local puro (sem rede).
+ *
+ * O BUG: registrarResposta prometia ("o indicador reage dentro da propria
+ * sessao") mas nunca recalculava — o modelo so rodava no boot, no flush
+ * de 10 eventos ou no fim do quiz. Resultado: o aluno respondia 5
+ * questoes, voltava para a Central e o indice seguia escondido ou com o
+ * valor velho do boot. Agora cada resposta recalcula na hora; a gravacao
+ * no servidor continua so no flush/fim, para nao spammar a rede.
+ */
+function calcularLocal(eventos: EventoTelemetria[]): {
+  previsao: PrevisaoBurnout;
+  features: ReturnType<typeof extrairFeatures>;
+} | null {
+  if (eventos.length < 5) return null;
+  const app = useAppStore.getState();
+  const features = extrairFeatures(eventos, { horasSono: app.sono });
+  // FADIGA_ZERADA: o modelo roda igual, mas o consumo é sempre 0/saudável.
+  return { previsao: FADIGA_ZERADA ? PREVISAO_ZERADA : preverBurnout(features), features };
+}
 
 interface IntervencaoAtiva {
   id: number | null;
@@ -83,6 +106,8 @@ interface BemEstarState {
   registrarResposta: (e: Omit<EventoTelemetria, 'timestamp' | 'horaLocal'>) => void;
   descarregarTelemetria: () => Promise<void>;
   recalcularBurnout: () => Promise<PrevisaoBurnout | null>;
+  /** Zera telemetria + serie (servidor via RPC 017) e esconde o card ate 5 eventos. */
+  reiniciarIndice: () => Promise<void>;
   iniciarEscudo: (modo: ModoEscudo) => void;
   registrarInterrupcao: () => void;
   atualizarCronometro: (minutos: number) => void;
@@ -121,7 +146,9 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
       bemEstarRepository.listarRelatorios(8),
     ]);
 
-    set({ telemetria, historicoBurnout: historico, carteira, sessoesOffline: sessoes, revisoes, relatorios, carregado: true });
+    // Fadiga zerada: histórico antigo do servidor é ignorado (a curva dos
+    // pais e a série do card nascem zeradas e assim permanecem).
+    set({ telemetria, historicoBurnout: FADIGA_ZERADA ? [] : historico, carteira, sessoesOffline: sessoes, revisoes, relatorios, carregado: true });
     await get().recalcularBurnout();
   },
 
@@ -139,10 +166,18 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
       horaLocal: new Date().getHours(),
     };
 
-    set((s) => ({
-      bufferTelemetria: [...s.bufferTelemetria, completo],
-      telemetria: [completo, ...s.telemetria].slice(0, 2000),
-    }));
+    set((s) => {
+      const bufferTelemetria = [...s.bufferTelemetria, completo];
+      const telemetria = [completo, ...s.telemetria].slice(0, 2000);
+      const calc = calcularLocal([...bufferTelemetria, ...telemetria]);
+      return {
+        bufferTelemetria,
+        telemetria,
+        previsao: calc?.previsao ?? null,
+        // Fadiga zerada: conteúdo denso nunca é bloqueado.
+        conteudoDensoBloqueado: FADIGA_ZERADA ? false : calc ? deveBloquearConteudoDenso(calc.previsao.classe) : false,
+      };
+    });
 
     if (get().bufferTelemetria.length >= LOTE_TELEMETRIA) {
       void get().descarregarTelemetria();
@@ -169,18 +204,19 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
    * decide sobre o alerta aos responsaveis (uma vez por dia, no maximo).
    */
   recalcularBurnout: async () => {
-    const app = useAppStore.getState();
+    // Fadiga zerada: responde 0/saudável sem gravar nada no servidor
+    // (nem histórico, nem alerta aos responsáveis).
+    if (FADIGA_ZERADA) {
+      set({ previsao: PREVISAO_ZERADA, conteudoDensoBloqueado: false });
+      return PREVISAO_ZERADA;
+    }
     const eventos = [...get().bufferTelemetria, ...get().telemetria];
-    if (eventos.length < 5) {
+    const calc = calcularLocal(eventos);
+    if (!calc) {
       set({ previsao: null, conteudoDensoBloqueado: false });
       return null;
     }
-
-    const features = extrairFeatures(eventos, {
-      horasSono: app.sono,
-      diasSemPausa: app.gamification.streak,
-    });
-    const previsao = preverBurnout(features);
+    const { previsao, features } = calc;
 
     set({ previsao, conteudoDensoBloqueado: deveBloquearConteudoDenso(previsao.classe) });
 
@@ -209,6 +245,23 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
     }
 
     return previsao;
+  },
+
+  reiniciarIndice: async () => {
+    set({
+      bufferTelemetria: [],
+      telemetria: [],
+      previsao: null,
+      historicoBurnout: [],
+      conteudoDensoBloqueado: false,
+    });
+    const ok = await bemEstarRepository.reiniciarIndice().catch(() => false);
+    const app = useAppStore.getState();
+    if (ok) {
+      app.setToast('Índice reiniciado. Ele volta a calcular nas próximas respostas.', 'success');
+    } else {
+      app.setToast('Índice zerado aqui. Sem conexão, o histórico antigo pode voltar ao recarregar.', 'info');
+    }
   },
 
   // =================================================================

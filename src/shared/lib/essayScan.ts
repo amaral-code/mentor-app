@@ -133,9 +133,10 @@ async function direto(
 
   const base64 = paraBase64(await arquivo.arrayBuffer());
 
-  const resposta = await fetch(`${GEMINI_URL}/${MODELO_VISAO}:generateContent?key=${apiKey}`, {
+  // Chave no header, nunca na URL (?key= vaza em logs de proxy/CDN).
+  const resposta = await fetch(`${GEMINI_URL}/${MODELO_VISAO}:generateContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     signal,
     body: JSON.stringify({
       contents: [
@@ -166,7 +167,15 @@ async function direto(
     .join('')
     .trim();
 
-  const correcao = normalizarCorrecao(JSON.parse(texto));
+  // O modelo às vezes devolve prosa em vez de JSON: erro acionável (a tela
+  // trata como foto ilegível) em vez de SyntaxError cru sem contexto.
+  let bruto: unknown;
+  try {
+    bruto = JSON.parse(texto);
+  } catch {
+    throw new Error('Não consegui ler a folha na foto. Tente enquadrar só o texto, com boa luz.');
+  }
+  const correcao = normalizarCorrecao(bruto);
   return {
     ...correcao,
     image_url: imagemUrl,

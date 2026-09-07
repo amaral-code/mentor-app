@@ -164,7 +164,8 @@ describe('gerarRelatorioDescompressao', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const texto = await gerarRelatorioDescompressao(metricas, 'chave', 'Ana');
-    expect(texto).toBe('Voce apareceu em 4 dos 7 dias.');
+    // Personalização local (LGPD): o nome é prefixado no aparelho.
+    expect(texto).toBe('Ana, voce apareceu em 4 dos 7 dias.');
 
     const corpo = JSON.parse(fetchMock.mock.calls[0][1].body);
     const system = corpo.systemInstruction.parts[0].text;
@@ -175,8 +176,8 @@ describe('gerarRelatorioDescompressao', () => {
     expect(system).toContain('Nunca');
     expect(system).toContain('coach');
     expect(system).toContain('4 frases');
-    // Dados no user.
-    expect(usuario).toContain('Ana');
+    // O nome NÃO viaja para a IA (menor de idade): vai só métrica anônima.
+    expect(usuario).not.toContain('Ana');
     expect(usuario).toContain('120 minutos');
     // Teto de tokens e o que segura o "curto e direto".
     expect(corpo.generationConfig.maxOutputTokens).toBe(220);

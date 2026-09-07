@@ -6,7 +6,7 @@ import { BarChart3, BookOpen, ClipboardList, Flame, Frown, Moon, Sparkles, Targe
 import { useAppStore } from '../../stores/appStore';
 import { getSSCColor, getSSCLabel } from '../../shared/lib/sscCalculator';
 import { DailyPlan, QuizResult } from '../../shared/types';
-import { getToday, MOOD_LABEL, MOOD_COLOR } from '../../shared/lib/utils';
+import { calcLevel, getToday, MOOD_LABEL, MOOD_COLOR } from '../../shared/lib/utils';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { AppIcon, MoodIcon } from '../../shared/ui/AppIcon';
 import { BurnoutCard } from './BurnoutCard';
@@ -42,8 +42,10 @@ export function DashboardPage() {
       .catch(() => regeneratePlan());
   }, []);
 
-  const xpForNext = 100 * gamification.level;
-  const xpProgress = gamification.xp % xpForNext;
+  /* Nível e progresso SEMPRE via calcLevel (fonte única): o campo level do
+     servidor pode vir da fórmula plana antiga de quem não rodou a 008. */
+  const { level: nivel, remainder: xpProgress } = calcLevel(gamification.xp);
+  const xpForNext = 100 * nivel;
   const sscLevel = getSSCLabel(sscScore);
   const sscColor = getSSCColor(sscScore);
 
@@ -248,7 +250,7 @@ export function DashboardPage() {
             <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium flex items-center gap-1.5">
               <BarChart3 size={14} /> Progresso
             </span>
-            <span className="text-xs text-gray-500 tabular-nums">Nível {gamification.level}</span>
+            <span className="text-xs text-gray-500 tabular-nums">Nível {nivel}</span>
           </div>
           <div className="flex items-baseline gap-1 mb-2">
             <span className="text-2xl font-bold text-white tabular-nums">{xpProgress}</span>

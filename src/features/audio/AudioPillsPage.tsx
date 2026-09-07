@@ -3,7 +3,8 @@ import { CheckCircle2, Headphones, Loader2, Sparkles } from 'lucide-react';
 import { conteudoRepository } from '../../shared/storage/ConteudoRepository';
 import { useAppStore } from '../../stores/appStore';
 import { aiAvailable, gerarRoteiroAudio, sintetizarAudio, hasProxy } from '../../shared/lib/aiService';
-import { estimarDuracaoSegundos, formatarTempo, VOZES } from '../../shared/lib/audioPills';
+import { estimarDuracaoSegundos, formatarTempo, VOZES, roteiroLocalEmergencia } from '../../shared/lib/audioPills';
+import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import type { ModuloAudio, ProgressoAudio } from '../../shared/types';
 import { AudioPlayer } from './AudioPlayer';
 import { EmptyState } from '../../shared/ui/EmptyState';
@@ -62,7 +63,7 @@ export function AudioPillsPage() {
 
   /** Roteiro completo: cache local -> banco -> IA. */
   async function obterRoteiro(modulo: ModuloAudio): Promise<string> {
-    const salvo = localStorage.getItem(CHAVE_ROTEIRO + modulo.id);
+    const salvo = safeGet(CHAVE_ROTEIRO + modulo.id);
     if (salvo && salvo.length > 400) return salvo;
 
     // O seed do banco traz um roteiro-esboco terminado em marcador; se o
@@ -71,13 +72,24 @@ export function AudioPillsPage() {
       return modulo.roteiro;
     }
 
+    // Sem IA (offline, sem chave, sem servidor): versão curta de bolso,
+    // 100% local — a pílula SEMPRE toca, com a mesma voz. Nunca inventa
+    // conteúdo de estudo: avisa que é a curta e guia revisão com o resumo.
+    // A curta NÃO vai ao cache: senão, quando a IA voltar, o app
+    // continuaria servindo a curta (ela passa no filtro de 400 chars).
     if (!aiAvailable(apiKey)) {
-      throw new Error('Configure a IA no Perfil para gerar o roteiro desta pilula.');
+      setToast('Sem conexão com a IA: tocando a versão curta de bolso.', 'info');
+      return roteiroLocalEmergencia(modulo.materia, modulo.topico, modulo.resumo);
     }
 
-    const texto = await gerarRoteiroAudio(modulo.materia, modulo.topico, apiKey);
-    localStorage.setItem(CHAVE_ROTEIRO + modulo.id, texto);
-    return texto;
+    try {
+      const texto = await gerarRoteiroAudio(modulo.materia, modulo.topico, apiKey);
+      safeSet(CHAVE_ROTEIRO + modulo.id, texto);
+      return texto;
+    } catch {
+      setToast('A IA falhou: tocando a versão curta de bolso.', 'info');
+      return roteiroLocalEmergencia(modulo.materia, modulo.topico, modulo.resumo);
+    }
   }
 
   async function abrir(modulo: ModuloAudio) {
@@ -111,7 +123,9 @@ export function AudioPillsPage() {
       ...p,
       [modulo.id]: { moduloId: modulo.id, segundosOuvidos: segundos, concluido },
     }));
-    void conteudoRepository.salvarProgresso(modulo.id, segundos, concluido);
+    conteudoRepository.salvarProgresso(modulo.id, segundos, concluido).catch(() => {
+      // Progresso local continua valendo; o servidor sincroniza depois.
+    });
   }
 
   function concluir(modulo: ModuloAudio) {

@@ -12,6 +12,7 @@
  *   POST /pagamento       -> abre a cobrança da consulta
  *   POST /webhook/pagamento -> provedor confirma; cria a sala e libera
  *   POST /notify/drain    -> envia a fila de e-mail/push
+ *   POST /api/turmas/import -> secretaria importa alunos (IA + contas + convites)
  *   GET  /health
  *
  * SEGREDOS a configurar no provedor:
@@ -39,6 +40,8 @@ import {
   extrairFontes,
   detectarCitacaoDeProva,
   modoValido,
+  modoRespostaValido,
+  limparTextoLivre,
   MODO_PADRAO,
 } from './chatPrompt.js';
 import {
@@ -70,12 +73,15 @@ const MODELO_VISAO_PADRAO = 'gemini-1.5-flash';
 const BUCKET_REDACOES = 'essay_scans';
 
 function cors(env) {
+  // Em produção defina ALLOWED_ORIGIN=https://seu-dominio: com '*' qualquer
+  // site usa sua cota de IA (o API_TOKEN vai no bundle, então não é segredo).
   const origin = env.ALLOWED_ORIGIN || '*';
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Supabase-Auth',
     'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
   };
 }
 
@@ -213,16 +219,41 @@ function paraBase64(buffer) {
   return btoa(binario);
 }
 
+/**
+ * Detecta o tipo real pelos magic-bytes (não pelo `arquivo.type`, que o
+ * cliente controla). Retorna null para SVG/texto/executável disfarçado.
+ */
+function tipoPorMagicBytes(buffer) {
+  const b = new Uint8Array(buffer);
+  if (b.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'image/png';
+  // WebP: RIFF....WEBP
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+      b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'image/webp';
+  // HEIC/HEIF: ....ftyp + marca heic/heix/hevc/hevx/mif1/msf1
+  if (b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) return 'image/heic';
+  return null;
+}
+
 /** Extrai o JSON da resposta do Gemini, com ou sem cerca de markdown. */
 function jsonDaResposta(texto) {
   const limpo = String(texto || '').replace(/```json\s*/gi, '').replace(/```/g, '').trim();
   try {
     return JSON.parse(limpo);
-  } catch {
+  } catch (primeiroErro) {
     const inicio = limpo.indexOf('{');
     const fim = limpo.lastIndexOf('}');
-    if (inicio >= 0 && fim > inicio) return JSON.parse(limpo.slice(inicio, fim + 1));
-    throw new Error('resposta do modelo não é JSON');
+    if (inicio >= 0 && fim > inicio) {
+      try {
+        return JSON.parse(limpo.slice(inicio, fim + 1));
+      } catch (segundoErro) {
+        throw new Error(`resposta do modelo não é JSON: ${String(segundoErro && segundoErro.message || segundoErro).slice(0, 120)}`);
+      }
+    }
+    throw new Error(`resposta do modelo não é JSON: ${String(primeiroErro && primeiroErro.message || primeiroErro).slice(0, 120)}`);
   }
 }
 
@@ -273,6 +304,33 @@ function paraMensagensOpenAI(systemInstruction, contents) {
   return mensagens;
 }
 
+/**
+ * Trava os parâmetros que o cliente pode pedir no /generate.
+ *
+ * temperature 0-1, teto de 8192 tokens de saída (o quiz estruturado usa
+ * até ~5000; o chat usa 1000). Sem isso, max_tokens arbitrário virava
+ * dreno de cota — ainda mais com CORS aberto e API_TOKEN opcional.
+ */
+function limitarGenerationConfig(generationConfig) {
+  const base = generationConfig && typeof generationConfig === 'object' ? generationConfig : {};
+  const out = { ...base };
+  const temp = Number(base.temperature);
+  out.temperature = Number.isFinite(temp) ? Math.min(1, Math.max(0, temp)) : 0.5;
+  const maxReq = Number(base.maxOutputTokens ?? base.max_tokens);
+  const maximo = Number.isFinite(maxReq) && maxReq > 0 ? Math.min(8192, Math.floor(maxReq)) : 1000;
+  out.maxOutputTokens = maximo;
+  delete out.max_tokens;
+  const topP = Number(base.topP ?? base.top_p);
+  if (Number.isFinite(topP)) out.topP = Math.min(1, Math.max(0, topP));
+  delete out.top_p;
+  if (base.response_format && typeof base.response_format === 'object') {
+    out.response_format = base.response_format;
+  } else {
+    delete out.response_format;
+  }
+  return out;
+}
+
 function genParaDeepSeek(generationConfig = {}) {
   const out = {};
   const temp = Number(generationConfig.temperature);
@@ -281,6 +339,12 @@ function genParaDeepSeek(generationConfig = {}) {
   if (Number.isFinite(temp)) out.temperature = temp;
   if (Number.isFinite(maxTokens) && maxTokens > 0) out.max_tokens = Math.floor(maxTokens);
   if (Number.isFinite(topP)) out.top_p = topP;
+  // Saida JSON estrita (quiz, mapa mental). So chega aqui em fluxos
+  // DeepSeek: o front so inclui em modo deepseek, e o caminho Gemini do
+  // worker nunca repassa este campo ao Google.
+  if (generationConfig.response_format && typeof generationConfig.response_format === 'object') {
+    out.response_format = generationConfig.response_format;
+  }
   return out;
 }
 
@@ -362,6 +426,284 @@ async function enviarEmail(env, para, assunto, corpo) {
   return resposta.ok;
 }
 
+/* ===================================================================
+   Importacao de turma: normalizacao por IA + contas + convites
+   =================================================================== */
+
+const EMAIL_OK_IMPORT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Primeiro char aceita '(' — o formato BR "(11) 99999-8888" começava com
+// parêntese e era rejeitado pelo padrão antigo, inclusive no exemplo.
+const FONE_OK_IMPORT = /^[+\d(][\d\s().-]{7,24}$/;
+
+/** Senha temporaria de uso unico: 12 chars sem ambiguos (0/O, 1/l). */
+function senhaTemporaria() {
+  const alfabeto = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return [...bytes].map((b) => alfabeto[b % alfabeto.length]).join('');
+}
+
+/** Login institucional do aluno (email tecnico, nao precisa receber). */
+function loginDoAluno(nome, codigoTurma, dominio) {
+  const slug = String(nome || 'aluno')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.|\.$/g, '').slice(0, 30) || 'aluno';
+  const sufixo = crypto.randomUUID().replace(/-/g, '').slice(0, 4);
+  return `${slug}.${String(codigoTurma || 'turma').toLowerCase()}.${sufixo}@${dominio}`;
+}
+
+function dominioAlunos(env) {
+  try {
+    const host = new URL(env.PUBLIC_APP_URL || 'https://app.midnightmentor.app').hostname;
+    return `alunos.${host}`;
+  } catch {
+    return 'alunos.midnightmentor.app';
+  }
+}
+
+/**
+ * IA (DeepSeek barato) normaliza a lista: corrige caixa dos nomes,
+ * associa cada sala a uma turma existente (por id) e valida contatos.
+ * Qualquer falha -> segue com os dados crus (ia: false no relatorio).
+ */
+async function normalizarTurmaComIA(env, linhas, turmas) {
+  const cruas = linhas.map((l) => ({
+    nome: String(l.nome || l['Nome do Aluno'] || '').slice(0, 120),
+    sala: String(l.sala || l.Sala || '').slice(0, 20),
+    email: String(l.email || l['Email do Responsável'] || '').trim().slice(0, 120),
+    telefone: String(l.telefone || l['Telefone do Responsável'] || '').trim().slice(0, 25),
+    tipo: /docente|professor|teacher/i.test(String(l.tipo || '')) ? 'teacher' : 'student',
+  }));
+
+  if (!env.DEEPSEEK_API_KEY) return { linhas: cruas, ia: false };
+
+  try {
+    const saida = await chamarDeepSeek(
+      env,
+      env.AI_MODEL && /^deepseek-/i.test(env.AI_MODEL) ? env.AI_MODEL : DEEPSEEK_DEFAULT_MODEL,
+      [
+        {
+          role: 'system',
+          content: 'Você normaliza cadastros escolares. Responda APENAS com JSON {"alunos":[...]}.',
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            turmas: turmas.map((t) => ({ id: t.id, nome: t.nome, codigo: t.codigo })),
+            alunos: cruas,
+            instrucao: 'Para cada aluno devolva {nome (Title Case, sem apelidos), sala (igual à turma mais parecida), turmaId (id exato da turma ou null), email, telefone, tipo, problemas[] (lista curta do que está errado ou vazio)}.',
+          }),
+        },
+      ],
+      { temperature: 0.2, maxOutputTokens: 4000, response_format: { type: 'json_object' } },
+    );
+    if (!saida.ok) return { linhas: cruas, ia: false };
+    // chamarDeepSeek reembala em envelope Gemini: desembrulha antes de
+    // ler o JSON da IA (antes lia .choices do envelope e a IA nunca
+    // era aplicada — caía sempre no fallback cru).
+    const texto = textoDaResposta(JSON.parse(saida.texto));
+    const arr = JSON.parse(texto).alunos;
+    if (!Array.isArray(arr) || arr.length === 0) return { linhas: cruas, ia: false };
+    const ids = new Set(turmas.map((t) => String(t.id)));
+    return {
+      ia: true,
+      linhas: cruas.map((crua, i) => {
+        const n = arr[i] && typeof arr[i] === 'object' ? arr[i] : {};
+        return {
+          nome: String(n.nome || crua.nome).slice(0, 120),
+          sala: String(n.sala || crua.sala).slice(0, 20),
+          turmaId: ids.has(String(n.turmaId)) ? String(n.turmaId) : null,
+          email: String(n.email || crua.email).trim().slice(0, 120),
+          telefone: String(n.telefone || crua.telefone).trim().slice(0, 25),
+          tipo: n.tipo === 'teacher' ? 'teacher' : 'student',
+          problemas: Array.isArray(n.problemas) ? n.problemas.map(String).slice(0, 4) : [],
+        };
+      }),
+    };
+  } catch {
+    return { linhas: cruas.map((c) => ({ ...c, turmaId: null, problemas: [] })), ia: false };
+  }
+}
+
+/** Associa sala -> turma por nome quando a IA não devolveu id. */
+function turmaPorSala(turmas, sala) {
+  const alvo = String(sala || '').trim().toLowerCase();
+  if (!alvo) return null;
+  return turmas.find((t) => String(t.nome || '').trim().toLowerCase() === alvo) || null;
+}
+
+function cabecalhosAdmin(env) {
+  return {
+    apikey: env.SUPABASE_SERVICE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+async function adminCreateUser(env, email, password, nome) {
+  const resposta = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers: cabecalhosAdmin(env),
+    body: JSON.stringify({ email, password, email_confirm: true, user_metadata: { nome } }),
+  });
+  const texto = await resposta.text();
+  if (!resposta.ok) return { ok: false, erro: texto.slice(0, 160) };
+  try {
+    return { ok: true, id: JSON.parse(texto).id };
+  } catch {
+    return { ok: false, erro: 'resposta admin invalida' };
+  }
+}
+
+/** Link mágico de confirmação (Supabase Admin). Null quando indisponível. */
+async function adminGenerateLink(env, email) {
+  try {
+    const resposta = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, {
+      method: 'POST',
+      headers: cabecalhosAdmin(env),
+      body: JSON.stringify({ type: 'magiclink', email }),
+    });
+    if (!resposta.ok) return null;
+    const dados = await resposta.json();
+    return typeof dados?.action_link === 'string' ? dados.action_link : null;
+  } catch {
+    return null;
+  }
+}
+
+async function perfilDoImportado(env, uid, patch) {
+  const resposta = await fetch(`${env.SUPABASE_URL}/rest/v1/perfis?id=eq.${encodeURIComponent(uid)}`, {
+    method: 'PATCH',
+    headers: { ...cabecalhosAdmin(env), Prefer: 'return=minimal' },
+    body: JSON.stringify(patch),
+  });
+  return resposta.ok;
+}
+
+function emailBoasVindas({ paraQuem, login, senha, linkMagico, escola, codigoInstituicao, turma, appUrl }) {
+  const linhasTexto = [
+    `Olá! Sua conta no Midnight Mentor foi criada pela secretaria (${escola}).`,
+    '',
+    `Login: ${login}`,
+    `Senha temporária (uso único, troque no primeiro acesso): ${senha}`,
+    linkMagico ? `Confirmação em 1 clique: ${linkMagico}` : '',
+    '',
+    `Código da instituição (digite no Perfil): ${codigoInstituicao}`,
+    turma ? `Código da turma ${turma.nome} (digite no Perfil): ${turma.codigo}` : 'Sua turma será vinculada pela secretaria.',
+    '',
+    `Acesse: ${appUrl}`,
+    'Guarde este email em sigilo e não repasse os códigos a ninguém de fora da escola.',
+  ].filter((l) => l !== null);
+  return { assunto: `Sua conta no Midnight Mentor (${escola})`, corpo: linhasTexto.join('\n') };
+}
+
+/**
+ * Importa UMA linha: cria aluno (+ responsavel ou docente), vincula
+ * escola/turma, marca troca de senha e envia o convite. Devolve o
+ * resultado para o relatório da secretaria (nunca joga).
+ */
+async function importarLinha(env, escola, turmas, linha) {
+  const tipo = linha.tipo === 'teacher' ? 'teacher' : 'student';
+  const turma = linha.turmaId
+    ? turmas.find((t) => String(t.id) === String(linha.turmaId)) || null
+    : turmaPorSala(turmas, linha.sala);
+  const appUrl = env.PUBLIC_APP_URL || 'https://app.midnightmentor.app';
+  const podeEmail = !!env.RESEND_API_KEY;
+
+  // Docente usa o próprio email como login; aluno usa login institucional
+  // e o email do responsável só recebe (nunca vira login do aluno).
+  const emailDono = tipo === 'teacher' ? linha.email : null;
+  if (tipo === 'teacher' && !EMAIL_OK_IMPORT.test(linha.email)) {
+    return { ok: false, erro: 'email do docente inválido', emailEnviado: false };
+  }
+  if (tipo === 'student') {
+    if (!linha.nome.trim()) return { ok: false, erro: 'nome ausente', emailEnviado: false };
+    if (!EMAIL_OK_IMPORT.test(linha.email)) return { ok: false, erro: 'email do responsável inválido', emailEnviado: false };
+    if (linha.telefone && !FONE_OK_IMPORT.test(linha.telefone)) {
+      return { ok: false, erro: 'telefone do responsável inválido', emailEnviado: false };
+    }
+  }
+
+  const senhaAluno = senhaTemporaria();
+  const loginAluno = tipo === 'teacher'
+    ? linha.email.trim()
+    : loginDoAluno(linha.nome, turma?.codigo, dominioAlunos(env));
+
+  const criado = await adminCreateUser(env, loginAluno, senhaAluno, linha.nome || 'Docente');
+  if (!criado.ok) {
+    const duplicado = /already|exists|duplicate|unique/i.test(criado.erro);
+    return { ok: false, erro: duplicado ? 'login já existe' : `falha ao criar conta: ${criado.erro}`, emailEnviado: false };
+  }
+
+  await perfilDoImportado(env, criado.id, {
+    papel: tipo,
+    escola_id: escola.id,
+    turma_id: turma ? turma.id : null,
+    deve_trocar_senha: true,
+    ...(tipo === 'student' ? { email_responsaveis: linha.email.trim() } : {}),
+  });
+
+  let loginResp = null;
+  let senhaResp = null;
+  let linkMagico = null;
+  let destinoEmail = null;
+
+  if (tipo === 'student') {
+    // Conta do responsável (email real): confirmação por link mágico.
+    senhaResp = senhaTemporaria();
+    const resp = await adminCreateUser(env, linha.email.trim(), senhaResp, `Responsável por ${linha.nome}`);
+    if (resp.ok) {
+      await perfilDoImportado(env, resp.id, { papel: 'parent', escola_id: escola.id, deve_trocar_senha: true });
+      loginResp = linha.email.trim();
+      linkMagico = await adminGenerateLink(env, linha.email.trim());
+    }
+    destinoEmail = linha.email.trim();
+  } else {
+    loginResp = null;
+    linkMagico = await adminGenerateLink(env, linha.email.trim());
+    destinoEmail = linha.email.trim();
+  }
+
+  const convite = emailBoasVindas({
+    paraQuem: tipo,
+    login: loginAluno,
+    senha: senhaAluno,
+    linkMagico,
+    escola: escola.nome,
+    codigoInstituicao: escola.codigo_instituicao,
+    turma,
+    appUrl,
+  });
+  // O corpo do responsável carrega as duas credenciais + códigos.
+  const corpoFinal = tipo === 'student' && loginResp
+    ? `${convite.corpo}\n\n--- Conta do responsável ---\nLogin: ${loginResp}\nSenha temporária: ${senhaResp}\nUse o link de confirmação acima para ativar.`
+    : convite.corpo;
+
+  let emailEnviado = false;
+  if (podeEmail && destinoEmail) {
+    emailEnviado = await enviarEmail(env, destinoEmail, convite.assunto, corpoFinal);
+  }
+
+  const saida = {
+    ok: true,
+    login: loginAluno,
+    turma: turma ? turma.nome : null,
+    codigoTurma: turma ? turma.codigo : null,
+    emailEnviado,
+  };
+  // Sem Resend, a secretaria repassa manualmente: credenciais voltam no
+  // relatório (canal interno, nunca em tela pública).
+  if (!emailEnviado) {
+    return {
+      ...saida,
+      senhaTemporaria: senhaAluno,
+      ...(loginResp ? { loginResponsavel: loginResp, senhaResponsavel: senhaResp } : {}),
+      linkMagico,
+    };
+  }
+  return saida;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -408,6 +750,9 @@ export default {
       // Evita que o usuário final escolha modelo pago/indesejado
       const provedor = provedorEfetivo(payload, env);
       const model = modeloEfetivo(payload, env, provedor);
+      // Teto server-side: o cliente manda generationConfig livre e sem isso
+      // qualquer origem (CORS *) drenava a cota com max_tokens gigante.
+      payload.generationConfig = limitarGenerationConfig(payload.generationConfig);
 
       // ---- DeepSeek-V4-Flash (chat completions) ----
       if (provedor === 'deepseek' || /^deepseek-/i.test(model)) {
@@ -485,7 +830,8 @@ export default {
       const texto = String(corpo.texto || '').trim().slice(0, 4800);
       if (!texto) return json({ error: 'texto_vazio' }, 400, corsHeaders);
 
-      const voz = /^pt-BR-[A-Za-z0-9-]+$/.test(corpo.voz || '') ? corpo.voz : 'pt-BR-Neural2-B';
+      // Padrão: Ana (Neural2-A, feminina) — a voz das pílulas.
+      const voz = /^pt-BR-[A-Za-z0-9-]+$/.test(corpo.voz || '') ? corpo.voz : 'pt-BR-Neural2-A';
       const velocidade = Math.max(0.5, Math.min(Number(corpo.velocidade) || 1, 1.6));
 
       try {
@@ -543,13 +889,17 @@ export default {
 
       const { agendamentoId, valorCentavos, descricao, emailPagador } = corpo;
       if (!agendamentoId) return json({ error: 'agendamento_ausente' }, 400, corsHeaders);
+      const valor = valorCentavos ?? null;
+      if (valor !== null && (!Number.isFinite(Number(valor)) || Number(valor) <= 0)) {
+        return json({ error: 'valor_invalido' }, 400, corsHeaders);
+      }
 
       // O agendamento tem de ser mesmo de quem está pagando.
       let agendamento;
       try {
         const linhas = await supabaseSelect(
           env,
-          `agendamentos?id=eq.${agendamentoId}&select=id,aluno_id,responsavel_id,valor_centavos,status_pagamento`,
+          `agendamentos?id=eq.${encodeURIComponent(agendamentoId)}&select=id,aluno_id,responsavel_id,valor_centavos,status_pagamento`,
         );
         agendamento = linhas[0];
       } catch (err) {
@@ -663,6 +1013,10 @@ export default {
         }
 
         const agendamentoId = pagamento.external_reference;
+        // external_reference forjado ou ausente não cria sala nem confirma.
+        if (!agendamentoId || typeof agendamentoId !== 'string') {
+          return json({ ok: true, ignorado: true }, 200, corsHeaders);
+        }
         const sala = criarSala(env, agendamentoId);
 
         await supabaseRpc(env, 'confirmar_pagamento_consulta', {
@@ -691,21 +1045,23 @@ export default {
       try {
         const pendentes = await supabaseSelect(
           env,
-          'notificacoes?canal=eq.email&enviada_em=is.null&tentativas=lt.3&select=id,user_id,titulo,corpo&limit=50',
+          'notificacoes?canal=eq.email&enviada_em=is.null&tentativas=lt.3&select=id,user_id,titulo,corpo,tentativas&limit=50',
         );
 
         let enviadas = 0;
         for (const n of pendentes) {
-          const perfis = await supabaseSelect(env, `perfis?id=eq.${n.user_id}&select=email`);
+          const perfis = await supabaseSelect(env, `perfis?id=eq.${encodeURIComponent(n.user_id)}&select=email`);
           const email = perfis[0]?.email;
           const ok = email ? await enviarEmail(env, email, n.titulo, n.corpo) : false;
 
           await supabasePatch(
             env,
-            `notificacoes?id=eq.${n.id}`,
+            `notificacoes?id=eq.${encodeURIComponent(n.id)}`,
             ok
               ? { enviada_em: new Date().toISOString() }
-              : { tentativas: 1 /* incrementado a cada passagem */ },
+              : // Antes gravava `tentativas: 1` fixo: a fila tentava para
+                // sempre. Incremento real (lê o valor atual da linha).
+                { tentativas: (Number(n.tentativas) || 0) + 1 },
           );
           if (ok) enviadas++;
         }
@@ -740,14 +1096,20 @@ export default {
       const modo = modoValido(corpo.modo) ? corpo.modo : MODO_PADRAO;
       const provedorChat = provedorEfetivo(corpo, env);
 
+      // Toggle Explicativo/Comunicativo: validado contra a allowlist para
+      // nao deixar o cliente injetar instrucao livre no system do servidor.
+      const modoResposta = modoRespostaValido(corpo.modoResposta) ? corpo.modoResposta : undefined;
+
       const systemInstruction = {
         parts: [
           {
             text: montarSystemInstructionChat({
               modo,
               horaLocal: Number(corpo.horaLocal),
-              nomeAluno: String(corpo.nomeAluno || '').slice(0, 60),
-              materiaRecente: String(corpo.materiaRecente || '').slice(0, 60),
+              // limparTextoLivre (mesma do front): sem \n, sem injeção de prompt.
+              nomeAluno: limparTextoLivre(corpo.nomeAluno),
+              materiaRecente: limparTextoLivre(corpo.materiaRecente),
+              modoResposta,
             }),
           },
         ],
@@ -760,7 +1122,11 @@ export default {
           parts: [{ text: String(m.text).slice(0, 8000) }],
         }));
 
-      const generationConfig = { temperature: 0.4, maxOutputTokens: 1024, topP: 0.9 };
+      /* temperature 0.5 / 1000 tokens: mesmo config do front
+         (aiProvider DEEPSEEK_CHAT_CONFIG/GEMINI_CHAT_CONFIG) — versão
+         mais barata do DeepSeek-V4-Flash, comportamento idêntico em
+         todos os transportes. */
+      const generationConfig = { temperature: 0.5, maxOutputTokens: 1000, topP: 0.9 };
 
       // ---- DeepSeek: mesmo system prompt, sem busca do Google ----
       if (provedorChat === 'deepseek') {
@@ -896,9 +1262,12 @@ export default {
         return json({ error: 'imagem_ausente' }, 400, corsHeaders);
       }
 
-      const tipo = arquivo.type || 'image/jpeg';
-      if (!MIMES_ACEITOS.includes(tipo)) {
-        return json({ error: 'tipo_invalido', message: `Formato ${tipo} nao aceito.` }, 415, corsHeaders);
+      // arquivo.type é cabeçalho controlado pelo cliente: confere os
+      // magic-bytes reais (JPEG/PNG/WebP/HEIC) e veta SVG por conteúdo.
+      const buffer = await arquivo.arrayBuffer();
+      const tipoReal = tipoPorMagicBytes(buffer);
+      if (!tipoReal || !MIMES_ACEITOS.includes(tipoReal)) {
+        return json({ error: 'tipo_invalido', message: 'Formato de imagem nao aceito. Use JPG ou PNG.' }, 415, corsHeaders);
       }
       if (arquivo.size > TAMANHO_MAXIMO_BYTES) {
         return json(
@@ -911,8 +1280,9 @@ export default {
       const tema = String(formulario.get('tema') || '').slice(0, 300);
 
       try {
-        const buffer = await arquivo.arrayBuffer();
-        const extensao = (tipo.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+        // Extensão sai dos BYTES verificados, nunca do tipo declarado.
+        const tipo = tipoReal;
+        const extensao = tipo === 'image/png' ? 'png' : tipo === 'image/webp' ? 'webp' : 'jpg';
         const caminho = `${usuario.id}/${crypto.randomUUID()}.${extensao}`;
 
         // 1) guarda a foto (bucket privado, caminho por dono)
@@ -999,6 +1369,108 @@ export default {
       } catch (err) {
         return json({ error: 'correcao_falhou', message: String(err && err.message) }, 502, corsHeaders);
       }
+    }
+
+    // =============================================================
+    // 8. Importacao de turma (secretaria, pos-pagamento no site)
+    //
+    // A secretaria importa CSV/tabela no painel; a IA normaliza
+    // (nomes, sala -> turma, email/telefone) e o SERVIDOR cria as
+    // contas com senha temporaria de uso unico + link magico, e envia
+    // tudo por email ao responsavel (login do aluno, login do
+    // responsavel, codigos da instituicao e da turma).
+    //
+    // So educator/admin da PROPRIA escola (papel lido do perfil, nunca
+    // do cliente). Senhas temporarias morrem no primeiro login
+    // (deve_trocar_senha) e nunca aparecem em tela — so no email.
+    // =============================================================
+    if (url.pathname === '/api/turmas/import' && request.method === 'POST') {
+      if (!tokenValido(request, env)) return json({ error: 'Unauthorized' }, 401, corsHeaders);
+      if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+        return json({ error: 'misconfigured', message: 'Defina SUPABASE_URL e SUPABASE_SERVICE_KEY.' }, 500, corsHeaders);
+      }
+
+      const educador = await usuarioDoToken(env, request);
+      if (!educador) {
+        return json({ error: 'sem_sessao', message: 'Faca login novamente.' }, 401, corsHeaders);
+      }
+
+      let corpo;
+      try {
+        corpo = await request.json();
+      } catch {
+        return json({ error: 'invalid_json' }, 400, corsHeaders);
+      }
+
+      const linhas = Array.isArray(corpo.alunos) ? corpo.alunos.slice(0, 500) : [];
+      if (linhas.length === 0) return json({ error: 'sem_alunos' }, 400, corsHeaders);
+
+      // Papel e escola do solicitante: o cliente nao escolhe a escola.
+      let perfil;
+      try {
+        const linhasPerfil = await supabaseSelect(
+          env,
+          `perfis?id=eq.${encodeURIComponent(educador.id)}&select=papel,escola_id`,
+        );
+        perfil = linhasPerfil[0];
+      } catch (err) {
+        return json({ error: 'perfil_falhou', message: String(err.message) }, 502, corsHeaders);
+      }
+      const papel = String(perfil?.papel || '');
+      if (papel !== 'educator' && papel !== 'admin') {
+        return json({ error: 'sem_permissao', message: 'So a secretaria da escola importa turmas.' }, 403, corsHeaders);
+      }
+      const escolaId = perfil?.escola_id;
+      if (!escolaId) {
+        return json({ error: 'sem_escola', message: 'Sua conta nao esta vinculada a uma escola.' }, 400, corsHeaders);
+      }
+
+      // Escola (codigo da instituicao) + turmas (id, nome, codigo).
+      let escola;
+      let turmas;
+      try {
+        const [e, t] = await Promise.all([
+          supabaseSelect(env, `escolas?id=eq.${encodeURIComponent(escolaId)}&select=id,nome,codigo_instituicao`),
+          supabaseSelect(env, `turmas?escola_id=eq.${encodeURIComponent(escolaId)}&select=id,nome,codigo`),
+        ]);
+        escola = e[0];
+        turmas = Array.isArray(t) ? t : [];
+      } catch (err) {
+        return json({ error: 'escola_falhou', message: String(err.message) }, 502, corsHeaders);
+      }
+      if (!escola) return json({ error: 'escola_nao_encontrada' }, 404, corsHeaders);
+
+      // 1) IA normaliza (nomes, sala -> turma, valida contatos). Sem
+      // DeepSeek, segue com os dados crus + validacao por regex.
+      const { linhas: normalizados, ia } = await normalizarTurmaComIA(env, linhas, turmas);
+
+      // 2) Cria contas e envia convites, uma linha por vez (para o
+      // relatorio dizer exatamente qual linha falhou e por que).
+      const resultados = [];
+      let emailsEnviados = 0;
+      for (let i = 0; i < normalizados.length; i++) {
+        const linha = normalizados[i];
+        // eslint-disable-next-line no-await-in-loop
+        const r = await importarLinha(env, escola, turmas, linha);
+        if (r.emailEnviado) emailsEnviados++;
+        resultados.push({ linha: i + 1, nome: linha.nome, tipo: linha.tipo, ia, ...r });
+      }
+
+      return json(
+        {
+          ok: true,
+          escola: escola.nome,
+          codigoInstituicao: escola.codigo_instituicao,
+          total: resultados.length,
+          criados: resultados.filter((r) => r.ok).length,
+          emailsEnviados,
+          emailConfigurado: !!env.RESEND_API_KEY,
+          normalizadoPorIA: ia,
+          resultados,
+        },
+        200,
+        corsHeaders,
+      );
     }
 
     return json({ error: 'not_found' }, 404, corsHeaders);

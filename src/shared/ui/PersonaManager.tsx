@@ -26,10 +26,12 @@ export function PersonaManager() {
 
   function handleCreate() {
     if (!name.trim() || !instruction.trim()) return;
+    // Teto + linha única: a instrução viaja no system prompt da IA, então
+    // texto gigante ou com quebras vira custo e vetor de injeção de prompt.
     const persona: ChatPersona = {
       id: `persona_${Date.now()}`,
-      name: name.trim(),
-      instruction: instruction.trim(),
+      name: name.trim().replace(/\s+/g, ' ').slice(0, 60),
+      instruction: instruction.trim().replace(/\s+/g, ' ').slice(0, 2000),
       icon,
       color,
       createdAt: Date.now(),
@@ -142,6 +144,9 @@ export function PersonaManager() {
                 </div>
                 <button onClick={handleCreate} disabled={!name.trim() || !instruction.trim()} className="btn-primary w-full"> Criar Persona
                 </button>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Personas criadas aqui valem para estudos com travas de segurança automáticas: hacking, conteúdos perigosos, atividades ilícitas e xingamentos são sempre recusados.
+                </p>
               </div>
             </div>
           </div>

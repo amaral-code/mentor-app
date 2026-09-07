@@ -38,20 +38,10 @@ export function FocoPage() {
       .catch(() => {});
   }, []);
 
-  function updateSessoesHoje() {
-    const hoje = new Date().toDateString();
-    {
-      {
-        const h = historico;
-        const count = h.filter((e: any) => new Date(e.data).toDateString() === hoje && e.tipo === 'foco').length;
-        setSessoesHoje(count);
-      }
-    }
-  }
-
   function playAlerta() {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (ctx.state === 'suspended') void ctx.resume();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -64,19 +54,9 @@ export function FocoPage() {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.6);
+      // Sem close, cada ciclo vazava um AudioContext na sessão.
+      osc.onended = () => { void ctx.close().catch(() => {}); };
     } catch {}
-  }
-
-  function tick() {
-    setSegundos(prev => {
-      if (prev <= 1) {
-        clearInterval(intervalRef.current!);
-        intervalRef.current = null;
-        if (!mutedRef.current) playAlerta();
-        return 0;
-      }
-      return prev - 1;
-    });
   }
 
   function iniciar() {
@@ -84,33 +64,49 @@ export function FocoPage() {
     setSegundos(FOCO_MIN * 60);
   }
 
+  /* Tick: intervalo único por ciclo (deps [state]). Antes `segundos` estava
+     nas deps e o setInterval era destruído/recriado a cada tick (drift). */
   useEffect(() => {
-    if ((state === 'foco' || state === 'pausa') && segundos > 0) {
-      intervalRef.current = setInterval(tick, 1000);
-    } else if (segundos === 0 && (state === 'foco' || state === 'pausa')) {
-      if (state === 'foco') {
-        const xp = 10 * (1 + cicles);
-        addXP(xp);
-        addLog({ timestamp: Date.now(), type: 'foco', description: `Ciclo de foco completo (${FOCO_MIN}min)`, xp });
-        const entry = { tipo: 'foco', minutos: FOCO_MIN, data: new Date().toISOString() };
-        setHistorico(h => [...h, entry]);
-        // O XP ja foi creditado por addLog (que grava no servidor). Aqui
-        // grava-se o HISTORICO da sessao; se falhar, o ciclo some do
-        // historico de foco sem o aluno perceber que perdeu o registro.
-        persistir(supabaseRepository.saveSessaoFoco('foco', FOCO_MIN), {
-          aoFalhar: () => setHistorico(h => h.filter(x => x !== entry)),
-          mensagem: 'O ciclo valeu XP, mas nao entrou no seu historico de foco.',
-        });
-        setCicles(p => p + 1);
-        setToast(`+${xp} XP por ciclo de foco!`, 'success');
-        setSessoesHoje(p => p + 1);
-        setState('concluido');
-      } else {
-        setState('concluido');
-      }
+    if (state !== 'foco' && state !== 'pausa') return;
+    intervalRef.current = setInterval(() => {
+      setSegundos(prev => {
+        if (prev <= 1) {
+          if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+          if (!mutedRef.current) playAlerta();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } };
+  }, [state]);
+
+  /* Conclusão do ciclo: efeito separado reagindo a `segundos === 0`.
+     O crédito acontece uma vez (o setState('concluido') desarma a guarda). */
+  useEffect(() => {
+    if (segundos !== 0 || (state !== 'foco' && state !== 'pausa')) return;
+    if (state === 'foco') {
+      const xp = 10 * (1 + cicles);
+      addXP(xp);
+      addLog({ timestamp: Date.now(), type: 'foco', description: `Ciclo de foco completo (${FOCO_MIN}min)`, xp });
+      const entry = { tipo: 'foco', minutos: FOCO_MIN, data: new Date().toISOString() };
+      setHistorico(h => [...h, entry]);
+      // O XP ja foi creditado por addLog (que grava no servidor). Aqui
+      // grava-se o HISTORICO da sessao; se falhar, o ciclo some do
+      // historico de foco sem o aluno perceber que perdeu o registro.
+      persistir(supabaseRepository.saveSessaoFoco('foco', FOCO_MIN), {
+        aoFalhar: () => setHistorico(h => h.filter(x => x !== entry)),
+        mensagem: 'O ciclo valeu XP, mas nao entrou no seu historico de foco.',
+      });
+      setCicles(p => p + 1);
+      setToast(`+${xp} XP por ciclo de foco!`, 'success');
+      setSessoesHoje(p => p + 1);
+      setState('concluido');
+    } else {
+      setState('concluido');
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [state, segundos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segundos, state]);
 
   function formatTime(s: number): string {
     const m = Math.floor(s / 60);
@@ -182,7 +178,7 @@ export function FocoPage() {
           ) : state !== 'concluido' ? (
             <div className="flex gap-3">
               <button
-                onClick={() => { clearInterval(intervalRef.current!); intervalRef.current = null; setState('concluido'); }}
+                onClick={() => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } setState('concluido'); }}
                 className="btn-ghost text-sm text-gray-400 hover:text-red-400"
               > Parar
               </button>

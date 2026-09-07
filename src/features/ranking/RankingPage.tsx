@@ -5,6 +5,7 @@ import { Medal, TrendingUp, Trophy, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { ListSkeleton } from '../../shared/ui/Skeleton';
 import { getRankingData } from '../../shared/lib/rankingEngine';
+import { calcLevel } from '../../shared/lib/utils';
 import type { RankingFilter, RankingData, RankingEntry } from '../../shared/types';
 
 const FILTERS: { id: RankingFilter; label: string; icon: typeof Trophy }[] = [
@@ -103,6 +104,7 @@ export function RankingPage() {
   const [filter, setFilter] = useState<RankingFilter>('geral');
   const [data, setData] = useState<RankingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [erroRanking, setErroRanking] = useState<string | null>(null);
 
   /*
    * A carga NAO depende mais de gamification.xp.
@@ -116,9 +118,16 @@ export function RankingPage() {
   const loadRanking = useCallback(async () => {
     if (!session) return;
     setLoading(true);
-    const result = await getRankingData(filter, session.uid, gamification.xp, gamification.streak);
-    setData(result);
-    setLoading(false);
+    setErroRanking(null);
+    try {
+      const result = await getRankingData(filter, session.uid, gamification.xp, gamification.streak);
+      setData(result);
+    } catch {
+      // Sem try/finally o skeleton ficava infinito numa falha de rede.
+      setErroRanking('Não foi possível carregar o ranking. Tente de novo.');
+    } finally {
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, session?.uid]);
 
@@ -127,8 +136,9 @@ export function RankingPage() {
   /** Reflete o XP atual do aluno sem refazer a lista inteira. */
   const entradas = useMemo(() => {
     if (!data) return [];
+    const nivelLocal = calcLevel(gamification.xp).level;
     const atualizadas = data.entries.map(e =>
-      e.destaque ? { ...e, xp: gamification.xp, streak: gamification.streak } : e,
+      e.destaque ? { ...e, xp: gamification.xp, streak: gamification.streak, level: nivelLocal } : e,
     );
     atualizadas.sort((a, b) => b.xp - a.xp);
     return atualizadas.map((e, i) => ({ ...e, posicao: i + 1 }));
@@ -242,7 +252,7 @@ export function RankingPage() {
             <p className="text-[10px] text-gray-500 mt-0.5">Seu XP</p>
           </div>
           <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums"> Nv. {gamification.level}
+            <p className="text-lg font-bold text-white tabular-nums"> Nv. {calcLevel(gamification.xp).level}
             </p>
             <p className="text-[10px] text-gray-500 mt-0.5">Seu nível</p>
           </div>
@@ -251,7 +261,17 @@ export function RankingPage() {
 
       {/* Ranking list */}
       <div className="glass rounded-2xl overflow-hidden">
-        {loading ? (
+        {erroRanking && !loading ? (
+          <div className="p-6 text-center">
+            <p className="text-sm text-amber-300">{erroRanking}</p>
+            <button
+              onClick={loadRanking}
+              className="mt-3 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/30 text-sm font-semibold hover:brightness-110 transition-all"
+            >
+              Tentar de novo
+            </button>
+          </div>
+        ) : loading ? (
           // Skeleton compartilhado, em vez do gradiente inline duplicado
           // que existia so aqui.
           <div className="p-6">

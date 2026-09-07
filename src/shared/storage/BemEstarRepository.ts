@@ -100,8 +100,23 @@ export class BemEstarRepository {
     return { alertaId: row?.alerta_id ?? null };
   }
 
-  /** Serie do indice. Sem alunoId, o proprio; com, um filho vinculado. */
-  async carregarBurnout(dias = 30, alunoId?: string): Promise<IndiceBurnout[]> {
+  /**
+   * Zera a base do modelo (migration 017): apaga telemetria e serie do
+   * proprio aluno via RPC. Devolve false sem jogar erro — o chamador
+   * decide o que contar ao aluno (offline = reset so local).
+   */
+  async reiniciarIndice(): Promise<boolean> {
+    if (!clienteAtivo()) return false;
+    try {
+      const sb = getSupabase()!;
+      const { error } = await sb.rpc('reiniciar_indice');
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Serie do indice. Sem alunoId, o proprio; com, um filho vinculado. */  async carregarBurnout(dias = 30, alunoId?: string): Promise<IndiceBurnout[]> {
     if (!clienteAtivo()) return [];
     const sb = getSupabase()!;
     const desde = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);

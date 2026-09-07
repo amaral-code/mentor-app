@@ -1,6 +1,6 @@
 // ===== Auth =====
 // Espelha o enum papel_usuario do banco.
-export type UserRole = 'student' | 'educator' | 'parent' | 'admin' | 'psychologist';
+export type UserRole = 'student' | 'educator' | 'parent' | 'admin' | 'psychologist' | 'teacher';
 
 /**
  * Perfil do usuario (tabela `perfis`).
@@ -31,6 +31,8 @@ export interface Session {
   role: UserRole;
   escolaId?: string | null;
   turmaId?: string | null;
+  /** Conta importada pela secretaria: precisa trocar a senha temporária. */
+  deveTrocarSenha?: boolean;
 }
 
 export type RolePage = 'dashboard' | 'educator-dashboard' | 'parent-dashboard';
@@ -85,6 +87,14 @@ export interface GamificationState {
 }
 
 // ===== Chat =====
+/** Thread do Mentor (migration 016): historico lateral da conta. */
+export interface Conversa {
+  id: string;
+  titulo: string;
+  modo: string;
+  criadoEm: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -108,6 +118,8 @@ export interface ChatMessage {
   citouProva?: boolean;
   /** Modo tematico ativo quando a resposta foi gerada. */
   modoChat?: string;
+  /** Toggle Explicativo/Comunicativo vigente na resposta (selo Didático/Macete). */
+  modoResposta?: 'explicativo' | 'comunicativo';
 }
 
 export interface KBEntry {
@@ -149,10 +161,21 @@ export interface ChallengeResult {
 export interface QuizQuestion {
   id: string;
   materia: string;
+  /** Assunto especifico da questao (ex.: "Funções afins"). Informado pela IA. */
+  topico?: string;
   enunciado: string;
+  /** Sempre 4 alternativas na geracao por IA; apenas uma correta. */
   alternativas: string[];
   correta: number; // index
   explicacao: string;
+  /** Pista curta que ajuda sem entregar a resposta. Informada pela IA. */
+  dica?: string;
+  /**
+   * Origem declarada pela IA: "ENEM 2022" quando inspirada em prova real,
+   * ou "inédita, estilo <banca>" quando criada no padrão da banca.
+   * Nunca apresentada como oficial quando for inédita.
+   */
+  fonte?: string;
   /**
    * Informada pela IA na geracao. Alimenta a feature "tempo demais em
    * questao facil" do modelo de fadiga - sem ela, ficar 4 minutos numa
@@ -305,7 +328,11 @@ export type TabId =
   | 'dashboard' | 'chat' | 'essay' | 'notebook' | 'quiz' | 'profile' | 'ranking'
   | 'foco' | 'comunidade' | 'store'
   // Modulo de bem-estar (migracoes 010/011)
-  | 'escudo' | 'audio' | 'calendario' | 'cuidado';
+  | 'escudo' | 'audio' | 'calendario' | 'cuidado'
+  // Agenda de consultas com psicologos (marketplace)
+  | 'agenda'
+  // Analytics do quiz (migration 015)
+  | 'estatisticas';
 
 export interface Tab {
   id: TabId;

@@ -13,6 +13,7 @@ import {
   ChatPersona,
   UserRole,
   ChallengeResult,
+  Conversa,
 } from '../shared/types';
 import { calculateSSC } from '../shared/lib/sscCalculator';
 import { detectEmotion, getMoodColor } from '../shared/lib/emotionEngine';
@@ -21,6 +22,7 @@ import { generatePlan, XP_PER_TASK } from '../shared/lib/plannerEngine';
 import { userRepository } from '../shared/storage/UserRepository';
 import { supabaseRepository } from '../shared/storage/SupabaseRepository';
 import { isSupabaseConfigured } from '../shared/lib/supabase';
+import { safeSet } from '../shared/lib/safeStorage';
 import { calcLevel, getToday } from '../shared/lib/utils';
 
 interface AppState {
@@ -54,6 +56,10 @@ interface AppState {
   chatMessages: ChatMessage[];
   isMuted: boolean;
 
+  /** Threads do Mentor (migration 016). chatMessages = thread ativa. */
+  conversas: Conversa[];
+  conversaAtivaId: string | null;
+
   lastCorrection: EssayCorrection | null;
 
   quizResults: QuizResult[];
@@ -75,7 +81,14 @@ interface AppState {
   recalcSSC: () => void;
   detectAndSetMood: (text: string) => Promise<MoodType>;
   setMood: (mood: MoodType) => void;
-  addChatMessage: (msg: ChatMessage) => void;
+  addChatMessage: (msg: ChatMessage, conversaId?: string | null) => void;
+  setConversas: (conversas: Conversa[]) => void;
+  /** Cria thread (aguarda o id do banco quando online) e abre vazia. */
+  novaConversa: () => Promise<void>;
+  /** Troca a thread ativa carregando as mensagens dela. */
+  selecionarConversa: (id: string | null) => Promise<void>;
+  /** Apaga a thread (mensagens caem juntas no banco) e abre outra. */
+  apagarConversa: (id: string) => Promise<void>;
   addXP: (n: number) => void;
   addLog: (entry: LogEntry) => void;
   setDailyPlan: (plan: DailyPlan | null) => void;
@@ -144,7 +157,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       // Sem escopo: este e o generalista, e e para ele que os outros
       // mandam o aluno quando a pergunta foge da materia.
       instruction:
-        'Voce e o mentor geral do ENEM. Ajuda com qualquer materia, organizacao de estudo e duvidas sobre a prova. Quando a pergunta for muito ampla, escolha um recorte e comece por ele em vez de listar tudo.',
+        'Voce e o mentor geral do ENEM: cobre qualquer materia, estrategia de prova (logica da TRI, gestao do tempo e ordem de resolucao), redacao rumo ao 1000 e cronogramas de estudo para quem trabalha de dia e estuda a noite. Quando a pergunta for ampla, escolha um recorte e comece por ele em vez de listar tudo.',
       createdAt: 0,
     },
     {
@@ -154,7 +167,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       color: '#3b82f6',
       escopo: 'matemática: álgebra, funções, geometria plana e espacial, estatística, probabilidade, análise combinatória, razão e proporção',
       instruction:
-        'Voce ensina matematica para o ENEM. Resolva passo a passo mostrando a conta, um passo por linha, e termine apontando a pegadinha mais comum nesse tipo de questao. Quando o aluno errar, mostre em que passo o raciocinio saiu do trilho antes de dar a resposta certa.',
+        'Voce ensina matematica para o ENEM, e SOMENTE matematica. Resolva passo a passo mostrando a conta, um passo por linha, e termine apontando a pegadinha mais comum nesse tipo de questao. Quando o aluno errar, mostre em que passo o raciocinio saiu do trilho antes de dar a resposta certa. Se perguntarem de outra materia, recuse em uma frase educada e traga a conversa de volta para a matematica, oferecendo o que voce pode resolver.',
       createdAt: 0,
     },
     {
@@ -164,7 +177,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       color: '#10b981',
       escopo: 'língua portuguesa: gramática, interpretação de texto, literatura brasileira e redação',
       instruction:
-        'Voce ensina portugues para o ENEM. Explique a regra com um exemplo curto antes da teoria, e sempre mostre a frase errada ao lado da corrigida. Em redacao, aponte a competencia do ENEM que esta em jogo.',
+        'Voce ensina exclusivamente lingua portuguesa para o ENEM: gramatica, interpretacao de texto, literatura brasileira e redacao - e nada fora disso. Explique a regra com um exemplo curto antes da teoria, e sempre mostre a frase errada ao lado da corrigida. Em redacao, aponte a competencia do ENEM que esta em jogo.',
       createdAt: 0,
     },
     {
@@ -174,7 +187,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       color: '#8b5cf6',
       escopo: 'ciências da natureza: biologia, física e química',
       instruction:
-        'Voce ensina ciencias da natureza para o ENEM. Comece pelo fenomeno do cotidiano e so depois nomeie o conceito. Em calculo, deixe a unidade visivel em cada etapa.',
+        'Voce ensina exclusivamente ciencias da natureza para o ENEM: biologia, fisica e quimica - e nada fora disso. Comece pelo fenomeno do cotidiano e so depois nomeie o conceito. Em calculo, deixe a unidade visivel em cada etapa.',
       createdAt: 0,
     },
     {
@@ -184,7 +197,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       color: '#ec4899',
       escopo: 'ciências humanas: história, geografia, filosofia e sociologia',
       instruction:
-        'Voce ensina ciencias humanas para o ENEM. Situe o fato no tempo e no espaco, ligue causa e consequencia, e conecte com o Brasil de hoje quando fizer sentido - e assim que a prova costuma cobrar.',
+        'Voce ensina exclusivamente ciencias humanas para o ENEM: historia, geografia, filosofia e sociologia - e nada fora disso. Situe o fato no tempo e no espaco, ligue causa e consequencia, e conecte com o Brasil de hoje quando fizer sentido - e assim que a prova costuma cobrar.',
       createdAt: 0,
     },
   ],
@@ -206,6 +219,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   chatMessages: [],
   isMuted: false,
+  conversas: [],
+  conversaAtivaId: null,
 
   lastCorrection: null,
   quizResults: [],
@@ -246,6 +261,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       quizResults: [],
       challengeResults: [],
       dailyPlan: null,
+      conversas: [],
+      conversaAtivaId: null,
       gamification: { xp: 0, level: 1, streak: 1, lastAccessDate: getToday() },
     });
   },
@@ -270,7 +287,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   detectAndSetMood: async (text) => {
     const apiKey = get().apiKey;
     let mood: MoodType;
-    let aiReason = '';
     if (apiKey) {
       try {
         const raw = await analyzeMoodWithAI(text, apiKey);
@@ -279,8 +295,10 @@ export const useAppStore = create<AppState>((set, get) => ({
           .replace(/```\s*$/gm, '')
           .trim();
         const parsed = JSON.parse(cleaned);
-        mood = parsed.mood as MoodType;
-        aiReason = parsed.reason || '';
+        // O modelo pode devolver qualquer string: só aceita os 10 estados
+        // válidos, senão o humor inválido quebra SSC/plano/cores.
+        const validos: MoodType[] = ['stress', 'anxiety', 'sadness', 'tired', 'demotivated', 'focused', 'motivated', 'happy', 'energetic', 'neutral'];
+        mood = validos.includes(parsed.mood) ? parsed.mood : detectEmotion(text).mood;
       } catch {
         const result = detectEmotion(text);
         mood = result.mood;
@@ -312,16 +330,90 @@ export const useAppStore = create<AppState>((set, get) => ({
     get().regeneratePlan();
   },
 
-  addChatMessage: (msg) => {
-    set((s) => ({ chatMessages: [...s.chatMessages, msg] }));
+  addChatMessage: (msg, conversaIdArg) => {
+    // conversaId capturado no envio: se o aluno trocou de thread durante o
+    // await da IA, a resposta é salva na thread de origem (banco) em vez de
+    // cair na thread nova — e a tela atual não é poluída.
+    const conversaId = conversaIdArg !== undefined ? conversaIdArg : get().conversaAtivaId;
+    const aindaNaMesma = conversaId === get().conversaAtivaId;
+    if (aindaNaMesma) {
+      set((s) => ({ chatMessages: [...s.chatMessages, msg] }));
+    }
+    /* Salvamento silencioso de proposito: a mensagem fica na tela e o app
+       tenta gravar em segundo plano, sem toast. O aviso antigo aparecia
+       toda hora e era so ruido. */
+    supabaseRepository.saveChatMessage(msg, conversaId).catch(() => {});
     /*
-     * Nao desfaz: tirar a mensagem da tela no meio de uma conversa seria
-     * pior que mante-la. Mas o aluno precisa saber que aquele trecho nao
-     * estara aqui quando ele voltar.
+     * Titulo automatico: a primeira mensagem do aluno batiza a thread
+     * ("Nova conversa" vira o assunto). Silencioso e best-effort.
      */
-    persistir(supabaseRepository.saveChatMessage(msg), {
-      mensagem: 'Esta mensagem nao foi salva e pode sumir ao recarregar.',
-    });
+    if (msg.role === 'user' && conversaId && !conversaId.startsWith('tmp_')) {
+      const conv = get().conversas.find((c) => c.id === conversaId);
+      const soSaudacao = get().chatMessages.filter((m) => m.role === 'user').length <= 1;
+      if (conv && conv.titulo === 'Nova conversa' && soSaudacao) {
+        const titulo = msg.text.trim().slice(0, 42) || 'Nova conversa';
+        set((s) => ({
+          conversas: s.conversas.map((c) => (c.id === conversaId ? { ...c, titulo } : c)),
+        }));
+        supabaseRepository.renameConversa(conversaId, titulo).catch(() => {});
+      }
+    }
+  },
+
+  setConversas: (conversas) => set({ conversas }),
+
+  novaConversa: async () => {
+    // Online: espera o id definitivo para as mensagens ja nascerem
+    // amarradas. Offline: thread so-local (tmp_) que nao quebra nada.
+    let conversa: Conversa = {
+      id: `tmp_${Date.now()}`,
+      titulo: 'Nova conversa',
+      modo: 'enem_geral',
+      criadoEm: Date.now(),
+    };
+    try {
+      const salva = await supabaseRepository.createConversa();
+      if (salva) conversa = salva;
+    } catch {
+      /* offline: segue local, avisa sem travar */
+      get().setToast('Sem conexão: a conversa fica só neste aparelho.', 'info');
+    }
+    set((s) => ({
+      conversas: [conversa, ...s.conversas],
+      conversaAtivaId: conversa.id,
+      chatMessages: [],
+    }));
+  },
+
+  selecionarConversa: async (id) => {
+    if (get().conversaAtivaId === id) return;
+    set({ conversaAtivaId: id, chatMessages: [] });
+    if (!id) return;
+    try {
+      const msgs = await supabaseRepository.loadChat(100, id);
+      // Troca rapida de thread: so aplica se ainda for a ativa.
+      if (get().conversaAtivaId === id) set({ chatMessages: msgs });
+    } catch {
+      get().setToast('Não foi possível carregar a conversa.', 'error');
+    }
+  },
+
+  apagarConversa: async (id) => {
+    const { conversas, conversaAtivaId } = get();
+    try {
+      await supabaseRepository.deleteConversa(id);
+    } catch {
+      get().setToast('Não foi possível apagar a conversa.', 'error');
+      return;
+    }
+    const restantes = conversas.filter((c) => c.id !== id);
+    set({ conversas: restantes });
+    get().setToast('Conversa apagada.', 'info');
+    if (conversaAtivaId === id) {
+      // Abre a mais recente; sem nenhuma, tela limpa (a saudacao do
+      // ChatPage assume sozinha).
+      await get().selecionarConversa(restantes[0]?.id ?? null);
+    }
   },
 
   /**
@@ -368,7 +460,11 @@ export const useAppStore = create<AppState>((set, get) => ({
      */
     persistir(
       supabaseRepository.registrarXp(entry.type, entry.description, xp).then((g) => {
-        if (g) set({ gamification: g });
+        /* Pela updateGamification: o nivel e SEMPRE recalculado do XP via
+           calcLevel, nunca confiado no campo level do servidor (a formula
+           plana antiga da migration 003 ainda pode estar valendo no banco
+           de quem nao rodou a 008). */
+        if (g) get().updateGamification(g);
       }),
       { mensagem: 'Este XP nao foi registrado. Ele nao vai contar no seu total.' },
     );
@@ -412,7 +508,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     supabaseRepository
       .concluirTarefa(plano.date, taskId)
       .then((g) => {
-        if (g) set({ gamification: g });
+        if (g) get().updateGamification(g);
       })
       .catch(() => {
         // servidor recusou: desfaz a marcacao para nao mentir ao aluno
@@ -486,7 +582,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setShowPersonaManager: (v) => set({ showPersonaManager: v }),
   setApiKey: (key) => {
-    localStorage.setItem('mm_api_key', key);
+    safeSet('mm_api_key', key);
     set({ apiKey: key });
   },
   setIsMuted: (v) => set({ isMuted: v }),

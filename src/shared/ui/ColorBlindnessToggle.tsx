@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { lerAcessibilidade, salvarAcessibilidade, type TipoDaltonismo } from '../lib/acessibilidade';
 
-type ColorBlindnessType = 'normal' | 'protanopia' | 'protanomaly' | 'deuteranopia' | 'deuteranomaly' | 'tritanopia' | 'tritanomaly' | 'achromatopsia' | 'achromatomaly';
+type ColorBlindnessType = TipoDaltonismo;
 
 interface GroupOption {
   type: ColorBlindnessType;
@@ -21,21 +22,12 @@ const OPTIONS: GroupOption[] = [
 ];
 
 /*
- * Unica preferencia que fica em localStorage de proposito.
- *
- * O filtro de daltonismo precisa valer JA na tela de login, antes de haver
- * sessao para consultar. E uma configuracao de acessibilidade do
- * dispositivo, sem dado pessoal, entao guardar local e o comportamento
- * certo: quem usa o computador da escola nao herda o ajuste da conta.
+ * Lê e escreve pelo módulo central (acessibilidade.ts): o painel de
+ * Acessibilidade do Perfil usa a mesma fonte, então os dois controles
+ * andam sempre juntos. Continua valendo no login, antes da sessão.
  */
-const STORAGE_KEY = 'mm_color_blindness';
-
 function getInitialType(): ColorBlindnessType {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && OPTIONS.some(o => o.type === saved)) return saved as ColorBlindnessType;
-  } catch { /* ignore */ }
-  return 'normal';
+  return lerAcessibilidade().daltonismo;
 }
 
 const GROUP_ORDER = ['', 'Vermelho-Verde', 'Azul-Amarelo', 'Completo'];
@@ -45,15 +37,11 @@ export function ColorBlindnessToggle() {
   const [current, setCurrent] = useState<ColorBlindnessType>(getInitialType);
 
   const applyFilter = useCallback((type: ColorBlindnessType) => {
-    if (type === 'normal') {
-      document.documentElement.style.filter = '';
-    } else {
-      document.documentElement.style.filter = `url(#cb-${type})`;
-    }
+    const pref = lerAcessibilidade();
+    salvarAcessibilidade({ ...pref, daltonismo: type });
   }, []);
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, current); } catch { /* ignore */ }
     applyFilter(current);
   }, [current, applyFilter]);
 

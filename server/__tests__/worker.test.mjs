@@ -153,7 +153,8 @@ describe('/tts', () => {
 
   it('sanitiza voz, velocidade e tamanho do texto', async () => {
     const vozRuim = await chamar('/tts', { corpo: { texto: 'x', voz: 'en-US-Hacker; drop' }, env: envTts });
-    expect(saidaPara(vozRuim, 'texttospeech').body.voice.name).toBe('pt-BR-Neural2-B');
+    // Fallback sanitizado: Ana (Neural2-A, feminina) — a voz padrão das pílulas.
+    expect(saidaPara(vozRuim, 'texttospeech').body.voice.name).toBe('pt-BR-Neural2-A');
 
     const rapido = await chamar('/tts', { corpo: { texto: 'x', velocidade: 99 }, env: envTts });
     expect(saidaPara(rapido, 'texttospeech').body.audioConfig.speakingRate).toBe(1.6);
@@ -295,8 +296,8 @@ describe('/api/chat/completions', () => {
 
     // O cliente manda contexto; a INSTRUCAO e do servidor.
     expect(system).toContain('MODO ATIVO: Matemática & Exatas');
-    expect(system).toContain('Nao entregue a resposta final de imediato');
-    expect(system).toContain('120 palavras'); // densidade de madrugada
+    expect(system).toContain('Responda a duvida de forma COMPLETA');
+    expect(system).toContain('150 palavras'); // densidade de madrugada
   });
 
   it('liga a busca e devolve as fontes que viram badges', async () => {
@@ -401,9 +402,16 @@ describe('/api/essays/upload-and-grade', () => {
     ['generativelanguage', () => respostaGeminiTexto(JSON.stringify(correcao))],
   ];
 
+  /** JPEG mínimo válido (magic-bytes FF D8 FF): o worker valida bytes reais. */
+  function bytesJpeg() {
+    const b = new Uint8Array(1024).fill(120);
+    b[0] = 0xff; b[1] = 0xd8; b[2] = 0xff;
+    return b;
+  }
+
   async function enviarFoto(opcoes = {}) {
     const form = new FormData();
-    const bytes = new Uint8Array(1024).fill(120);
+    const bytes = opcoes.bytes ?? bytesJpeg();
     form.append('imagem', new File([bytes], 'redacao.jpg', { type: opcoes.tipo ?? 'image/jpeg' }));
     if (opcoes.tema) form.append('tema', opcoes.tema);
 
@@ -447,8 +455,14 @@ describe('/api/essays/upload-and-grade', () => {
   });
 
   it('recusa arquivo que nao seja imagem', async () => {
-    const r = await enviarFoto({ tipo: 'application/pdf' });
+    const r = await enviarFoto({ tipo: 'application/pdf', bytes: new Uint8Array(1024).fill(120) });
     expect(r.status).toBe(415);
+  });
+
+  it('recusa imagem declarada com bytes falsos (vale o magic-byte, nao o tipo)', async () => {
+    const r = await enviarFoto({ tipo: 'image/jpeg', bytes: new Uint8Array(1024).fill(120) });
+    expect(r.status).toBe(415);
+    expect(r.dados.error).toBe('tipo_invalido');
   });
 
   it('sobe a foto no bucket privado, dentro da pasta do dono', async () => {
@@ -516,5 +530,118 @@ describe('/api/essays/upload-and-grade', () => {
     expect(r.status).toBe(200);
     expect(r.dados.total_score).toBe(880);
     expect(r.dados.essay_id).toBeNull();
+  });
+});
+
+describe('/api/turmas/import', () => {
+  const ESCOLA = '22222222-3333-4444-5555-666666666666';
+  const TURMA = '33333333-4444-5555-6666-777777777777';
+  const EDUCADOR = '44444444-5555-6666-7777-888888888888';
+
+  const mundoImport = (papel = 'educator') => [
+    ['/auth/v1/user', () => json({ id: EDUCADOR })],
+    ['/rest/v1/perfis', () => json([{ papel, escola_id: ESCOLA }])],
+    ['/rest/v1/escolas', () => json([{ id: ESCOLA, nome: 'Escola Sol', codigo_instituicao: 'SOL2026A' }])],
+    ['/rest/v1/turmas', () => json([{ id: TURMA, nome: '3A', codigo: 'ABC123' }])],
+    ['/auth/v1/admin/users', () => json({ id: '55555555-6666-7777-8888-999999999999' })],
+    ['/auth/v1/admin/generate_link', () => json({ action_link: 'https://projeto.supabase.co/auth/v1/verify?token=magico' })],
+    ['api.resend.com', () => json({ id: 'email-1' })],
+  ];
+
+  const corpo = {
+    alunos: [{ nome: 'Ana Silva', sala: '3A', email: 'mae@test.br', telefone: '(11) 99999-8888' }],
+  };
+  const cabecalhos = { 'X-Supabase-Auth': 'jwt' };
+  // Sem DEEPSEEK_API_KEY: segue com dados crus (ia: false), sem custo.
+  const envImport = { ...ENV, RESEND_API_KEY: 'chave-resend' };
+
+  it('exige sessao', async () => {
+    expect((await chamar('/api/turmas/import', { corpo, respostas: mundoImport() })).status).toBe(401);
+  });
+
+  it('barra quem nao e secretaria', async () => {
+    const r = await chamar('/api/turmas/import', { corpo, cabecalhos, respostas: mundoImport('student') });
+    expect(r.status).toBe(403);
+    expect(saidaPara(r, '/auth/v1/admin/users')).toBeUndefined();
+  });
+
+  it('cria aluno + responsavel, vincula turma e envia convite sem expor senha', async () => {
+    const r = await chamar('/api/turmas/import', { corpo, cabecalhos, respostas: mundoImport(), env: envImport });
+    expect(r.status).toBe(200);
+    expect(r.dados.criados).toBe(1);
+    expect(r.dados.codigoInstituicao).toBe('SOL2026A');
+    expect(r.dados.emailsEnviados).toBe(1);
+
+    const [res] = r.dados.resultados;
+    expect(res.ok).toBe(true);
+    expect(res.turma).toBe('3A');
+    expect(res.codigoTurma).toBe('ABC123');
+    // Com email enviado, a senha temporária NÃO volta no relatório.
+    expect(res.senhaTemporaria).toBeUndefined();
+    expect(res.login).toContain('@alunos.');
+
+    const criacoes = r.saidas.filter((s) => s.url.includes('/auth/v1/admin/users'));
+    expect(criacoes).toHaveLength(2); // aluno + responsável
+    expect(criacoes[0].body.email_confirm).toBe(true);
+
+    const email = saidaPara(r, 'api.resend.com');
+    expect(email.body.to).toEqual(['mae@test.br']);
+    expect(email.body.text).toContain('SOL2026A');
+    expect(email.body.text).toContain('ABC123');
+    expect(email.body.text).toContain('token=magico');
+  });
+
+  it('sem Resend, credenciais voltam no relatorio para repasse manual', async () => {
+    const r = await chamar('/api/turmas/import', { corpo, cabecalhos, respostas: mundoImport(), env: ENV });
+    expect(r.status).toBe(200);
+    expect(r.dados.emailConfigurado).toBe(false);
+    const [res] = r.dados.resultados;
+    expect(res.ok).toBe(true);
+    expect(res.senhaTemporaria).toMatch(/^[A-Za-z2-9]{12}$/);
+    expect(res.loginResponsavel).toBe('mae@test.br');
+  });
+
+  it('IA normaliza e associa a turma quando ha DEEPSEEK_API_KEY', async () => {
+    const normalizado = {
+      alunos: [{
+        nome: 'Ana Souza',
+        sala: '3A',
+        turmaId: '33333333-4444-5555-6666-777777777777',
+        email: 'mae@test.br',
+        telefone: '(11) 99999-8888',
+        tipo: 'student',
+        problemas: [],
+      }],
+    };
+    const respostas = [
+      ...mundoImport(),
+      ['api.deepseek.com', () => json({ choices: [{ message: { content: JSON.stringify(normalizado) } }] })],
+    ];
+    const r = await chamar('/api/turmas/import', {
+      corpo: { alunos: [{ nome: 'ana souza', sala: '3a', email: 'mae@test.br', telefone: '(11) 99999-8888' }] },
+      cabecalhos,
+      respostas,
+      env: { ...envImport, DEEPSEEK_API_KEY: 'ds-teste' },
+    });
+    expect(r.status).toBe(200);
+    expect(r.dados.normalizadoPorIA).toBe(true);
+    const [res] = r.dados.resultados;
+    expect(res.ok).toBe(true);
+    expect(res.nome).toBe('Ana Souza');
+    expect(res.codigoTurma).toBe('ABC123');
+  });
+
+  it('linha invalida nao cria conta e explica o motivo', async () => {
+    const r = await chamar('/api/turmas/import', {
+      corpo: { alunos: [{ nome: 'Sem Email', sala: '3A', email: 'errado', telefone: '' }] },
+      cabecalhos,
+      respostas: mundoImport(),
+      env: envImport,
+    });
+    expect(r.status).toBe(200);
+    expect(r.dados.criados).toBe(0);
+    expect(r.dados.resultados[0].ok).toBe(false);
+    expect(r.dados.resultados[0].erro).toContain('email');
+    expect(saidaPara(r, '/auth/v1/admin/users')).toBeUndefined();
   });
 });

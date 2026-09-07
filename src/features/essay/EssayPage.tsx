@@ -111,8 +111,7 @@ export function EssayPage() {
     if (text.trim().length < 50) return;
     setIsCorrecting(true);
     try {
-      const correction = await runCorrection(text, tema, false);
-      setLastCorrection(correction);
+      await runCorrection(text, tema, false);
     } catch (e) {
       setToast('Erro na correção: ' + (e instanceof Error ? e.message : 'erro desconhecido'), 'error');
     } finally {
@@ -131,7 +130,11 @@ export function EssayPage() {
     setLastCorrection(correction);
     const xpGain = correction.notaFinal >= 600 ? 100 : 50;
     addXP(xpGain);
-    addLog({ timestamp: Date.now(), type: 'essay', description: `Redação corrigida: ${correction.notaFinal}/1000`, xp: xpGain });
+    // No desafio o addLog (que persiste o XP no servidor) acontece uma única
+    // vez dentro de addChallengeResult — sem isso o XP entrava em dobro.
+    if (!isChallenge) {
+      addLog({ timestamp: Date.now(), type: 'essay', description: `Redação corrigida: ${correction.notaFinal}/1000`, xp: xpGain });
+    }
     if (!isMuted) {
       if (correction.notaFinal >= 600) playCorrect(); else playError();
     }
@@ -199,7 +202,7 @@ export function EssayPage() {
       const remaining = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
       setTimeLeft(remaining);
       if (remaining <= 0) {
-        if (timerRef.current) window.clearInterval(timerRef.current);
+        if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
         setTimeUp(true);
         setChallengeSubmitted(true);
         setChallengeIsCorrecting(true);
@@ -214,7 +217,7 @@ export function EssayPage() {
       }
     }, 1000);
     return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
+      if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [challengeOpen, deadline, challengeSubmitted, theme]);
@@ -225,7 +228,7 @@ export function EssayPage() {
   async function handleChallengeSubmit() {
     if (challengeText.trim().length < 50) return;
     if (challengeSubmitted) return;
-    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
     setTimeUp(false);
     setChallengeSubmitted(true);
     setChallengeIsCorrecting(true);
@@ -249,7 +252,7 @@ export function EssayPage() {
     setChallengeCorrection(null);
     setChallengeSubmitted(false);
     setTimeUp(false);
-    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
   }
 
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;

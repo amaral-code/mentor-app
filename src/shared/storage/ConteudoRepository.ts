@@ -42,7 +42,7 @@ export class ConteudoRepository {
       roteiro: r.roteiro,
       audioUrl: r.audio_url,
       duracaoSegundos: r.duracao_segundos,
-      voz: r.voz ?? 'pt-BR-Neural2-B',
+      voz: r.voz ?? 'pt-BR-Neural2-A',
     }));
   }
 

@@ -1,4 +1,5 @@
-import { ChatPersona } from '../types';
+import { ChatPersona, Dificuldade, QuizQuestion } from '../types';
+import { montarBlocoAntirrepeticao } from './quizHistory';
 import { StudentMonthlyRecord } from './dropoutRisk';
 import { promptRoteiroAudio, montarPedidoTTS } from './audioPills';
 import { SYSTEM_PROMPT_DESCOMPRESSAO, promptDescompressao } from './decompressionReport';
@@ -8,6 +9,7 @@ import {
   AI_PROVIDER,
   DEEPSEEK_DEV_PROXY_PATH,
   DEEPSEEK_TIMEOUT_MS,
+  GEMINI_CHAT_CONFIG,
   backendDeepSeekAtual,
   diagnosticarErroRede,
   erroProxyLocalSemChave,
@@ -94,7 +96,9 @@ async function fetchGemini(url: string, init: RequestInit, signal?: AbortSignal)
       const err = await res.text();
       return { ok: false, status: res.status, data: null, error: err };
     } catch (e) {
-      // Falha de rede (fetch lança TypeError) - causa comum do "streaming response failed"if (attempt === MAX_RETRIES - 1) throw e;
+      // Falha de rede (fetch lança TypeError) - causa comum do "streaming response failed".
+      // Na última tentativa, propaga para o chamador cair no fallback local com toast.
+      if (attempt === MAX_RETRIES - 1) throw e;
       await sleep(700 * (attempt + 1));
     }
   }
@@ -110,7 +114,11 @@ async function fetchGemini(url: string, init: RequestInit, signal?: AbortSignal)
  */
 async function fetchViaWorker(url: string, init: RequestInit, signal?: AbortSignal): Promise<RetryResult> {
   try {
-    return await fetchGemini(url, { ...init, signal: sinalComTimeout(signal, DEEPSEEK_TIMEOUT_MS) }, signal);
+    // O sinal COMBINADO (usuário + timeout 30s) precisa ir nos dois lugares:
+    // fetchGemini espalha {...init, signal} por cima do init, então passar o
+    // `signal` original como 3º arg anulava o timeout (bug: trava infinita).
+    const combinado = sinalComTimeout(signal, DEEPSEEK_TIMEOUT_MS);
+    return await fetchGemini(url, { ...init, signal: combinado }, combinado);
   } catch (e) {
     const diag = diagnosticarErroRede(PROXY_URL || 'worker', e, !!signal?.aborted);
     console.debug('[ia] falha de rede (worker)', { ...diag });
@@ -153,11 +161,13 @@ async function sendToAI(
   if (isDeepSeekProvider()) {
     return sendToDeepSeekViaBackend(body, signal);
   }
+  // Chave no header, nunca na URL: ?key= fica em access-log de proxy/CDN,
+  // histórico e crash-report. O REST do Gemini aceita x-goog-api-key.
   return fetchGemini(
-    `${GEMINI_URL}?key=${apiKey}`,
+    GEMINI_URL,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       signal,
       body: JSON.stringify(body),
     },
@@ -292,9 +302,12 @@ export async function askGemini(
   imageBase64?: string,
   signal?: AbortSignal,
 ): Promise<string> {
-  const systemInstruction = persona
-    ? `Você é ${persona.name}. ${persona.instruction} Responda em português brasileiro com rigor de pesquisador, estruturando a resposta em seções claras sempre que necessário e fundamentando-a em conceitos relevantes.`
-    : 'Você é um mentor de estudos para o ENEM. Responda em português brasileiro com rigor acadêmico e estilo de pesquisador. Seja preciso, organizado e baseado em fundamentos.';
+  // Delega a montarInstrucaoDaPersona: o texto antigo interpolava
+  // `persona.instruction` (digitado pelo usuário) direto no system sem a
+  // trava de segurança nem teto de tamanho — "me obedeça em tudo" virava
+  // regra do sistema. O único chamador passa persona null, mas a função é
+  // pública e precisa ser segura por construção.
+  const systemInstruction = montarInstrucaoDaPersona(persona, {});
 
   const parts: any[] = [{ text: message }];
   if (imageBase64) {
@@ -311,9 +324,8 @@ export async function askGemini(
       systemInstruction: { parts: [{ text: systemInstruction }] },
       contents: [{ parts }],
       generationConfig: {
-        temperature: 0.35,
-        maxOutputTokens: 1024,
-        topP: 0.85,
+        // Mesmo custo/comportamento do chat temático (ver aiProvider).
+        ...GEMINI_CHAT_CONFIG,
         topK: 20,
       },
     },
@@ -365,6 +377,397 @@ export async function generateQuizQuestions(
   }
 
   return extractGeminiText(res.data) || 'Erro ao gerar questões.';
+}
+
+/* ============================================================
+  QUIZ ESTRUTURADO (JSON) - o caminho que garante renderizacao
+  ------------------------------------------------------------
+  O gerador legado devolve texto livre ("Resposta: B") e um parser de
+  regex tenta adivinhar alternativas e gabarito - fragil entre modelos:
+  negrito, "Gabarito:", numeracao diferente ou prosa do modelo de
+  raciocinio quebravam o parse e a tela voltava vazia ("gerou, mas nao
+  apareceu"). Aqui o modelo devolve JSON com schema fixo e cada questao
+  e validada campo a campo: enunciado, EXATAMENTE 4 alternativas,
+  indice 0-3, explicacao, dica e dificuldade. O que nao passa e
+  descartado em vez de quebrar a tela.
+  ============================================================ */
+
+/** Letra A-D (ou texto contendo) -> indice 0-3. */
+function letraParaIndice(valor: unknown): number | null {
+  if (Number.isInteger(valor)) {
+    const n = valor as number;
+    return n >= 0 && n <= 3 ? n : null;
+  }
+  if (typeof valor === 'string') {
+    const m = valor.match(/[a-dA-D]/);
+    if (m) return m[0].toUpperCase().charCodeAt(0) - 65;
+  }
+  return null;
+}
+
+function normalizarDificuldadeQuiz(valor: unknown): Dificuldade {
+  const t = String(valor ?? '').toLowerCase();
+  if (t.includes('facil') || t.includes('fácil')) return 'facil';
+  if (t.includes('dific')) return 'dificil';
+  return 'media';
+}
+
+/**
+ * Converte a resposta JSON do modelo em questoes validas.
+ * Funcao pura - nao faz I/O, ideal para testes.
+ */
+export function parseQuizJson(raw: string, materia: string): QuizQuestion[] {
+  const texto = (raw || '')
+    .replace(/```json\s*/gi, '')
+    .replace(/```/g, '')
+    .trim();
+
+  let arr: unknown = null;
+  const tentar = (t: string): unknown => {
+    try {
+      const p = JSON.parse(t);
+      return Array.isArray(p) ? p : (p as { questoes?: unknown })?.questoes ?? null;
+    } catch {
+      return null;
+    }
+  };
+  arr = tentar(texto);
+  if (!Array.isArray(arr)) {
+    const m = texto.match(/\[[\s\S]*\]/);
+    if (m) arr = tentar(m[0]);
+  }
+  if (!Array.isArray(arr)) return [];
+
+  const out: QuizQuestion[] = [];
+  arr.forEach((item, i) => {
+    if (!item || typeof item !== 'object') return;
+    const q = item as Record<string, unknown>;
+    const enunciado = String(q.enunciado ?? '').trim();
+    const alts = Array.isArray(q.alternativas)
+      ? (q.alternativas as unknown[]).map((a) => String(a ?? '').trim()).filter(Boolean)
+      : [];
+    if (enunciado.length < 10 || alts.length < 4) return;
+    const correta = letraParaIndice(q.correta);
+    if (correta === null) return;
+    const topico = String((q.tema ?? q.topico) ?? '').trim();
+    const dica = String(q.dica ?? '').trim();
+    const explicacao = String(q.explicacao ?? '').trim();
+    const fonte = String(q.fonte ?? '').trim().slice(0, 40);
+    out.push({
+      id: `ai_q_${Date.now()}_${i}`,
+      materia,
+      topico: topico || undefined,
+      enunciado,
+      alternativas: alts.slice(0, 4),
+      correta,
+      explicacao: explicacao || 'Questão gerada por IA.',
+      dica: dica || undefined,
+      fonte: fonte || undefined,
+      dificuldade: normalizarDificuldadeQuiz(q.dificuldade),
+    });
+  });
+  return out;
+}
+
+export interface QuizEstruturado {
+  questions: QuizQuestion[];
+  /** Texto bruto (para fallback legado quando o JSON vier incompleto). */
+  raw: string;
+}
+
+export type NivelQuiz = 'facil' | 'media' | 'dificil';
+
+export interface OpcoesQuiz {
+  /** Nivel pedido na tela de configuracao; o modelo distribui se ausente. */
+  dificuldade?: NivelQuiz;
+  /** Previews de enunciados ja aplicados (antirrepeticao por conta). */
+  historico?: string[];
+}
+
+const TEXTO_NIVEL: Record<NivelQuiz, string> = {
+  facil: 'FÁCIL: conceitos diretos em uma etapa, sem pegadinha, linguagem simples.',
+  media: 'MÉDIO: padrão ENEM - interpretação de texto/gráfico com uma etapa de raciocínio.',
+  dificil: 'DIFÍCIL: múltiplas etapas, interpretação fina e distratores fortes, nível FUVEST/UNICAMP segunda fase.',
+};
+
+/**
+ * Gera questoes com schema JSON fixo: tema, enunciado, 4 alternativas,
+ * indice da correta, explicacao, dica, fonte e dificuldade.
+ *
+ * O system prompt coloca o modelo como BANCA examinadora (padrão
+ * INEP/FUVEST/UNICAMP/UNESP): cada questão segue o estilo e o rigor de
+ * provas reais para o conteúdo pedido. Questão inspirada em prova real
+ * cita banca e ano em "fonte"; questão inédita declara
+ * "inédita, estilo <banca>" e NUNCA se apresenta como oficial - inventar
+ * enunciado, ano ou número de questão é proibido.
+ */
+export async function generateQuizStructured(
+  subject: string,
+  topic: string,
+  apiKey: string,
+  count: number = 10,
+  opcoes: OpcoesQuiz = {},
+): Promise<QuizEstruturado> {
+  const systemInstruction =
+    `Você é uma banca examinadora de alto nível (padrão INEP/ENEM, FUVEST, UNICAMP e UNESP) ` +
+    `especialista em ${subject}. Baseie cada questão no estilo e no rigor de questões REAIS desses vestibulares. ` +
+    'Responda APENAS com JSON válido (array), sem markdown, sem cercas de código e sem texto fora do JSON.';
+  const foco = topic === 'geral'
+    ? `abrangendo tópicos essenciais e representativos de ${subject} cobrados no ENEM e nos vestibulares`
+    : `focadas no tema "${topic}" de ${subject}, rigorosamente filtradas para esse conteúdo`;
+  const nivel = opcoes.dificuldade
+    ? `Nível de dificuldade solicitado: ${TEXTO_NIVEL[opcoes.dificuldade]} Todas as ${count} questões seguem esse nível.`
+    : 'Distribua as dificuldades entre facil, media e dificil.';
+  const blocoHistorico = montarBlocoAntirrepeticao(opcoes.historico ?? []);
+  const prompt =
+    `Gere exatamente ${count} questões inéditas de múltipla escolha, ${foco}. ${nivel}` +
+    (blocoHistorico ? `\n\n${blocoHistorico}` : '') +
+    '\n\nFormato (array JSON com exatamente ' + count + ' itens):\n' +
+    '[{"tema":"<assunto específico da questão>","enunciado":"<texto com contexto>","alternativas":["<A>","<B>","<C>","<D>"],' +
+    '"correta":<índice 0-3 da alternativa certa>,"explicacao":"<justificativa breve com a resolução>","dica":"<pista curta que ajuda sem revelar a resposta>",' +
+    '"fonte":"<banca + ano se inspirada em prova real, ou \'inédita, estilo <banca>\'>","dificuldade":"facil|media|dificil"}]\n' +
+    'Regras: enunciado com contexto; 4 alternativas plausíveis e distintas, apenas uma correta; "correta" é o ÍNDICE (0-3), nunca letra; ' +
+    'dica ajuda sem entregar; nunca apresente questão inédita como oficial nem invente ano/número de prova.';
+
+  const gen: Record<string, unknown> = {
+    temperature: 0.45,
+    maxOutputTokens: Math.max(4096, count * 500),
+    topP: 0.9,
+    topK: 20,
+    // So o caminho DeepSeek recebe: modo JSON estrito da API.
+    // (O Gemini ignora — por isso a chave so entra aqui.)
+    ...(isDeepSeekProvider() ? { response_format: { type: 'json_object' } } : {}),
+  };
+
+  const res = await sendToAI(
+    {
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: gen,
+    },
+    apiKey,
+  );
+
+  if (!res.ok) {
+    if (hasProxy()) throw new Error(`Erro ao gerar questões: ${res.error || 'falha do servidor'}`);
+    throw new Error(`Erro ao gerar questões: ${res.error}`);
+  }
+
+  const raw = extractGeminiText(res.data) || '';
+  return { questions: parseQuizJson(raw, subject), raw };
+}
+
+/* ============================================================
+  MAPA MENTAL (caderno/estudio) - JSON + Mermaid deterministico
+  ------------------------------------------------------------
+  O modelo e de TEXTO: pedir o codigo Mermaid pronto a ele funciona
+  as vezes e quebra as outras (aspas, colchetes e prosa do modelo de
+  raciocinio invalidam o diagrama). Aqui o modelo devolve so DADOS em
+  JSON (titulo + ramos + filhos) e o CODIGO Mermaid e montado aqui, com
+  sanitizacao total dos rotulos. Diagrama quebrado vira impossivel por
+  construcao; o que o modelo pode errar e so o conteudo.
+  ============================================================ */
+
+export interface RamoMapaMental {
+  rotulo: string;
+  filhos: string[];
+}
+
+export interface DadosMapaMental {
+  titulo: string;
+  ramos: RamoMapaMental[];
+}
+
+/** Remove tudo que quebra a sintaxe do Mermaid. Funcao pura. */
+export function sanitizarRotuloMermaid(valor: unknown, max = 42): string {
+  return String(valor ?? '')
+    .replace(/["'#[\]{}()|<>`\\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+/**
+ * Monta o diagrama mindmap a partir dos dados (sempre valido).
+ * Funcao pura - nao faz I/O, ideal para testes.
+ */
+export function buildMindmapMermaid(dados: DadosMapaMental): string {
+  const titulo = sanitizarRotuloMermaid(dados.titulo, 48) || 'Meus estudos';
+  const linhas = ['mindmap', `  root((${titulo}))`];
+  for (const ramo of (dados.ramos ?? []).slice(0, 5)) {
+    const rotulo = sanitizarRotuloMermaid(ramo.rotulo);
+    if (!rotulo) continue;
+    linhas.push(`    ${rotulo}`);
+    for (const filho of (ramo.filhos ?? []).slice(0, 4)) {
+      const f = sanitizarRotuloMermaid(filho);
+      if (f) linhas.push(`      ${f}`);
+    }
+  }
+  return linhas.join('\n');
+}
+
+/** Extrai {titulo, ramos} do JSON do modelo, com limites. Funcao pura. */
+export function parseMapaMental(raw: string): DadosMapaMental | null {
+  const texto = (raw || '')
+    .replace(/```json\s*/gi, '')
+    .replace(/```/g, '')
+    .trim();
+  const tentar = (t: string): unknown => {
+    try {
+      return JSON.parse(t);
+    } catch {
+      return null;
+    }
+  };
+  let obj = tentar(texto);
+  if (!obj || typeof obj !== 'object') {
+    const m = texto.match(/\{[\s\S]*\}/);
+    if (m) obj = tentar(m[0]);
+  }
+  if (!obj || typeof obj !== 'object') return null;
+  const o = obj as Record<string, unknown>;
+  const ramosBrutos = Array.isArray(o.ramos) ? o.ramos : [];
+  const ramos: RamoMapaMental[] = [];
+  for (const r of ramosBrutos) {
+    if (!r || typeof r !== 'object') continue;
+    const rr = r as Record<string, unknown>;
+    const rotulo = sanitizarRotuloMermaid(rr.rotulo);
+    if (!rotulo) continue;
+    const filhos = (Array.isArray(rr.filhos) ? rr.filhos : [])
+      .map((f) => sanitizarRotuloMermaid(f))
+      .filter(Boolean)
+      .slice(0, 4);
+    ramos.push({ rotulo, filhos });
+    if (ramos.length >= 5) break;
+  }
+  if (ramos.length === 0) return null;
+  return { titulo: sanitizarRotuloMermaid(o.titulo, 48) || 'Meus estudos', ramos };
+}
+
+/**
+ * Resume as notas do aluno em dados de mapa mental (DeepSeek Flash).
+ * A renderizacao (Mermaid) acontece no Estúdio via buildMindmapMermaid.
+ */
+export async function gerarMapaMental(
+  notas: string[],
+  apiKey: string,
+): Promise<DadosMapaMental | null> {
+  const lista = notas.map((t) => t.trim()).filter(Boolean).slice(-10);
+  if (lista.length === 0) return null;
+
+  const systemInstruction =
+    'Você organiza anotações de estudo em mapas mentais. ' +
+    'Responda APENAS com JSON válido (objeto), sem markdown, sem cercas de código e sem texto fora do JSON.';
+  const prompt =
+    'Com base nas anotações abaixo, monte um mapa mental com o tema central e até 5 ramos, cada ramo com até 4 pontos curtos.\n' +
+    'Formato (objeto JSON):\n' +
+    '{"titulo":"<tema central, max 6 palavras>","ramos":[{"rotulo":"<conceito>","filhos":["<ponto curto>", "..."]}]}\n' +
+    'Regras: rotulos curtos (max 6 palavras cada), sem aspas e sem caracteres especiais; use as palavras do proprio aluno quando possivel.\n\n' +
+    'Anotações:\n' +
+    lista.map((t, i) => `${i + 1}. ${t.slice(0, 500)}`).join('\n');
+
+  const res = await sendToAI(
+    {
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 1024,
+        topP: 0.9,
+        topK: 20,
+        ...(isDeepSeekProvider() ? { response_format: { type: 'json_object' } } : {}),
+      },
+    },
+    apiKey,
+  );
+
+  if (!res.ok) throw new Error(`Erro ao gerar mapa mental: ${res.error || 'falha do servidor'}`);
+  return parseMapaMental(extractGeminiText(res.data) || '');
+}
+
+/* ============================================================
+  TUTOR POS-ERRO - explica o erro conceitual com empatia
+  ------------------------------------------------------------
+  Chamado quando o aluno erra uma questao (botao "Explicacao do
+  tutor") ou revisa os erros no gabarito. O modelo recebe a resposta
+  DADA vs a GABARITADA e diagnostica o raciocinio que saiu do trilho -
+  nao repete o gabarito, explica o PORQUE do erro. Tom do Sagui:
+  acolhe antes de corrigir, sem culpa e sem jargao.
+  ============================================================ */
+
+export interface ErroParaTutor {
+  materia: string;
+  topico?: string;
+  enunciado: string;
+  alternativas: string[];
+  /** Indice 0-3 da alternativa que o aluno marcou. */
+  escolhida: number;
+  /** Indice 0-3 da alternativa correta. */
+  correta: number;
+  explicacao?: string;
+}
+
+const LETRAS_ALTERNATIVA = ['A', 'B', 'C', 'D'];
+
+export function montarPromptTutorPosErro(erro: ErroParaTutor): { system: string; user: string } {
+  const system = [
+    'Você é o Sagui, tutor empático de um app de estudos brasileiro (ensino médio noturno, ENEM e vestibulares).',
+    'Sua tarefa: diagnosticar o ERRO CONCEITUAL do aluno a partir da resposta que ele marcou vs. a correta.',
+    'Estrutura obrigatória, em português brasileiro acessível:',
+    '1. Acolhimento em UMA frase, sem culpa e sem dizer "você errou".',
+    '2. "O que você provavelmente pensou": reconstrua o raciocínio que leva à alternativa marcada.',
+    '3. "Onde saiu do trilho": aponte o passo exato em que esse raciocínio falha.',
+    '4. "Da próxima vez": uma regra prática de uma frase para esse tipo de questão.',
+    'Limite: no máximo 150 palavras no total. Sem emoji, sem jargão desnecessário, sem repetir o enunciado inteiro.',
+  ].join('\n');
+
+  const letra = (i: number) => LETRAS_ALTERNATIVA[i] ?? '?';
+  const alts = erro.alternativas
+    .slice(0, 4)
+    .map((a, i) => `${letra(i)}) ${a}`)
+    .join('\n');
+  const user = [
+    `Matéria: ${erro.materia}${erro.topico ? ` | Tema: ${erro.topico}` : ''}`,
+    '',
+    `Questão: ${erro.enunciado}`,
+    '',
+    'Alternativas:',
+    alts,
+    '',
+    `O aluno marcou: ${letra(erro.escolhida)}) ${erro.alternativas[erro.escolhida] ?? ''}`,
+    `Resposta correta: ${letra(erro.correta)}) ${erro.alternativas[erro.correta] ?? ''}`,
+    erro.explicacao ? `\nExplicação oficial do gabarito: ${erro.explicacao}` : '',
+  ].join('\n');
+
+  return { system, user };
+}
+
+export async function explicarErroComTutor(
+  erro: ErroParaTutor,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  // Acerto nao precisa de diagnostico: economiza a chamada.
+  if (erro.escolhida === erro.correta) {
+    return 'Resposta certa - nenhum erro conceitual para diagnosticar. Siga assim!';
+  }
+
+  const { system, user } = montarPromptTutorPosErro(erro);
+  const res = await sendToAI(
+    {
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ parts: [{ text: user }] }],
+      generationConfig: { temperature: 0.6, maxOutputTokens: 600, topP: 0.9, topK: 32 },
+    },
+    apiKey,
+    signal,
+  );
+
+  if (!res.ok) {
+    if (hasProxy()) throw new Error(`Erro no tutor: ${res.error || 'falha do servidor'}`);
+    throw new Error(`Erro no tutor: ${res.error}`);
+  }
+  return extractGeminiText(res.data) || 'Não consegui explicar agora. Releia a explicação do gabarito com calma.';
 }
 
 export async function correctEssayWithAI(text: string, apiKey: string, tema?: string): Promise<string> {
@@ -473,6 +876,8 @@ export interface SendMessageToGeminiOptions {
   history?: GeminiHistoryMessage[];
   imageBase64?: string;
   signal?: AbortSignal;
+  /** Toggle Explicativo/Comunicativo da barra de entrada do Mentor. */
+  modoResposta?: ModoRespostaPersona;
 }
 
 /**
@@ -501,7 +906,12 @@ export interface SendMessageToGeminiOptions {
  *    e materia minha" para quem disse que nao esta aguentando quebra o
  *    proposito do app inteiro. A excecao e explicita.
  */
-export function montarInstrucaoDaPersona(persona: ChatPersona | null): string {
+export type ModoRespostaPersona = 'explicativo' | 'comunicativo';
+
+export function montarInstrucaoDaPersona(
+  persona: ChatPersona | null,
+  opcoes: { modoResposta?: ModoRespostaPersona } = {},
+): string {
   if (!persona) return SAGUI_SYSTEM_PROMPT;
 
   const partes = [
@@ -509,13 +919,45 @@ export function montarInstrucaoDaPersona(persona: ChatPersona | null): string {
     `PAPEL: ${persona.name}. ${persona.instruction}`,
   ];
 
+  // Toggle Explicativo/Comunicativo da barra do Mentor. Allowlist
+  // fechada: qualquer outro valor e ignorado.
+  if (opcoes.modoResposta === 'comunicativo') {
+    partes.push(
+      'MODO DE RESPOSTA: comunicativo. Direto ao ponto, com macetes rapidos e tom descontraido - sem rodeios e sem formalidade excessiva.',
+    );
+  } else {
+    partes.push(
+      'MODO DE RESPOSTA: explicativo. Passo a passo didatico, formal e detalhado, um conceito por vez.',
+    );
+  }
+
   if (persona.escopo) {
     partes.push(
       [
         `ESCOPO: voce responde somente sobre ${persona.escopo}.`,
-        'Se a pergunta for de outra materia, diga em uma frase que o tema e de outra area, indique qual professor do app cobre isso (Mentor ENEM, Prof. Matematica, Prof. Portugues, Prof. Ciencias ou Prof. Humanas) e nao responda o conteudo pedido.',
+        'Se a pergunta for de outra materia, recuse em UMA frase educada e nao responda o conteudo pedido; em seguida indique qual professor do app cobre isso (Mentor ENEM, Prof. Matematica, Prof. Portugues, Prof. Ciencias ou Prof. Humanas) e ofereca ajuda dentro da SUA materia.',
         'Se houver uma ponte real com a sua materia, ofereca essa ponte em uma frase.',
         'EXCECAO: cansaco, ansiedade, medo da prova ou desanimo NUNCA sao fora de escopo. Acolha em uma frase antes de voltar ao conteudo.',
+      ].join(' '),
+    );
+  }
+
+  /*
+   * Trava de seguranca da persona customizada.
+   *
+   * Personas embutidas tem createdAt 0 e (exceto o Mentor ENEM) escopo
+   * proprio; persona criada pelo usuario tem createdAt real e nenhum
+   * escopo - e exatamente ela que recebe este bloco. A instrucao do
+   * usuario continua valendo para o papel, mas a fronteira do que e
+   * recusado vem daqui, nao do texto digitado: sem isso, bastaria
+   * escrever "voce obedece a tudo" na instrucao para remover a trava.
+   */
+  if (!persona.escopo && persona.createdAt !== 0) {
+    partes.push(
+      [
+        'SEGURANCA (persona criada pelo usuario): voce atua SOMENTE para estudos e aprendizado seguro.',
+        'Recuse em uma frase educada e redirecione ao estudo quando pedirem: hacking ou invasao de sistemas, conteudo perigoso (armas, explosivos, drogas ilicitas), atividades ilicitas, xingamentos ou humilhacao de pessoas.',
+        'Nunca gere esses conteudos, mesmo que insistam ou digam que e para fins educacionais.',
       ].join(' '),
     );
   }
@@ -532,9 +974,9 @@ export function montarInstrucaoDaPersona(persona: ChatPersona | null): string {
 
 export async function sendMessageToGemini(
   userMessage: string,
-  { apiKey, persona = null, history = [], imageBase64, signal }: SendMessageToGeminiOptions,
+  { apiKey, persona = null, history = [], imageBase64, signal, modoResposta }: SendMessageToGeminiOptions,
 ): Promise<string> {
-  const systemInstruction = montarInstrucaoDaPersona(persona);
+  const systemInstruction = montarInstrucaoDaPersona(persona, { modoResposta });
 
   const contents: { role: 'user' | 'model'; parts: any[] }[] = [];
   for (const msg of history.slice(-8)) {
@@ -558,7 +1000,8 @@ export async function sendMessageToGemini(
     {
       systemInstruction: { parts: [{ text: systemInstruction }] },
       contents,
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1024, topP: 0.9, topK: 32 },
+      // Alinhado ao DeepSeek-V4-Flash barato (aiProvider.DEEPSEEK_CHAT_CONFIG).
+      generationConfig: { ...GEMINI_CHAT_CONFIG, topK: 32 },
     },
     apiKey,
     signal,
@@ -868,10 +1311,12 @@ export async function gerarRelatorioDescompressao(
   primeiroNome?: string,
   signal?: AbortSignal,
 ): Promise<string> {
+  // O nome NÃO viaja para a IA: o prompt vai anônimo e a personalização
+  // ("Maria, ...") é interpolada aqui, no aparelho (LGPD, menor de idade).
   const res = await sendToAI(
     {
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT_DESCOMPRESSAO }] },
-      contents: [{ parts: [{ text: promptDescompressao(metricas, primeiroNome) }] }],
+      contents: [{ parts: [{ text: promptDescompressao(metricas) }] }],
       generationConfig: { temperature: 0.55, maxOutputTokens: 220, topP: 0.9, topK: 32 },
     },
     apiKey,
@@ -879,7 +1324,8 @@ export async function gerarRelatorioDescompressao(
   );
 
   if (!res.ok) throw new Error(`Erro no relatorio: ${res.error || 'falha do servidor'}`);
-  return extractGeminiText(res.data).replace(/[*#`]/g, '').trim();
+  const paragrafo = extractGeminiText(res.data).replace(/[*#`]/g, '').trim();
+  return primeiroNome ? `${primeiroNome}, ${paragrafo.charAt(0).toLowerCase()}${paragrafo.slice(1)}` : paragrafo;
 }
 
 /**

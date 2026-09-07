@@ -15,12 +15,45 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Tokens exatos do Design System v2.4 (Midnight Glow). */
+  :root {
+    --canvas: #0B0F19;
+    --surface: #0E131F;
+    --surface-subtle: #161B28;
+    --surface-highlight: #1E2538;
+    --surface-glass: rgba(22, 27, 40, 0.75);
+    --brand-gold: #F59E0B;
+    --brand-gold-hover: #D97706;
+    --gold-light: #FDE047;
+    --gold-glow: rgba(245, 158, 11, 0.25);
+    --accent-emerald: #10B981;
+    --emerald-light: #34D399;
+    --emerald-glow: rgba(16, 185, 129, 0.25);
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --text-gold: #FBBF24;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-glass: rgba(255, 255, 255, 0.12);
+    --border-active-gold: rgba(245, 158, 11, 0.5);
+  }
+
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: #0b1120;
-    color: #e2e8f0;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #060911;
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+      radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px;
+    color: #F8FAFC;
     min-height: 100dvh;
     overflow-x: hidden;
+  }
+
+  /* Mono do design system (gabaritos, codigo, cronometros). */
+  code, pre, kbd, .font-mono-app {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
 
   #root {
@@ -32,10 +65,8 @@
     color: #fff;
   }
 
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(71,85,105,0.3); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(71,85,105,0.5); }
+  /* Scrollbar global: versao do code.html (5px, thumb claro, hover ouro).
+     A regra detalhada vive no bloco transferido abaixo. */
 
   input, textarea, select {
     background: rgba(30, 41, 59, 0.5);
@@ -143,6 +174,37 @@
     textarea { min-height: 64px; }
   }
 }
+
+/* ==== Acessibilidade (src/shared/lib/acessibilidade.ts) ==== */
+
+/* Guarda global: nenhum bloco decorativo (orbes, blobs fixed) cria
+   rolagem horizontal no iPhone. `clip` não quebra `position: sticky`. */
+body {
+  overflow-x: clip;
+}
+
+/* Escolha do usuário vence o sistema: com a chave ligada, zera
+   animação e transição em tudo (o @media acima só cobre o padrão). */
+html.a11y-sem-movimento *,
+html.a11y-sem-movimento *::before,
+html.a11y-sem-movimento *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Alto contraste: textos apagados (cinzas) sobem para tons legíveis
+   sobre o fundo midnight. Só mexe em cor; layout e tamanho intactos. */
+html.a11y-contraste .text-gray-500 { color: #c3cad4 !important; }
+html.a11y-contraste .text-gray-400 { color: #d7dce3 !important; }
+html.a11y-contraste .text-gray-600 { color: #aeb6c2 !important; }
+html.a11y-contraste .text-slate-500 { color: #c3cad4 !important; }
+html.a11y-contraste .text-slate-400 { color: #d7dce3 !important; }
+html.a11y-contraste .placeholder-gray-500::placeholder,
+html.a11y-contraste .placeholder-slate-400::placeholder,
+html.a11y-contraste .placeholder-slate-500::placeholder { color: #9aa3b2 !important; }
+html.a11y-contraste .border-white\/5 { border-color: rgb(255 255 255 / 0.22) !important; }
+html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !important; }
 
 @layer components {
   /* === Glass === */
@@ -490,6 +552,240 @@
 .challenge-stat:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* =====================================================================
+   Bloco visual do code.html (referencia v2.4): orbes, estrelas, pulsos,
+   cards magneticos, seguidores deslizantes e scrollbars. Transferido
+   1:1 para a folha global para valer em qualquer tela.
+   ===================================================================== */
+
+/* Orbes nebulosos flutuantes */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(75px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.35;
+  animation: orbFloat 22s ease-in-out infinite alternate;
+}
+.orb-1 {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.05) 60%, transparent 80%);
+  top: 10%;
+  left: 15%;
+}
+.orb-2 {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.03) 65%, transparent 80%);
+  bottom: 8%;
+  right: 12%;
+  animation-duration: 28s;
+  animation-delay: -6s;
+}
+
+@keyframes orbFloat {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(35px, -30px) scale(1.1); }
+  100% { transform: translate(-25px, 25px) scale(0.95); }
+}
+
+/* Particulas estelares magneticas flutuantes */
+.star-particle {
+  position: absolute;
+  background-color: #ffffff;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 0 8px 1px rgba(254, 240, 138, 0.8);
+  animation: starTwinkle 4s ease-in-out infinite alternate;
+}
+@keyframes starTwinkle {
+  0% { opacity: 0.2; transform: translateY(0) scale(0.8); }
+  50% { opacity: 0.9; transform: translateY(-8px) scale(1.25); filter: drop-shadow(0 0 6px #F59E0B); }
+  100% { opacity: 0.3; transform: translateY(4px) scale(0.9); }
+}
+
+/* Logo da lua com glow pulsante */
+@keyframes moonGlowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.45)) drop-shadow(0 0 20px rgba(245, 158, 11, 0.2));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.75)) drop-shadow(0 0 28px rgba(253, 224, 71, 0.4));
+    transform: scale(1.04);
+  }
+}
+.animate-moon-pulse {
+  animation: moonGlowPulse 4.2s ease-in-out infinite;
+}
+
+/* Aura hipnotica do icone central */
+@keyframes centralAuraGlow {
+  0%, 100% {
+    box-shadow: 0 0 25px 2px rgba(245, 158, 11, 0.3), 0 0 50px 10px rgba(245, 158, 11, 0.15);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 45px 8px rgba(245, 158, 11, 0.55), 0 0 80px 22px rgba(245, 158, 11, 0.25);
+    transform: scale(1.05);
+  }
+}
+.animate-aura-glow {
+  animation: centralAuraGlow 4.8s ease-in-out infinite;
+}
+
+/* Mascote respirando suave */
+@keyframes mascotBreathe {
+  0%, 100% { transform: translateY(0px) scale(1.08); }
+  50% { transform: translateY(-3px) scale(1.12); }
+}
+.animate-mascot-breathe {
+  animation: mascotBreathe 3.4s ease-in-out infinite;
+}
+
+/* Shimmer do XP */
+@keyframes xpShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.animate-xp-shimmer {
+  animation: xpShimmer 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Card magnetico com shimmer de borda no hover */
+.prompt-card {
+  position: relative;
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: linear-gradient(135deg, rgba(19, 27, 46, 0.75) 0%, rgba(11, 15, 25, 0.85) 100%);
+}
+.prompt-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(245, 158, 11, 0));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: background 0.35s ease;
+}
+.prompt-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.7), 0 0 26px -3px rgba(245, 158, 11, 0.35);
+}
+.prompt-card:hover::before {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(253, 224, 71, 0.3));
+}
+
+/* Indicador amarelo seguidor da sidebar (posicao via React; ver AppShell).
+   Classe (nao id): desktop e drawer mobile montam o seguidor juntos. */
+.sidebar-follower {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 1;
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.25s ease, opacity 0.25s ease;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.25);
+}
+.sidebar-follower::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 18px;
+  border-radius: 9999px;
+  background-color: #F59E0B;
+  box-shadow: 0 0 12px 2px rgba(245, 158, 11, 0.9);
+}
+
+/* Pilula deslizante dos chips de materia (posicao via React; ver ChatPage) */
+#topicSliderPill {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 8px;
+  pointer-events: none;
+  transition: left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 14px -1px rgba(245, 158, 11, 0.3);
+}
+
+/* Esconde scrollbar mantendo a rolagem */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Scrollbar sutil do app */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.4);
+}
+
+/* Shimmer da barra de XP do rodape (spec v2.4: gradiente ouro + brilho). */
+.xp-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.xp-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(253, 224, 71, 0.5), transparent);
+  animation: xpShimmerSlide 2.4s ease-in-out infinite;
+}
+@keyframes xpShimmerSlide {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+/* Input do Mentor aderido ao rodape no mobile, com padding seguro para
+   polegares e notch (spec v2.4: floatingInput). */
+@media (max-width: 768px) {
+  .input-safe-mobile {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Orbes de iluminacao e estrelas de fundo (spec v2.4: float-ambient). */
+@keyframes floatAmbient {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.6; }
+  50% { transform: translate3d(0, -18px, 0) scale(1.06); opacity: 1; }
+}
+.animate-float-ambient {
+  animation: floatAmbient 8s ease-in-out infinite alternate;
 }
 @keyframes challengeBlink {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
@@ -1306,4 +1602,127 @@
      celular) e o valor fixo produzia texto sobreposto. */
   content-visibility: auto;
   contain-intrinsic-size: auto 63px;
+}
+
+/* =====================================================================
+   PROTÓTIPO AGcode — tela do Mentor ENEM (portado 1:1 do <style>).
+   Classes utilitárias usadas pelos componentes em
+   src/features/chat/components/. Os @keyframes também existem como
+   tokens no tailwind.config.js (animate-orb-1, animate-hero-bulb etc.);
+   aqui ficam as classes compostas que o Tailwind não expressa
+   (cards 3D, cyber glow, pills deslizantes, sidebar recolhida).
+   Ícones: no React o <i class="fa-..."> vira lucide-react com as mesmas
+   classes de tamanho/cor — o FontAwesome via CDN foi removido porque a
+   CSP do index.html bloqueia domínios externos (img/script) e quebraria
+   em produção.
+   ===================================================================== */
+
+/* Recolhimento fluído da sidebar global (AppShell <aside id="sidebarNav">).
+   Mesmos seletores do protótipo: .sidebar-label some, links centralizam. */
+#sidebarNav.collapsed { width: 72px !important; min-width: 72px !important; }
+#sidebarNav.collapsed .sidebar-label { display: none !important; }
+#sidebarNav.collapsed #sidebarToggleBtn { margin-left: 0; width: 100%; justify-content: center; margin-top: 6px; }
+#sidebarNav.collapsed #sidebarToggleIcon { transform: rotate(180deg); }
+#sidebarNav.collapsed nav[data-purpose="sidebar-nav-links"] a { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }
+#sidebarNav.collapsed nav[data-purpose="sidebar-nav-links"] a > div { justify-content: center; gap: 0; }
+#sidebarNav.collapsed nav[data-purpose="sidebar-nav-links"] a > div.w-1,
+#sidebarNav.collapsed nav[data-purpose="sidebar-nav-links"] a > div.active-glow-bar { display: none !important; }
+#sidebarNav.collapsed [data-purpose="sagui-quick-card"] { justify-content: center; padding: 0.375rem; }
+#sidebarNav.collapsed [data-purpose="sagui-quick-card"] > div { justify-content: center; }
+#sidebarNav.collapsed > div:first-child > div:first-child { flex-direction: column; align-items: center; }
+#sidebarNav.collapsed > div:last-child > div.flex { justify-content: center; }
+#sidebarNav.collapsed > div:last-child > div.flex > div { justify-content: center; }
+
+/* Aliases do protótipo para os tokens do tailwind.config (mesmos nomes). */
+.animate-orb-1 { animation: orbFloat1 10s ease-in-out infinite; }
+.animate-orb-2 { animation: orbFloat2 12s ease-in-out infinite; }
+.animate-orb-3 { animation: orbFloat3 9s ease-in-out infinite; }
+.animate-hero-bulb { animation: pulseAuraHero 3.6s ease-in-out infinite; }
+.animate-spin-orbit { animation: ringSpinClockwise 16s linear infinite; }
+.animate-spin-orbit-rev { animation: ringSpinCounter 11s linear infinite; }
+.animate-particle-1 { animation: particleOrbit 7s linear infinite; }
+.animate-particle-2 { animation: particleOrbitReverse 9s linear infinite; }
+.twinkle-star-fast { animation: starTwinkleFast 3.2s ease-in-out infinite; }
+.twinkle-star-slow { animation: starTwinkleSlow 4.5s ease-in-out infinite; }
+.shimmer-sweep { animation: xpLiquidShimmer 2.2s cubic-bezier(0.4, 0.2, 1) infinite; }
+.mascot-interactive { animation: mascotBreatheAG 5s ease-in-out infinite; }
+.emerald-ping-glow { animation: pulseEmeraldDot 2s cubic-bezier(0.4, 0.6, 1) infinite; }
+
+/* Card 3D com lift no hover (hero do Mentor). */
+.prompt-lift-card {
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.prompt-lift-card:hover { transform: translateY(-6px) scale(1.02); }
+.prompt-lift-card:hover .card-arrow { transform: translateX(4px); }
+
+/* Deslizamento dos links da sidebar ao hover. */
+.nav-item-link { transition: all 0.25s cubic-bezier(0.4, 0.2, 1); }
+.nav-item-link:hover { transform: translateX(5px); }
+
+/* Borda neon animada do input premium + flash ao preencher (fillPrompt). */
+.cyber-input-wrap {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(16, 185, 129, 0.3), rgba(99, 102, 241, 0.3), rgba(245, 158, 11, 0.5));
+  background-size: 300% 300%;
+  animation: cyberBorderGlowEffect 8s ease infinite;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.cyber-input-wrap.input-flash { animation: flashGlow 0.8s ease-out; }
+
+/* Pílula do modo Explicativo/Comunicativo + glider das abas de tópico
+   (posição via React por getBoundingClientRect). */
+.mode-slider-pill {
+  transition: transform 0.25s cubic-bezier(0.4, 0.2, 1), width 0.25s ease;
+}
+#topicActiveGlider {
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-orb-1, .animate-orb-2, .animate-orb-3, .animate-hero-bulb,
+  .animate-spin-orbit, .animate-spin-orbit-rev, .animate-particle-1,
+  .animate-particle-2, .twinkle-star-fast, .twinkle-star-slow,
+  .shimmer-sweep, .mascot-interactive, .emerald-ping-glow,
+  .cyber-input-wrap {
+    animation: none !important;
+  }
+}
+
+/* =====================================================================
+   PROTÓTIPO Minha Agenda — canvas, shimmer XP, células do calendário.
+   O canvas aqui é absolute (fica dentro da página) em vez de fixed do
+   protótipo, para não vazar sobre as outras abas do app. O Toast usa o
+   sistema global do store (setToast), sem duplicar estrutura.
+   ===================================================================== */
+
+#stars-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.xp-shimmer-bar {
+  background: linear-gradient(90deg, #F59E0B 0%, #FDE68A 50%, #F59E0B 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.8s infinite linear;
+}
+
+.day-cell {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.day-cell:hover:not(.is-empty) {
+  transform: translateY(-2px);
+}
+.day-selected-ring {
+  box-shadow: 0 0 0 2px #F59E0B, 0 0 16px rgba(245, 158, 11, 0.5) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-shimmer-bar {
+    animation: none !important;
+  }
 }

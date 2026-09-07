@@ -40,7 +40,9 @@ export function MascotFab() {
     <m.div
       className="fixed z-[80] bottom-28 md:bottom-16 md:right-8 right-3 cursor-pointer"
       onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
       role="button"
+      tabIndex={0}
       aria-label="Mascote: dicas e reações"
       whileHover={reduzir ? undefined : { scale: 1.05 }}
       whileTap={reduzir ? undefined : { scale: 0.95 }}

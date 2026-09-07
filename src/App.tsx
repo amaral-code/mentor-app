@@ -4,6 +4,7 @@ import { useAppStore, persistir } from './stores/appStore';
 import { userRepository } from './shared/storage/UserRepository';
 import { supabaseRepository } from './shared/storage/SupabaseRepository';
 import { isSupabaseConfigured } from './shared/lib/supabase';
+import { safeGet } from './shared/lib/safeStorage';
 import { AuthPage } from './features/auth/AuthPage';
 import { AppShell } from './app/AppShell';
 import { PageSkeleton } from './shared/ui/Skeleton';
@@ -25,6 +26,7 @@ const PsicologoPage = lazy(() =>
   import('./features/psicologo/PsicologoPage').then((m) => ({ default: m.PsicologoPage })),
 );
 import { ParticleCanvas } from './features/atmo/ParticleCanvas';
+import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
@@ -59,6 +61,7 @@ export default function App() {
     setLogs,
     setNotas,
     setChatMessages,
+    setConversas,
     setPersonas,
     setActivePersonaId,
     setApiKey,
@@ -83,22 +86,44 @@ export default function App() {
     const PADRAO = ['mentor_enem', 'prof_matematica', 'prof_portugues', 'prof_ciencias', 'prof_humanas'];
 
     async function carregarDados() {
-      const [gam, logs, notas, chat, personas, desafios, prefs, escolas, turmas, quizzes, humor] =
-        await Promise.all([
-          supabaseRepository.loadGamification(),
-          supabaseRepository.loadLogs(),
-          supabaseRepository.loadNotas(),
-          supabaseRepository.loadChat(),
-          supabaseRepository.loadPersonas(),
-          supabaseRepository.loadDesafios(),
-          supabaseRepository.loadPreferencias(),
-          supabaseRepository.loadEscolas(),
-          supabaseRepository.loadTurmas(),
-          // Faltavam no boot: sem eles o historico de quiz ficava sempre
-          // vazio, e por isso o Mentor nunca sabia qual materia retomar.
-          supabaseRepository.loadQuizResults(),
-          supabaseRepository.loadHumor(),
-        ]);
+      // allSettled: se 1 das 11 tabelas falhar, as outras 10 ainda entram na
+      // tela — antes um erro isolado zerava o app com cara de "perdi tudo".
+      const nomes = ['gam', 'logs', 'notas', 'conversas', 'personas', 'desafios', 'prefs', 'escolas', 'turmas', 'quizzes', 'humor'] as const;
+      const resultados = await Promise.allSettled([
+        supabaseRepository.loadGamification(),
+        supabaseRepository.loadLogs(),
+        supabaseRepository.loadNotas(),
+        supabaseRepository.loadConversas(),
+        supabaseRepository.loadPersonas(),
+        supabaseRepository.loadDesafios(),
+        supabaseRepository.loadPreferencias(),
+        supabaseRepository.loadEscolas(),
+        supabaseRepository.loadTurmas(),
+        // Faltavam no boot: sem eles o historico de quiz ficava sempre
+        // vazio, e por isso o Mentor nunca sabia qual materia retomar.
+        supabaseRepository.loadQuizResults(),
+        supabaseRepository.loadHumor(),
+      ]);
+      const valor = <T,>(i: number, padrao: T): T =>
+        resultados[i].status === 'fulfilled' ? (resultados[i] as PromiseFulfilledResult<T>).value : padrao;
+      const falhas = resultados
+        .map((r, i) => (r.status === 'rejected' ? nomes[i] : null))
+        .filter(Boolean);
+      if (falhas.length > 0) {
+        console.warn('[boot] tabelas nao carregadas:', falhas.join(', '));
+        useAppStore.getState().setToast(`Alguns dados nao carregaram (${falhas.join(', ')}). O resto esta normal.`, 'info');
+      }
+      const gam = valor<Awaited<ReturnType<typeof supabaseRepository.loadGamification>>>(0, null);
+      const logs = valor(1, useAppStore.getState().logs);
+      const notas = valor(2, useAppStore.getState().notas);
+      const conversas = valor(3, useAppStore.getState().conversas);
+      const personas = valor(4, [] as Awaited<ReturnType<typeof supabaseRepository.loadPersonas>>);
+      const desafios = valor(5, useAppStore.getState().challengeResults);
+      const prefs = valor<Awaited<ReturnType<typeof supabaseRepository.loadPreferencias>>>(6, null);
+      const escolas = valor(7, [] as Awaited<ReturnType<typeof supabaseRepository.loadEscolas>>);
+      const turmas = valor(8, [] as Awaited<ReturnType<typeof supabaseRepository.loadTurmas>>);
+      const quizzes = valor(9, useAppStore.getState().quizResults);
+      const humor = valor(10, [] as Awaited<ReturnType<typeof supabaseRepository.loadHumor>>);
 
       // Inventario da loja e cache de escolas/turmas ficavam sem carregar:
       // as funcoes existiam, mas nada as chamava. Efeito visivel: item ja
@@ -115,7 +140,17 @@ export default function App() {
       if (gam) updateGamification(gam);
       setLogs(logs);
       setNotas(notas);
-      setChatMessages(chat);
+      /*
+       * Threads do Mentor (016): abre a mais recente; sem nenhuma, cai
+       * no fluxo legado (mensagens sem thread). A saudacao do ChatPage
+       * assume sozinha quando a thread ativa chega vazia.
+       */
+      setConversas(conversas);
+      const ativa = conversas[0]?.id ?? null;
+      setChatMessages(
+        ativa ? await supabaseRepository.loadChat(100, ativa) : await supabaseRepository.loadChat(),
+      );
+      useAppStore.setState({ conversaAtivaId: ativa });
       if (personas.length > 0) {
         const embutidas = useAppStore.getState().personas.filter((p) => PADRAO.includes(p.id));
         setPersonas([...embutidas, ...personas]);
@@ -130,6 +165,15 @@ export default function App() {
           isMuted: !!prefs.mudo,
         });
         if (prefs.persona_ativa_id) setActivePersonaId(String(prefs.persona_ativa_id));
+      }
+      // Tour do aluno: conta nova (ou que nunca completou) cai direto no
+      // passo a passo na primeira entrada. Só estudantes: educador, pais
+      // e psicólogo têm telas próprias, sem tour. Backup local cobre conta
+      // recém-criada sem linha de preferências (ou offline).
+      const papel = useAppStore.getState().session?.role;
+      const tourVisto = !!prefs?.tutorial_completo || safeGet('mm_tour_visto') === '1';
+      if (papel === 'student' && !tourVisto) {
+        useAppStore.setState({ showTutorial: true, tutorialStep: 0 });
       }
     }
 
@@ -168,7 +212,7 @@ export default function App() {
    * criaria um alvo unico para todas as chaves de todos os alunos.
    */
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('mm_api_key');
+    const savedApiKey = safeGet('mm_api_key');
     if (savedApiKey) setApiKey(savedApiKey);
   }, []);
 
@@ -245,7 +289,22 @@ export default function App() {
     );
   }
 
-  if (userRole === 'educator') {
+  // Conta importada pela secretaria: troca a senha temporária antes de
+  // qualquer outra tela. Sem essa trava, a senha que passou pelo email
+  // viraria permanente.
+  if (session?.deveTrocarSenha) {
+    return (
+      <>
+        <TrocarSenha />
+        <Toast />
+      </>
+    );
+  }
+
+  // Educador (secretaria) e docente usam o painel educacional: códigos,
+  // turmas e importação. A importação e a regeneração de códigos são
+  // liberadas só para educator/admin (o servidor confere de novo).
+  if (userRole === 'educator' || userRole === 'teacher') {
     return (
       <LazyMotion features={featuresAnimacao} strict>
         <ParticleCanvas />

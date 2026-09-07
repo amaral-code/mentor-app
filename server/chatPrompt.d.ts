@@ -27,21 +27,29 @@ export interface ResultadoGrounding {
   groundingUsado: boolean;
 }
 
+export type ModoResposta = 'explicativo' | 'comunicativo';
+
 export interface OpcoesPromptChat {
   modo?: string;
   /** Hora local do aluno, 0-23. Define a densidade da resposta. */
   horaLocal?: number;
   nomeAluno?: string;
   materiaRecente?: string;
+  /** Toggle Explicativo/Comunicativo da barra de entrada. */
+  modoResposta?: string;
 }
 
 export declare const MODOS_CHAT: ModoChat[];
 export declare const MODO_PADRAO: string;
+export declare const MODOS_RESPOSTA: ModoResposta[];
 
 export declare function acharModo(id?: string): ModoChat;
 export declare function modoValido(id?: string): boolean;
+export declare function modoRespostaValido(id?: string): boolean;
 export declare function faixaHoraria(hora?: number): 'madrugada' | 'noite' | 'dia';
 export declare function montarSystemInstructionChat(opcoes?: OpcoesPromptChat): string;
+export declare function limparTextoLivre(valor: unknown, max?: number): string;
 export declare function ferramentasDeBusca(modelo?: string): Record<string, unknown>[];
 export declare function extrairFontes(resposta: unknown): ResultadoGrounding;
 export declare function detectarCitacaoDeProva(texto?: string): boolean;
+export declare function eHttps(uri: unknown): boolean;

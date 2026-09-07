@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Brain, Check, CheckCircle2, ClipboardList, Lightbulb, Lock, Moon, XCircle, Zap } from 'lucide-react';
+import { Brain, Check, CheckCircle2, ClipboardList, Eye, EyeOff, Lightbulb, Lock, Moon, XCircle, Zap } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { calcLevel } from '../../shared/lib/utils';
 import { AppIcon } from '../../shared/ui/AppIcon';
+import { AcessibilidadePanel } from '../../shared/ui/AcessibilidadePanel';
 import { hasProxy, testGeneration, getAIProviderInfo } from '../../shared/lib/aiService';
 import type { Escola, Turma } from '../../shared/types';
 
@@ -17,6 +19,9 @@ export function ProfilePage() {
   const [showKey, setShowKey] = useState(false);
   const [aiTest, setAiTest] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle');
   const [aiTestMsg, setAiTestMsg] = useState('');
+  /* Nível via calcLevel (fonte única, igual à sidebar). */
+  const { level: nivel, remainder: xpResto } = calcLevel(gamification.xp);
+  const xpMeta = 100 * nivel;
 
   async function runAiTest() {
     setAiTest('testing');
@@ -41,6 +46,21 @@ export function ProfilePage() {
   // escolhidos livremente pelo proprio aluno.
   const [codigoTurma, setCodigoTurma] = useState('');
   const [entrando, setEntrando] = useState(false);
+  // Codigo confidencial da instituicao (8 letras, no email da secretaria).
+  // Vincula a ESCOLA; a sala entra depois, pelo codigo da turma.
+  const [codigoInst, setCodigoInst] = useState('');
+  const [vinculando, setVinculando] = useState(false);
+
+  const SECOES = [
+    { id: 'secao-conta', rotulo: 'Conta' },
+    { id: 'secao-escola', rotulo: 'Escola e códigos' },
+    { id: 'secao-acessibilidade', rotulo: 'Acessibilidade' },
+    { id: 'secao-ia', rotulo: 'IA' },
+  ];
+
+  function irParaSecao(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   useEffect(() => {
     if (!session) return;
@@ -65,12 +85,28 @@ export function ProfilePage() {
     if (nova) useAppStore.getState().setSession(nova);
   }
 
+  async function handleVincularInstituicao() {
+    if (!codigoInst.trim()) return;
+    setVinculando(true);
+    const { ok, erro } = await supabaseRepository.vincularInstituicao(codigoInst.trim());
+    setVinculando(false);
+    if (!ok) { setToast(erro ?? 'Não foi possível vincular.', 'error'); return; }
+    setCodigoInst('');
+    setToast('Escola vinculada! Agora digite o código da turma.', 'success');
+    const nova = await userRepository.getSession();
+    if (nova) useAppStore.getState().setSession(nova);
+  }
+
+  const [salvandoPerfil, setSalvandoPerfil] = useState(false);
+
   function handleSaveProfile() {
-    if (!session) return;
+    if (!session || salvandoPerfil) return;
+    setSalvandoPerfil(true);
     userRepository
       .updateProfile({ nome, sobrenome: sobrenome || undefined, metaEstudo: meta || undefined })
       .then((ok) => setToast(ok ? 'Perfil atualizado!' : 'Não foi possível salvar.', ok ? 'success' : 'error'))
-      .catch(() => setToast('Não foi possível salvar.', 'error'));
+      .catch(() => setToast('Não foi possível salvar.', 'error'))
+      .finally(() => setSalvandoPerfil(false));
   }
 
   function handleSaveKey() {
@@ -92,10 +128,23 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Atalhos de seção: o perfil cresceu, o aluno pula direto ao assunto */}
+      <nav aria-label="Seções do perfil" className="flex flex-wrap gap-2">
+        {SECOES.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => irParaSecao(s.id)}
+            className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300 hover:border-amber-400/40 hover:text-amber-200 transition-all"
+          >
+            {s.rotulo}
+          </button>
+        ))}
+      </nav>
+
+      {/* Stats (nível via calcLevel: fonte única, igual à sidebar) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
-          { label: 'Nível', value: gamification.level, icon: 'estrela' },
+          { label: 'Nível', value: nivel, icon: 'estrela' },
           { label: 'XP Total', value: gamification.xp.toLocaleString(), icon: 'raio' },
           { label: 'Sequência', value: `${gamification.streak}d`, icon: 'fogo' },
         ].map(stat => (
@@ -115,49 +164,73 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {/* XP Bar */}
+      {/* XP Bar (mesma conta da sidebar: resto e meta do nível atual) */}
       <div className="glass-card rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs text-gray-500 uppercase tracking-wider font-medium">Progresso</h2>
-          <span className="text-xs text-gray-500 tabular-nums">Nível {gamification.level}</span>
+          <span className="text-xs text-gray-500 tabular-nums">Nível {nivel}</span>
         </div>
         <div className="flex items-baseline gap-1 mb-3">
-          <span className="text-2xl font-bold text-white tabular-nums">{gamification.xp % (100 * gamification.level)}</span>
-          <span className="text-sm text-gray-500">/ {100 * gamification.level} XP</span>
+          <span className="text-2xl font-bold text-white tabular-nums">{xpResto}</span>
+          <span className="text-sm text-gray-500">/ {xpMeta} XP</span>
         </div>
         <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-          <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 xp-bar" style={{ width: `${((gamification.xp % (100 * gamification.level)) / (100 * gamification.level)) * 100}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 xp-bar" style={{ width: `${(xpResto / xpMeta) * 100}%` }} />
         </div>
       </div>
 
-      {/* Escola e turma: somente leitura + entrada por codigo */}
-      <div className="glass-card rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4">Escola e Turma</h2>
+      {/* Escola e codigos: vinculo por codigo confidencial (email da secretaria) */}
+      <div id="secao-escola" className="glass-card rounded-2xl p-5 scroll-mt-24">
+        <h2 className="text-sm font-semibold text-gray-300 mb-1">Escola e códigos</h2>
+        <p className="text-xs text-gray-500 mb-4">Primeiro a instituição, depois a turma. Os códigos são secretos: não repasse a ninguém de fora.</p>
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Escola</label>
+              <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Escola vinculada</label>
               <p className="text-sm text-white glass-light rounded-xl px-3 py-2.5">
-                {escolas.find(e => e.id === escolaId)?.nome ?? 'Sem escola'}
+                {escolas.find(e => e.id === escolaId)?.nome ?? 'Nenhuma ainda'}
               </p>
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Turma</label>
               <p className="text-sm text-white glass-light rounded-xl px-3 py-2.5">
-                {turmas.find(t => t.id === turmaId)?.nome ?? 'Sem turma'}
+                {turmas.find(t => t.id === turmaId)?.nome ?? 'Nenhuma ainda'}
               </p>
             </div>
           </div>
 
           <div>
-            <label htmlFor="codigo-turma" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider"> Entrar em uma turma
+            <label htmlFor="codigo-instituicao" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider"> 1. Código da instituição
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="codigo-instituicao"
+                value={codigoInst}
+                onChange={e => setCodigoInst(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="Ex: SOL2026A (veio no email)"
+                maxLength={12}
+                autoComplete="off"
+                className="flex-1 text-sm tracking-widest uppercase"
+              />
+              <button
+                onClick={handleVincularInstituicao}
+                disabled={!codigoInst.trim() || vinculando}
+                className="btn-primary text-xs px-4 py-2 shrink-0 disabled:opacity-40"
+              >
+                {vinculando ? 'Vinculando...' : 'Vincular'}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="codigo-turma" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider"> 2. Código da turma
             </label>
             <div className="flex gap-2">
               <input
                 id="codigo-turma"
                 value={codigoTurma}
-                onChange={e => setCodigoTurma(e.target.value.toUpperCase())}
-                placeholder="Código do professor"
+                onChange={e => setCodigoTurma(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="Ex: ABC123 (professor passa)"
                 maxLength={12}
                 autoComplete="off"
                 className="flex-1 text-sm tracking-widest uppercase"
@@ -165,21 +238,24 @@ export function ProfilePage() {
               <button
                 onClick={handleEntrarNaTurma}
                 disabled={!codigoTurma.trim() || entrando}
-                className="btn-primary text-xs px-4 py-2 shrink-0"
+                className="btn-primary text-xs px-4 py-2 shrink-0 disabled:opacity-40"
               >
                 {entrando ? 'Entrando...' : 'Entrar'}
               </button>
             </div>
-            <p className="text-xs text-gray-600 mt-2"> Peça o código ao seu professor. Ele define qual ranking e qual mural você enxerga,
+            <p className="text-xs text-gray-600 mt-2"> O código da turma define qual ranking e qual mural você enxerga,
               por isso a turma não pode ser escolhida na lista.
             </p>
           </div>
         </div>
       </div>
 
+      {/* Acessibilidade: fonte, contraste, movimento, daltonismo */}
+      <AcessibilidadePanel />
+
       {/* Personal info */}
-      <div className="glass-card rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4"><ClipboardList size={16} className="inline-block align-[-0.15em] text-gray-400" /> Informações Pessoais</h2>
+      <div id="secao-conta" className="glass-card rounded-2xl p-5 scroll-mt-24">
+        <h2 className="text-sm font-semibold text-gray-300 mb-4"><ClipboardList size={16} className="inline-block align-[-0.15em] text-gray-400" /> Conta</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">E-mail</label>
@@ -197,12 +273,12 @@ export function ProfilePage() {
             <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Meta de Estudo</label>
             <input type="text" value={meta} onChange={e => setMeta(e.target.value)} className="w-full text-sm" placeholder="Ex: Medicina na USP" />
           </div>
-          <button onClick={handleSaveProfile} className="btn-primary w-full">Salvar alterações</button>
+          <button onClick={handleSaveProfile} disabled={salvandoPerfil} className="btn-primary w-full">{salvandoPerfil ? 'Salvando…' : 'Salvar alterações'}</button>
         </div>
       </div>
 
       {/* AI Settings */}
-      <div className="glass-card rounded-2xl p-5">
+      <div id="secao-ia" className="glass-card rounded-2xl p-5 scroll-mt-24">
         <div className="flex items-center gap-3 mb-4">
           {/* Era gradiente roxo/azul com robozinho: o combo que a regra 5
               proibe. A identidade aqui e o sagui e o ambar da noite. */}
@@ -279,9 +355,11 @@ export function ProfilePage() {
               />
               <button
                 onClick={() => setShowKey(!showKey)}
+                aria-label={showKey ? 'Ocultar chave' : 'Mostrar chave'}
+                title={showKey ? 'Ocultar chave' : 'Mostrar chave'}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 p-1.5"
               >
-                {showKey ? '' : ''}
+                {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 

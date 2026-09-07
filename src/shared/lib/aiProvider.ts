@@ -150,8 +150,8 @@ export function toChatCompletionsMessages(
 /** generationConfig (Gemini) -> parametros do chat completions. */
 export function geminiGenConfigToDeepSeek(
   generationConfig: Record<string, unknown> = {},
-): { temperature?: number; max_tokens?: number; top_p?: number } {
-  const out: { temperature?: number; max_tokens?: number; top_p?: number } = {};
+): { temperature?: number; max_tokens?: number; top_p?: number; response_format?: unknown } {
+  const out: { temperature?: number; max_tokens?: number; top_p?: number; response_format?: unknown } = {};
   const temp = Number((generationConfig as Record<string, unknown>).temperature);
   const maxTokens = Number(
     (generationConfig as Record<string, unknown>).maxOutputTokens ??
@@ -161,6 +161,10 @@ export function geminiGenConfigToDeepSeek(
   if (Number.isFinite(temp)) out.temperature = temp;
   if (Number.isFinite(maxTokens) && maxTokens > 0) out.max_tokens = Math.floor(maxTokens);
   if (Number.isFinite(topP)) out.top_p = topP;
+  // Saida JSON estrita (quiz, mapa mental): repassada ao chat completions.
+  // So e incluida pelo chamador em fluxos DeepSeek - o Gemini nao recebe.
+  const rf = (generationConfig as Record<string, unknown>).response_format;
+  if (rf && typeof rf === 'object') out.response_format = rf;
   return out;
 }
 
@@ -219,6 +223,49 @@ export function wrapAsGeminiResponse(text: string): unknown {
 
 /** Tempo limite de cada tentativa DeepSeek (evita trava indefinida). */
 export const DEEPSEEK_TIMEOUT_MS = 30000;
+
+/* ============================================================
+ * CONFIG UNICA DO CHAT — DeepSeek-V4-Flash (versão mais barata)
+ * ------------------------------------------------------------
+ * Todos os caminhos de chat (worker, proxy local dev, Gemini
+ * direto como fallback) usam ESTES valores. Motivo: antes cada
+ * arquivo tinha seu temperature/max_tokens (0.4/1024, 0.5/1400,
+ * 0.7/1024), então a mesma pergunta custava e respondia diferente
+ * conforme o transporte. Centralizar aqui mantém custo mínimo e
+ * comportamento idêntico em dev, preview e produção.
+ * ============================================================ */
+
+/** Chat completions (DeepSeek): teto enxuto = menos tokens = mais barato. */
+export const DEEPSEEK_CHAT_CONFIG = {
+  temperature: 0.5,
+  max_tokens: 1000,
+  top_p: 0.9,
+} as const;
+
+/** Envelope Gemini equivalente (mesmos valores, nomes do Google). */
+export const GEMINI_CHAT_CONFIG = {
+  temperature: 0.5,
+  maxOutputTokens: 1000,
+  topP: 0.9,
+} as const;
+
+/** Resposta vazia (content null, filtro, corte) nunca vira bolha vazia. */
+export function garantirTextoResposta(texto: unknown): string {
+  const t = typeof texto === 'string' ? texto.trim() : '';
+  if (!t) throw new Error('A IA devolveu uma resposta vazia. Tente de novo com outras palavras.');
+  return t;
+}
+
+/** true só para cancelamento explícito do usuário (não para timeout). */
+export function isCancelamentoUsuario(erro: unknown, sinalUsuario?: AbortSignal | null): boolean {
+  if (erro instanceof Error && erro.name === 'AbortError' && sinalUsuario?.aborted) {
+    const motivo = (sinalUsuario as AbortSignal & { reason?: unknown }).reason;
+    const nomeMotivo = motivo instanceof Error ? motivo.name : '';
+    // Timeout usa TimeoutError como motivo — não é cancelamento do usuário.
+    return nomeMotivo !== 'TimeoutError';
+  }
+  return false;
+}
 
 export interface ContextoChamada {
   model?: string;

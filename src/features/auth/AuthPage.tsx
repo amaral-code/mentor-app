@@ -19,7 +19,9 @@ type AuthStep = 'role' | 'auth';
  * na tela de acesso. O psicologo cria a conta como qualquer pessoa e e
  * promovido por registrar_psicologo() no banco, depois da conferencia do
  * CRP - deixar o papel disponivel aqui seria permitir que qualquer um se
- * anunciasse como profissional de saude na plataforma.
+ * anunciasse como profissional de saude na plataforma. O docente entra
+ * pela porta propria (a conta chega por email da secretaria); escolher
+ * outra porta so gera o aviso de divergencia, o servidor decide o papel.
  */
 type RoleEscolhivel = Exclude<UserRole, 'admin' | 'psychologist'>;
 
@@ -32,9 +34,15 @@ const ROLE_CONFIG: Record<RoleEscolhivel, { label: string; desc: string; icon: R
   },
   educator: {
     label: 'Educacional',
-    desc: 'Professor ou secretaria',
+    desc: 'Secretaria da escola',
     icon: <Users size={24} />,
     gradient: 'from-emerald-400 to-cyan-600',
+  },
+  teacher: {
+    label: 'Docente',
+    desc: 'Professor em sala',
+    icon: <Users size={24} />,
+    gradient: 'from-sky-400 to-blue-600',
   },
   parent: {
     label: 'Pais e responsáveis',

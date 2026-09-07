@@ -72,8 +72,11 @@ export function EscudoPage() {
    */
   useEffect(() => {
     if (!escudo.ativo) return;
-
+    // Ignora o 1º disparo: alguns browsers emitem visibilitychange na
+    // ativação (aba já visible) e contavam interrupção fantasma.
+    let primeiroEvento = true;
     const aoMudar = () => {
+      if (primeiroEvento) { primeiroEvento = false; return; }
       if (document.visibilityState === 'visible') {
         registrarInterrupcao();
         if (!alertouSaida.current) {

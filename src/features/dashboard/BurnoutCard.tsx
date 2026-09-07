@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Activity, ShieldAlert } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Activity, RotateCcw, ShieldAlert } from 'lucide-react';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
 import { useAppStore } from '../../stores/appStore';
 import { COR_CLASSE, ROTULO_CLASSE, sugestaoPausa } from '../../shared/lib/burnoutModel';
@@ -16,12 +16,23 @@ import { COR_CLASSE, ROTULO_CLASSE, sugestaoPausa } from '../../shared/lib/burno
  * classificar burnout com tres cliques seria chute com cara de medida.
  */
 export function BurnoutCard() {
-  const { previsao, historicoBurnout, carregado, carregarTudo, conteudoDensoBloqueado } = useBemEstarStore();
+  const { previsao, historicoBurnout, carregado, carregarTudo, conteudoDensoBloqueado, reiniciarIndice } = useBemEstarStore();
   const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const [confirmandoReset, setConfirmandoReset] = useState(false);
 
   useEffect(() => {
     if (!carregado) void carregarTudo();
-  }, [carregado]);
+  }, [carregado, carregarTudo]);
+
+  function pedirReset() {
+    if (!confirmandoReset) {
+      setConfirmandoReset(true);
+      window.setTimeout(() => setConfirmandoReset(false), 4000);
+      return;
+    }
+    setConfirmandoReset(false);
+    void reiniciarIndice();
+  }
 
   if (!previsao) return null;
 
@@ -48,6 +59,19 @@ export function BurnoutCard() {
           </p>
           <p className="text-[10px] text-gray-500">/100</p>
         </div>
+        <button
+          onClick={pedirReset}
+          title={confirmandoReset ? 'Clique de novo para confirmar' : 'Zerar índice e recomeçar do zero'}
+          aria-label={confirmandoReset ? 'Confirmar reinício do índice' : 'Reiniciar índice de fadiga'}
+          className={`shrink-0 inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all active:scale-95 ${
+            confirmandoReset
+              ? 'text-red-300 bg-red-500/15'
+              : 'text-gray-600 hover:text-gray-300 hover:bg-white/5'
+          }`}
+        >
+          <RotateCcw size={12} />
+          {confirmandoReset ? 'Zerar?' : 'Reiniciar'}
+        </button>
       </div>
 
       <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden mb-3">
@@ -69,9 +93,9 @@ export function BurnoutCard() {
 
       {serie.length > 1 && (
         <div className="flex items-end gap-[3px] h-10 mt-4" aria-hidden="true">
-          {serie.map((d) => (
+          {serie.map((d, i) => (
             <div
-              key={d.data}
+              key={`${d.data}-${i}`}
               className="flex-1 rounded-t-sm min-h-[3px]"
               style={{ height: `${Math.max(6, d.score)}%`, background: COR_CLASSE[d.classe], opacity: 0.75 }}
               title={`${d.data}: ${d.score}`}
