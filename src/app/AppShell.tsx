@@ -91,6 +91,9 @@ function MascotCard({ onOpen, reduzida }: { onOpen: () => void; reduzida?: boole
             alt="Sagui Mascote Feliz Pulando"
             className="w-full h-full object-cover object-top scale-110 animate-mascot-breathe"
             src="/assets/ele_feliz_pulando.png"
+            loading="lazy"
+            draggable={false}
+            onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
           />
           <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-midnight-900 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
         </div>

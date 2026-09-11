@@ -18,8 +18,11 @@ export const MASCOT_SPRITE: Record<MascotState, string> = {
   typing: '/assets/sagui_estudando_2.png',
   loading: '/assets/sagui_aprovacao_2.png',
   success: '/assets/sagui_pulando_2.png',
-  error: '/mascot.png',
+  error: '/assets/sagui_acenando_2.png',
 };
+
+/** Fallback caso algum sprite falhe (evita ícone quebrado). */
+export const MASCOT_FALLBACK = '/assets/sagui_meditando_2.png';
 
 /** Classe de animação (keyframes) aplicada por estado. */
 export const MASCOT_ANIM: Record<MascotState, string> = {

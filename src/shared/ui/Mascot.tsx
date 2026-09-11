@@ -3,6 +3,7 @@ import {
   mascotStore,
   MascotState,
   MASCOT_SPRITE,
+  MASCOT_FALLBACK,
   MASCOT_ANIM,
   MASCOT_DEFAULT_MSG,
 } from '../../stores/mascotStore';
@@ -98,7 +99,15 @@ export function Mascot({
 
       {/* Sprint keyed por estado -> dispara a microinteração de entrada */}
       <div key={`${rev}:${sprite}`} className="mascot-sprite-entry">
-        <img src={sprite} alt="" draggable={false} className="mascot-img" />
+        <img
+          src={sprite}
+          alt=""
+          draggable={false}
+          className="mascot-img"
+          onError={(e) => {
+            if (e.currentTarget.src !== MASCOT_FALLBACK) e.currentTarget.src = MASCOT_FALLBACK;
+          }}
+        />
       </div>
 
       {/* Confete na comemoração */}

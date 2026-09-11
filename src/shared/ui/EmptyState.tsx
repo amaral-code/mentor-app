@@ -50,6 +50,11 @@ export function EmptyState({
         draggable={false}
         style={{ width: lado, height: lado }}
         className="object-contain mb-3 opacity-90 motion-safe:animate-float-suave"
+        onError={(e) => {
+          if (!e.currentTarget.src.endsWith('sagui_meditando_2.png')) {
+            e.currentTarget.src = '/assets/sagui_meditando_2.png';
+          }
+        }}
       />
       <p className={`font-medium text-gray-300 ${compacto ? 'text-sm' : 'text-base'}`}>{titulo}</p>
       {descricao && (

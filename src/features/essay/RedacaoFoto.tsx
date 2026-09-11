@@ -226,6 +226,16 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
                   src={previa || resultado.image_url || ''}
                   alt="Foto da redação enviada"
                   className="w-full h-auto max-h-72 object-contain bg-black/30"
+                  onError={(e) => {
+                    // URL assinada do Supabase expira em 7 dias: tenta a outra
+                    // fonte antes de mostrar ícone quebrado.
+                    const alternativa = e.currentTarget.src === previa ? resultado.image_url : previa;
+                    if (alternativa && e.currentTarget.src !== alternativa) {
+                      e.currentTarget.src = alternativa;
+                    } else {
+                      e.currentTarget.style.display = 'none';
+                    }
+                  }}
                 />
               </a>
             )}

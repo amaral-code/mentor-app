@@ -4,6 +4,10 @@ import { useAppStore, persistir } from '../../stores/appStore';
 import { MeditationOverlay } from '../../shared/ui/MeditationOverlay';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { focusMetricsRepository, type FocusMetricRow } from '../../shared/storage/FocusMetricsRepository';
+import { useFocusTracker } from './useFocusTracker';
+import { ConsciousPauseOverlay } from './ConsciousPauseOverlay';
+import { distractionStage, formatFocusTime } from './focusLogic';
 
 type FocoState = 'idle' | 'foco' | 'pausa' | 'concluido';
 const FOCO_MIN = 25;
@@ -21,6 +25,56 @@ export function FocoPage() {
   const mutedRef = useRef(isMuted);
   mutedRef.current = isMuted;
 
+  /*
+   * MODO FOCO CONSCIENTE: rastreia perdas de atenção via `visibilitychange`
+   * enquanto a página está montada. A intervenção é progressiva — toast
+   * sutil na 1ª perda, aviso na 2ª, overlay de respiração na 3ª — e, ao
+   * encerrar a sessão, as métricas vão para `focus_metrics` automaticamente.
+   */
+  const tracker = useFocusTracker({
+    onDistraction: (n) => {
+      const estagio = distractionStage(n);
+      if (estagio === 'aviso-leve') {
+        setToast('Uma ida e volta — sem culpa. Volte no seu ritmo.', 'info');
+      } else if (estagio === 'aviso-final') {
+        setToast('Segunda distração em poucos minutos. Na próxima, faremos uma pausa para respirar juntos.', 'info');
+      }
+    },
+  });
+  const pausaAberta = tracker.shouldPause;
+  const [metricasAtencao, setMetricasAtencao] = useState<FocusMetricRow[]>([]);
+
+  /** Persiste as métricas da sessão atual em `focus_metrics`. */
+  function salvarMetricasFoco() {
+    const metrics = tracker.stop();
+    // Sessão sem 1 min de foco nem distração: ruído, não vale a linha.
+    if (metrics.focusedMinutes <= 0 && metrics.distractionCount <= 0) return;
+    persistir(
+      focusMetricsRepository.salvarMetricasSessao(metrics).then((row) => {
+        // Confirmação do servidor: entra no histórico da tela na hora.
+        if (row) setMetricasAtencao((m) => [row, ...m].slice(0, 7));
+        return row;
+      }),
+      {
+        mensagem: 'Não foi possível salvar as métricas de foco desta sessão.',
+      },
+    );
+    tracker.reset();
+  }
+
+  /*
+   * Sair da aba Foco também encerra a sessão (a página desmonta): salva o
+   * acumulado no unmount. Após Parar/ciclo completo os refs já foram
+   * zerados pelo reset e o filtro de ruído descarta — sem duplicar linha.
+   * Seguro no StrictMode: na remontagem de dev os refs estão zerados.
+   */
+  const salvarRef = useRef(salvarMetricasFoco);
+  salvarRef.current = salvarMetricasFoco;
+  useEffect(() => {
+    return () => { salvarRef.current(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     // Historico vem do banco (tabela sessoes_foco).
     supabaseRepository
@@ -36,6 +90,8 @@ export function FocoPage() {
       // aviso de erro toda vez que a rede oscila atrapalharia mais do que
       // a lista vazia, e o cronometro funciona sem esse dado.
       .catch(() => {});
+    // Métricas de atenção (focus_metrics): mesmo silêncio proposital.
+    focusMetricsRepository.listarMetricas(7).then(setMetricasAtencao).catch(() => {});
   }, []);
 
   function playAlerta() {
@@ -101,6 +157,8 @@ export function FocoPage() {
       setCicles(p => p + 1);
       setToast(`+${xp} XP por ciclo de foco!`, 'success');
       setSessoesHoje(p => p + 1);
+      // Sessão encerrada (ciclo completo): métricas vão para focus_metrics.
+      salvarMetricasFoco();
       setState('concluido');
     } else {
       setState('concluido');
@@ -122,7 +180,9 @@ export function FocoPage() {
   const totalSessoes = historico.filter(h => h.tipo === 'foco').length;
 
   return (
-    <div className="space-y-5 animate-fade-up max-w-lg mx-auto">
+    <>
+    {/* Desfoque suave do conteúdo principal enquanto a micro-pausa está aberta. */}
+    <div className={`space-y-5 animate-fade-up max-w-lg mx-auto transition-all duration-300 ${pausaAberta ? 'pointer-events-none select-none blur-sm' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 flex items-center justify-center">
@@ -178,7 +238,7 @@ export function FocoPage() {
           ) : state !== 'concluido' ? (
             <div className="flex gap-3">
               <button
-                onClick={() => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } setState('concluido'); }}
+                onClick={() => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } salvarMetricasFoco(); setState('concluido'); }}
                 className="btn-ghost text-sm text-gray-400 hover:text-red-400"
               > Parar
               </button>
@@ -211,6 +271,17 @@ export function FocoPage() {
           <span className="w-1 h-1 rounded-full bg-gray-600" />
           <span>{cicles} ciclos hoje</span>
         </div>
+
+        {/* Modo Foco Consciente: tempo de atenção + perdas de foco ao vivo. */}
+        <div className="flex items-center justify-center gap-4 mt-3 text-xs" aria-live="polite">
+          <span className="text-indigo-300/90 tabular-nums" title="Tempo de foco contínuo (aba visível)">
+            Foco {formatFocusTime(tracker.focusSeconds)}
+          </span>
+          <span className="w-1 h-1 rounded-full bg-gray-600" />
+          <span className={tracker.distractionCount > 0 ? 'text-violet-300/90' : 'text-gray-500'} title="Mudanças de aba nesta sessão">
+            {tracker.distractionCount} {tracker.distractionCount === 1 ? 'distração' : 'distrações'}
+          </span>
+        </div>
       </div>
 
       {/* Stats */}
@@ -238,6 +309,30 @@ export function FocoPage() {
             titulo="Nenhum ciclo de foco ainda"
             descricao="Comece um bloco de 25 minutos. O sagui fica de olho no relógio por você."
           />
+        </div>
+      )}
+
+      {/* Atenção recente (focus_metrics): minutos focados x distrações. */}
+      {metricasAtencao.length > 0 && (
+        <div className="glass rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-gray-300 mb-3">
+            <BarChart3 size={16} className="inline-block align-[-0.15em] text-violet-400" /> Atenção recente
+          </h2>
+          <div className="space-y-1.5">
+            {metricasAtencao.map((m) => (
+              <div key={m.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
+                <div className="flex items-center gap-2">
+                  <span className="text-violet-400">●</span>
+                  <span className="text-gray-400">
+                    {new Date(`${m.sessionDate}T12:00:00`).toLocaleDateString()}
+                  </span>
+                </div>
+                <span className="text-gray-500 text-xs tabular-nums">
+                  {m.focusedMinutes}min focados • {m.distractionCount} {m.distractionCount === 1 ? 'distração' : 'distrações'}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -275,5 +370,13 @@ export function FocoPage() {
         }}
       />
     </div>
+
+    {/* Micro-pausa consciente: 3 distrações em 15 min disparam o modal. */}
+    <ConsciousPauseOverlay
+      open={pausaAberta}
+      distractionCount={tracker.distractionCount}
+      onResume={tracker.dismissPause}
+    />
+    </>
   );
 }

@@ -44,6 +44,7 @@ const ARQUIVOS = [
   '016_conversas_chat.sql',
   '017_reiniciar_indice.sql',
   '018_instituicao_convites.sql',
+  '019_focus_metrics.sql',
 ];
 
 let db;
@@ -618,5 +619,35 @@ describe('codigo da instituicao e convites (018)', () => {
   it('conta nova nasce sem troca obrigatoria', async () => {
     const p = await primeira(aluno, 'select deve_trocar_senha from public.perfis where id=$1', [aluno]);
     expect(p.deve_trocar_senha).toBe(false);
+  });
+});
+
+describe('modo foco consciente — focus_metrics (019)', () => {
+  it('o dono grava e le as metricas da propria sessao', async () => {
+    await comoUsuario(aluno,
+      `insert into public.focus_metrics (user_id, session_date, focused_minutes, distraction_count)
+       values ($1, CURRENT_DATE, 25, 3)`, [aluno]);
+    const rows = await linhas(aluno,
+      'select * from public.focus_metrics where user_id=$1', [aluno]);
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect(rows[0].focused_minutes).toBe(25);
+    expect(rows[0].distraction_count).toBe(3);
+  });
+
+  it('recusa valores negativos', async () => {
+    await expect(comoUsuario(aluno,
+      `insert into public.focus_metrics (user_id, focused_minutes) values ($1, -5)`, [aluno]))
+      .rejects.toThrow();
+  });
+
+  it('estranho nao le nem apaga metrica alheia', async () => {
+    const alheias = await linhas(estranho,
+      'select * from public.focus_metrics where user_id=$1', [aluno]);
+    expect(alheias).toHaveLength(0);
+    await comoUsuario(estranho,
+      'delete from public.focus_metrics where user_id=$1', [aluno]);
+    const depois = await linhas(aluno,
+      'select * from public.focus_metrics where user_id=$1', [aluno]);
+    expect(depois.length).toBeGreaterThanOrEqual(1);
   });
 });

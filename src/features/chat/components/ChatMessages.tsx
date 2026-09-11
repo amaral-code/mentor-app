@@ -89,6 +89,7 @@ export function ChatMessages({
                 height={36}
                 loading="lazy"
                 draggable={false}
+                onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
                 className="w-full h-full object-cover object-top"
               />
             </div>
@@ -164,6 +165,7 @@ export function ChatMessages({
               width={36}
               height={36}
               draggable={false}
+              onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
               className="w-full h-full object-cover object-top"
             />
           </div>
@@ -195,6 +197,7 @@ export function ChatMessages({
               height={36}
               loading="lazy"
               draggable={false}
+              onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
               className="w-full h-full object-cover object-top"
             />
           </div>

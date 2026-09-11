@@ -94,6 +94,7 @@ export function HeroSessao({ sessao, countdown, salaAberta, entrando, onEntrar }
             alt="Sagui Amigo"
             loading="lazy"
             draggable={false}
+            onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
             className="w-full h-full object-cover object-top scale-110"
             src="/assets/ele_feliz_pulando.png"
           />
