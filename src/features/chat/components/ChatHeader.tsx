@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { EllipsisVertical, History, Lightbulb, PanelRightClose, Volume2, VolumeX } from 'lucide-react';
+import { EllipsisVertical, GraduationCap, History, Lightbulb, PanelRightClose, Timer, Volume2, VolumeX } from 'lucide-react';
 
 /** Aba temática do Mentor (espelha ABAS_MENTOR do ChatPage). */
 export interface AbaMentor {
@@ -23,6 +23,11 @@ interface ChatHeaderProps {
   isMuted: boolean;
   onToggleMute: () => void;
   onOpenPersonas: () => void;
+  /** Modo Sala de Aula: esconde o chat, libera so o scanner (OCR). */
+  modoAula: boolean;
+  onToggleModoAula: () => void;
+  /** Ancora de Foco: abre o overlay do Pomodoro de 25 min. */
+  onAbrirFoco: () => void;
 }
 
 /**
@@ -45,6 +50,9 @@ export function ChatHeader({
   isMuted,
   onToggleMute,
   onOpenPersonas,
+  modoAula,
+  onToggleModoAula,
+  onAbrirFoco,
 }: ChatHeaderProps) {
   return (
     <header
@@ -118,6 +126,29 @@ export function ChatHeader({
 
       {/* Ações rápidas */}
       <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={onToggleModoAula}
+          title="Modo Aula: só scanner, sem chat"
+          aria-label={modoAula ? 'Desligar Modo Aula' : 'Ligar Modo Aula'}
+          aria-pressed={modoAula}
+          className={`h-8 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm active:scale-95 ${
+            modoAula
+              ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300'
+              : 'bg-[#131b2e]/90 hover:bg-[#1a253f] border-white/10 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300'
+          }`}
+        >
+          <GraduationCap size={14} className={modoAula ? 'text-cyan-300' : 'text-slate-400'} />
+          <span className="hidden lg:inline text-[11px] font-semibold">Modo Aula</span>
+        </button>
+        <button
+          onClick={onAbrirFoco}
+          title="Pomodoro (25 min): guarde o celular e foque no caderno"
+          aria-label="Iniciar Pomodoro de 25 minutos"
+          className="h-8 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm active:scale-95 bg-[#131b2e]/90 hover:bg-[#1a253f] border-white/10 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-300"
+        >
+          <Timer size={14} className="text-slate-400" />
+          <span className="hidden lg:inline text-[11px] font-semibold">Pomodoro</span>
+        </button>
         <button
           onClick={onToggleHistorico}
           title="Alternar Histórico de Conversas"

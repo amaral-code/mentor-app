@@ -13,6 +13,7 @@
  *   POST /webhook/pagamento -> provedor confirma; cria a sala e libera
  *   POST /notify/drain    -> envia a fila de e-mail/push
  *   POST /api/turmas/import -> secretaria importa alunos (IA + contas + convites)
+ *   POST /api/ocr-process   -> EPICO 1: foto do caderno -> transcricao + duvida
  *   GET  /health
  *
  * SEGREDOS a configurar no provedor:
@@ -38,6 +39,7 @@ import {
   montarSystemInstructionChat,
   ferramentasDeBusca,
   extrairFontes,
+  extrairSinalFrustracao,
   detectarCitacaoDeProva,
   modoValido,
   modoRespostaValido,
@@ -1144,16 +1146,19 @@ export default {
           if (!saida.ok) {
             return json({ error: 'deepseek_falhou', message: saida.texto.slice(0, 400) }, saida.status, corsHeaders);
           }
-          const texto = textoDaResposta(JSON.parse(saida.texto));
+          const brutoDs = textoDaResposta(JSON.parse(saida.texto));
+          // EPICO 2: o bloco `frustracao` nunca chega a tela; vira flag.
+          const sinalDs = extrairSinalFrustracao(brutoDs);
           return json(
             {
-              texto,
+              texto: sinalDs.textoLimpo,
+              frustrationDetected: sinalDs.frustrationDetected,
               modo,
               modelo: modeloDs,
               fontes: [],
               consultas: [],
               groundingUsado: false,
-              citouProva: detectarCitacaoDeProva(texto),
+              citouProva: detectarCitacaoDeProva(sinalDs.textoLimpo),
             },
             200,
             corsHeaders,
@@ -1212,12 +1217,14 @@ export default {
         }
 
         const dados = JSON.parse(bruta.texto);
-        const texto = textoDaResposta(dados);
+        // EPICO 2: separa o bloco `frustracao` antes de exibir.
+        const { textoLimpo, frustrationDetected } = extrairSinalFrustracao(textoDaResposta(dados));
         const { fontes, consultas, groundingUsado } = extrairFontes(dados);
 
         return json(
           {
-            texto,
+            texto: textoLimpo,
+            frustrationDetected,
             modo,
             modelo,
             fontes,
@@ -1225,7 +1232,7 @@ export default {
             // Dois sinais distintos, e a interface mostra badges
             // diferentes: "buscou na web" nao e o mesmo que "citou prova".
             groundingUsado: usouBusca && groundingUsado,
-            citouProva: detectarCitacaoDeProva(texto),
+            citouProva: detectarCitacaoDeProva(textoLimpo),
           },
           200,
           corsHeaders,
@@ -1471,6 +1478,99 @@ export default {
         200,
         corsHeaders,
       );
+    }
+
+    // =============================================================
+    // 9. EPICO 1 (HackTudo 2026): Ponte analogica-digital (OCR)
+    //
+    // O celular e so um scanner de 5 segundos: recebe a foto do caderno
+    // em base64, o Gemini Vision transcreve o manuscrito e extrai a
+    // duvida principal, e o front joga o texto no input do chat.
+    // Sem sessao nao entra (foto de material escolar de menor).
+    // =============================================================
+    if (url.pathname === '/api/ocr-process' && request.method === 'POST') {
+      if (!tokenValido(request, env)) return json({ error: 'Unauthorized' }, 401, corsHeaders);
+      if (!env.GEMINI_API_KEY) {
+        return json({ error: 'misconfigured', message: 'Defina GEMINI_API_KEY.' }, 500, corsHeaders);
+      }
+
+      const usuario = await usuarioDoToken(env, request);
+      if (!usuario) {
+        return json({ error: 'sem_sessao', message: 'Faca login novamente.' }, 401, corsHeaders);
+      }
+
+      let corpo;
+      try {
+        corpo = await request.json();
+      } catch {
+        return json({ error: 'invalid_json' }, 400, corsHeaders);
+      }
+
+      const bruto = String(corpo.imageBase64 || corpo.imagem || '');
+      if (!bruto) return json({ error: 'imagem_ausente' }, 400, corsHeaders);
+
+      // Aceita data-URL ou base64 puro; mime sai do prefixo quando houver.
+      const match = bruto.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/s);
+      const mimeType = String(corpo.mimeType || (match ? match[1] : 'image/jpeg')).toLowerCase();
+      const base64 = (match ? match[2] : bruto).replace(/\s/g, '');
+      const MIMES_OCR = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!MIMES_OCR.includes(mimeType)) {
+        return json({ error: 'tipo_invalido', message: 'Use foto JPG ou PNG.' }, 415, corsHeaders);
+      }
+      // ~6MB em base64 ~= 4.5MB binarios: teto do scanner rapido.
+      if (base64.length > 6 * 1024 * 1024) {
+        return json({ error: 'imagem_grande', message: 'Foto muito grande. Aproxime so do trecho da duvida.' }, 413, corsHeaders);
+      }
+
+      const modelo = env.GEMINI_MODEL_VISION || MODELO_VISAO_PADRAO;
+      const promptOcr = [
+        'Voce e o scanner do Midnight Mentor. Transcreva o texto MANUSCRITO da foto com fidelidade total (mantenha numeros, formulas e unidades).',
+        'Depois, em UMA frase, extraia a duvida principal do aluno sobre esse trecho.',
+        'Responda APENAS com JSON valido, sem markdown: {"transcricao": "<texto fiel>", "duvida": "<duvida em 1 frase>"}',
+        'Se a foto estiver ilegivel, devolva {"transcricao": "", "duvida": ""}.',
+      ].join('\n');
+
+      try {
+        const upstream = await fetch(
+          `${GEMINI_BASE}/${modelo}:generateContent?key=${env.GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [
+                    { text: promptOcr },
+                    { inlineData: { mimeType, data: base64 } },
+                  ],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.1,
+                maxOutputTokens: 2048,
+                responseMimeType: 'application/json',
+              },
+            }),
+          },
+        );
+        if (!upstream.ok) {
+          return json(
+            { error: 'visao_falhou', message: (await upstream.text()).slice(0, 400) },
+            upstream.status,
+            corsHeaders,
+          );
+        }
+        const parsed = jsonDaResposta(textoDaResposta(await upstream.json()));
+        const transcricao = String(parsed.transcricao || '').slice(0, 4000);
+        const duvida = String(parsed.duvida || '').slice(0, 500);
+        const textoParaChat = duvida && transcricao
+          ? `${duvida}\n\nTrecho do caderno: ${transcricao}`
+          : (transcricao || duvida);
+        return json({ transcricao, duvida, textoParaChat }, 200, corsHeaders);
+      } catch (err) {
+        return json({ error: 'ocr_falhou', message: String(err && err.message) }, 502, corsHeaders);
+      }
     }
 
     return json({ error: 'not_found' }, 404, corsHeaders);

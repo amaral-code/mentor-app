@@ -16,6 +16,11 @@ import { ChatMessage, ChatPersona } from '../../shared/types';
 import { playClick, speak, stopSpeech } from '../../shared/lib/sfx';
 import { buildContextGreeting, ultimaMateria } from '../../shared/lib/contextMemory';
 import { PersonaManager } from '../../shared/ui/PersonaManager';
+import { FocusAnchorOverlay } from './components/FocusAnchorOverlay';
+import { TeamProgressBanner } from './components/TeamProgressBanner';
+import { ConsciousPauseModal } from './components/ConsciousPauseModal';
+import { extrairFrustracao, heuristicaFrustracao } from '../../shared/lib/frustration';
+import { OcrUploader } from './components/OcrUploader';
 import { ChatHeader, type AbaMentor } from './components/ChatHeader';
 import { HeroWelcome } from './components/HeroWelcome';
 import { ChatMessages } from './components/ChatMessages';
@@ -98,6 +103,11 @@ const PERSONAS_EMBUTIDAS = [...Object.values(PERSONA_DO_MODO), 'prof_portugues']
 const CHAVE_MODO = 'mm_modo_chat';
 const CHAVE_MODO_RESPOSTA = 'mm_modo_resposta';
 const CHAVE_HISTORICO_ABERTO = 'mm_historico_aberto';
+/** EPICO 2: pausa no maximo 1x a cada 10min (anti-nagging, sem vigilancia). */
+const CHAVE_PAUSA_ULTIMA = 'mm_pausa_ultima';
+const PAUSA_INTERVALO_MS = 10 * 60 * 1000;
+/** Modo Sala de Aula: persiste entre sessoes neste aparelho. */
+const CHAVE_MODO_AULA = 'mm_modo_aula';
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -138,6 +148,26 @@ export function ChatPage() {
   const [confirmarApagarId, setConfirmarApagarId] = useState<string | null>(null);
   /* Streaming da resposta: texto parcial renderizado no balão do Mentor. */
   const [streamingText, setStreamingText] = useState<string | null>(null);
+  /* EPICO 2: modal de pausa consciente (flag frustration_detected). */
+  const [pausaAberta, setPausaAberta] = useState(false);
+  /* Modo Sala de Aula (todos os turnos) + Ancora de Foco (pomodoro). */
+  const [modoAula, setModoAula] = useState(() => safeGet(CHAVE_MODO_AULA) === '1');
+  const [focoAberto, setFocoAberto] = useState(false);
+
+  function alternarModoAula() {
+    playClick();
+    setModoAula((v) => {
+      safeSet(CHAVE_MODO_AULA, v ? '0' : '1');
+      return !v;
+    });
+  }
+
+  function pedirPausa() {
+    const ultima = Number(safeGet(CHAVE_PAUSA_ULTIMA) || 0);
+    if (Date.now() - ultima < PAUSA_INTERVALO_MS) return;
+    safeSet(CHAVE_PAUSA_ULTIMA, String(Date.now()));
+    setPausaAberta(true);
+  }
   /* Flash neon da borda ao preencher via card (input-flash do protótipo). */
   const [flashKey, setFlashKey] = useState(0);
   const conversaAtivaId = useAppStore((s) => s.conversaAtivaId);
@@ -416,6 +446,9 @@ export function ChatPage() {
         role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
         text: m.text || (m.image ? '[Anexo de imagem]' : ''),
       }));
+    // EPICO 2: ligado pela flag do modelo OU pela heuristica local; o modal
+    // abre apos a resposta commitar (nunca cobre o streaming).
+    let abrirPausaApos = false;
     const finalizar = (msg: ChatMessage, falar = true) => {
       // Resposta que chegou após troca de conversa/novo envio: salva na
       // thread de origem (banco) sem poluir a tela atual e sem animação.
@@ -430,6 +463,10 @@ export function ChatPage() {
         if (falar && !useAppStore.getState().isMuted) { stopSpeech(); speak(msg.text); }
         isGeneratingRef.current = false;
         setIsGenerating(false);
+        if (abrirPausaApos) {
+          abrirPausaApos = false;
+          pedirPausa();
+        }
       });
     };
     const falharComFallback = (motivo: string, textoOriginal: string, moodAtual: string) => {
@@ -453,10 +490,14 @@ export function ChatPage() {
         let reply: string;
         let extras: Partial<ChatMessage> = {};
         if (personaCustomizada || image) {
-          reply = await sendMessageToGemini(
+          const bruto = await sendMessageToGemini(
             text || (image ? 'Analise esta imagem de estudo' : 'Olá!'),
             { apiKey, persona: activePersona, history, imageBase64: image, signal: abortRef.current.signal, modoResposta },
           );
+          // EPICO 2: remove o bloco `frustracao` antes de exibir; sobra a flag.
+          const sinal = extrairFrustracao(bruto);
+          reply = sinal.textoLimpo || bruto;
+          abrirPausaApos = sinal.frustrationDetected;
         } else {
           const resposta = await conversarComMentor({
             modo,
@@ -467,12 +508,19 @@ export function ChatPage() {
             signal: abortRef.current.signal,
           });
           reply = resposta.texto;
+          abrirPausaApos = resposta.frustrationDetected;
           extras = {
             fontes: resposta.fontes,
             groundingUsado: resposta.groundingUsado,
             citouProva: resposta.citouProva,
             modoChat: resposta.modo,
           };
+        }
+        // EPICO 2 (fallback sem IA): curtas repetitivas/desistencia no
+        // historico recente tambem pedem a pausa, mesmo sem a flag.
+        if (!abrirPausaApos) {
+          const falasAluno = history.filter((h) => h.role === 'user').map((h) => h.text);
+          abrirPausaApos = heuristicaFrustracao([...falasAluno, text]);
         }
         if (!reply?.trim()) throw new Error('A IA devolveu uma resposta vazia. Tente de novo com outras palavras.');
 
@@ -636,10 +684,16 @@ export function ChatPage() {
           gliderEmerald={abaAtiva.id === 'natureza'}
           historicoAberto={historicoAberto}
           onToggleHistorico={alternarHistorico}
+          modoAula={modoAula}
+          onToggleModoAula={alternarModoAula}
+          onAbrirFoco={() => { playClick(); setFocoAberto(true); }}
           isMuted={isMuted}
           onToggleMute={() => { setIsMuted(!isMuted); if (!isMuted) stopSpeech(); }}
           onOpenPersonas={() => setShowPersonaManager(true)}
         />
+
+        {/* Efeito Cardume (edital): faixa coletiva fixa no topo do chat. */}
+        <TeamProgressBanner />
 
         {personaCustomizada && (
           <p className="relative z-10 text-[11px] text-gray-500 px-4 pt-1.5 shrink-0">
@@ -674,6 +728,30 @@ export function ChatPage() {
           )}
         </section>
 
+        {modoAula ? (
+          /* Modo Sala de Aula: sem input de texto, so o scanner + aviso. */
+          <div className="relative z-10 flex shrink-0 flex-col items-center gap-2 px-4 pb-3">
+            <p role="status" className="w-full max-w-4xl rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-center text-xs font-semibold text-cyan-200">
+              Chat silenciado. Use apenas a câmera para escanear a matéria.
+            </p>
+            <OcrUploader
+              apiKey={apiKey}
+              onTranscrito={(t) => { setInput(t); setFlashKey((k) => k + 1); setToast('Caderno digitalizado! Toque em Modo Aula para voltar ao chat e enviar.', 'success'); }}
+              onErro={(m) => setToast(m, 'error')}
+            />
+          </div>
+        ) : (
+        <>
+        {/* EPICO 1: scanner rapido -> transcricao cai no input (com flash). */}
+        <div className="relative z-10 flex shrink-0 items-center gap-2 px-4 pb-1">
+          <OcrUploader
+            apiKey={apiKey}
+            onTranscrito={(t) => { insertPrompt(t); setToast('Caderno digitalizado! Revise e envie.', 'success'); }}
+            onErro={(m) => setToast(m, 'error')}
+          />
+          <span className="text-[10px] text-slate-500">Foto do caderno vira texto aqui — sem digitar.</span>
+        </div>
+
         <PremiumInput
           input={input}
           onChange={(v) => { setInput(v); if (inputRef.current) autoResize(inputRef.current); }}
@@ -692,6 +770,8 @@ export function ChatPage() {
           modePill={modePill}
           flashKey={flashKey}
         />
+        </>
+        )}
       </div>
 
       <HistoryPanel
@@ -729,6 +809,8 @@ export function ChatPage() {
       )}
 
       <PersonaManager />
+      <ConsciousPauseModal open={pausaAberta} onClose={() => setPausaAberta(false)} />
+      <FocusAnchorOverlay open={focoAberto} onClose={() => setFocoAberto(false)} />
     </div>
   );
 }

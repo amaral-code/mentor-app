@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -13,9 +14,75 @@ export default defineConfig(({ mode }) => {
    */
   const env = loadEnv(mode, process.cwd(), '')
   const deepseekKey = (env.DEEPSEEK_API_KEY || '').trim()
+  /*
+   * Base do worker de IA (ex.: https://midnight-mentor-ia.workers.dev).
+   * Entra no bypass do SW como regex escapada - sem isso, o host
+   * publicado cairia no precache generico e a demo mostraria IA velha.
+   */
+  const aiBase = (env.VITE_AI_BASE_URL || '').trim().replace(/\/+$/, '')
+  const aiBasePattern = aiBase
+    ? new RegExp(`^${aiBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/.*`, 'i')
+    : null
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      /*
+       * PWA (prompt de instalacao no Chrome) com REGRA DE OURO do pitch:
+       *
+       * - registerType 'autoUpdate': o SW novo assume na hora (skipWaiting +
+       *   clientsClaim), sem popup de "nova versao" no meio da demo.
+       * - Precache ESTRITO do App Shell: HTML/JS/CSS/fontes/ico­nes gerados.
+       *   E so o que o workbox precarrega; nada de runtime caching generico.
+       * - PROIBIDO cachear rede externa: Supabase, Gemini, DeepSeek, TTS e
+       *   o worker de IA sao Network Only (bypass total do SW). Dado de
+       *   jurado jamais vem de cache: offline, essas chamadas falham e o
+       *   app cai nos fallbacks locais ja existentes (toast + modo local).
+       */
+      VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: false,
+        manifest: false,
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,woff,woff2,ttf,png,svg}'],
+          // Mascotes do shell passam de 2 MiB (limite padrao do workbox):
+          // sem este teto eles ficariam fora do precache e o offline
+          // quebraria imagens da UI. Continua so App Shell, sem rede.
+          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+          navigateFallback: 'index.html',
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+          runtimeCaching: [
+            {
+              // Supabase: REST, Auth, Realtime e Storage (qualquer projeto).
+              urlPattern: /^https:\/\/[^/]+\.supabase\.co\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
+              // Gemini REST + TTS do Google.
+              urlPattern: /^https:\/\/.*\.googleapis\.com\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
+              // DeepSeek direto (producao sem worker nunca chama, mas trava
+              // a porta por garantia).
+              urlPattern: /^https:\/\/api\.deepseek\.com\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
+              // Proxy local do Vite dev (same-origin).
+              urlPattern: /\/deepseek-api\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            // Worker de IA publicado (so existe se VITE_AI_BASE_URL setado).
+            ...(aiBasePattern
+              ? [{ urlPattern: aiBasePattern, handler: 'NetworkOnly' as const }]
+              : []),
+          ],
+        },
+      }),
+    ],
     server: {
       /*
        * Portas fixas e fora da faixa 8080: essa porta ja hospeda outra

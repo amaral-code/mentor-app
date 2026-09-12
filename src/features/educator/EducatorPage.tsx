@@ -4,6 +4,7 @@ import { useAppStore } from '../../stores/appStore';
 import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { hasProxy } from '../../shared/lib/aiService';
+import { EducatorInsights } from './EducatorInsights';
 import Papa from 'papaparse';
 
 const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
@@ -144,6 +145,8 @@ function paraImportacao(
 
 export function EducatorPage() {
   const { session, logout } = useAppStore();
+  /** EPICO 3: `/educador/dashboard` do spec = esta aba no SPA. */
+  const [aba, setAba] = useState<'turmas' | 'insights'>('turmas');
   const [modo, setModo] = useState<ModoEntrada>('csv');
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
@@ -508,6 +511,27 @@ export function EducatorPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 md:px-8 py-8 space-y-6 animate-fade-up">
+        {/* EPICO 3: abas Onboarding | Insights (dashboard em lote). */}
+        <div role="tablist" aria-label="Painel educacional" className="flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 w-fit">
+          {(['turmas', 'insights'] as const).map((t) => (
+            <button
+              key={t}
+              role="tab"
+              aria-selected={aba === t}
+              onClick={() => setAba(t)}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                aba === t ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:text-white border border-transparent'
+              }`}
+            >
+              {t === 'turmas' ? 'Onboarding' : 'Insights da turma'}
+            </button>
+          ))}
+        </div>
+
+        {aba === 'insights' ? (
+          <EducatorInsights />
+        ) : (
+        <>
         {/* Welcome */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-cyan-600/10 flex items-center justify-center text-lg">
@@ -960,6 +984,8 @@ export function EducatorPage() {
             <TriangleAlert size={14} className="shrink-0" />
             <span>Webhook não configurado. Defina <code className="bg-black/30 px-1 rounded">VITE_N8N_WEBHOOK_URL</code> no .env para enviar os dados.</span>
           </div>
+        )}
+        </>
         )}
       </main>
     </div>

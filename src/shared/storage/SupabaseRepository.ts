@@ -62,6 +62,18 @@ export interface DesempenhoTopico {
   erros: number;
 }
 
+/** EPICO 3: agregado por (materia, topico) - sem nenhum dado individual. */
+export interface InsightTurma {
+  materia: string;
+  topico: string;
+  alunosComDificuldade: number;
+  totalAlunos: number;
+  taxaDificuldade: number;
+  totalErros: number;
+  totalRespostas: number;
+  perguntas24h: number;
+}
+
 export class SupabaseRepository {
   private async uid(): Promise<string | null> {
     const sb = getSupabase();
@@ -541,6 +553,34 @@ export class SupabaseRepository {
       p_acertou: acertou,
     });
     if (error) exigir('registrarDesempenhoTopico', error);
+  }
+
+  /**
+   * EPICO 3 (HackTudo 2026): insights agregados da turma via
+   * `insights_turma_24h` (migration 020). Equivale ao spec
+   * `chat_logs(topic, is_error, timestamp)`, lido do placar real
+   * (quiz_desempenho_topicos + quiz_questoes_exibidas): topicos com mais
+   * erro na escola nas ultimas N horas, sem expor chats individuais.
+   * Falha (RLS/sem permissao) = lista vazia, nunca throw na leitura.
+   */
+  async loadInsightsTurma(horas = 24): Promise<InsightTurma[]> {
+    if (!this.ativo()) return [];
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('insights_turma_24h', { p_horas: horas });
+    if (error) {
+      falhou('loadInsightsTurma', error);
+      return [];
+    }
+    return (Array.isArray(data) ? data : []).map((r) => ({
+      materia: String(r.materia ?? ''),
+      topico: String(r.topico ?? ''),
+      alunosComDificuldade: Number(r.alunos_com_dificuldade ?? 0),
+      totalAlunos: Number(r.total_alunos ?? 0),
+      taxaDificuldade: Number(r.taxa_dificuldade ?? 0),
+      totalErros: Number(r.total_erros ?? 0),
+      totalRespostas: Number(r.total_respostas ?? 0),
+      perguntas24h: Number(r.perguntas_24h ?? 0),
+    }));
   }
 
   /** Placar por topico do dono, para a tela de Estatisticas. */

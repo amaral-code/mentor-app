@@ -3,6 +3,7 @@ import {
   MODO_PADRAO,
   acharModo,
   extrairFontes,
+  extrairSinalFrustracao,
   detectarCitacaoDeProva,
   ferramentasDeBusca,
   montarSystemInstructionChat,
@@ -76,6 +77,8 @@ export interface ContextoChat {
 
 export interface RespostaChat {
   texto: string;
+  /** EPICO 2: bloco `frustracao` do modelo, ja removido do texto. */
+  frustrationDetected: boolean;
   fontes: FonteConsultada[];
   consultas: string[];
   groundingUsado: boolean;
@@ -121,10 +124,14 @@ async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
   }
 
   const dados = await resposta.json();
+  // O worker ja remove o bloco; a flag viaja separada. O parse local cobre
+  // worker antigo que ainda devolva o bloco no texto.
+  const { textoLimpo, frustrationDetected } = extrairSinalFrustracao(String(dados.texto ?? ''));
   return {
     // Resposta vazia vira erro para cair no fallback local com toast,
     // em vez de bolha vazia que parecia "não respondeu".
-    texto: garantirTextoResposta(dados.texto),
+    texto: garantirTextoResposta(textoLimpo),
+    frustrationDetected: Boolean(dados.frustrationDetected) || frustrationDetected,
     fontes: dados.fontes ?? [],
     consultas: dados.consultas ?? [],
     groundingUsado: !!dados.groundingUsado,
@@ -195,11 +202,13 @@ async function direto(ctx: ContextoChat): Promise<RespostaChat> {
   }
 
   const dados = await resposta.json();
-  const texto = garantirTextoResposta(textoDaResposta(dados));
+  const { textoLimpo, frustrationDetected } = extrairSinalFrustracao(textoDaResposta(dados));
+  const texto = garantirTextoResposta(textoLimpo);
   const grounding = extrairFontes(dados);
 
   return {
     texto,
+    frustrationDetected,
     fontes: grounding.fontes,
     consultas: grounding.consultas,
     groundingUsado: tentouBusca && grounding.groundingUsado,
@@ -259,9 +268,12 @@ async function viaProxyLocalDeepSeek(ctx: ContextoChat, systemText: string): Pro
   }
 
   const dados = await resposta.json();
-  const texto = garantirTextoResposta(String(dados?.choices?.[0]?.message?.content ?? ''));
+  const brutoProxy = String(dados?.choices?.[0]?.message?.content ?? '');
+  const sinalProxy = extrairSinalFrustracao(brutoProxy);
+  const texto = garantirTextoResposta(sinalProxy.textoLimpo);
   return {
     texto,
+    frustrationDetected: sinalProxy.frustrationDetected,
     fontes: [],
     consultas: [],
     groundingUsado: false,

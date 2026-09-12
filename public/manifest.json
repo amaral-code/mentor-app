@@ -1,0 +1,26 @@
+{
+  "name": "Mentor Noturno",
+  "short_name": "Mentor",
+  "description": "Mentor de estudos para o ENEM e vestibulares - ensino medio noturno.",
+  "display": "standalone",
+  "dir": "ltr",
+  "lang": "pt-BR",
+  "theme_color": "#020617",
+  "background_color": "#020617",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

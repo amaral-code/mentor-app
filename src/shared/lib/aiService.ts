@@ -966,6 +966,25 @@ export function montarInstrucaoDaPersona(
     'PRECEDENCIA: em caso de conflito, o CONTEUDO segue as regras do papel e do escopo; o TOM segue o do Sagui (frases curtas, linguagem acessivel, sem jargao desnecessario).',
   );
 
+  // Active Recall (edital): mesma regra do chat tematico.
+  partes.push(
+    'ACTIVE RECALL: apos o aluno resolver uma duvida (cerca de 4 a 5 interacoes), nao encerre o assunto. Diga: Para salvarmos seu progresso, resuma em 1 frase o que voce aprendeu agora.',
+  );
+
+  // EPICO 2: mesma regra do chat tematico (server/chatPrompt.js). Se notar
+  // frustracao/agressividade/respostas curtas repetitivas apos erros,
+  // apende o bloco `frustracao` no fim; o front remove da tela e abre a
+  // pausa consciente. Sem frustracao, sem bloco, sem mencionar JSON.
+  partes.push(
+    [
+      'SINAL DE FRUSTRACAO (obrigatorio, invisivel ao aluno):',
+      'analise o sentimento do aluno. Se notar frustracao, agressividade ou respostas curtas repetitivas apos erros, termine com EXATAMENTE:',
+      '```frustracao',
+      '{"frustration_detected": true}',
+      '```',
+    ].join('\n'),
+  );
+
   // Blocos separados por linha em branco: o modelo trata cada secao
   // (PAPEL, ESCOPO, PRECEDENCIA) como uma regra, nao como um paragrafo
   // corrido de onde ele escolhe o que seguir.
