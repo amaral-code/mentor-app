@@ -11,7 +11,13 @@ import { hasProxy, testGeneration, getAIProviderInfo } from '../../shared/lib/ai
 import type { Escola, Turma } from '../../shared/types';
 
 export function ProfilePage() {
-  const { session, logout, setShowWeeklyReport, gamification, apiKey, setApiKey, setToast } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const logout = useAppStore((s) => s.logout);
+  const setShowWeeklyReport = useAppStore((s) => s.setShowWeeklyReport);
+  const gamification = useAppStore((s) => s.gamification);
+  const apiKey = useAppStore((s) => s.apiKey);
+  const setApiKey = useAppStore((s) => s.setApiKey);
+  const setToast = useAppStore((s) => s.setToast);
   const [nome, setNome] = useState(session?.nome || '');
   const [sobrenome, setSobrenome] = useState('');
   const [meta, setMeta] = useState('');

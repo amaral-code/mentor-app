@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment, memo } from 'react';
 import { ChevronLeft, ChevronRight, Eye, EyeOff, GraduationCap, HeartHandshake, Moon, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
@@ -58,20 +58,212 @@ interface ErrosCampo {
   senha?: string;
 }
 
+interface ValoresAuth {
+  nome: string;
+  email: string;
+  senha: string;
+}
+
+/* ====================================================================
+   CampoAuth — input isolado e memorizado.
+   ====================================================================
+   Por que existe: antes o `value`/`onChange` de cada campo morava no
+   AuthPage raiz, entao CADA TECLA re-renderizava a pagina inteira —
+   fundo com blur, card `.glass` com backdrop-filter (o paint mais caro
+   no mobile) e todos os irmaos. Aqui o input e NAO-CONTROLADO
+   (defaultValue + ref): digitar nao dispara setState nenhum, logo nao
+   ha re-render por tecla. O unico setState no onChange limpa o erro do
+   proprio campo — e so roda quando aquele erro esta visivel.
+   ==================================================================== */
+interface CampoAuthProps {
+  id: string;
+  erroId: string;
+  label: string;
+  erro?: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  limparErro: (campo: keyof ErrosCampo) => void;
+  campo: keyof ErrosCampo;
+  type?: string;
+  placeholder?: string;
+  autoComplete?: string;
+  inputMode?: 'email' | 'text';
+  enterKeyHint?: 'next' | 'send' | 'go';
+  acaoDireita?: React.ReactNode;
+  comEspacoDireita?: boolean;
+}
+
+const CampoAuth = memo(function CampoAuth({
+  id, erroId, label, erro, inputRef, limparErro, campo,
+  type = 'text', placeholder, autoComplete, inputMode,
+  enterKeyHint, acaoDireita, comEspacoDireita,
+}: CampoAuthProps) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs text-gray-500 mb-1.5 font-medium tracking-wide">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          name={id}
+          ref={inputRef}
+          type={type}
+          defaultValue=""
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          enterKeyHint={enterKeyHint}
+          autoCapitalize={type === 'email' ? 'none' : undefined}
+          autoCorrect={type === 'email' ? 'off' : undefined}
+          spellCheck={type === 'email' ? false : undefined}
+          aria-invalid={!!erro}
+          aria-describedby={erro ? erroId : undefined}
+          onChange={() => limparErro(campo)}
+          className={`w-full transition-all${comEspacoDireita ? ' pr-12' : ''}${erro ? ' border-red-500/40 focus:border-red-500/60' : ''}`}
+        />
+        {acaoDireita}
+      </div>
+      {erro && <p id={erroId} className="text-xs text-red-400 mt-1.5">{erro}</p>}
+    </div>
+  );
+});
+
+interface AuthFormProps {
+  isLogin: boolean;
+  loading: boolean;
+  onSubmit: (valores: ValoresAuth) => void;
+}
+
+/**
+ * Formulario isolado do chrome da pagina.
+ *
+ * Todo estado de digitacao vive aqui dentro (refs + erros + ver-senha).
+ * O AuthPage pai NUNCA re-renderiza por tecla — cabecalho, card glass,
+ * banner do perfil e fundo com blur ficam intactos enquanto digita.
+ * Validacao so no submit: email usa regex simples (microssegundos),
+ * sem mascara nem formatacao por tecla.
+ */
+const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthFormProps) {
+  const nomeRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const senhaRef = useRef<HTMLInputElement | null>(null);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [erros, setErros] = useState<ErrosCampo>({});
+
+  // Limpa o erro do campo ao voltar a digitar. Sem erro visivel, retorna
+  // o estado anterior = React descarta o update, zero re-render.
+  const limparErro = useCallback((campo: keyof ErrosCampo) => {
+    setErros((anterior) => {
+      if (!anterior[campo]) return anterior;
+      const { [campo]: _removido, ...resto } = anterior;
+      return resto;
+    });
+  }, []);
+
+  const alternarSenha = useCallback(() => setMostrarSenha((v) => !v), []);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const nome = nomeRef.current?.value.trim() ?? '';
+    const email = emailRef.current?.value.trim() ?? '';
+    const senha = senhaRef.current?.value ?? '';
+
+    const novos: ErrosCampo = {};
+    if (!isLogin && !nome) novos.nome = 'Como podemos te chamar?';
+    if (!email) novos.email = 'Informe seu e-mail';
+    else if (!EMAIL_REGEX.test(email)) novos.email = 'Esse e-mail não parece válido';
+    if (!senha) novos.senha = 'Informe sua senha';
+    else if (!isLogin && senha.length < MIN_SENHA_CADASTRO) {
+      novos.senha = `Use pelo menos ${MIN_SENHA_CADASTRO} caracteres`;
+    }
+    setErros(novos);
+    if (Object.keys(novos).length > 0) return;
+    onSubmit({ nome, email, senha });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      {!isLogin && (
+        <CampoAuth
+          id="campo-nome"
+          erroId="erro-nome"
+          campo="nome"
+          label="Nome"
+          placeholder="Seu nome"
+          autoComplete="name"
+          enterKeyHint="next"
+          inputRef={nomeRef}
+          erro={erros.nome}
+          limparErro={limparErro}
+        />
+      )}
+
+      <CampoAuth
+        id="campo-email"
+        erroId="erro-email"
+        campo="email"
+        label="E-mail"
+        type="email"
+        inputMode="email"
+        placeholder="seu@email.com"
+        autoComplete="email"
+        enterKeyHint="next"
+        inputRef={emailRef}
+        erro={erros.email}
+        limparErro={limparErro}
+      />
+
+      <CampoAuth
+        id="campo-senha"
+        erroId="erro-senha"
+        campo="senha"
+        label="Senha"
+        type={mostrarSenha ? 'text' : 'password'}
+        placeholder={isLogin ? 'Sua senha' : `Pelo menos ${MIN_SENHA_CADASTRO} caracteres`}
+        autoComplete={isLogin ? 'current-password' : 'new-password'}
+        enterKeyHint="send"
+        inputRef={senhaRef}
+        erro={erros.senha}
+        limparErro={limparErro}
+        comEspacoDireita
+        acaoDireita={
+          <button
+            type="button"
+            onClick={alternarSenha}
+            aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+            className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-gray-500 hover:text-amber-400 transition-colors"
+          >
+            {mostrarSenha ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        }
+      />
+
+      <button
+        type="submit"
+        className="btn-primary w-full flex items-center justify-center gap-2 h-12 press"
+        disabled={loading}
+      >
+        {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+        {loading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Criar conta')}
+      </button>
+    </form>
+  );
+});
+
 export function AuthPage() {
   const [step, setStep] = useState<AuthStep>('role');
   const [selectedRole, setSelectedRole] = useState<RoleEscolhivel>('student');
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [nome, setNome] = useState('');
-  const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [erros, setErros] = useState<ErrosCampo>({});
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
-  const { setSession, setShowTutorial, setTutorialStep } = useAppStore();
+  // Seletores atomicos: assinar o store INTEIRO aqui faria qualquer update
+  // global (toast, mascote, telemetria) re-renderizar os inputs e roubar
+  // foco no meio da digitacao.
+  const setSession = useAppStore((s) => s.setSession);
+  const setShowTutorial = useAppStore((s) => s.setShowTutorial);
+  const setTutorialStep = useAppStore((s) => s.setTutorialStep);
 
   // O beat de comemoracao usa setTimeout. Se o componente sair antes de
   // disparar, o timer chamaria setState num componente desmontado.
@@ -79,30 +271,15 @@ export function AuthPage() {
   useEffect(() => () => { if (timerRef.current) window.clearTimeout(timerRef.current); }, []);
 
   /**
-   * Validacao por campo.
+   * Autenticacao (rede). Recebe os valores lidos dos refs no submit —
+   * nao ha estado de digitacao aqui, entao nada re-renderiza por tecla.
    *
-   * O banner unico de erro obrigava o usuario a adivinhar QUAL campo
-   * estava errado. Agora a mensagem fica sob o campo correspondente, e o
-   * banner serve so para falha de servidor ou conexao.
+   * O banner unico de erro fica reservado a falha de servidor/conexao;
+   * erro de campo aparece sob o campo, dentro do AuthForm.
    */
-  function validar(): boolean {
-    const e: ErrosCampo = {};
-    if (!isLogin && !nome.trim()) e.nome = 'Como podemos te chamar?';
-    if (!email.trim()) e.email = 'Informe seu e-mail';
-    else if (!EMAIL_REGEX.test(email)) e.email = 'Esse e-mail não parece válido';
-    if (!senha) e.senha = 'Informe sua senha';
-    else if (!isLogin && senha.length < MIN_SENHA_CADASTRO) {
-      e.senha = `Use pelo menos ${MIN_SENHA_CADASTRO} caracteres`;
-    }
-    setErros(e);
-    return Object.keys(e).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleAutenticar = useCallback(async ({ nome, email, senha }: ValoresAuth) => {
     setError('');
     setAviso('');
-    if (!validar()) return;
     setLoading(true);
 
     try {
@@ -118,7 +295,7 @@ export function AuthPage() {
         const sessao = r.session;
         timerRef.current = window.setTimeout(() => setSession(sessao), 650);
       } else {
-        const r = await userRepository.register(email, senha, nome.trim());
+        const r = await userRepository.register(email, senha, nome);
         if (r.precisaConfirmarEmail) {
           setAviso('Conta criada. Confirme o e-mail para entrar: mandamos um link para você.');
           setIsLogin(true);
@@ -137,10 +314,21 @@ export function AuthPage() {
       setError(err.message || 'Erro de conexão');
       setLoading(false);
     }
-  }
+  }, [isLogin, selectedRole, setSession, setShowTutorial, setTutorialStep]);
 
-  const campoBase = 'w-full transition-all';
-  const campoErro = 'border-red-500/40 focus:border-red-500/60';
+  const voltarParaPapeis = useCallback(() => { setStep('role'); setError(''); }, []);
+  const alternarModo = useCallback(() => {
+    setIsLogin((v) => !v);
+    setError('');
+    setAviso('');
+  }, []);
+  const escolherPapel = useCallback((role: RoleEscolhivel) => {
+    setSelectedRole(role);
+    setStep('auth');
+    setIsLogin(true);
+    setError('');
+    setAviso('');
+  }, []);
 
   /* ==================================================================
      Etapa 1: escolha do perfil
@@ -188,7 +376,7 @@ export function AuthPage() {
               {(Object.entries(ROLE_CONFIG) as [RoleEscolhivel, typeof ROLE_CONFIG['student']][]).map(([role, cfg]) => (
                 <button
                   key={role}
-                  onClick={() => { setSelectedRole(role); setStep('auth'); setIsLogin(true); setError(''); setErros({}); }}
+                  onClick={() => escolherPapel(role)}
                   className="w-full glass rounded-2xl p-5 text-left hover:border-amber-500/20 transition-all group border border-white/5 flex items-center gap-4 press lift"
                 >
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cfg.gradient} flex items-center justify-center text-white shadow-lg shrink-0`}>
@@ -255,7 +443,7 @@ export function AuthPage() {
             )}
 
             <button
-              onClick={() => { setStep('role'); setErros({}); setError(''); }}
+              onClick={voltarParaPapeis}
               className="flex items-center gap-1 text-xs text-gray-500 hover:text-amber-400 transition-colors mb-3 -ml-2 px-2 min-h-[44px] press"
             >
               <ChevronLeft size={14} />
@@ -283,104 +471,30 @@ export function AuthPage() {
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              {!isLogin && (
-                <div>
-                  <label htmlFor="campo-nome" className="block text-xs text-gray-500 mb-1.5 font-medium tracking-wide">
-                    Nome
-                  </label>
-                  <input
-                    id="campo-nome"
-                    type="text"
-                    value={nome}
-                    onChange={e => { setNome(e.target.value); if (erros.nome) setErros({ ...erros, nome: undefined }); }}
-                    placeholder="Seu nome"
-                    autoComplete="name"
-                    autoCapitalize="words"
-                    aria-invalid={!!erros.nome}
-                    aria-describedby={erros.nome ? 'erro-nome' : undefined}
-                    className={`${campoBase} ${erros.nome ? campoErro : ''}`}
-                  />
-                  {erros.nome && <p id="erro-nome" className="text-xs text-red-400 mt-1.5">{erros.nome}</p>}
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="campo-email" className="block text-xs text-gray-500 mb-1.5 font-medium tracking-wide">
-                  E-mail
-                </label>
-                <input
-                  id="campo-email"
-                  type="email"
-                  inputMode="email"
-                  value={email}
-                  onChange={e => { setEmail(e.target.value); if (erros.email) setErros({ ...erros, email: undefined }); }}
-                  placeholder="seu@email.com"
-                  autoComplete="email"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  aria-invalid={!!erros.email}
-                  aria-describedby={erros.email ? 'erro-email' : undefined}
-                  className={`${campoBase} ${erros.email ? campoErro : ''}`}
-                />
-                {erros.email && <p id="erro-email" className="text-xs text-red-400 mt-1.5">{erros.email}</p>}
+            {/* Banners de servidor/conexao (erros de campo vivem no form) */}
+            {error && (
+              <div className="text-red-400 text-sm bg-red-500/10 rounded-xl px-4 py-2.5 border border-red-500/10 animate-slide-up mb-4" role="alert">
+                {error}
               </div>
+            )}
 
-              <div>
-                <label htmlFor="campo-senha" className="block text-xs text-gray-500 mb-1.5 font-medium tracking-wide">
-                  Senha
-                </label>
-                <div className="relative">
-                  <input
-                    id="campo-senha"
-                    type={mostrarSenha ? 'text' : 'password'}
-                    value={senha}
-                    onChange={e => { setSenha(e.target.value); if (erros.senha) setErros({ ...erros, senha: undefined }); }}
-                    placeholder={isLogin ? 'Sua senha' : `Pelo menos ${MIN_SENHA_CADASTRO} caracteres`}
-                    autoComplete={isLogin ? 'current-password' : 'new-password'}
-                    aria-invalid={!!erros.senha}
-                    aria-describedby={erros.senha ? 'erro-senha' : undefined}
-                    className={`${campoBase} pr-12 ${erros.senha ? campoErro : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setMostrarSenha(!mostrarSenha)}
-                    aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-gray-500 hover:text-amber-400 transition-colors"
-                  >
-                    {mostrarSenha ? <EyeOff size={17} /> : <Eye size={17} />}
-                  </button>
-                </div>
-                {erros.senha && <p id="erro-senha" className="text-xs text-red-400 mt-1.5">{erros.senha}</p>}
+            {aviso && (
+              <div className="text-amber-300 text-sm bg-amber-500/10 rounded-xl px-4 py-2.5 border border-amber-500/15 animate-slide-up mb-4" role="status">
+                {aviso}
               </div>
+            )}
 
-              {/* Banner reservado a falhas de servidor e conexao */}
-              {error && (
-                <div className="text-red-400 text-sm bg-red-500/10 rounded-xl px-4 py-2.5 border border-red-500/10 animate-slide-up" role="alert">
-                  {error}
-                </div>
-              )}
-
-              {aviso && (
-                <div className="text-amber-300 text-sm bg-amber-500/10 rounded-xl px-4 py-2.5 border border-amber-500/15 animate-slide-up" role="status">
-                  {aviso}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="btn-primary w-full flex items-center justify-center gap-2 h-12 press"
-                disabled={loading}
-              >
-                {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                {loading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Criar conta')}
-              </button>
-            </form>
+            {/* key reseta os inputs nao-controlados ao trocar de modo */}
+            <AuthForm
+              key={isLogin ? 'login' : 'cadastro'}
+              isLogin={isLogin}
+              loading={loading}
+              onSubmit={handleAutenticar}
+            />
 
             <div className="mt-6 text-center">
               <button
-                onClick={() => { setIsLogin(!isLogin); setError(''); setAviso(''); setErros({}); }}
+                onClick={alternarModo}
                 className="text-sm text-gray-500 hover:text-amber-400 transition-colors"
               >
                 {isLogin ? 'Ainda não tem conta? ' : 'Já tem conta? '}

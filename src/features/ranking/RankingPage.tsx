@@ -100,7 +100,8 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
 
 export function RankingPage() {
   const reduzir = useReducedMotion();
-  const { session, gamification } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const gamification = useAppStore((s) => s.gamification);
   const [filter, setFilter] = useState<RankingFilter>('geral');
   const [data, setData] = useState<RankingData | null>(null);
   const [loading, setLoading] = useState(true);

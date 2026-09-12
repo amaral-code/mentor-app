@@ -4,7 +4,8 @@ import { useAppStore } from '../../stores/appStore';
 import { playClick } from '../../shared/lib/sfx';
 
 export function CrisisOverlay() {
-  const { showCrisisOverlay, setShowCrisisOverlay } = useAppStore();
+  const showCrisisOverlay = useAppStore((s) => s.showCrisisOverlay);
+  const setShowCrisisOverlay = useAppStore((s) => s.setShowCrisisOverlay);
   const [phase, setPhase] = useState<'inicio' | 'respirando' | 'melhor'>('inicio');
   const [breathPhase, setBreathPhase] = useState<'inspira' | 'segura' | 'expira'>('inspira');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

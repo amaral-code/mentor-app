@@ -68,7 +68,9 @@ function generateDailyPrompt(league: StudyLeague): string {
 }
 
 export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailProps) {
-  const { session, addXP, addLog } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);

@@ -13,8 +13,11 @@ import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
 const SAGUI_IDLE = '/assets/sagui_meditando_2.png';
 
 export function StudentStore() {
-  const { gamification, setToast } = useAppStore();
-  const { inventory, buyItem, equipItem } = useStoreStore();
+  const gamification = useAppStore((s) => s.gamification);
+  const setToast = useAppStore((s) => s.setToast);
+  const inventory = useStoreStore((s) => s.inventory);
+  const buyItem = useStoreStore((s) => s.buyItem);
+  const equipItem = useStoreStore((s) => s.equipItem);
   const reduzir = useReducedMotion();
   const [operando, setOperando] = useState<string | null>(null);
   const { level } = calcLevel(gamification.xp);

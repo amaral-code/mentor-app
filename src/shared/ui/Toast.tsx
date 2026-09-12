@@ -24,7 +24,9 @@ const ICONE = {
  * spring dá o mesmo peso físico do resto da interface.
  */
 export function Toast() {
-  const { toastMessage, toastType, clearToast } = useAppStore();
+  const toastMessage = useAppStore((s) => s.toastMessage);
+  const toastType = useAppStore((s) => s.toastType);
+  const clearToast = useAppStore((s) => s.clearToast);
   const reduzir = useReducedMotion();
 
   useEffect(() => {

@@ -20,7 +20,9 @@ import { EmptyState } from '../../shared/ui/EmptyState';
  * sala vazia e concluir que "nao funciona".
  */
 export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
-  const { agendamentos, carregarConsultas, cancelar } = useMarketplaceStore();
+  const agendamentos = useMarketplaceStore((s) => s.agendamentos);
+  const carregarConsultas = useMarketplaceStore((s) => s.carregarConsultas);
+  const cancelar = useMarketplaceStore((s) => s.cancelar);
 
   useEffect(() => {
     void carregarConsultas();

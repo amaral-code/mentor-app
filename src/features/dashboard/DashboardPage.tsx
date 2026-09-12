@@ -13,11 +13,21 @@ import { BurnoutCard } from './BurnoutCard';
 
 export function DashboardPage() {
   const reduzir = useReducedMotion();
-  const {
-    currentMood, moodColor, sscScore, sono, cansaco, gamification, dailyPlan,
-    setSono, setCansaco, recalcSSC, completeTask, regeneratePlan,
-    quizResults, logs, session,
-  } = useAppStore();
+  const currentMood = useAppStore((s) => s.currentMood);
+  const moodColor = useAppStore((s) => s.moodColor);
+  const sscScore = useAppStore((s) => s.sscScore);
+  const sono = useAppStore((s) => s.sono);
+  const cansaco = useAppStore((s) => s.cansaco);
+  const gamification = useAppStore((s) => s.gamification);
+  const dailyPlan = useAppStore((s) => s.dailyPlan);
+  const setSono = useAppStore((s) => s.setSono);
+  const setCansaco = useAppStore((s) => s.setCansaco);
+  const recalcSSC = useAppStore((s) => s.recalcSSC);
+  const completeTask = useAppStore((s) => s.completeTask);
+  const regeneratePlan = useAppStore((s) => s.regeneratePlan);
+  const quizResults = useAppStore((s) => s.quizResults);
+  const logs = useAppStore((s) => s.logs);
+  const session = useAppStore((s) => s.session);
 
   /** Id da tarefa que acabou de ganhar XP: posiciona o "+20 XP" flutuante. */
   const [xpVoando, setXpVoando] = useState<string | null>(null);

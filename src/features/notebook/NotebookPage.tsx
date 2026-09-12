@@ -10,7 +10,10 @@ import { Mascot } from '../../shared/ui/Mascot';
 
 export function NotebookPage() {
   const reduzir = useReducedMotion();
-  const { notas, setNotas, addNota, setShowNotebookStudio } = useAppStore();
+  const notas = useAppStore((s) => s.notas);
+  const setNotas = useAppStore((s) => s.setNotas);
+  const addNota = useAppStore((s) => s.addNota);
+  const setShowNotebookStudio = useAppStore((s) => s.setShowNotebookStudio);
   const [newText, setNewText] = useState('');
   const [newTag, setNewTag] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);

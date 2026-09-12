@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { memo, type RefObject } from 'react';
 import { BadgeCheck, Bookmark, Lightbulb, Link2, TriangleAlert } from 'lucide-react';
 import type { ChatMessage } from '../../../shared/types';
 import { TextoFormatado } from '../../../shared/ui/TextoFormatado';
@@ -25,8 +25,13 @@ function formatarHora(ts: number) {
  * Lista de mensagens (protótipo AGcode 1:1): bolha do aluno em gradiente
  * índigo com avatar inicial, bolha do Mentor Sagui com cabeçalho
  * (Mentor ENEM + horário + selo Didático/Macete Rápido).
+ *
+ * Memorizada: o pai (ChatPage) faz setState a cada tecla no input e a cada
+ * tick do streaming (24ms). Sem memo, cada um desses renders recriava a
+ * arvore inteira de mensagens; com memo + TextoFormatado memorizado, o
+ * React reaproveita tudo e so renderiza o balao de streaming.
  */
-export function ChatMessages({
+export const ChatMessages = memo(function ChatMessages({
   messages,
   streamingText,
   streamingModo,
@@ -214,4 +219,4 @@ export function ChatMessages({
       <div ref={messagesEndRef} />
     </div>
   );
-}
+});

@@ -29,6 +29,7 @@ const PsicologoPage = lazy(() =>
 import { ParticleCanvas } from './features/atmo/ParticleCanvas';
 import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
+import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
 import { mascotStore } from './stores/mascotStore';
@@ -54,21 +55,23 @@ import { useBemEstarStore } from './stores/bemEstarStore';
 import { deveGerarRelatorio } from './shared/lib/decompressionReport';
 
 export default function App() {
-  const {
-    isAuthenticated,
-    userRole,
-    setSession,
-    updateGamification,
-    setLogs,
-    setNotas,
-    setChatMessages,
-    setConversas,
-    setPersonas,
-    setActivePersonaId,
-    setApiKey,
-    gamification,
-  } = useAppStore();
-  const { session } = useAppStore();
+  // Seletores atomicos: o App monta TODAS as telas; assinar o store inteiro
+  // aqui re-renderizava a arvore toda a cada mensagem, toast ou XP.
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  const userRole = useAppStore((s) => s.userRole);
+  const setSession = useAppStore((s) => s.setSession);
+  const updateGamification = useAppStore((s) => s.updateGamification);
+  const setLogs = useAppStore((s) => s.setLogs);
+  const setNotas = useAppStore((s) => s.setNotas);
+  const setChatMessages = useAppStore((s) => s.setChatMessages);
+  const setConversas = useAppStore((s) => s.setConversas);
+  const setPersonas = useAppStore((s) => s.setPersonas);
+  const setActivePersonaId = useAppStore((s) => s.setActivePersonaId);
+  const setApiKey = useAppStore((s) => s.setApiKey);
+  // Fatia de gamificacao (nao o store): os efeitos de streak/level abaixo
+  // precisam dela, e ela so muda em ganho de XP — nao a cada mensagem.
+  const gamification = useAppStore((s) => s.gamification);
+  const session = useAppStore((s) => s.session);
   const logs = useAppStore((s) => s.logs);
   // Assinatura minima do store de bem-estar: so o que dispara o efeito
   // do relatorio semanal, para nao re-renderizar o App a cada telemetria.
@@ -288,10 +291,10 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <>
+      <ErrorBoundary nome="login">
         <ParticleCanvas />
         <AuthPage />
-      </>
+      </ErrorBoundary>
     );
   }
 
@@ -300,10 +303,10 @@ export default function App() {
   // viraria permanente.
   if (session?.deveTrocarSenha) {
     return (
-      <>
+      <ErrorBoundary nome="troca-senha">
         <TrocarSenha />
         <Toast />
-      </>
+      </ErrorBoundary>
     );
   }
 
@@ -312,6 +315,7 @@ export default function App() {
   // liberadas só para educator/admin (o servidor confere de novo).
   if (userRole === 'educator' || userRole === 'teacher') {
     return (
+      <ErrorBoundary nome="educador">
       <LazyMotion features={featuresAnimacao} strict>
         <ParticleCanvas />
         <Suspense
@@ -325,11 +329,13 @@ export default function App() {
         </Suspense>
         <Toast />
       </LazyMotion>
+      </ErrorBoundary>
     );
   }
 
   if (userRole === 'parent') {
     return (
+      <ErrorBoundary nome="responsaveis">
       <LazyMotion features={featuresAnimacao} strict>
         <ParticleCanvas />
         <Suspense
@@ -343,6 +349,7 @@ export default function App() {
         </Suspense>
         <Toast />
       </LazyMotion>
+      </ErrorBoundary>
     );
   }
 
@@ -353,6 +360,7 @@ export default function App() {
    */
   if (userRole === 'psychologist') {
     return (
+      <ErrorBoundary nome="psicologo">
       <LazyMotion features={featuresAnimacao} strict>
         <ParticleCanvas />
         <Suspense
@@ -366,11 +374,13 @@ export default function App() {
         </Suspense>
         <Toast />
       </LazyMotion>
+      </ErrorBoundary>
     );
   }
 
   // Default: student
   return (
+    <ErrorBoundary nome="aluno">
     <LazyMotion features={featuresAnimacao} strict>
       <ParticleCanvas />
       <AppShell />
@@ -378,5 +388,6 @@ export default function App() {
       <OnboardingTour />
       <LevelUpOverlay open={levelUp !== null} level={levelUp ?? 1} onClose={() => setLevelUp(null)} />
     </LazyMotion>
+    </ErrorBoundary>
   );
 }

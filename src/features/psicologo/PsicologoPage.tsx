@@ -27,7 +27,9 @@ import type { JanelaDisponibilidade } from '../../shared/types';
 const DIAS = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
 
 export function PsicologoPage() {
-  const { session, logout, setToast } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const logout = useAppStore((s) => s.logout);
+  const setToast = useAppStore((s) => s.setToast);
   const [janelas, setJanelas] = useState<JanelaDisponibilidade[]>([]);
   const [dia, setDia] = useState(1);
   const [inicio, setInicio] = useState('14:00');

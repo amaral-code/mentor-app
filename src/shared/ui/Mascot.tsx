@@ -62,7 +62,9 @@ export function Mascot({
   breathing = false,
   talking = false,
 }: MascotProps) {
-  const { state: storeState, message: storeMessage, messageId } = mascotStore();
+  const storeState = mascotStore((s) => s.state);
+  const storeMessage = mascotStore((s) => s.message);
+  const messageId = mascotStore((s) => s.messageId);
 
   /* Estado efetivo: prop controlada > store (não controlado) */
   const state: MascotState = controlledState ?? storeState;

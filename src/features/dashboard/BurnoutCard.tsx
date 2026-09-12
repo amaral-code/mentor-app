@@ -16,7 +16,12 @@ import { COR_CLASSE, ROTULO_CLASSE, sugestaoPausa } from '../../shared/lib/burno
  * classificar burnout com tres cliques seria chute com cara de medida.
  */
 export function BurnoutCard() {
-  const { previsao, historicoBurnout, carregado, carregarTudo, conteudoDensoBloqueado, reiniciarIndice } = useBemEstarStore();
+  const previsao = useBemEstarStore((s) => s.previsao);
+  const historicoBurnout = useBemEstarStore((s) => s.historicoBurnout);
+  const carregado = useBemEstarStore((s) => s.carregado);
+  const carregarTudo = useBemEstarStore((s) => s.carregarTudo);
+  const conteudoDensoBloqueado = useBemEstarStore((s) => s.conteudoDensoBloqueado);
+  const reiniciarIndice = useBemEstarStore((s) => s.reiniciarIndice);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const [confirmandoReset, setConfirmandoReset] = useState(false);
 

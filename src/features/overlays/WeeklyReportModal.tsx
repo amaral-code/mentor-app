@@ -53,8 +53,16 @@ class LimiteDeErro extends Component<{ children: ReactNode }, { erro: boolean }>
 }
 
 function Conteudo() {
-  const { logs, quizResults, gamification, sono, apiKey, session } = useAppStore();
-  const { sessoesOffline, revisoes, relatorios, adicionarRelatorio } = useBemEstarStore();
+  const logs = useAppStore((s) => s.logs);
+  const quizResults = useAppStore((s) => s.quizResults);
+  const gamification = useAppStore((s) => s.gamification);
+  const sono = useAppStore((s) => s.sono);
+  const apiKey = useAppStore((s) => s.apiKey);
+  const session = useAppStore((s) => s.session);
+  const sessoesOffline = useBemEstarStore((s) => s.sessoesOffline);
+  const revisoes = useBemEstarStore((s) => s.revisoes);
+  const relatorios = useBemEstarStore((s) => s.relatorios);
+  const adicionarRelatorio = useBemEstarStore((s) => s.adicionarRelatorio);
 
   const [texto, setTexto] = useState('');
   const [gerando, setGerando] = useState(true);
@@ -200,7 +208,8 @@ function Conteudo() {
 }
 
 export function WeeklyReportModal() {
-  const { showWeeklyReport, setShowWeeklyReport } = useAppStore();
+  const showWeeklyReport = useAppStore((s) => s.showWeeklyReport);
+  const setShowWeeklyReport = useAppStore((s) => s.setShowWeeklyReport);
   if (!showWeeklyReport) return null;
 
   return (

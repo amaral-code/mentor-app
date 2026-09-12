@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PanelRightOpen } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 import { useAppStore } from '../../stores/appStore';
 import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '../../shared/lib/kbSearch';
 import { getEmpathicPrefix } from '../../shared/lib/emotionEngine';
@@ -124,10 +125,34 @@ function autoResize(el: HTMLTextAreaElement) {
 }
 
 export function ChatPage() {
-  const { chatMessages, addChatMessage, detectAndSetMood, isMuted, setIsMuted, addNota, setToast,
-    personas, activePersonaId, setActivePersonaId, setShowPersonaManager, apiKey,
-    quizResults, logs, session } = useAppStore();
+  // Seletores atomicos: assinar o store inteiro aqui (como era antes)
+  // re-renderizava a pagina TODA a cada mensagem, toast, XP ou humor —
+  // incluindo re-parse de todas as mensagens e remediacao dos gliders.
+  // Cada linha abaixo so re-renderiza quando o proprio fatia muda.
+  const chatMessages = useAppStore((s) => s.chatMessages);
+  const addChatMessage = useAppStore((s) => s.addChatMessage);
+  const detectAndSetMood = useAppStore((s) => s.detectAndSetMood);
+  const isMuted = useAppStore((s) => s.isMuted);
+  const setIsMuted = useAppStore((s) => s.setIsMuted);
+  const addNota = useAppStore((s) => s.addNota);
+  const setToast = useAppStore((s) => s.setToast);
+  const personas = useAppStore((s) => s.personas);
+  const activePersonaId = useAppStore((s) => s.activePersonaId);
+  const setActivePersonaId = useAppStore((s) => s.setActivePersonaId);
+  const setShowPersonaManager = useAppStore((s) => s.setShowPersonaManager);
+  const apiKey = useAppStore((s) => s.apiKey);
+  const quizResults = useAppStore((s) => s.quizResults);
+  const logs = useAppStore((s) => s.logs);
+  const session = useAppStore((s) => s.session);
   const [input, setInput] = useState('');
+  // Espelho mutavel do input: handlers memorizados (Enter, enviar) leem o
+  // valor atual sem depender do estado — sem isso, cada tecla criaria
+  // novos callbacks e anularia o memo do PremiumInput.
+  const inputValorRef = useRef('');
+  const definirInput = useCallback((v: string) => {
+    inputValorRef.current = v;
+    setInput(v);
+  }, []);
   const [modo, setModo] = useState<string>(() => {
     const salvo = safeGet(CHAVE_MODO) || MODO_PADRAO;
     return ABAS_MENTOR.some((t) => t.modo === salvo) ? salvo : MODO_PADRAO;
@@ -154,40 +179,42 @@ export function ChatPage() {
   const [modoAula, setModoAula] = useState(() => safeGet(CHAVE_MODO_AULA) === '1');
   const [focoAberto, setFocoAberto] = useState(false);
 
-  function alternarModoAula() {
+  const alternarModoAula = useCallback(() => {
     playClick();
     setModoAula((v) => {
       safeSet(CHAVE_MODO_AULA, v ? '0' : '1');
       return !v;
     });
-  }
+  }, []);
 
-  function pedirPausa() {
+  const pedirPausa = useCallback(() => {
     const ultima = Number(safeGet(CHAVE_PAUSA_ULTIMA) || 0);
     if (Date.now() - ultima < PAUSA_INTERVALO_MS) return;
     safeSet(CHAVE_PAUSA_ULTIMA, String(Date.now()));
     setPausaAberta(true);
-  }
+  }, []);
   /* Flash neon da borda ao preencher via card (input-flash do protótipo). */
   const [flashKey, setFlashKey] = useState(0);
   const conversaAtivaId = useAppStore((s) => s.conversaAtivaId);
   const conversas = useAppStore((s) => s.conversas);
 
-  function trocarModoResposta(m: ModoRespostaUI) {
+  const trocarModoResposta = useCallback((m: ModoRespostaUI) => {
     playClick();
     setModoResposta(m);
     safeSet(CHAVE_MODO_RESPOSTA, m);
-  }
+  }, []);
 
-  function alternarHistorico() {
+  const alternarHistorico = useCallback(() => {
     playClick();
     setHistoricoAberto((v) => {
       safeSet(CHAVE_HISTORICO_ABERTO, v ? '0' : '1');
       return !v;
     });
-  }
+  }, []);
 
-  async function criarConversa() {
+  // Estavel na pratica: so troca de identidade durante a criacao em si,
+  // quando o botao ja esta desabilitado pelo proprio `criando`.
+  const criarConversa = useCallback(async () => {
     if (criandoConversa) return;
     playClick();
     setCriandoConversa(true);
@@ -196,20 +223,25 @@ export function ChatPage() {
     } finally {
       setCriandoConversa(false);
     }
-  }
+  }, [criandoConversa]);
 
-  async function trocarConversa(id: string) {
-    if (trocandoConversaId || id === conversaAtivaId) return;
+  // Guarda de troca em curso (ref, nao estado): evita dois toques rapidos
+  // dispararem selecionarConversa em paralelo sem re-renderizar por isso.
+  const trocandoRef = useRef<string | null>(null);
+  const trocarConversa = useCallback(async (id: string) => {
+    if (trocandoRef.current || useAppStore.getState().conversaAtivaId === id) return;
     playClick();
+    trocandoRef.current = id;
     setTrocandoConversaId(id);
     try {
       await useAppStore.getState().selecionarConversa(id);
     } finally {
+      trocandoRef.current = null;
       setTrocandoConversaId(null);
     }
-  }
+  }, []);
 
-  async function apagarConversa(id: string) {
+  const apagarConversa = useCallback(async (id: string) => {
     if (confirmarApagarId !== id) {
       setConfirmarApagarId(id);
       window.setTimeout(() => {
@@ -225,7 +257,7 @@ export function ChatPage() {
     } finally {
       setApagandoConversaId(null);
     }
-  }
+  }, [confirmarApagarId, apagandoConversaId]);
 
   const chatAreaRef = useRef<HTMLElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -244,19 +276,19 @@ export function ChatPage() {
     () => (activePersona && !PERSONAS_EMBUTIDAS.includes(activePersona.id) ? activePersona : null),
     [activePersona],
   );
-  function trocarModo(id: string) {
+  const trocarModo = useCallback((id: string) => {
     setModo(id);
     safeSet(CHAVE_MODO, id);
     setActivePersonaId(PERSONA_DO_MODO[id] ?? 'mentor_enem');
-  }
+  }, [setActivePersonaId]);
 
-  function trocarAbaMentor(aba: AbaMentor) {
+  const trocarAbaMentor = useCallback((aba: AbaMentor) => {
     playClick();
     const original = ABAS_MENTOR.find((t) => t.id === aba.id);
     if (!original) return;
     trocarModo(original.modo);
     setActivePersonaId(original.persona);
-  }
+  }, [trocarModo, setActivePersonaId]);
 
   const abaAtiva = ABAS_MENTOR.find((t) => t.modo === modo && !personaCustomizada) ?? ABAS_MENTOR[0];
 
@@ -437,7 +469,7 @@ export function ChatPage() {
     const conversaIdNoEnvio = useAppStore.getState().conversaAtivaId;
     const userMsg: ChatMessage = { id: generateId(), role: 'user', text: text.trim(), timestamp: Date.now(), image };
     addChatMessage(userMsg, conversaIdNoEnvio);
-    setInput('');
+    definirInput('');
     if (inputRef.current) { inputRef.current.style.height = 'auto'; }
     window.setTimeout(() => rolarParaFim(), 30);
     // Histórico lido do store na hora (sem closure stale do useCallback).
@@ -551,39 +583,50 @@ export function ChatPage() {
         finalizar({ id: generateId(), role: 'assistant', text: reply, timestamp: Date.now(), mood, modoResposta }, false);
       }, 400 + Math.random() * 600);
     }
-  }, [addChatMessage, detectAndSetMood, activePersona, apiKey, modo, modoResposta, personaCustomizada, materiaRetomada, setToast]);
+  }, [addChatMessage, detectAndSetMood, activePersona, apiKey, modo, modoResposta, personaCustomizada, materiaRetomada, setToast, pedirPausa, definirInput]);
 
   /* Ctrl/Cmd+Enter envia; Enter sozinho quebra linha (spec da barra). */
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      handleSend(input);
+      void handleSend(inputValorRef.current);
     }
-  }
+  }, [handleSend]);
+
+  // Estaveis entre renders: durante o streaming o pai atualiza 40x/s e o
+  // PremiumInput memorizado pula todos esses renders.
+  const aoMudarInput = useCallback((v: string) => {
+    definirInput(v);
+    if (inputRef.current) autoResize(inputRef.current);
+  }, [definirInput]);
+
+  const enviarAtual = useCallback(() => {
+    void handleSend(inputValorRef.current);
+  }, [handleSend]);
 
   /* Digitação do prompt no input (protótipo: fillPrompt + flash neon). */
   const typingRef = useRef<number | null>(null);
 
-  function insertPrompt(prompt: string) {
+  const insertPrompt = useCallback((prompt: string) => {
     playClick();
     if (typingRef.current !== null) window.clearInterval(typingRef.current);
-    setInput('');
+    definirInput('');
     setFlashKey((k) => k + 1);
     inputRef.current?.focus();
     let i = 0;
     typingRef.current = window.setInterval(() => {
       if (i < prompt.length) {
         i++;
-        setInput(prompt.slice(0, i));
+        definirInput(prompt.slice(0, i));
         if (inputRef.current) inputRef.current.scrollTop = inputRef.current.scrollHeight;
       } else if (typingRef.current !== null) {
         window.clearInterval(typingRef.current);
         typingRef.current = null;
       }
     }, 12);
-  }
+  }, [definirInput]);
 
-  function handleVoice() {
+  const handleVoice = useCallback(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setToast('Reconhecimento de voz não disponível', 'error');
       return;
@@ -597,17 +640,17 @@ export function ChatPage() {
     recognitionRef.current = recognition;
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
-      setInput(transcript);
+      definirInput(transcript);
       setIsListening(false);
-      handleSend(transcript);
+      void handleSend(transcript);
     };
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
     recognition.start();
     setIsListening(true);
-  }
+  }, [isListening, setToast, definirInput, handleSend]);
 
-  async function handleFileCapture(e: React.ChangeEvent<HTMLInputElement>) {
+  const handleFileCapture = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     // Mesmo allowlist da redação: SVG vetado, só foto real.
@@ -622,19 +665,54 @@ export function ChatPage() {
       return;
     }
     try {
-      const base64 = await readFileAsBase64(file);
-      handleSend(input, base64);
+      // Comprime no cliente (Web Worker, sem travar a UI) ANTES do base64:
+      // foto de 5MB virava string de ~6,7MB no store, pesando render,
+      // memoria e upload. Fallback: original.
+      let foto = file;
+      try {
+        foto = await imageCompression(file, {
+          maxSizeMB: 0.4,
+          maxWidthOrHeight: 1600,
+          useWebWorker: true,
+          fileType: 'image/jpeg',
+        });
+      } catch {
+        foto = file;
+      }
+      const base64 = await readFileAsBase64(foto);
+      void handleSend(inputValorRef.current, base64);
     } catch {
       setToast('Erro ao carregar imagem', 'error');
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }
+  }, [setToast, handleSend]);
 
-  function saveToNotebook(msg: ChatMessage) {
+  const saveToNotebook = useCallback((msg: ChatMessage) => {
     const text = msg.image ? `[Imagem] ${msg.text || 'Foto de lição'}` : msg.text;
     addNota({ id: `tmp_${Date.now()}`, text, data: new Date().toISOString(), tag: 'chat' });
     setToast('Salva no Caderno!', 'success');
-  }
+  }, [addNota, setToast]);
+
+  // Callbacks estaveis do header: sem eles, o ChatHeader memorizado
+  // re-renderizaria a cada tecla/tick por causa de closures novas.
+  const abrirFoco = useCallback(() => { playClick(); setFocoAberto(true); }, []);
+  const alternarMute = useCallback(() => {
+    const mutado = !useAppStore.getState().isMuted;
+    setIsMuted(mutado);
+    if (mutado) stopSpeech();
+  }, [setIsMuted]);
+  const abrirPersonas = useCallback(() => setShowPersonaManager(true), [setShowPersonaManager]);
+  const abrirCamera = useCallback(() => fileInputRef.current?.click(), []);
+  const aoTranscritoModoAula = useCallback((t: string) => {
+    definirInput(t);
+    setFlashKey((k) => k + 1);
+    setToast('Caderno digitalizado! Toque em Modo Aula para voltar ao chat e enviar.', 'success');
+  }, [definirInput, setToast]);
+  const aoTranscritoChat = useCallback((t: string) => {
+    insertPrompt(t);
+    setToast('Caderno digitalizado! Revise e envie.', 'success');
+  }, [insertPrompt, setToast]);
+  const aoErroOcr = useCallback((m: string) => setToast(m, 'error'), [setToast]);
 
   const userInicial = (session?.nome?.charAt(0)?.toUpperCase()) || 'M';
   const vazio = chatMessages.length === 0;
@@ -686,10 +764,10 @@ export function ChatPage() {
           onToggleHistorico={alternarHistorico}
           modoAula={modoAula}
           onToggleModoAula={alternarModoAula}
-          onAbrirFoco={() => { playClick(); setFocoAberto(true); }}
+          onAbrirFoco={abrirFoco}
           isMuted={isMuted}
-          onToggleMute={() => { setIsMuted(!isMuted); if (!isMuted) stopSpeech(); }}
-          onOpenPersonas={() => setShowPersonaManager(true)}
+          onToggleMute={alternarMute}
+          onOpenPersonas={abrirPersonas}
         />
 
         {/* Efeito Cardume (edital): faixa coletiva fixa no topo do chat. */}
@@ -736,8 +814,8 @@ export function ChatPage() {
             </p>
             <OcrUploader
               apiKey={apiKey}
-              onTranscrito={(t) => { setInput(t); setFlashKey((k) => k + 1); setToast('Caderno digitalizado! Toque em Modo Aula para voltar ao chat e enviar.', 'success'); }}
-              onErro={(m) => setToast(m, 'error')}
+              onTranscrito={aoTranscritoModoAula}
+              onErro={aoErroOcr}
             />
           </div>
         ) : (
@@ -746,20 +824,20 @@ export function ChatPage() {
         <div className="relative z-10 flex shrink-0 items-center gap-2 px-4 pb-1">
           <OcrUploader
             apiKey={apiKey}
-            onTranscrito={(t) => { insertPrompt(t); setToast('Caderno digitalizado! Revise e envie.', 'success'); }}
-            onErro={(m) => setToast(m, 'error')}
+            onTranscrito={aoTranscritoChat}
+            onErro={aoErroOcr}
           />
           <span className="text-[10px] text-slate-500">Foto do caderno vira texto aqui — sem digitar.</span>
         </div>
 
         <PremiumInput
           input={input}
-          onChange={(v) => { setInput(v); if (inputRef.current) autoResize(inputRef.current); }}
-          onSend={() => handleSend(input)}
+          onChange={aoMudarInput}
+          onSend={enviarAtual}
           onKeyDown={handleKeyDown}
           inputRef={inputRef}
           fileInputRef={fileInputRef}
-          onCamera={() => fileInputRef.current?.click()}
+          onCamera={abrirCamera}
           onFileChange={handleFileCapture}
           onVoice={handleVoice}
           isListening={isListening}

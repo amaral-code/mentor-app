@@ -162,6 +162,11 @@ export async function prepararFotoRedacao(
       histograma[cinza]++;
     }
 
+    // Cede a thread entre as passadas: em foto 1600px sao ~2,5M pixels por
+    // loop na thread principal. Sem este respiro, o "Preparando a foto..."
+    // nunca pinta e a UI parece congelada no celular mais fraco.
+    await new Promise((r) => setTimeout(r, 0));
+
     // Passada 2: alonga os niveis com a tabela calculada.
     const { preto, branco } = limitesDoHistograma(histograma, largura * altura, cfg.corte);
     const tabela = tabelaDeNiveis(preto, branco);

@@ -4,6 +4,7 @@ import App from './App';
 import './styles/index.css';
 import { aplicarAcessibilidade } from './shared/lib/acessibilidade';
 import { registrarPWA } from './pwa';
+import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 
 // Acessibilidade antes da primeira pintura: fonte, contraste, movimento
 // e daltonismo valem já no login, sem sessão.
@@ -14,6 +15,10 @@ registrarPWA();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    {/* Ultima rede: excecao nao tratada em qualquer lugar cai aqui, numa
+        tela amigavel com recarga — nunca tela branca fatal. */}
+    <ErrorBoundary nome="raiz">
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
 );

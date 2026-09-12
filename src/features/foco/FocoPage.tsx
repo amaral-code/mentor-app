@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { BarChart3, Timer } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { MeditationOverlay } from '../../shared/ui/MeditationOverlay';
@@ -13,8 +13,110 @@ type FocoState = 'idle' | 'foco' | 'pausa' | 'concluido';
 const FOCO_MIN = 25;
 const PAUSA_MIN = 5;
 
+/* ====================================================================
+   Trechos memorizados da pagina.
+   ====================================================================
+   O cronometro faz setState 1x por segundo (mais o rastreador de atencao
+   logo abaixo). Sem memo, cada tick recriava stats + listas de historico
+   e re-diffava tudo no DOM. Estes blocos so mudam quando os dados mudam
+   (fim de ciclo, carga do banco) — o tick do relogio os pula.
+   ==================================================================== */
+const FocoStats = memo(function FocoStats({
+  sessoesHoje, totalSessoes, totalFocoMin,
+}: {
+  sessoesHoje: number;
+  totalSessoes: number;
+  totalFocoMin: number;
+}) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="glass rounded-xl px-4 py-3 text-center">
+        <p className="text-lg font-bold text-white tabular-nums">{sessoesHoje}</p>
+        <p className="text-[10px] text-gray-500 mt-0.5">Sessões hoje</p>
+      </div>
+      <div className="glass rounded-xl px-4 py-3 text-center">
+        <p className="text-lg font-bold text-white tabular-nums">{totalSessoes}</p>
+        <p className="text-[10px] text-gray-500 mt-0.5">Total sessões</p>
+      </div>
+      <div className="glass rounded-xl px-4 py-3 text-center">
+        <p className="text-lg font-bold text-white tabular-nums">{Math.round(totalFocoMin)}</p>
+        <p className="text-[10px] text-gray-500 mt-0.5">Min focados</p>
+      </div>
+    </div>
+  );
+});
+
+const FocoHistorico = memo(function FocoHistorico({
+  historico, metricasAtencao,
+}: {
+  historico: { tipo: string; minutos: number; data: string }[];
+  metricasAtencao: FocusMetricRow[];
+}) {
+  const sessoes = historico.filter((h) => h.tipo === 'foco');
+  return (
+    <>
+      {sessoes.length === 0 && (
+        <div className="glass rounded-2xl p-5">
+          <EmptyState
+            pose="meditando"
+            compacto
+            titulo="Nenhum ciclo de foco ainda"
+            descricao="Comece um bloco de 25 minutos. O sagui fica de olho no relógio por você."
+          />
+        </div>
+      )}
+
+      {metricasAtencao.length > 0 && (
+        <div className="glass rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-gray-300 mb-3">
+            <BarChart3 size={16} className="inline-block align-[-0.15em] text-violet-400" /> Atenção recente
+          </h2>
+          <div className="space-y-1.5">
+            {metricasAtencao.map((m) => (
+              <div key={m.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
+                <div className="flex items-center gap-2">
+                  <span className="text-violet-400">●</span>
+                  <span className="text-gray-400">
+                    {new Date(`${m.sessionDate}T12:00:00`).toLocaleDateString()}
+                  </span>
+                </div>
+                <span className="text-gray-500 text-xs tabular-nums">
+                  {m.focusedMinutes}min focados • {m.distractionCount} {m.distractionCount === 1 ? 'distração' : 'distrações'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sessoes.length > 0 && (
+        <div className="glass rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-gray-300 mb-3"><BarChart3 size={16} className="inline-block align-[-0.15em] text-cyan-400" /> Últimas sessões</h2>
+          <div className="space-y-1.5">
+            {[...sessoes].reverse().slice(0, 7).map((h, i) => (
+              <div key={i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400">●</span>
+                  <span className="text-gray-400">{new Date(h.data).toLocaleDateString()}</span>
+                </div>
+                <span className="text-gray-500 text-xs tabular-nums">{h.minutos}min • {new Date(h.data).toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+});
+
 export function FocoPage() {
-  const { addXP, addLog, isMuted, setToast, cansaco } = useAppStore();
+  // Seletores atomicos: o store inteiro aqui faria cada tick do relogio
+  // (1/s) + cada toast/XP de OUTRA tela re-renderizar a pagina de foco.
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
+  const isMuted = useAppStore((s) => s.isMuted);
+  const setToast = useAppStore((s) => s.setToast);
+  const cansaco = useAppStore((s) => s.cansaco);
   const [state, setState] = useState<FocoState>('idle');
   const [segundos, setSegundos] = useState(FOCO_MIN * 60);
   const [cicles, setCicles] = useState(0);
@@ -179,6 +281,16 @@ export function FocoPage() {
   const totalFocoMin = historico.filter(h => h.tipo === 'foco').reduce((acc, h) => acc + h.minutos, 0);
   const totalSessoes = historico.filter(h => h.tipo === 'foco').length;
 
+  // Estavel entre ticks: o overlay e recriado a cada segundo se receber
+  // closure nova (mesmo fechado, a reconciliacao passa por ele).
+  const aoCompletarMeditacao = useCallback((seconds: number) => {
+    setMeditando(false);
+    const xp = Math.max(5, Math.round(seconds / 20));
+    addXP(xp);
+    addLog({ timestamp: Date.now(), type: 'foco', description: `Meditação guiada (${Math.round(seconds)}s)`, xp });
+    setToast(`+${xp} XP - mente renovada! `, 'success');
+  }, [addXP, addLog, setToast]);
+
   return (
     <>
     {/* Desfoque suave do conteúdo principal enquanto a micro-pausa está aberta. */}
@@ -285,73 +397,10 @@ export function FocoPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="glass rounded-xl px-4 py-3 text-center">
-          <p className="text-lg font-bold text-white tabular-nums">{sessoesHoje}</p>
-          <p className="text-[10px] text-gray-500 mt-0.5">Sessões hoje</p>
-        </div>
-        <div className="glass rounded-xl px-4 py-3 text-center">
-          <p className="text-lg font-bold text-white tabular-nums">{totalSessoes}</p>
-          <p className="text-[10px] text-gray-500 mt-0.5">Total sessões</p>
-        </div>
-        <div className="glass rounded-xl px-4 py-3 text-center">
-          <p className="text-lg font-bold text-white tabular-nums">{Math.round(totalFocoMin)}</p>
-          <p className="text-[10px] text-gray-500 mt-0.5">Min focados</p>
-        </div>
-      </div>
+      <FocoStats sessoesHoje={sessoesHoje} totalSessoes={totalSessoes} totalFocoMin={totalFocoMin} />
 
-      {/* Recent history */}
-      {historico.filter(h => h.tipo === 'foco').length === 0 && (
-        <div className="glass rounded-2xl p-5">
-          <EmptyState
-            pose="meditando"
-            compacto
-            titulo="Nenhum ciclo de foco ainda"
-            descricao="Comece um bloco de 25 minutos. O sagui fica de olho no relógio por você."
-          />
-        </div>
-      )}
-
-      {/* Atenção recente (focus_metrics): minutos focados x distrações. */}
-      {metricasAtencao.length > 0 && (
-        <div className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">
-            <BarChart3 size={16} className="inline-block align-[-0.15em] text-violet-400" /> Atenção recente
-          </h2>
-          <div className="space-y-1.5">
-            {metricasAtencao.map((m) => (
-              <div key={m.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
-                <div className="flex items-center gap-2">
-                  <span className="text-violet-400">●</span>
-                  <span className="text-gray-400">
-                    {new Date(`${m.sessionDate}T12:00:00`).toLocaleDateString()}
-                  </span>
-                </div>
-                <span className="text-gray-500 text-xs tabular-nums">
-                  {m.focusedMinutes}min focados • {m.distractionCount} {m.distractionCount === 1 ? 'distração' : 'distrações'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {historico.filter(h => h.tipo === 'foco').length > 0 && (
-        <div className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3"><BarChart3 size={16} className="inline-block align-[-0.15em] text-cyan-400" /> Últimas sessões</h2>
-          <div className="space-y-1.5">
-            {historico.filter(h => h.tipo === 'foco').reverse().slice(0, 7).map((h, i) => (
-              <div key={i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-400">●</span>
-                  <span className="text-gray-400">{new Date(h.data).toLocaleDateString()}</span>
-                </div>
-                <span className="text-gray-500 text-xs tabular-nums">{h.minutos}min • {new Date(h.data).toLocaleTimeString()}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Historico + atencao (memorizados: pulam o tick de 1s) */}
+      <FocoHistorico historico={historico} metricasAtencao={metricasAtencao} />
 
       {/* Dica */}
       <div className="text-center text-xs text-gray-600 leading-relaxed px-4 py-3 glass-light rounded-xl"> O ciclo Pomodoro ajuda a manter o foco e prevenir o cansaço mental. Complete ciclos para ganhar XP extra!
@@ -361,13 +410,7 @@ export function FocoPage() {
       <MeditationOverlay
         open={meditando}
         onClose={() => setMeditando(false)}
-        onComplete={(seconds) => {
-          setMeditando(false);
-          const xp = Math.max(5, Math.round(seconds / 20));
-          addXP(xp);
-          addLog({ timestamp: Date.now(), type: 'foco', description: `Meditação guiada (${Math.round(seconds)}s)`, xp });
-          setToast(`+${xp} XP - mente renovada! `, 'success');
-        }}
+        onComplete={aoCompletarMeditacao}
       />
     </div>
 

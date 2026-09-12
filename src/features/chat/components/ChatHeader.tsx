@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { memo, type RefObject } from 'react';
 import { EllipsisVertical, GraduationCap, History, Lightbulb, PanelRightClose, Timer, Volume2, VolumeX } from 'lucide-react';
 
 /** Aba temática do Mentor (espelha ABAS_MENTOR do ChatPage). */
@@ -34,8 +34,11 @@ interface ChatHeaderProps {
  * Header do Mentor (protótipo AGcode 1:1, <i class="fa-..."> trocado por
  * lucide-react nas mesmas classes — o CDN do FontAwesome foi removido
  * porque a CSP do index.html bloqueia domínios externos).
+ *
+ * Memorizado: o pai atualiza a cada tecla/streaming; o header so muda de
+ * fato ao trocar de aba, mutar ou abrir/fechar historico.
  */
-export function ChatHeader({
+export const ChatHeader = memo(function ChatHeader({
   titulo,
   descricao,
   abas,
@@ -187,4 +190,4 @@ export function ChatHeader({
       </div>
     </header>
   );
-}
+});

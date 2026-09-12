@@ -4,7 +4,8 @@ import { ParentsDashboard } from './ParentsDashboard';
 import { PainelCuidado } from './PainelCuidado';
 
 export function ParentPage() {
-  const { session, logout } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const logout = useAppStore((s) => s.logout);
 
   return (
     <div className="min-h-screen" style={{ background: '#0b1120' }}>

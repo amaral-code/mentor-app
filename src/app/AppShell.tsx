@@ -264,7 +264,11 @@ function XpFooter({ level, remainder, xpForNext, progresso, compacto }: { level:
 }
 
 export function AppShell() {
-  const { activeTab, setActiveTab, session, logout, gamification } = useAppStore();
+  const activeTab = useAppStore((s) => s.activeTab);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const session = useAppStore((s) => s.session);
+  const logout = useAppStore((s) => s.logout);
+  const gamification = useAppStore((s) => s.gamification);
   const { level, remainder } = calcLevel(gamification.xp);
   const xpForNext = 100 * level;
   const progresso = Math.min(100, (remainder / xpForNext) * 100);

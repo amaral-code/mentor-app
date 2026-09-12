@@ -43,8 +43,17 @@ const MODOS: { id: ModoEscudo; nome: string; descricao: string }[] = [
 ];
 
 export function EscudoPage() {
-  const { escudo, carteira, sessoesOffline, iniciarEscudo, encerrarEscudo, cancelarEscudo, registrarInterrupcao, atualizarCronometro, gastarMoedas, carregado, carregarTudo } =
-    useBemEstarStore();
+  const escudo = useBemEstarStore((s) => s.escudo);
+  const carteira = useBemEstarStore((s) => s.carteira);
+  const sessoesOffline = useBemEstarStore((s) => s.sessoesOffline);
+  const iniciarEscudo = useBemEstarStore((s) => s.iniciarEscudo);
+  const encerrarEscudo = useBemEstarStore((s) => s.encerrarEscudo);
+  const cancelarEscudo = useBemEstarStore((s) => s.cancelarEscudo);
+  const registrarInterrupcao = useBemEstarStore((s) => s.registrarInterrupcao);
+  const atualizarCronometro = useBemEstarStore((s) => s.atualizarCronometro);
+  const gastarMoedas = useBemEstarStore((s) => s.gastarMoedas);
+  const carregado = useBemEstarStore((s) => s.carregado);
+  const carregarTudo = useBemEstarStore((s) => s.carregarTudo);
   const setToast = useAppStore((s) => s.setToast);
   const addLog = useAppStore((s) => s.addLog);
 

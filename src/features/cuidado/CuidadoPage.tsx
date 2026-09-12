@@ -25,9 +25,13 @@ import { ListaConsultas } from '../marketplace/ListaConsultas';
  * confianca no resto do app.
  */
 export function CuidadoPage() {
-  const { session } = useAppStore();
-  const { vinculos, carregarVinculos, responderVinculo, notificacoes, carregarNotificacoes, marcarNotificacaoLida } =
-    useMarketplaceStore();
+  const session = useAppStore((s) => s.session);
+  const vinculos = useMarketplaceStore((s) => s.vinculos);
+  const carregarVinculos = useMarketplaceStore((s) => s.carregarVinculos);
+  const responderVinculo = useMarketplaceStore((s) => s.responderVinculo);
+  const notificacoes = useMarketplaceStore((s) => s.notificacoes);
+  const carregarNotificacoes = useMarketplaceStore((s) => s.carregarNotificacoes);
+  const marcarNotificacaoLida = useMarketplaceStore((s) => s.marcarNotificacaoLida);
   const [mostrarCatalogo, setMostrarCatalogo] = useState(false);
 
   useEffect(() => {

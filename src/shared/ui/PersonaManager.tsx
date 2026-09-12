@@ -14,7 +14,13 @@ const ICONS = [
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#ef4444', '#06b6d4', '#84cc16', '#14b8a6', '#f97316'];
 
 export function PersonaManager() {
-  const { personas, showPersonaManager, setShowPersonaManager, addPersona, removePersona, setActivePersonaId, activePersonaId } = useAppStore();
+  const personas = useAppStore((s) => s.personas);
+  const showPersonaManager = useAppStore((s) => s.showPersonaManager);
+  const setShowPersonaManager = useAppStore((s) => s.setShowPersonaManager);
+  const addPersona = useAppStore((s) => s.addPersona);
+  const removePersona = useAppStore((s) => s.removePersona);
+  const setActivePersonaId = useAppStore((s) => s.setActivePersonaId);
+  const activePersonaId = useAppStore((s) => s.activePersonaId);
   const [name, setName] = useState('');
   const [instruction, setInstruction] = useState('');
   const [icon, setIcon] = useState('');

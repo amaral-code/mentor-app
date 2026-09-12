@@ -27,7 +27,9 @@ import { EmptyState } from '../../shared/ui/EmptyState';
 const CHAVE_ROTEIRO = 'mm_roteiro_audio_';
 
 export function AudioPillsPage() {
-  const { apiKey, setToast, addLog } = useAppStore();
+  const apiKey = useAppStore((s) => s.apiKey);
+  const setToast = useAppStore((s) => s.setToast);
+  const addLog = useAppStore((s) => s.addLog);
   const [modulos, setModulos] = useState<ModuloAudio[]>([]);
   const [progresso, setProgresso] = useState<Record<string, ProgressoAudio>>({});
   const [ativo, setAtivo] = useState<ModuloAudio | null>(null);

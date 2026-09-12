@@ -1,4 +1,4 @@
-import type { ChangeEvent, KeyboardEvent, RefObject } from 'react';
+import { memo, type ChangeEvent, type KeyboardEvent, type RefObject } from 'react';
 import { BookOpen, Camera, MessageSquareText, Mic, Send } from 'lucide-react';
 
 export type ModoRespostaUI = 'explicativo' | 'comunicativo';
@@ -31,8 +31,12 @@ const MODOS = [
 /**
  * Barra premium flutuante (protótipo AGcode 1:1): cyber glow, textarea,
  * OCR/voz/envio e switch segmentado Explicativo/Comunicativo com pílula.
+ *
+ * Memorizada junto ao pai: a digitacao muda `input` (re-render necessario
+ * e barato, so desta barra), mas trocas de resto do chat (mensagem nova,
+ * tick de streaming, toast) nao precisam recriar esta arvore.
  */
-export function PremiumInput({
+export const PremiumInput = memo(function PremiumInput({
   input,
   onChange,
   onSend,
@@ -167,4 +171,4 @@ export function PremiumInput({
       </div>
     </footer>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useStoreStore } from '../../stores/storeStore';
 import { getStoreItem } from '../../shared/lib/storeCatalog';
@@ -22,7 +22,9 @@ function formatTime(totalSeconds: number): string {
 }
 
 export function FocusCompanion() {
-  const { addXP, addLog, setToast } = useAppStore();
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
+  const setToast = useAppStore((s) => s.setToast);
   const inventory = useStoreStore(s => s.inventory);
   const [open, setOpen] = useState(false);
   const [mini, setMini] = useState(false);
@@ -79,16 +81,20 @@ export function FocusCompanion() {
     window.addEventListener('pointercancel', aoSoltarArraste);
   }
 
-  function aoMoverArraste(e: PointerEvent) {
+  // Estaveis (useCallback vazio): o par add/removeEventListener do arrasto
+  // EXIGE a mesma identidade de funcao. Como funcoes planas, cada render
+  // criava novas — o remove no pointerup nunca removia o que o pointerdown
+  // adicionou, e cada arrasto vazava 3 listeners na janela para sempre.
+  const aoMoverArraste = useCallback((e: PointerEvent) => {
     const a = arrasteRef.current;
     if (!a) return;
     const dx = e.clientX - a.inicioX, dy = e.clientY - a.inicioY;
     if (!a.movendo && Math.hypot(dx, dy) < 7) return;
     a.movendo = true;
     setPos(limitar(a.baseX + dx, a.baseY + dy));
-  }
+  }, []);
 
-  function aoSoltarArraste() {
+  const aoSoltarArraste = useCallback(() => {
     window.removeEventListener('pointermove', aoMoverArraste);
     window.removeEventListener('pointerup', aoSoltarArraste);
     window.removeEventListener('pointercancel', aoSoltarArraste);
@@ -101,7 +107,19 @@ export function FocusCompanion() {
         return p;
       });
     }
-  }
+  }, [aoMoverArraste]);
+
+  // Rede de seguranca: desmontar no meio do arrasto (troca de aba) remove
+  // os listeners da janela. Sem isso, o gesto seguinte herdava o estado.
+  useEffect(() => {
+    const soltar = () => { arrasteRef.current = null; };
+    return () => {
+      window.removeEventListener('pointermove', aoMoverArraste);
+      window.removeEventListener('pointerup', aoSoltarArraste);
+      window.removeEventListener('pointercancel', aoSoltarArraste);
+      soltar();
+    };
+  }, [aoMoverArraste, aoSoltarArraste]);
 
   function cliqueSeNaoArrastou(e: React.SyntheticEvent) {
     if (Date.now() - ultimoArrasteFimRef.current < 300) {

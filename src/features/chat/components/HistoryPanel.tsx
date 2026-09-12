@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { ChevronRight, CloudUpload, History, PenLine, Plus, Search, Trash2 } from 'lucide-react';
 import type { Conversa } from '../../../shared/types';
 
@@ -59,8 +59,11 @@ function inicioDoDia(ts: number): number {
  * badge com contagem real, busca filtrando de verdade, grupos
  * Hoje/Ontem/Últimos 7 dias montados de `conversas`, Nova Conversa,
  * renomear e apagar por thread.
+ *
+ * Memorizado: durante digitacao e streaming no chat, `conversas` mantem a
+ * referencia e os callbacks do pai sao estaveis — o painel e pulado.
  */
-export function HistoryPanel({
+export const HistoryPanel = memo(function HistoryPanel({
   aberto,
   onFechar,
   conversas,
@@ -257,4 +260,4 @@ export function HistoryPanel({
       </div>
     </aside>
   );
-}
+});

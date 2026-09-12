@@ -23,7 +23,9 @@ interface CatalogoProps {
  * tarde. Cada card mostra o valor da sessao antes de qualquer clique.
  */
 export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoProps) {
-  const { psicologos, carregarCatalogo, carregando } = useMarketplaceStore();
+  const psicologos = useMarketplaceStore((s) => s.psicologos);
+  const carregarCatalogo = useMarketplaceStore((s) => s.carregarCatalogo);
+  const carregando = useMarketplaceStore((s) => s.carregando);
   const [busca, setBusca] = useState('');
   const [teto, setTeto] = useState(tetoInicial ?? 30000);
   const [escolhido, setEscolhido] = useState<Psicologo | null>(null);

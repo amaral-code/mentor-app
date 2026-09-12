@@ -26,8 +26,13 @@ import { MOOD_LABEL } from '../lib/utils';
  */
 export function DoomscrollGuard() {
   const reduzir = useReducedMotion();
-  const { apiKey, setActiveTab, quizResults, currentMood } = useAppStore();
-  const { intervencao, mostrarIntervencao, responderIntervencao } = useBemEstarStore();
+  const apiKey = useAppStore((s) => s.apiKey);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const quizResults = useAppStore((s) => s.quizResults);
+  const currentMood = useAppStore((s) => s.currentMood);
+  const intervencao = useBemEstarStore((s) => s.intervencao);
+  const mostrarIntervencao = useBemEstarStore((s) => s.mostrarIntervencao);
+  const responderIntervencao = useBemEstarStore((s) => s.responderIntervencao);
 
   useEffect(() => {
     const rastreador = criarRastreadorOciosidade(async (avaliacao) => {

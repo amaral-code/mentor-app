@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, memo, useMemo, type ReactNode } from 'react';
 
 /**
  * Renderiza a marcação leve que a IA devolve.
@@ -42,8 +42,11 @@ interface TextoFormatadoProps {
   className?: string;
 }
 
-export function TextoFormatado({ texto, className = '' }: TextoFormatadoProps) {
-  const linhas = texto.split('\n');
+export const TextoFormatado = memo(function TextoFormatado({ texto, className = '' }: TextoFormatadoProps) {
+  // Parse memorizado: sem isso, cada tick do streaming (24ms) e cada tecla
+  // no input do chat reprocessava TODAS as mensagens da conversa — custo
+  // O(mensagens x ticks) com regex em cada render do pai.
+  const linhas = useMemo(() => texto.split('\n'), [texto]);
 
   return (
     /* break-words e o que impede a bolha de estourar: sem ele, uma URL ou
@@ -58,4 +61,4 @@ export function TextoFormatado({ texto, className = '' }: TextoFormatadoProps) {
       ))}
     </p>
   );
-}
+});

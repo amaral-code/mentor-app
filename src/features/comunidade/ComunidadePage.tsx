@@ -122,7 +122,10 @@ function getLigasIniciais(): StudyLeague[] {
 }
 
 export function ComunidadePage() {
-  const { session, addXP, addLog, setToast } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
+  const setToast = useAppStore((s) => s.setToast);
   const [mensagens, setMensagens] = useState<CommunityMessage[]>([]);
   const [falhaAoCarregar, setFalhaAoCarregar] = useState(false);
   const [escolas, setEscolas] = useState<Escola[]>([]);

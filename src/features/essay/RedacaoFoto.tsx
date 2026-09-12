@@ -39,7 +39,14 @@ const CORES_NOTA = (nota: number) =>
   nota >= 160 ? '#10b981' : nota >= 120 ? '#f59e0b' : nota >= 80 ? '#f97316' : '#ef4444';
 
 export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
-  const { apiKey, setToast, addXP, addLog, setLastCorrection } = useAppStore();
+  // Seletores atomicos: o processamento da foto atualiza etapa/previa varias
+  // vezes; assinar o store inteiro faria cada uma dessas atualizacoes
+  // re-renderizar junto com qualquer outro update global.
+  const apiKey = useAppStore((s) => s.apiKey);
+  const setToast = useAppStore((s) => s.setToast);
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
+  const setLastCorrection = useAppStore((s) => s.setLastCorrection);
 
   const [previa, setPrevia] = useState<string | null>(null);
   const [info, setInfo] = useState<{ antes: number; depois: number } | null>(null);

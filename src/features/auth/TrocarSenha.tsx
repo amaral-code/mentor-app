@@ -14,7 +14,8 @@ import { useAppStore } from '../../stores/appStore';
  * email) viraria senha permanente.
  */
 export function TrocarSenha() {
-  const { setToast, setSession } = useAppStore();
+  const setToast = useAppStore((s) => s.setToast);
+  const setSession = useAppStore((s) => s.setSession);
   const [nova, setNova] = useState('');
   const [confirma, setConfirma] = useState('');
   const [trocando, setTrocando] = useState(false);

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ArrowRight, Feather, Lightbulb, Ruler, Zap } from 'lucide-react';
 
 interface HeroWelcomeProps {
@@ -53,8 +54,10 @@ const CARDS = [
 /**
  * Boas-vindas do Mentor (protótipo AGcode 1:1): lâmpada hero com anéis
  * orbitais + 3 cards de prompt com hover 3D.
+ *
+ * Memorizada: carta estatica; o pai re-renderiza a cada tecla e tick.
  */
-export function HeroWelcome({ titulo, subtitulo, onPrompt }: HeroWelcomeProps) {
+export const HeroWelcome = memo(function HeroWelcome({ titulo, subtitulo, onPrompt }: HeroWelcomeProps) {
   return (
     <div
       className="w-full max-w-4xl flex flex-col items-center text-center my-auto transition-all duration-300"
@@ -111,4 +114,4 @@ export function HeroWelcome({ titulo, subtitulo, onPrompt }: HeroWelcomeProps) {
       </div>
     </div>
   );
-}
+});

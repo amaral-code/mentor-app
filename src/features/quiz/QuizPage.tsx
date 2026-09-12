@@ -117,7 +117,13 @@ function parseQuestions(text: string): QuizQuestion[] {
 
 export function QuizPage() {
   const reduzir = useReducedMotion();
-  const { addXP, addLog, isMuted, quizResults, addQuizResult, apiKey, setToast } = useAppStore();
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
+  const isMuted = useAppStore((s) => s.isMuted);
+  const quizResults = useAppStore((s) => s.quizResults);
+  const addQuizResult = useAppStore((s) => s.addQuizResult);
+  const apiKey = useAppStore((s) => s.apiKey);
+  const setToast = useAppStore((s) => s.setToast);
   const [stage, setStage] = useState<Stage>('select');
   const [materia, setMateria] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
@@ -166,8 +172,10 @@ export function QuizPage() {
   const [generating, setGenerating] = useState(false);
   const [showMilestone, setShowMilestone] = useState(false);
 
-  const { registrarResposta, descarregarTelemetria, agendarRevisao, conteudoDensoBloqueado } =
-    useBemEstarStore();
+  const registrarResposta = useBemEstarStore((s) => s.registrarResposta);
+  const descarregarTelemetria = useBemEstarStore((s) => s.descarregarTelemetria);
+  const agendarRevisao = useBemEstarStore((s) => s.agendarRevisao);
+  const conteudoDensoBloqueado = useBemEstarStore((s) => s.conteudoDensoBloqueado);
   /** Instante em que a questao atual apareceu: base do tempo por questao. */
   const inicioQuestao = useRef(Date.now());
   /** Topico aberto pelo calendario adaptativo, se veio de la. */

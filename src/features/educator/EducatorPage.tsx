@@ -144,7 +144,8 @@ function paraImportacao(
 }
 
 export function EducatorPage() {
-  const { session, logout } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const logout = useAppStore((s) => s.logout);
   /** EPICO 3: `/educador/dashboard` do spec = esta aba no SPA. */
   const [aba, setAba] = useState<'turmas' | 'insights'>('turmas');
   const [modo, setModo] = useState<ModoEntrada>('csv');

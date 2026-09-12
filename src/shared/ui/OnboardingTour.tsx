@@ -66,7 +66,13 @@ function SpotlightOverlay({ rect, padding = 12 }: { rect: Rect; padding?: number
 }
 
 export function OnboardingTour() {
-  const { showTutorial, tutorialStep, setShowTutorial, setTutorialStep, setActiveTab, addXP, addLog } = useAppStore();
+  const showTutorial = useAppStore((s) => s.showTutorial);
+  const tutorialStep = useAppStore((s) => s.tutorialStep);
+  const setShowTutorial = useAppStore((s) => s.setShowTutorial);
+  const setTutorialStep = useAppStore((s) => s.setTutorialStep);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const [cardPos, setCardPos] = useState<'bottom' | 'top' | 'right'>('bottom');
   const cardRef = useRef<HTMLDivElement>(null);

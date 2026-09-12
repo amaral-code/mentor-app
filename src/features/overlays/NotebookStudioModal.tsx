@@ -41,7 +41,10 @@ function carregarMermaid() {
 type StudioTool = 'resumo' | 'mapa' | 'flashcards' | 'gaps';
 
 export function NotebookStudioModal() {
-  const { showNotebookStudio, setShowNotebookStudio, notas, apiKey } = useAppStore();
+  const showNotebookStudio = useAppStore((s) => s.showNotebookStudio);
+  const setShowNotebookStudio = useAppStore((s) => s.setShowNotebookStudio);
+  const notas = useAppStore((s) => s.notas);
+  const apiKey = useAppStore((s) => s.apiKey);
   const [activeTool, setActiveTool] = useState<StudioTool>('resumo');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');

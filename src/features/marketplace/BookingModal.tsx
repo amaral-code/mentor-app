@@ -32,7 +32,11 @@ interface BookingModalProps {
  * atende a semana inteira.
  */
 export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingModalProps) {
-  const { slots, disponibilidade, carregarAgenda, contratar, processandoPagamento } = useMarketplaceStore();
+  const slots = useMarketplaceStore((s) => s.slots);
+  const disponibilidade = useMarketplaceStore((s) => s.disponibilidade);
+  const carregarAgenda = useMarketplaceStore((s) => s.carregarAgenda);
+  const contratar = useMarketplaceStore((s) => s.contratar);
+  const processandoPagamento = useMarketplaceStore((s) => s.processandoPagamento);
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
   const [slotSelecionado, setSlotSelecionado] = useState<SlotAgenda | null>(null);
   const [carregandoAgenda, setCarregandoAgenda] = useState(false);

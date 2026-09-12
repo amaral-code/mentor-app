@@ -90,7 +90,17 @@ export function EssayPage() {
   const [text, setText] = useState('');
   const [tema, setTema] = useState('');
   const [isCorrecting, setIsCorrecting] = useState(false);
-  const { lastCorrection, setLastCorrection, addXP, addLog, isMuted, apiKey, setToast, challengeResults, addChallengeResult, challengeSeenTutorial, setChallengeSeenTutorial } = useAppStore();
+  const lastCorrection = useAppStore((s) => s.lastCorrection);
+  const setLastCorrection = useAppStore((s) => s.setLastCorrection);
+  const addXP = useAppStore((s) => s.addXP);
+  const addLog = useAppStore((s) => s.addLog);
+  const isMuted = useAppStore((s) => s.isMuted);
+  const apiKey = useAppStore((s) => s.apiKey);
+  const setToast = useAppStore((s) => s.setToast);
+  const challengeResults = useAppStore((s) => s.challengeResults);
+  const addChallengeResult = useAppStore((s) => s.addChallengeResult);
+  const challengeSeenTutorial = useAppStore((s) => s.challengeSeenTutorial);
+  const setChallengeSeenTutorial = useAppStore((s) => s.setChallengeSeenTutorial);
 
   // Challenge state
   const [challengeOpen, setChallengeOpen] = useState(false);

@@ -28,8 +28,12 @@ import { EmptyState } from '../../shared/ui/EmptyState';
 const TETO_DIARIO = 8;
 
 export function CalendarioPage() {
-  const { revisoes, carregado, carregarTudo, agendarRevisao } = useBemEstarStore();
-  const { setActiveTab, setToast } = useAppStore();
+  const revisoes = useBemEstarStore((s) => s.revisoes);
+  const carregado = useBemEstarStore((s) => s.carregado);
+  const carregarTudo = useBemEstarStore((s) => s.carregarTudo);
+  const agendarRevisao = useBemEstarStore((s) => s.agendarRevisao);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const setToast = useAppStore((s) => s.setToast);
   const [dias, setDias] = useState(14);
 
   useEffect(() => {

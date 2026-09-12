@@ -204,7 +204,8 @@ const AI_RISK = {
 } as const;
 
 export function ParentsDashboard() {
-  const { session, apiKey } = useAppStore();
+  const session = useAppStore((s) => s.session);
+  const apiKey = useAppStore((s) => s.apiKey);
   const [period, setPeriod] = useState<PeriodKey>(6);
 
   const records = useMemo(() => cognitiveHistory.slice(-period), [period]);
