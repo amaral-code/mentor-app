@@ -100,6 +100,8 @@ export function promptCorrecaoFoto(temaInformado) {
   const guias = COMPETENCIAS.map((c, i) => `${i + 1}. ${c.titulo} — ${c.guia}`).join('\n');
 
   return [
+    'PAPEL: você é um Corretor Oficial do ENEM, aplicando a grade do INEP com o rigor da banca — sem benevolência, sem invenção.',
+    '',
     'Você recebeu a FOTO de uma redação manuscrita, escrita à mão em folha de caderno por um estudante brasileiro do ensino médio.',
     '',
     'TAREFA 1 — TRANSCRIÇÃO',
@@ -118,13 +120,19 @@ export function promptCorrecaoFoto(temaInformado) {
     '',
     'REGRAS DE PONTUAÇÃO',
     '- Cada competência vale exatamente 0, 40, 80, 120, 160 ou 200. Não use valores intermediários.',
-    '- total_score é a soma das cinco.',
+    '- total_score é a soma das cinco (0 a 1000).',
     '- Seja rigoroso como um corretor do ENEM: 200 exige domínio excelente, não apenas ausência de erro grave.',
+    '- ESTRUTURA OBRIGATÓRIA da resposta: nota final exata; pontuação detalhada das 5 competências; o que o aluno acertou (strengths); o que precisa melhorar em detalhe (actionable_improvements).',
+    '',
+    'FIM DAS ALUCINAÇÕES — regra de ouro:',
+    '- Todo feedback de competência PRECISA citar pelo menos um trecho literal da transcrição entre aspas. Sem trecho citado, o feedback não vale.',
+    '- PROIBIDO: inventar frases que o aluno não escreveu, elogiar ou criticar algo sem apontar onde está no texto, dar nota 200 sem justificar com exemplo concreto.',
+    '- Se um trecho citado não existir na transcrição, a correção inteira é inválida: confira antes de responder.',
     '- Em cada feedback, cite um trecho concreto da redação. Feedback genérico não ensina nada.',
     '- Na competência 5, liste explicitamente quais dos cinco elementos (agente, ação, meio, efeito, detalhamento) estão presentes e quais faltam.',
     '',
-    'strengths: 2 a 4 pontos fortes reais do texto.',
-    'actionable_improvements: 2 a 4 ajustes práticos para a PRÓXIMA redação, no imperativo e específicos.',
+    'strengths: 2 a 4 pontos fortes reais do texto, cada um ancorado num trecho citado.',
+    'actionable_improvements: 2 a 4 ajustes práticos para a PRÓXIMA redação, no imperativo e específicos, mostrando como reescrever o trecho citado.',
     'Escreva todo o feedback em português brasileiro, falando com o estudante em segunda pessoa, sem ironia e sem elogio vazio.',
   ].join('\n');
 }

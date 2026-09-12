@@ -187,7 +187,7 @@ function SidebarNav({
       />
       <nav
         ref={navRef}
-        className="space-y-0.5 overflow-y-auto max-h-[calc(100vh-270px)] md:max-h-[calc(100vh-250px)] relative z-10 hide-scrollbar"
+        className="space-y-0.5 overflow-y-auto overscroll-contain max-h-[calc(100vh-270px)] md:max-h-[calc(100vh-250px)] relative z-10 hide-scrollbar pb-6"
         data-purpose="sidebar-nav"
       >
         {TABS.map((tab) => {
@@ -414,6 +414,7 @@ export function AppShell() {
             </div>
             )}
             <button
+              type="button"
               onClick={logout}
               className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all press shrink-0"
               title="Sair"
@@ -525,7 +526,10 @@ export function AppShell() {
               exit={reduzir ? { opacity: 0 } : { x: '-100%' }}
               transition={{ type: 'tween', duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             >
-              <div className="flex flex-col">
+              {/* Meio rolavel: em telas baixas o menu inteiro rola aqui dentro
+                  (overscroll-contain nao deixa a pagina de tras rolar junto)
+                  e o pb garante o ultimo item clicavel acima da safe-area. */}
+              <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overscroll-contain">
                 <div className="p-3.5 flex items-center justify-between border-b border-white/5">
                   <div className="flex items-center gap-3">
                     <div className="relative w-10 h-10 rounded-2xl flex items-center justify-center p-1 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 shadow-glow-amber animate-moon-pulse">

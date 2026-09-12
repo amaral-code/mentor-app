@@ -202,9 +202,20 @@ const STRATEGIES: Strategy[] = [
   },
 ];
 
-export function generatePlan(mood: MoodType): Omit<DailyPlan, 'date'> {
+/**
+ * Gera o plano do dia a partir do humor.
+ *
+ * ROTACAO SEMANAL: o mesmo humor gerava as mesmas 3 tarefas todo dia, e o
+ * aluno decorava a sequencia em vez de estudar. `diaSemana` (0 = domingo)
+ * gira a ordem e desloca o ponto de partida, entao cada dia tem uma
+ * combinacao diferente — sem precisar de rede ou de banco novo.
+ */
+export function generatePlan(mood: MoodType, diaSemana: number = new Date().getDay()): Omit<DailyPlan, 'date'> {
   const strategy = STRATEGIES.find((s) => s.mood === mood) || STRATEGIES[STRATEGIES.length - 1];
-  const tasks: MicroTask[] = strategy.tasks.map((t) => ({
+  const base = strategy.tasks;
+  const giro = ((diaSemana % base.length) + base.length) % base.length;
+  const rotacionadas = [...base.slice(giro), ...base.slice(0, giro)];
+  const tasks: MicroTask[] = rotacionadas.map((t) => ({
     ...t,
     id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     completed: false,

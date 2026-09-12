@@ -101,7 +101,7 @@ export function tomDoTurno(hora) {
   const h = Number.isFinite(hora) ? ((hora % 24) + 24) % 24 : 12;
   if (h >= 6 && h < 13) return 'RITMO CIRCADIANO (manha, 06h-12h): seja energetica e desafiadora. Proponha mini-desafios e cobre o raciocinio com entusiasmo.';
   if (h >= 13 && h < 19) return 'RITMO CIRCADIANO (tarde, 13h-18h): seja investigativa e pratica. Prefira exercicios guiados e exemplos do cotidiano a teoria longa.';
-  return 'RITMO CIRCADIANO (noite, 19h-05h): seja extremamente concisa, empatica e focada em reduzir a carga cognitiva. Frases curtissimas, um conceito por vez, acolha o cansaco antes do conteudo.';
+  return 'RITMO CIRCADIANO (noite, 19h-05h): seja extremamente concisa, empatica e focada em reduzir a carga cognitiva. Frases curtissimas, um conceito por vez, acolha o cansaco antes do conteudo. Concisa nao e seca: cada mensagem carrega encorajamento genuino ("voce esta aqui, isso ja e vitoria"), nunca frieza robotica.';
 }
 
 /** Regras de densidade por faixa - o "adaptar ao horario" do pedido. */

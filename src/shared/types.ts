@@ -33,6 +33,14 @@ export interface Session {
   turmaId?: string | null;
   /** Conta importada pela secretaria: precisa trocar a senha temporária. */
   deveTrocarSenha?: boolean;
+  /** Onboarding inteligente: false = primeiro acesso (wizard), true = recorrente. */
+  onboardingCompleted: boolean;
+  /** Metas escolhidas no passo 2 (ex.: "Passar no ENEM"). */
+  metasEstudo: string[];
+  /** Disponibilidade do passo 3 (ex.: "1 hora"). */
+  tempoDiarioEstudo?: string | null;
+  /** Turno principal do passo 3 ("manha" | "tarde" | "noite"). */
+  turnoEstudo?: string | null;
 }
 
 export type RolePage = 'dashboard' | 'educator-dashboard' | 'parent-dashboard';

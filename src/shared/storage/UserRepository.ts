@@ -31,13 +31,48 @@ export interface AuthResult {
   papelDivergente?: UserRole;
 }
 
+export interface DadosOnboarding {
+  metas: string[];
+  tempoDiario: string;
+  turno: string;
+}
+
 export class UserRepository {
   /** Perfil do usuario logado, ou null. */
   private async carregarPerfil(uid: string, emailFallback: string): Promise<Session | null> {
     const sb = getSupabase();
     if (!sb) return null;
 
+    // Colunas do onboarding (migration 021). Banco ainda sem a migration:
+    // o select completo falha e o fallback legado mantem o login de pe,
+    // marcando primeiro-acesso para o wizard aparecer de qualquer forma.
     const { data, error } = await comTimeout(
+      sb
+        .from('perfis')
+        .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha, onboarding_completed, metas_estudo, tempo_diario_estudo, turno_estudo')
+        .eq('id', uid)
+        .maybeSingle(),
+      TIMEOUT_AUTH_MS,
+      'Carregar perfil',
+    );
+
+    if (!error && data) {
+      return {
+        uid: data.id,
+        email: data.email ?? emailFallback,
+        nome: data.nome,
+        role: (data.papel as UserRole) ?? 'student',
+        escolaId: data.escola_id,
+        turmaId: data.turma_id,
+        deveTrocarSenha: !!data.deve_trocar_senha,
+        onboardingCompleted: !!data.onboarding_completed,
+        metasEstudo: Array.isArray(data.metas_estudo) ? data.metas_estudo : [],
+        tempoDiarioEstudo: data.tempo_diario_estudo ?? null,
+        turnoEstudo: data.turno_estudo ?? null,
+      };
+    }
+
+    const legado = await comTimeout(
       sb
         .from('perfis')
         .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha')
@@ -46,17 +81,20 @@ export class UserRepository {
       TIMEOUT_AUTH_MS,
       'Carregar perfil',
     );
-
-    if (error || !data) return null;
-
+    if (legado.error || !legado.data) return null;
+    const d = legado.data;
     return {
-      uid: data.id,
-      email: data.email ?? emailFallback,
-      nome: data.nome,
-      role: (data.papel as UserRole) ?? 'student',
-      escolaId: data.escola_id,
-      turmaId: data.turma_id,
-      deveTrocarSenha: !!data.deve_trocar_senha,
+      uid: d.id,
+      email: d.email ?? emailFallback,
+      nome: d.nome,
+      role: (d.papel as UserRole) ?? 'student',
+      escolaId: d.escola_id,
+      turmaId: d.turma_id,
+      deveTrocarSenha: !!d.deve_trocar_senha,
+      onboardingCompleted: false,
+      metasEstudo: [],
+      tempoDiarioEstudo: null,
+      turnoEstudo: null,
     };
   }
 
@@ -186,6 +224,31 @@ export class UserRepository {
     if (Object.keys(patch).length === 0) return true;
 
     const { error } = await sb.from('perfis').update(patch).eq('id', auth.user.id);
+    return !error;
+  }
+
+  /**
+   * Persiste a conclusao do onboarding (passo 4 do wizard).
+   *
+   * Devolve false quando o banco nao tem as colunas (migration 021 ainda
+   * nao rodada) ou a rede falhou: o chamador mesmo assim atualiza o store
+   * local, para o aluno nunca ficar preso no wizard por causa de infra.
+   */
+  async concluirOnboarding(dados: DadosOnboarding): Promise<boolean> {
+    const sb = getSupabase();
+    if (!sb) return false;
+    const { data: auth } = await sb.auth.getUser();
+    if (!auth.user) return false;
+
+    const { error } = await sb
+      .from('perfis')
+      .update({
+        onboarding_completed: true,
+        metas_estudo: dados.metas,
+        tempo_diario_estudo: dados.tempoDiario,
+        turno_estudo: dados.turno,
+      })
+      .eq('id', auth.user.id);
     return !error;
   }
 

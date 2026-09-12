@@ -123,9 +123,13 @@ export function OnboardingTour() {
     const t1 = setTimeout(locateTarget, 350);
     const t2 = setTimeout(locateTarget, 900);
     window.addEventListener('resize', locateTarget);
+    // Rolagem move o alvo: sem re-medir, o destaque fica para trás e o
+    // cartão aponta para o vazio (comum no drawer mobile).
+    window.addEventListener('scroll', locateTarget, { passive: true, capture: true });
     return () => {
       clearTimeout(t1); clearTimeout(t2);
       window.removeEventListener('resize', locateTarget);
+      window.removeEventListener('scroll', locateTarget, { capture: true });
     };
   }, [showTutorial, tutorialStep, setActiveTab, locateTarget]);
 
@@ -140,6 +144,7 @@ export function OnboardingTour() {
   // errado e jogava o cartão para fora da tela, sem botão clicável, e o
   // tour travava. O certo é medir a partir do rodapé da viewport.
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const telaEstreita = typeof window !== 'undefined' && window.innerWidth < 768;
 
   function marcarVisto() {
     // Servidor + backup local (conta nova sem linha de preferências ou
@@ -177,7 +182,10 @@ export function OnboardingTour() {
         <div className="fixed inset-0 bg-black/70" style={{ pointerEvents: 'auto' }} />
       )}
 
-      {/* Mascote ancorado ao elemento-alvo (Central de Estudos) simulando fala */}
+      {/* Mascote ancorado ao elemento-alvo simulando fala. Nos passos sem
+          alvo (boas-vindas e conclusão), o sagui aparece CENTRALIZADO acima
+          do cartão em qualquer tela — antes ele era `hidden` no mobile e o
+          recém-cadastrado nunca via o mascote dando as boas-vindas. */}
       {(() => {
         const mascotSize = 112;
         const mascotStyle: React.CSSProperties = {};
@@ -187,6 +195,12 @@ export function OnboardingTour() {
             ? Math.max(12, targetRect.top - mascotSize - 28)
             : targetRect.top + targetRect.height + 24;
           mascotStyle.left = Math.max(8, targetRect.left + targetRect.width / 2 - mascotSize / 2);
+        } else if (telaEstreita) {
+          // Boas-vindas no celular: sagui centralizado ACIMA do cartão
+          // (ao lado ele ficava atrás do cartão centralizado).
+          mascotStyle.top = Math.max(12, vh / 2 - 300);
+          mascotStyle.left = '50%';
+          mascotStyle.transform = 'translateX(-50%)';
         } else {
           mascotStyle.top = '50%';
           mascotStyle.left = 24;
@@ -194,7 +208,7 @@ export function OnboardingTour() {
         }
         return (
           <div
-            className="fixed z-[201] hidden md:block"
+            className={`fixed z-[201] ${hasTarget ? 'hidden md:block' : 'block'}`}
             style={{ width: mascotSize, height: mascotSize, ...mascotStyle }}
           >
             <Mascot state="typing" talking message="Vou te guiar, um passo de cada vez!" speech variant="floating" size={mascotSize} />
@@ -202,14 +216,16 @@ export function OnboardingTour() {
         );
       })()}
 
-      {/* Card */}
+      {/* Card (posição travada dentro da viewport: sem clamp, alvo perto da
+          borda empurrava o cartão para fora da tela e o tour travava sem
+          botão clicável). */}
       <div
         ref={cardRef}
         className="fixed z-[201] left-1/2 -translate-x-1/2 w-full max-w-sm px-4 animate-fade-up"
         style={
           hasTarget
             ? cardPos === 'bottom'
-              ? { top: targetRect.top + targetRect.height + 20, transform: 'translateX(-50%)' }
+              ? { top: Math.max(12, Math.min(targetRect.top + targetRect.height + 20, vh - 380)), transform: 'translateX(-50%)' }
               : { bottom: Math.max(12, vh - targetRect.top + 20), transform: 'translateX(-50%)' }
             : { top: '50%', transform: 'translate(-50%, -50%)' }
         }

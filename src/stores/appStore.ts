@@ -74,6 +74,12 @@ interface AppState {
   challengeSeenTutorial: boolean;
 
   setSession: (session: Session | null) => void;
+  /**
+   * Aplica a conclusao do onboarding na sessao em memoria (passo 4).
+   * Patch funcional sobre a sessao atual: quem assina `s.session` inteiro
+   * re-renderiza uma vez; o resto nem fica sabendo.
+   */
+  concluirOnboardingLocal: (dados: { metas: string[]; tempoDiario: string; turno: string }) => void;
   logout: () => void;
   setActiveTab: (tab: TabId) => void;
   setSono: (v: number) => void;
@@ -235,6 +241,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ session, isAuthenticated: !!session, userRole: session?.role || 'student' });
   },
 
+  concluirOnboardingLocal: (dados) => {
+    set((s) =>
+      s.session
+        ? {
+            session: {
+              ...s.session,
+              onboardingCompleted: true,
+              metasEstudo: dados.metas,
+              tempoDiarioEstudo: dados.tempoDiario,
+              turnoEstudo: dados.turno,
+            },
+          }
+        : s,
+    );
+  },
+
   /**
    * Sai da conta.
    *
@@ -249,12 +271,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     userRepository.logout().catch(() => {});
     // Inventario vive em outro store. Sem limpar, o proximo aluno a entrar
     // no MESMO dispositivo (laboratorio da escola) via os itens do anterior.
-    void import('./storeStore').then((m) => m.useStoreStore.getState().limpar());
-    void import('../shared/lib/rankingEngine').then((m) => m.limparCache());
+    void import('./storeStore').then((m) => m.useStoreStore.getState().limpar()).catch(() => {});
+    void import('../shared/lib/rankingEngine').then((m) => m.limparCache?.()).catch(() => {});
     set({
       session: null,
       isAuthenticated: false,
       userRole: 'student',
+      activeTab: 'dashboard',
+      toastMessage: null,
+      showTutorial: false,
+      tutorialStep: 0,
       chatMessages: [],
       notas: [],
       logs: [],

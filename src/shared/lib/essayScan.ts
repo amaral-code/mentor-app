@@ -46,12 +46,16 @@ export interface ResultadoCorrecaoFoto extends CorrecaoFoto {
 
 export const temEndpointDeRedacao = (): boolean => PROXY_URL.length > 0;
 
-function paraBase64(buffer: ArrayBuffer): string {
+async function paraBase64(buffer: ArrayBuffer): Promise<string> {
   const bytes = new Uint8Array(buffer);
   const BLOCO = 0x8000;
   let binario = '';
+  // Cede a thread a cada ~40 blocos: foto de caderno comprimida tem centenas
+  // de kB e o loop de btoa e sincrono. Sem o respiro, a tela de envio
+  // congela com o spinner parado bem na hora do upload.
   for (let i = 0; i < bytes.length; i += BLOCO) {
     binario += String.fromCharCode(...bytes.subarray(i, i + BLOCO));
+    if ((i / BLOCO) % 40 === 39) await new Promise((r) => setTimeout(r, 0));
   }
   return btoa(binario);
 }
@@ -131,7 +135,7 @@ async function direto(
     }
   }
 
-  const base64 = paraBase64(await arquivo.arrayBuffer());
+  const base64 = await paraBase64(await arquivo.arrayBuffer());
 
   // Chave no header, nunca na URL (?key= vaza em logs de proxy/CDN).
   const resposta = await fetch(`${GEMINI_URL}/${MODELO_VISAO}:generateContent`, {

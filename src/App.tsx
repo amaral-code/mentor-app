@@ -30,6 +30,7 @@ import { ParticleCanvas } from './features/atmo/ParticleCanvas';
 import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
+import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
 import { mascotStore } from './stores/mascotStore';
@@ -221,8 +222,13 @@ export default function App() {
    * criaria um alvo unico para todas as chaves de todos os alunos.
    */
   useEffect(() => {
+    // Precedencia: chave digitada em Perfil > IA (localStorage) vence o
+    // padrao do ambiente (VITE_GEMINI_API_KEY no .env). Sem nenhuma, a
+    // correcao de redacao pede a chave em vez de falhar muda.
     const savedApiKey = safeGet('mm_api_key');
+    const envApiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
     if (savedApiKey) setApiKey(savedApiKey);
+    else if (envApiKey) setApiKey(envApiKey);
   }, []);
 
   // Streak check (only for students)
@@ -306,6 +312,17 @@ export default function App() {
       <ErrorBoundary nome="troca-senha">
         <TrocarSenha />
         <Toast />
+      </ErrorBoundary>
+    );
+  }
+
+  // Primeiro acesso: wizard exclusivo em tela cheia. Sem sidebar, sem
+  // painel, sem dados — o recorrente (flag true) cai direto na interface
+  // padrão abaixo. A troca de senha vem antes por segurança.
+  if (session && !session.onboardingCompleted) {
+    return (
+      <ErrorBoundary nome="onboarding">
+        <OnboardingFlow />
       </ErrorBoundary>
     );
   }
