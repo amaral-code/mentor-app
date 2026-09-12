@@ -1,5 +1,5 @@
 import { memo, useCallback, useState, useEffect, useRef } from 'react';
-import { BarChart3, Timer } from 'lucide-react';
+import { BarChart3, Hand, ShieldAlert, Timer } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { MeditationOverlay } from '../../shared/ui/MeditationOverlay';
 import { EmptyState } from '../../shared/ui/EmptyState';
@@ -109,6 +109,112 @@ const FocoHistorico = memo(function FocoHistorico({
   );
 });
 
+/* ====================================================================
+   MODO FOCO ESTRITO — modal bloqueador "Foco Interrompido".
+   ====================================================================
+   Estado 100% local e memorizado: o progresso do hold (atualizado a cada
+   50ms) nunca sobe para a pagina — so o onDesbloquear estavel atravessa.
+   ==================================================================== */
+const HOLD_MS = 3000;
+
+const TravaFocoModal = memo(function TravaFocoModal({
+  aberto,
+  restantes,
+  onDesbloquear,
+}: {
+  aberto: boolean;
+  /** Tempo preservado no cronometro (ex.: "17:42"). */
+  restantes: string;
+  onDesbloquear: () => void;
+}) {
+  const [progresso, setProgresso] = useState(0);
+  const inicioRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const desbloquearRef = useRef(onDesbloquear);
+  desbloquearRef.current = onDesbloquear;
+
+  function pararHold() {
+    if (timerRef.current !== null) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    inicioRef.current = null;
+    setProgresso(0);
+  }
+
+  // Reabriu: garante barra zerada. Desmontou no meio do hold: limpa.
+  useEffect(() => {
+    if (aberto) setProgresso(0);
+    return () => {
+      if (timerRef.current !== null) window.clearInterval(timerRef.current);
+    };
+  }, [aberto ]);
+
+  function iniciarHold() {
+    if (inicioRef.current !== null) return;
+    inicioRef.current = Date.now();
+    timerRef.current = window.setInterval(() => {
+      const inicio = inicioRef.current;
+      if (inicio === null) return;
+      const decorrido = Date.now() - inicio;
+      if (decorrido >= HOLD_MS) {
+        pararHold();
+        desbloquearRef.current();
+        return;
+      }
+      setProgresso(Math.round((decorrido / HOLD_MS) * 100));
+    }, 50);
+  }
+
+  if (!aberto) return null;
+
+  const faltam = Math.max(1, Math.ceil(HOLD_MS * (1 - progresso / 100) / 1000));
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Foco interrompido"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6"
+    >
+      <div className="w-full max-w-sm rounded-3xl border border-red-500/25 bg-[#0e1628] p-6 text-center shadow-glass-lg animate-scale-in">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-400">
+          <ShieldAlert size={24} />
+        </span>
+        <h2 className="mt-3 text-lg font-bold text-white">Foco Interrompido</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">
+          Você saiu do app e o cronômetro <strong className="text-white">pausou em {restantes}</strong> —
+          nenhum segundo foi perdido. O Modo Aula exige atenção exclusiva.
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          Respire fundo e segure o botão por 3 segundos para voltar a estudar.
+        </p>
+
+        <button
+          type="button"
+          onPointerDown={iniciarHold}
+          onPointerUp={pararHold}
+          onPointerLeave={pararHold}
+          onPointerCancel={pararHold}
+          onContextMenu={(e) => e.preventDefault()}
+          aria-label={`Segure por 3 segundos para voltar ao foco. Faltam ${faltam} segundos.`}
+          className="relative mt-6 h-14 w-full select-none touch-none overflow-hidden rounded-2xl border border-amber-500/40 bg-white/[0.04] text-sm font-bold text-white active:scale-[0.99] transition-transform"
+        >
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-500/50 to-orange-500/50"
+            style={{ width: `${progresso}%` }}
+          />
+          <span className="relative flex items-center justify-center gap-2">
+            <Hand size={17} className="text-amber-300" />
+            {progresso > 0 ? `Segurando… ${faltam}s` : 'Segure 3s para voltar ao foco'}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+});
+
 export function FocoPage() {
   // Seletores atomicos: o store inteiro aqui faria cada tick do relogio
   // (1/s) + cada toast/XP de OUTRA tela re-renderizar a pagina de foco.
@@ -123,6 +229,12 @@ export function FocoPage() {
   const [historico, setHistorico] = useState<{ tipo: string; minutos: number; data: string }[]>([]);
   const [sessoesHoje, setSessoesHoje] = useState(0);
   const [meditando, setMeditando] = useState(false);
+  // MODO FOCO ESTRITO: trava anti-distracao. Quando o cronometro de foco
+  // esta rodando e o app e minimizado/trocado, o tick para na hora e a
+  // tela bloqueia ate o hold de 3s — o tempo e preservado, nunca zerado.
+  const [travado, setTravado] = useState(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mutedRef = useRef(isMuted);
   mutedRef.current = isMuted;
@@ -218,14 +330,39 @@ export function FocoPage() {
   }
 
   function iniciar() {
+    setTravado(false);
     setState('foco');
     setSegundos(FOCO_MIN * 60);
   }
 
-  /* Tick: intervalo único por ciclo (deps [state]). Antes `segundos` estava
-     nas deps e o setInterval era destruído/recriado a cada tick (drift). */
+  /*
+   * Trava anti-distracao (Page Visibility API).
+   *
+   * Regra: cronometro de FOCO rodando + app oculto (minimizar, trocar de
+   * aba, bloquear a tela) = pausa imediata + modal bloqueador na volta.
+   * Vale so para 'foco': na 'pausa' o descanso e livre, sem vigilancia.
+   * O estado e lido via ref para o listener ser registrado uma unica vez
+   * (sem re-subscrever a cada tick) e a limpeza e no unmount.
+   */
   useEffect(() => {
-    if (state !== 'foco' && state !== 'pausa') return;
+    const aoMudarVisibilidade = () => {
+      if (document.hidden && stateRef.current === 'foco') {
+        setTravado(true);
+      }
+    };
+    document.addEventListener('visibilitychange', aoMudarVisibilidade);
+    return () => document.removeEventListener('visibilitychange', aoMudarVisibilidade);
+  }, []);
+
+  // Estavel: o modal memorizado so re-renderiza no abrir/fechar.
+  const desbloquear = useCallback(() => setTravado(false), []);
+
+  /* Tick: intervalo único por ciclo (deps [state, travado]). Antes
+     `segundos` estava nas deps e o setInterval era destruído/recriado a
+     cada tick (drift). Travado = sem intervalo: o tempo congela onde
+     estava, sem decrementar escondido. */
+  useEffect(() => {
+    if (travado || (state !== 'foco' && state !== 'pausa')) return;
     intervalRef.current = setInterval(() => {
       setSegundos(prev => {
         if (prev <= 1) {
@@ -237,7 +374,7 @@ export function FocoPage() {
       });
     }, 1000);
     return () => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } };
-  }, [state]);
+  }, [state, travado]);
 
   /* Conclusão do ciclo: efeito separado reagindo a `segundos === 0`.
      O crédito acontece uma vez (o setState('concluido') desarma a guarda). */
@@ -293,8 +430,9 @@ export function FocoPage() {
 
   return (
     <>
-    {/* Desfoque suave do conteúdo principal enquanto a micro-pausa está aberta. */}
-    <div className={`space-y-5 animate-fade-up max-w-lg mx-auto transition-all duration-300 ${pausaAberta ? 'pointer-events-none select-none blur-sm' : ''}`}>
+    {/* Desfoque suave do conteúdo principal enquanto a micro-pausa ou a
+        trava estrita estão abertas. */}
+    <div className={`space-y-5 animate-fade-up max-w-lg mx-auto transition-all duration-300 ${(pausaAberta || travado) ? 'pointer-events-none select-none blur-sm' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 flex items-center justify-center">
@@ -350,7 +488,7 @@ export function FocoPage() {
           ) : state !== 'concluido' ? (
             <div className="flex gap-3">
               <button
-                onClick={() => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } salvarMetricasFoco(); setState('concluido'); }}
+                onClick={() => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } salvarMetricasFoco(); setTravado(false); setState('concluido'); }}
                 className="btn-ghost text-sm text-gray-400 hover:text-red-400"
               > Parar
               </button>
@@ -419,6 +557,14 @@ export function FocoPage() {
       open={pausaAberta}
       distractionCount={tracker.distractionCount}
       onResume={tracker.dismissPause}
+    />
+
+    {/* Modo Foco Estrito: saiu do app com o cronometro rodando = tela
+        bloqueada ate o hold de 3s. O tempo foi preservado. */}
+    <TravaFocoModal
+      aberto={travado}
+      restantes={formatTime(segundos)}
+      onDesbloquear={desbloquear}
     />
     </>
   );
