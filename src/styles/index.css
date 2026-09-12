@@ -13,6 +13,19 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /*
+     * Toque mobile sem lag (300ms de espera do double-tap zoom + flash
+     * cinza do Safari). `manipulation` permite pan/scroll e remove a
+     * espera so no tap - e o que faz o botao parecer "morto" no 4G.
+     */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  button, a, input, textarea, select, [role='button'] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Tokens exatos do Design System v2.4 (Midnight Glow). */
@@ -87,6 +100,17 @@
     background: rgba(30, 41, 59, 0.7);
   }
   textarea { resize: vertical; min-height: 80px; }
+
+  /*
+   * iOS da zoom automatico em input com fonte < 16px - a tela "pula" para
+   * o campo e o usuario acha que travou. No mobile a fonte minima e 16px;
+   * no desktop mantem 14px do design system.
+   */
+  @media (max-width: 768px) {
+    input, textarea, select {
+      font-size: 16px;
+    }
+  }
 
   input[type="range"] {
     -webkit-appearance: none;

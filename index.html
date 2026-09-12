@@ -2,7 +2,16 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Viewport travado no mobile: sem maximum-scale/user-scalable=no, o
+      duplo toque da zoom e o Safari impõe o atraso de 300ms no clique
+      (botao "morto"). viewport-fit=cover estende sob o notch/Dynamic
+      Island; as safe-areas ja sao tratadas nas classes safe-area-*.
+      Nota de acessibilidade: o zoom por pinca e compensado pelo controle
+      de tamanho de fonte em Perfil > Acessibilidade (aplicado antes da
+      primeira pintura em main.tsx).
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
     <!--
       Content Security Policy.

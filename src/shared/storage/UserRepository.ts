@@ -1,6 +1,7 @@
 import type { Session as SbSession, Subscription } from '@supabase/supabase-js';
 import { Session, User, UserRole } from '../types';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+import { comTimeout, TIMEOUT_AUTH_MS } from '../lib/comTimeout';
 
 /**
  * Autenticacao - exclusivamente Supabase Auth.
@@ -36,11 +37,15 @@ export class UserRepository {
     const sb = getSupabase();
     if (!sb) return null;
 
-    const { data, error } = await sb
-      .from('perfis')
-      .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha')
-      .eq('id', uid)
-      .maybeSingle();
+    const { data, error } = await comTimeout(
+      sb
+        .from('perfis')
+        .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha')
+        .eq('id', uid)
+        .maybeSingle(),
+      TIMEOUT_AUTH_MS,
+      'Carregar perfil',
+    );
 
     if (error || !data) return null;
 
@@ -55,17 +60,25 @@ export class UserRepository {
     };
   }
 
-  /** Sessao atual a partir do JWT guardado pelo supabase-js. */
+  /**
+   * Sessao atual a partir do JWT guardado pelo supabase-js.
+   * Nunca joga: com a rede travada devolve null (tela de login) em vez de
+   * derrubar o boot com rejection nao tratada.
+   */
   async getSession(): Promise<Session | null> {
     if (!isSupabaseConfigured()) return null;
     const sb = getSupabase();
     if (!sb) return null;
 
-    const { data } = await sb.auth.getSession();
-    const user = data.session?.user;
-    if (!user) return null;
+    try {
+      const { data } = await comTimeout(sb.auth.getSession(), TIMEOUT_AUTH_MS, 'Recuperar sessão');
+      const user = data.session?.user;
+      if (!user) return null;
 
-    return this.carregarPerfil(user.id, user.email ?? '');
+      return await this.carregarPerfil(user.id, user.email ?? '');
+    } catch {
+      return null;
+    }
   }
 
   async login(email: string, senha: string, papelEscolhido?: UserRole): Promise<AuthResult> {
@@ -73,7 +86,11 @@ export class UserRepository {
     const sb = getSupabase();
     if (!sb) return { session: null, error: SEM_SUPABASE };
 
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+    const { data, error } = await comTimeout(
+      sb.auth.signInWithPassword({ email, password: senha }),
+      TIMEOUT_AUTH_MS,
+      'Entrar',
+    );
 
     if (error) {
       // Mensagem generica de proposito: distinguir "e-mail nao existe" de
@@ -88,7 +105,13 @@ export class UserRepository {
     }
     if (!data.user) return { session: null, error: 'Falha ao autenticar.' };
 
-    const session = await this.carregarPerfil(data.user.id, data.user.email ?? email);
+    let session: Session | null;
+    try {
+      session = await this.carregarPerfil(data.user.id, data.user.email ?? email);
+    } catch (err) {
+      // Timeout de rede: mensagem acionavel, botao destrava (AuthPage sai do loading).
+      return { session: null, error: err instanceof Error ? err.message : 'Erro de conexão' };
+    }
     if (!session) {
       return { session: null, error: 'Perfil nao encontrado. Fale com o suporte.' };
     }
@@ -113,11 +136,15 @@ export class UserRepository {
     const sb = getSupabase();
     if (!sb) return { session: null, error: SEM_SUPABASE };
 
-    const { data, error } = await sb.auth.signUp({
-      email,
-      password: senha,
-      options: { data: { nome: nome.trim() } },
-    });
+    const { data, error } = await comTimeout(
+      sb.auth.signUp({
+        email,
+        password: senha,
+        options: { data: { nome: nome.trim() } },
+      }),
+      TIMEOUT_AUTH_MS,
+      'Criar conta',
+    );
 
     if (error) {
       const jaExiste = /already|registered|exists/i.test(error.message);
@@ -132,8 +159,12 @@ export class UserRepository {
       return { session: null, precisaConfirmarEmail: true };
     }
 
-    const session = await this.carregarPerfil(data.user!.id, email);
-    return { session, error: session ? undefined : 'Perfil nao criado. Tente entrar novamente.' };
+    try {
+      const session = await this.carregarPerfil(data.user!.id, email);
+      return { session, error: session ? undefined : 'Perfil nao criado. Tente entrar novamente.' };
+    } catch (err) {
+      return { session: null, error: err instanceof Error ? err.message : 'Erro de conexão' };
+    }
   }
 
   async logout(): Promise<void> {
@@ -171,7 +202,12 @@ export class UserRepository {
         cb(null);
         return;
       }
-      cb(await this.carregarPerfil(sbSession.user.id, sbSession.user.email ?? ''));
+      try {
+        cb(await this.carregarPerfil(sbSession.user.id, sbSession.user.email ?? ''));
+      } catch {
+        // Rede oscilou no refresh do token: ignora o evento em vez de
+        // chamar cb(null) e deslogar quem estava estudando.
+      }
     });
 
     const sub: Subscription | undefined = data?.subscription;

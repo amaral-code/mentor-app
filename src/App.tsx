@@ -4,6 +4,7 @@ import { useAppStore, persistir } from './stores/appStore';
 import { userRepository } from './shared/storage/UserRepository';
 import { supabaseRepository } from './shared/storage/SupabaseRepository';
 import { isSupabaseConfigured } from './shared/lib/supabase';
+import { comTimeout, TIMEOUT_BOOT_MS } from './shared/lib/comTimeout';
 import { safeGet } from './shared/lib/safeStorage';
 import { AuthPage } from './features/auth/AuthPage';
 import { AppShell } from './app/AppShell';
@@ -177,7 +178,8 @@ export default function App() {
       }
     }
 
-    // Sessao ja existente (F5 na pagina)
+    // Sessao ja existente (F5 na pagina). getSession nunca joga (timeout
+    // interno vira null = tela de login), entao este then e seguro.
     userRepository.getSession().then((s) => {
       if (s) {
         setSession(s);
@@ -186,9 +188,13 @@ export default function App() {
          * historico vazios: exatamente a aparencia de "perdi tudo". O
          * aviso separa "o servidor nao respondeu" de "voce nao tem nada",
          * que sao conclusoes muito diferentes para quem estuda aqui.
+         *
+         * Teto de 20s: com a rede pendurada o Promise.allSettled nunca
+         * resolve; o timeout rejeita, o toast avisa e a tela segue com o
+         * que ja carregou - nunca branca/congelada.
          */
-        persistir(carregarDados(), {
-          mensagem: 'Nao foi possivel carregar seus dados. Recarregue a pagina.',
+        persistir(comTimeout(carregarDados(), TIMEOUT_BOOT_MS, 'Carregar dados'), {
+          mensagem: 'Conexão lenta: mostrando o que já carregou. Recarregue para completar.',
         });
       }
     });
@@ -198,8 +204,8 @@ export default function App() {
       setSession(s);
       if (s) {
         hidratarCache({ perfil: { uid: s.uid, nome: s.nome, email: s.email, escolaId: s.escolaId ?? undefined, turmaId: s.turmaId ?? undefined } });
-        persistir(carregarDados(), {
-          mensagem: 'Nao foi possivel carregar seus dados. Recarregue a pagina.',
+        persistir(comTimeout(carregarDados(), TIMEOUT_BOOT_MS, 'Carregar dados'), {
+          mensagem: 'Conexão lenta: mostrando o que já carregou. Recarregue para completar.',
         });
       }
     });
