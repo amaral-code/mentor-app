@@ -1,5 +1,7 @@
 # 🌙 Midnight Mentor - Mentor ENEM
 
+> Projeto criado para o **HackaTown do HackTudo** — idealizado e construído para o hackathon.
+
 Plataforma inteligente de estudos para o ENEM com IA, gamificação, análise emocional,
 ligas colaborativas e dashboards multi-perfil (aluno, educacional, pais, psicólogo).
 
