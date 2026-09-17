@@ -493,10 +493,20 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
     margin: 0;
   }
 
-  /* === Focus visible === */
+  /*
+   * === Focus visible ===
+   *
+   * A opacidade era 0.3 - um anel de 2px a 30% praticamente some sobre o
+   * fundo midnight, e quem navega por teclado perdia a referencia de
+   * onde estava. A WCAG 2.4.11 pede indicador de foco percebivel; agora
+   * o anel e solido e ganha um halo escuro por fora, para se destacar
+   * tambem sobre os cartoes claros de vidro.
+   */
   *:focus-visible {
-    outline: 2px solid rgba(245, 158, 11, 0.3);
+    outline: 2px solid rgb(251, 191, 36);
     outline-offset: 2px;
+    border-radius: 0.375rem;
+    box-shadow: 0 0 0 4px rgba(10, 15, 28, 0.85);
   }
 
   /* === Smooth image loading === */

@@ -31,17 +31,30 @@ export const EASE_SAIDA = [0.16, 1, 0.3, 1] as const;
  * ninguém quer esperar para sair de onde já decidiu sair, mas a chegada
  * precisa de tempo para o olho acompanhar.
  */
+/*
+ * Entrada e saida de PAGINA (troca de aba).
+ *
+ * Os tempos somam, porque o AppShell usa `mode="wait"`: a pagina que sai
+ * termina antes de a nova comecar. Era 0.15 + 0.3 = 0.45s por troca, e
+ * navegacao com quase meio segundo de espera passa sensacao de app
+ * travado - ainda mais para quem percorre varias abas seguidas.
+ *
+ * Agora sao 0.1 + 0.2 = 0.3s: continua suave o bastante para orientar o
+ * olho sobre o que mudou, sem virar pedagio. O deslocamento tambem
+ * encolheu (12 -> 8px), porque movimento vertical grande em pagina
+ * inteira chama mais atencao que o proprio conteudo.
+ */
 export const pageEnter: Variants = {
-  inicial: { opacity: 0, y: 12 },
+  inicial: { opacity: 0, y: 8 },
   animar: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: EASE_SAIDA },
+    transition: { duration: 0.2, ease: EASE_SAIDA },
   },
   sair: {
     opacity: 0,
-    y: -8,
-    transition: { duration: 0.15, ease: 'easeIn' },
+    y: -6,
+    transition: { duration: 0.1, ease: 'easeIn' },
   },
 };
 
