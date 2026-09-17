@@ -3,15 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <!--
-      Viewport travado no mobile: sem maximum-scale/user-scalable=no, o
-      duplo toque da zoom e o Safari impõe o atraso de 300ms no clique
-      (botao "morto"). viewport-fit=cover estende sob o notch/Dynamic
-      Island; as safe-areas ja sao tratadas nas classes safe-area-*.
-      Nota de acessibilidade: o zoom por pinca e compensado pelo controle
-      de tamanho de fonte em Perfil > Acessibilidade (aplicado antes da
-      primeira pintura em main.tsx).
+      O zoom por pinca fica LIBERADO.
+
+      Antes havia `maximum-scale=1.0, user-scalable=no` aqui, para evitar o
+      atraso de 300ms no clique ("botao morto"). Essa premissa envelheceu:
+      os navegadores moveis removeram esse atraso quando a pagina declara
+      `width=device-width` - Chrome desde 2013, Safari desde o iOS 9.3.
+      Ou seja, o bloqueio nao comprava mais nada, e custava caro.
+
+      Custava porque travar o zoom e falha de acessibilidade (WCAG 1.4.4):
+      quem enxerga pouco perde o unico recurso universal de ampliacao. O
+      controle de fonte em Perfil > Acessibilidade nao substitui: ele
+      aumenta TEXTO, e nada resolve para ampliar um grafico do painel ou a
+      foto da redacao manuscrita - justamente o conteudo que mais pede
+      aproximacao neste app.
+
+      viewport-fit=cover estende a area util sob o notch/Dynamic Island. Em
+      troca, o respiro precisa vir das safe-areas: classes safe-area-*, e
+      `env(safe-area-inset-*)` no respiro do <main>, no Modal e na altura do
+      Mentor. Sem este cover, aqueles env() valeriam zero.
     -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!--
       Content Security Policy.

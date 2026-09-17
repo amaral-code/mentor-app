@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase';
 import { isDeepSeekProvider } from './aiProvider';
+import { aiProxyToken, aiVisionModel, temBackendIA, urlBackendIA } from './runtimeConfig';
 import {
   ESQUEMA_CORRECAO,
   COMPETENCIAS,
@@ -30,9 +31,6 @@ export type { CorrecaoFoto, ChaveCompetencia };
  * a funcionalidade so apareceria depois de publicar o proxy.
  */
 
-const PROXY_URL = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
-const PROXY_TOKEN = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
-const MODELO_VISAO = (import.meta.env.VITE_AI_VISION_MODEL as string) || 'gemini-1.5-flash';
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const BUCKET = 'essay_scans';
 
@@ -44,7 +42,7 @@ export interface ResultadoCorrecaoFoto extends CorrecaoFoto {
   ilegivel?: boolean;
 }
 
-export const temEndpointDeRedacao = (): boolean => PROXY_URL.length > 0;
+export const temEndpointDeRedacao = (): boolean => temBackendIA();
 
 async function paraBase64(buffer: ArrayBuffer): Promise<string> {
   const bytes = new Uint8Array(buffer);
@@ -66,7 +64,8 @@ async function pelaApi(arquivo: File, tema: string, signal?: AbortSignal): Promi
   const { data: sessao } = (await sb?.auth.getSession()) ?? { data: { session: null } };
 
   const headers: Record<string, string> = {};
-  if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+  const token = aiProxyToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   // O worker exige o JWT: a foto e material escolar de um menor, e o
   // caminho no bucket e derivado do dono da sessao.
   if (sessao?.session?.access_token) headers['X-Supabase-Auth'] = sessao.session.access_token;
@@ -75,7 +74,7 @@ async function pelaApi(arquivo: File, tema: string, signal?: AbortSignal): Promi
   form.append('imagem', arquivo);
   if (tema) form.append('tema', tema);
 
-  const resposta = await fetch(`${PROXY_URL}/api/essays/upload-and-grade`, {
+  const resposta = await fetch(urlBackendIA('/api/essays/upload-and-grade'), {
     method: 'POST',
     headers,
     body: form,
@@ -106,8 +105,8 @@ async function direto(
   // worker, o caminho suportado continua sendo o Gemini vision.
   if (isDeepSeekProvider()) {
     throw new Error(
-      'Correção por foto indisponível no modo DeepSeek sem worker (modelo de texto). ' +
-        'Publique o worker e defina VITE_AI_BASE_URL, ou troque VITE_AI_PROVIDER para gemini com VITE_AI_VISION_MODEL.',
+      'Correção por foto indisponível no modo DeepSeek sem back-end (o modelo configurado é de texto). ' +
+        'Defina GEMINI_API_KEY nas Environment Variables do projeto — o back-end usa o Gemini Vision para a foto, mesmo com o chat no DeepSeek.',
     );
   }
 
@@ -138,7 +137,7 @@ async function direto(
   const base64 = await paraBase64(await arquivo.arrayBuffer());
 
   // Chave no header, nunca na URL (?key= vaza em logs de proxy/CDN).
-  const resposta = await fetch(`${GEMINI_URL}/${MODELO_VISAO}:generateContent`, {
+  const resposta = await fetch(`${GEMINI_URL}/${aiVisionModel()}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     signal,

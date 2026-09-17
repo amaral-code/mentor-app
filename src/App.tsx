@@ -3,7 +3,6 @@ import { LazyMotion } from 'motion/react';
 import { useAppStore, persistir } from './stores/appStore';
 import { userRepository } from './shared/storage/UserRepository';
 import { supabaseRepository } from './shared/storage/SupabaseRepository';
-import { isSupabaseConfigured } from './shared/lib/supabase';
 import { comTimeout, TIMEOUT_BOOT_MS } from './shared/lib/comTimeout';
 import { safeGet } from './shared/lib/safeStorage';
 import { AuthPage } from './features/auth/AuthPage';
@@ -34,8 +33,7 @@ import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
 import { mascotStore } from './stores/mascotStore';
-import { GamificationState, ChatPersona } from './shared/types';
-import { getToday } from './shared/lib/utils';
+import { getToday, proximoStreak } from './shared/lib/utils';
 
 /*
  * Carregamento tardio das features de animação.
@@ -73,7 +71,6 @@ export default function App() {
   // precisam dela, e ela so muda em ganho de XP — nao a cada mensagem.
   const gamification = useAppStore((s) => s.gamification);
   const session = useAppStore((s) => s.session);
-  const logs = useAppStore((s) => s.logs);
   // Assinatura minima do store de bem-estar: so o que dispara o efeito
   // do relatorio semanal, para nao re-renderizar o App a cada telemetria.
   const relatoriosCarregados = useBemEstarStore((s) => s.carregado);
@@ -223,7 +220,10 @@ export default function App() {
    */
   useEffect(() => {
     // Precedencia: chave digitada em Perfil > IA (localStorage) vence o
-    // padrao do ambiente (VITE_GEMINI_API_KEY no .env). Sem nenhuma, a
+    // padrao do build (VITE_GEMINI_API_KEY). Este e o unico VITE_* de
+    // chave que sobrou: e a chave PESSOAL do usuario para o modo Gemini
+    // direto, sem back-end. A chave do servidor (GEMINI_API_KEY, sem
+    // prefixo) vive so dentro de /api e nunca chega aqui. Sem nenhuma, a
     // correcao de redacao pede a chave em vez de falhar muda.
     const savedApiKey = safeGet('mm_api_key');
     const envApiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
@@ -231,24 +231,31 @@ export default function App() {
     else if (envApiKey) setApiKey(envApiKey);
   }, []);
 
-  // Streak check (only for students)
+  /*
+   * Streak diário (só aluno).
+   *
+   * As dependências precisam incluir os campos LIDOS. Sem elas o efeito
+   * rodava uma única vez, no instante em que `isAuthenticated` vira true —
+   * ou seja, ANTES de `carregarDados` trazer a gamificação do servidor.
+   * Como o padrão de `lastAccessDate` já é hoje, a comparação dava igual,
+   * o efeito não fazia nada e nunca mais rodava: o streak jamais avançava
+   * de um dia para o outro, por mais que o aluno entrasse todo dia.
+   *
+   * Com as deps, o efeito roda de novo quando o valor real chega e faz a
+   * conta certa. Não há laço: a gravação deixa `lastAccessDate` igual a
+   * hoje, e a reexecução seguinte cai no `if` e para.
+   */
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'student') return;
     const today = getToday();
     const lastAccess = gamification.lastAccessDate;
-    let streak = gamification.streak;
-    if (lastAccess !== today) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-      if (lastAccess === yesterdayStr) {
-        streak = gamification.streak + 1;
-      } else {
-        streak = 1;
-      }
-      updateGamification({ lastAccessDate: today, streak });
-    }
-  }, [isAuthenticated, userRole]);
+    if (lastAccess === today) return;
+
+    updateGamification({
+      lastAccessDate: today,
+      streak: proximoStreak(lastAccess, gamification.streak),
+    });
+  }, [isAuthenticated, userRole, gamification.lastAccessDate, gamification.streak, updateGamification]);
 
   /*
    * Relatorio de descompressao: abre sozinho na sexta.

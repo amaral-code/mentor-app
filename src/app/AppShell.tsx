@@ -12,7 +12,8 @@ import { DoomscrollGuard } from '../shared/ui/DoomscrollGuard';
 import { PageSkeleton } from '../shared/ui/Skeleton';
 import { calcLevel } from '../shared/lib/utils';
 import { safeGet, safeSet } from '../shared/lib/safeStorage';
-import { AnimatedNumber, BarraProgresso } from '../shared/ui/AnimatedNumber';
+import { travarRolagem } from '../shared/lib/scrollLock';
+import { AnimatedNumber } from '../shared/ui/AnimatedNumber';
 import { pageEnter } from '../shared/lib/motionPresets';
 
 /*
@@ -289,15 +290,17 @@ export function AppShell() {
   }
 
   // Esc fecha o menu, e o scroll do fundo trava enquanto ele esta aberto.
+  // A trava e CONTADA (scrollLock): um modal aberto por cima do drawer
+  // tambem trava, e antes o primeiro a fechar destravava a pagina para os
+  // dois.
   useEffect(() => {
     if (!drawerAberto) return;
     const aoTeclar = (e: KeyboardEvent) => { if (e.key === 'Escape') setDrawerAberto(false); };
     document.addEventListener('keydown', aoTeclar);
-    const overflowAnterior = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const soltar = travarRolagem();
     return () => {
       document.removeEventListener('keydown', aoTeclar);
-      document.body.style.overflow = overflowAnterior;
+      soltar();
     };
   }, [drawerAberto]);
 
@@ -478,7 +481,25 @@ export function AppShell() {
           menor que o conteudo, entao qualquer bloco largo empurrava a
           pagina inteira e o app passava a rolar de lado, mesmo com
           overflow-x-auto no filho. */}
-      <main className={`flex-1 min-w-0 relative z-10 ${sidebarColapsada ? 'md:ml-[72px]' : 'md:ml-60 lg:ml-64'} ${activeTab === 'chat' ? 'px-2 pb-2 pt-20 md:p-3' : 'p-3 md:p-6 lg:p-8 pt-20 md:pt-6 pb-8'}`}>
+      {/*
+          O respiro de topo no mobile acompanha a safe-area.
+
+          O header acima é `fixed` + `safe-area-top`, ou seja, num aparelho
+          com notch ele fica ~47px MAIS ALTO. Como o respiro aqui era um
+          `pt-20` fixo, nesses aparelhos o começo de cada página passava a
+          correr por baixo do header — no chat, era o primeiro balão da
+          conversa que sumia. Somando o inset, a reserva cresce junto.
+
+          O rodapé segue a mesma ideia por causa da barra de gestos do
+          iPhone, que cobria a última linha de conteúdo.
+      */}
+      <main
+        className={`flex-1 min-w-0 relative z-10 ${sidebarColapsada ? 'md:ml-[72px]' : 'md:ml-60 lg:ml-64'} ${
+          activeTab === 'chat'
+            ? 'px-2 pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] md:p-3'
+            : 'p-3 md:p-6 lg:p-8 pt-[calc(5rem+env(safe-area-inset-top,0px))] md:pt-6 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] md:pb-8'
+        }`}
+      >
         <div id="conteudo" tabIndex={-1} className={`${activeTab === 'chat' ? 'max-w-none' : 'max-w-5xl'} mx-auto min-h-[calc(100dvh-3rem)]`}>
           {/* mode="wait": a pagina que sai termina antes de a nova entrar.
               Com as duas ao mesmo tempo o conteudo se sobrepoe e a leitura

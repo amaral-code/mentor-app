@@ -35,8 +35,6 @@ export type ModoChatId = ModoChat['id'];
  */
 
 import {
-  AI_MODEL,
-  AI_PROVIDER,
   DEEPSEEK_DEV_PROXY_PATH,
   DEEPSEEK_TIMEOUT_MS,
   GEMINI_CHAT_CONFIG,
@@ -46,13 +44,13 @@ import {
   garantirTextoResposta,
   geminiGenConfigToDeepSeek,
   isDeepSeekProvider,
+  modeloAtual,
+  provedorAtual,
   sinalComTimeout,
   toChatCompletionsMessages,
 } from './aiProvider';
+import { aiProxyToken, temBackendIA, urlBackendIA } from './runtimeConfig';
 
-const PROXY_URL = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
-const PROXY_TOKEN = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
-const MODELO_DIRETO = ((import.meta.env.VITE_AI_MODEL as string) || '').trim() || AI_MODEL;
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 export interface MensagemChat {
@@ -87,7 +85,7 @@ export interface RespostaChat {
   viaWorker: boolean;
 }
 
-export const temEndpointDeChat = (): boolean => PROXY_URL.length > 0;
+export const temEndpointDeChat = (): boolean => temBackendIA();
 
 function textoDaResposta(dados: any): string {
   const partes = dados?.candidates?.[0]?.content?.parts;
@@ -98,17 +96,18 @@ function textoDaResposta(dados: any): string {
 /** Caminho 1: o worker, com busca e chave do servidor. */
 async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+  const token = aiProxyToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
   // Timeout de 30s como nos demais caminhos: sem isso, rede que engole
   // pacote deixava "Sagui está digitando" para sempre.
-  const resposta = await fetch(`${PROXY_URL}/api/chat/completions`, {
+  const resposta = await fetch(urlBackendIA('/api/chat/completions'), {
     method: 'POST',
     headers,
     signal: sinalComTimeout(ctx.signal, DEEPSEEK_TIMEOUT_MS),
     body: JSON.stringify({
-      provider: AI_PROVIDER,
-      model: MODELO_DIRETO,
+      provider: provedorAtual(),
+      model: modeloAtual(),
       modo: ctx.modo,
       mensagens: ctx.mensagens,
       horaLocal: ctx.horaLocal ?? new Date().getHours(),
@@ -170,10 +169,10 @@ async function direto(ctx: ContextoChat): Promise<RespostaChat> {
       // Mesmos valores do DeepSeek barato (só muda o nome do campo).
       generationConfig: { ...GEMINI_CHAT_CONFIG },
     };
-    if (comBusca) payload.tools = ferramentasDeBusca(MODELO_DIRETO);
+    if (comBusca) payload.tools = ferramentasDeBusca(modeloAtual());
 
     // Chave no header, nunca na URL (?key= vaza em logs de proxy/CDN).
-    return fetch(`${GEMINI_URL}/${MODELO_DIRETO}:generateContent`, {
+    return fetch(`${GEMINI_URL}/${modeloAtual()}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': ctx.apiKey },
       signal: sinalComTimeout(ctx.signal, DEEPSEEK_TIMEOUT_MS),
@@ -245,12 +244,12 @@ async function viaProxyLocalDeepSeek(ctx: ContextoChat, systemText: string): Pro
       // SEM Authorization de proposito: a chave e injetada pelo Vite no
       // servidor (vite.config.ts). Nada de segredo no navegador.
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODELO_DIRETO, messages, ...gen }),
+      body: JSON.stringify({ model: modeloAtual(), messages, ...gen }),
     },
     {
       sinalUsuario: ctx.signal,
       rotuloDestino: 'proxy local (/deepseek-api)',
-      contexto: { model: MODELO_DIRETO, mensagens: messages.length, via: 'chatGrounding-devProxy' },
+      contexto: { model: modeloAtual(), mensagens: messages.length, via: 'chatGrounding-devProxy' },
     },
   );
 

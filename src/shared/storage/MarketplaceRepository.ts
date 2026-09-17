@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
+import { aiProxyToken, temBackendIA, urlBackendIA } from '../lib/runtimeConfig';
 import type {
   Agendamento,
   AlertaSaudeMental,
@@ -25,9 +26,7 @@ import type {
  * acompanhar o estado.
  */
 
-/** URL do worker que fala com o provedor de pagamento e cria a sala. */
-const BASE_WORKER = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
-const TOKEN_WORKER = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
+
 
 export interface RespostaCheckout {
   /** Para onde mandar o responsavel (Mercado Pago, Stripe...). */
@@ -181,20 +180,23 @@ export class MarketplaceRepository {
    * onde mandar o usuario.
    */
   async iniciarPagamento(agendamento: Agendamento, emailPagador: string): Promise<RespostaCheckout> {
-    if (!BASE_WORKER) {
-      throw new Error('Pagamento indisponivel: configure VITE_AI_BASE_URL com a URL do worker.');
+    if (!temBackendIA()) {
+      throw new Error(
+        'Pagamento indisponível: o back-end não respondeu. Defina MP_ACCESS_TOKEN nas Environment Variables do projeto.',
+      );
     }
 
     const sb = getSupabase();
     const { data: sessao } = (await sb?.auth.getSession()) ?? { data: { session: null } };
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (TOKEN_WORKER) headers['Authorization'] = `Bearer ${TOKEN_WORKER}`;
+    const token = aiProxyToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     // O worker confere este JWT antes de criar a cobranca: sem ele,
     // qualquer um geraria checkout para o agendamento de outra pessoa.
     if (sessao?.session?.access_token) headers['X-Supabase-Auth'] = sessao.session.access_token;
 
-    const resposta = await fetch(`${BASE_WORKER}/pagamento`, {
+    const resposta = await fetch(urlBackendIA('/pagamento'), {
       method: 'POST',
       headers,
       body: JSON.stringify({

@@ -5,9 +5,8 @@ import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { hasProxy } from '../../shared/lib/aiService';
 import { EducatorInsights } from './EducatorInsights';
+import { n8nWebhookUrl } from '../../shared/lib/runtimeConfig';
 import Papa from 'papaparse';
-
-const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
 
 interface CSVRow {
   'Nome do Aluno': string;
@@ -456,8 +455,8 @@ export function EducatorPage() {
         remetente: session?.nome || 'Educador',
       };
 
-      if (WEBHOOK_URL) {
-        const res = await fetch(WEBHOOK_URL, {
+      if (n8nWebhookUrl()) {
+        const res = await fetch(n8nWebhookUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -980,10 +979,10 @@ export function EducatorPage() {
           </div>
         )}
 
-        {!WEBHOOK_URL && (
+        {!n8nWebhookUrl() && (
           <div className="rounded-xl bg-amber-500/5 border border-amber-500/10 p-3 text-xs text-amber-400 flex items-center gap-2">
             <TriangleAlert size={14} className="shrink-0" />
-            <span>Webhook não configurado. Defina <code className="bg-black/30 px-1 rounded">VITE_N8N_WEBHOOK_URL</code> no .env para enviar os dados.</span>
+            <span>Webhook não configurado. Defina <code className="bg-black/30 px-1 rounded">N8N_WEBHOOK_URL</code> nas Environment Variables do projeto para enviar os dados.</span>
           </div>
         )}
         </>

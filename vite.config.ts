@@ -1,6 +1,8 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+// @ts-expect-error - modulo JS puro, compartilhado com a Vercel e o worker
+import { apiDevPlugin } from './server/devMiddleware.js'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -13,13 +15,20 @@ export default defineConfig(({ mode }) => {
    * chave jamais vaza para o front, mesmo com o proxy ativo.
    */
   const env = loadEnv(mode, process.cwd(), '')
+  /*
+   * O middleware de dev recebe .env E as variaveis reais do shell, na
+   * mesma forma que `process.env` tem na Vercel. Assim `npm run dev` com
+   * as variaveis exportadas no terminal se comporta como producao, sem
+   * exigir um arquivo .env.
+   */
+  const envServidor = { ...process.env, ...env }
   const deepseekKey = (env.DEEPSEEK_API_KEY || '').trim()
   /*
    * Base do worker de IA (ex.: https://midnight-mentor-ia.workers.dev).
    * Entra no bypass do SW como regex escapada - sem isso, o host
    * publicado cairia no precache generico e a demo mostraria IA velha.
    */
-  const aiBase = (env.VITE_AI_BASE_URL || '').trim().replace(/\/+$/, '')
+  const aiBase = (env.AI_BASE_URL || env.VITE_AI_BASE_URL || '').trim().replace(/\/+$/, '')
   const aiBasePattern = aiBase
     ? new RegExp(`^${aiBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/.*`, 'i')
     : null
@@ -27,6 +36,12 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      /*
+       * `/api/*` servido em dev pelo MESMO server/worker.js que a Vercel
+       * executa em producao. Sem isto, OCR, redacao por foto, TTS e
+       * importacao de turmas so podiam ser testados apos o deploy.
+       */
+      apiDevPlugin(envServidor),
       /*
        * PWA (prompt de instalacao no Chrome) com REGRA DE OURO do pitch:
        *
@@ -50,6 +65,9 @@ export default defineConfig(({ mode }) => {
           // quebraria imagens da UI. Continua so App Shell, sem rede.
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           navigateFallback: 'index.html',
+          /* `/api/*` e back-end, nao rota de SPA: sem esta exclusao o
+             fallback de navegacao devolveria index.html para elas. */
+          navigateFallbackDenylist: [/^\/api\//],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
@@ -73,6 +91,18 @@ export default defineConfig(({ mode }) => {
             {
               // Proxy local do Vite dev (same-origin).
               urlPattern: /\/deepseek-api\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
+              /*
+               * Back-end do app na mesma origem (Vercel Functions).
+               * PRECISA ser NetworkOnly: `navigateFallback: 'index.html'`
+               * faria o service worker responder `/api/config` com o HTML
+               * do App Shell, e o app subiria com a configuracao do build
+               * em vez da do servidor. Resposta de IA tambem nunca pode
+               * vir de cache.
+               */
+              urlPattern: /\/api\/.*/i,
               handler: 'NetworkOnly',
             },
             // Worker de IA publicado (so existe se VITE_AI_BASE_URL setado).
