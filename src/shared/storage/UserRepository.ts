@@ -2,6 +2,7 @@ import type { Session as SbSession, Subscription } from '@supabase/supabase-js';
 import { Session, User, UserRole } from '../types';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 import { comTimeout, TIMEOUT_AUTH_MS } from '../lib/comTimeout';
+import { onboardingConcluidoLocal } from '../lib/onboardingLocal';
 
 /**
  * Autenticacao - exclusivamente Supabase Auth.
@@ -65,7 +66,10 @@ export class UserRepository {
         escolaId: data.escola_id,
         turmaId: data.turma_id,
         deveTrocarSenha: !!data.deve_trocar_senha,
-        onboardingCompleted: !!data.onboarding_completed,
+        /* A marca local vale como "ja fez": sem ela, um update barrado
+           (RLS) ou uma coluna ausente devolvia o aluno ao wizard a cada
+           refresh de token. */
+        onboardingCompleted: !!data.onboarding_completed || onboardingConcluidoLocal(uid),
         metasEstudo: Array.isArray(data.metas_estudo) ? data.metas_estudo : [],
         tempoDiarioEstudo: data.tempo_diario_estudo ?? null,
         turnoEstudo: data.turno_estudo ?? null,
@@ -91,7 +95,14 @@ export class UserRepository {
       escolaId: d.escola_id,
       turmaId: d.turma_id,
       deveTrocarSenha: !!d.deve_trocar_senha,
-      onboardingCompleted: false,
+      /*
+       * Caminho legado: o banco AINDA NAO TEM as colunas da migration
+       * 021, entao o select completo acima falhou. Antes isto era um
+       * `false` fixo, e o resultado era um laco sem saida - o wizard
+       * aparecia, o aluno respondia, o banco nao tinha onde guardar, e
+       * na volta para a aba tudo se repetia. A marca local quebra o laco.
+       */
+      onboardingCompleted: onboardingConcluidoLocal(uid),
       metasEstudo: [],
       tempoDiarioEstudo: null,
       turnoEstudo: null,

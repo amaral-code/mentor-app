@@ -4,6 +4,7 @@ import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { safeSet } from '../../shared/lib/safeStorage';
+import { marcarOnboardingLocal } from '../../shared/lib/onboardingLocal';
 
 /**
  * ONBOARDING INTELIGENTE — wizard de primeiro acesso (tela cheia).
@@ -66,6 +67,10 @@ export function OnboardingFlow() {
       // segue local — ninguém fica preso no wizard por causa de infra.
       const ok = await userRepository.concluirOnboarding({ metas, tempoDiario: tempo, turno });
       concluirLocal({ metas, tempoDiario: tempo, turno });
+      /* Marca DURAVEL, nao so em memoria: a volta para a aba recarrega o
+         perfil do banco e sobrescreve a memoria. Sem isto, banco que nao
+         consegue guardar a flag = wizard a cada troca de aba. */
+      marcarOnboardingLocal(useAppStore.getState().session?.uid ?? '');
       // O tour guiado antigo cobriria a mesma coisa de novo: marca como
       // visto para o recém-chegado cair direto no app configurado.
       supabaseRepository.savePreferencias({ tutorial_completo: true }).catch(() => {});
@@ -76,6 +81,7 @@ export function OnboardingFlow() {
     } catch (e) {
       // Falha total: mesmo assim libera (store local), avisando.
       concluirLocal({ metas, tempoDiario: tempo, turno });
+      marcarOnboardingLocal(useAppStore.getState().session?.uid ?? '');
       setErro(e instanceof Error ? e.message : 'Erro de conexão');
     } finally {
       setSalvando(false);

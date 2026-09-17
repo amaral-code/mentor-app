@@ -1512,18 +1512,6 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   }
 }
 
-/* Skeleton: bloco glass pulsando. Comunica "carregando" sem spinner. */
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(255, 255, 255, 0.07) 50%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2.5s linear infinite;
-  border-radius: 0.75rem;
-}
 
 /* Tooltip do rail em tablet: so aparece no hover do icone. */
 .rail-tip {
@@ -1593,8 +1581,16 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   to { transform: scaleX(1); }
 }
 
-/* Shimmer do skeleton: gradiente percorrendo o bloco.
-   background-position nao dispara layout, so paint. */
+/*
+ * Skeleton de carregamento: gradiente percorrendo o bloco.
+ *
+ * Havia DUAS regras `.skeleton` no arquivo, com durações diferentes
+ * (2.5s e 1.2s). A segunda vencia por ordem de cascata, então a
+ * primeira era código morto - e o `border-radius` que só ela declarava
+ * se perdia junto. Agora é uma só, com o arredondamento preservado.
+ *
+ * Anima `background-position`, que não dispara layout, só paint.
+ */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -1604,6 +1600,7 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   );
   background-size: 200% 100%;
   animation: shimmer 1.2s linear infinite;
+  border-radius: 0.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1749,4 +1746,87 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   .xp-shimmer-bar {
     animation: none !important;
   }
+}
+
+/* =========================================================
+   KEYFRAMES USADOS POR CLASSES DE CSS PURO
+
+   Não mova isto para o tailwind.config.js.
+
+   Era exatamente aí que estava o bug: as nove animações abaixo tinham
+   os keyframes declarados no `tailwind.config.js`, mas eram
+   referenciadas por classes de CSS puro (`.skeleton`, `.shimmer-sweep`,
+   `.twinkle-star-fast`...). O Tailwind só emite um keyframe quando a
+   classe `animate-<nome>` correspondente aparece na marcação — e
+   nenhuma aparecia. Resultado: os keyframes eram removidos do CSS
+   final, e cada `animation: <nome>` apontava para o vazio.
+
+   Animação apontando para keyframe inexistente não é erro em CSS: o
+   navegador ignora em silêncio. Então nada quebrava, nada avisava, e a
+   interface simplesmente ficava parada. O sintoma relatado foi "as
+   animações de espera estão estáticas" — o shimmer do skeleton era uma
+   das nove.
+
+   Declarados aqui, os keyframes viajam sempre, porque este arquivo não
+   passa pela remoção por uso. Há um teste (`animacoesCss.test.ts`) que
+   trava a regra: toda animação usada por CSS puro precisa do seu
+   keyframe NESTE arquivo.
+   ========================================================= */
+
+/* Brilho percorrendo o skeleton de carregamento. */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Reflexo líquido atravessando a barra de XP. */
+@keyframes xpLiquidShimmer {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(250%); }
+}
+
+/* Halo pulsante do ponto verde "online". */
+@keyframes pulseEmeraldDot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6); }
+  70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+}
+
+/* Estrelas do fundo do Mentor: duas cadências para não pulsarem juntas. */
+@keyframes starTwinkleFast {
+  0%, 100% { opacity: 0.2; transform: scale(0.75); }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+    filter: drop-shadow(0 0 8px rgba(253, 224, 71, 0.9));
+  }
+}
+
+@keyframes starTwinkleSlow {
+  0%, 100% { opacity: 0.15; transform: scale(0.85); }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 6px rgba(103, 232, 249, 0.8));
+  }
+}
+
+/* Respiro do mascote: o que o faz parecer vivo em vez de figurinha. */
+@keyframes mascotBreatheAG {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.02); }
+}
+
+@keyframes fadeDown {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes flashGlow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.85)); }
+}
+
+@keyframes cyberBorderGlowEffect {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }

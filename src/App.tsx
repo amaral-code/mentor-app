@@ -75,6 +75,9 @@ export default function App() {
   // do relatorio semanal, para nao re-renderizar o App a cada telemetria.
   const relatoriosCarregados = useBemEstarStore((s) => s.carregado);
   const prevLevel = useRef(gamification.level);
+  /* Qual usuario ja teve os dados carregados. Evita refazer o boot a
+     cada TOKEN_REFRESHED (ou seja, a cada volta para a aba). */
+  const uidCarregadoRef = useRef<string | null>(null);
   const [levelUp, setLevelUp] = useState<number | null>(null);
 
   /**
@@ -183,6 +186,7 @@ export default function App() {
     // interno vira null = tela de login), entao este then e seguro.
     userRepository.getSession().then((s) => {
       if (s) {
+        uidCarregadoRef.current = s.uid;
         setSession(s);
         /*
          * Se a carga inicial falhar, o app abre com anotacoes, XP e
@@ -200,8 +204,28 @@ export default function App() {
       }
     });
 
-    // Login/logout/refresh, inclusive vindos de outra aba
+    /*
+     * Login/logout/refresh, inclusive vindos de outra aba.
+     *
+     * SO REAGE A TROCA DE USUARIO.
+     *
+     * O Supabase dispara este callback tambem em TOKEN_REFRESHED, que
+     * acontece sozinho e, na pratica, toda vez que a aba volta a ter
+     * foco. Sem o guarda de uid, cada volta para a aba custava:
+     *
+     *   1. as 11 consultas do boot outra vez, sem nada ter mudado;
+     *   2. um setSession com o perfil relido do banco - que SOBRESCREVIA
+     *      o estado local. Era isso que devolvia o aluno ao wizard de
+     *      onboarding quando o banco nao conseguia guardar a flag.
+     *
+     * Mesmo usuario = nada mudou = nada a refazer. Trocou de usuario
+     * (login, logout, outra conta em outra aba), recarrega tudo.
+     */
     const cancelar = userRepository.onAuthChange((s) => {
+      const uidNovo = s?.uid ?? null;
+      if (uidNovo !== null && uidNovo === uidCarregadoRef.current) return;
+      uidCarregadoRef.current = uidNovo;
+
       setSession(s);
       if (s) {
         hidratarCache({ perfil: { uid: s.uid, nome: s.nome, email: s.email, escolaId: s.escolaId ?? undefined, turmaId: s.turmaId ?? undefined } });
