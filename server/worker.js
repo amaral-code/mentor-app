@@ -60,6 +60,44 @@ const DEFAULT_MODEL = 'gemini-2.0-flash';
 const DEEPSEEK_DEFAULT_MODEL = 'deepseek-v4-flash';
 const DEEPSEEK_DEFAULT_BASE = 'https://api.deepseek.com';
 const MODELOS_PERMITIDOS = new Set(['gemini-2.0-flash', 'gemini-2.0-flash-lite', DEEPSEEK_DEFAULT_MODEL]);
+
+/* ===================================================================
+   Provedor e modelo vindos do ambiente
+
+   LEIA SEMPRE POR AQUI, nunca `env.AI_PROVIDER` direto.
+
+   Este helper existe por causa de um bug real em produção. Havia cinco
+   leituras espalhadas dessas duas variáveis, e só ALGUMAS aparavam o
+   valor: `AI_MODEL` passava por `.trim()`, `AI_PROVIDER` não. Um espaço
+   ou quebra de linha invisível no fim do valor — o que acontece à toa ao
+   colar no painel da Vercel — produzia o sintoma mais confuso possível:
+
+     AI_PROVIDER = "deepseek\n"  ->  "deepseek\n" !== "deepseek"  ->  cai em gemini
+     AI_MODEL    = "deepseek-v4-flash\n"  ->  aparado  ->  funciona
+
+   Ou seja, as duas variáveis cadastradas juntas, com o mesmo valor
+   colado do mesmo jeito, e o /health respondia
+   {provider: "gemini", model: "deepseek-v4-flash"} — um estado que, lendo
+   o painel, parecia impossível.
+
+   O padrão também mudou para DeepSeek. Antes era Gemini, e o
+   `wrangler.toml` já contornava isso com um comentário dizendo "sem isso
+   o worker assumia Gemini e quebrava tudo sem GEMINI_API_KEY". Só que
+   esse contorno vive no arquivo da Cloudflare, que não existe na Vercel —
+   então lá o padrão errado reaparecia. O padrão documentado do projeto
+   (README, .env.example, api/config.js) é DeepSeek; o código era o único
+   fora de compasso.
+   =================================================================== */
+
+/** Provedor configurado no ambiente. Aparado e com DeepSeek como padrão. */
+function provedorDoAmbiente(env) {
+  return String(env.AI_PROVIDER || '').trim().toLowerCase() === 'gemini' ? 'gemini' : 'deepseek';
+}
+
+/** Modelo configurado no ambiente, aparado ('' quando ausente). */
+function modeloDoAmbiente(env) {
+  return String(env.AI_MODEL || '').trim();
+}
 const TTS_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
 
 /*
@@ -275,15 +313,15 @@ function textoDaResposta(dados) {
    =================================================================== */
 
 function provedorEfetivo(payload, env) {
-  const pedido = String(payload?.provider || '').toLowerCase();
+  const pedido = String(payload?.provider || '').trim().toLowerCase();
   if (pedido === 'deepseek' || pedido === 'gemini') return pedido;
-  return String(env.AI_PROVIDER || '').toLowerCase() === 'deepseek' ? 'deepseek' : 'gemini';
+  return provedorDoAmbiente(env);
 }
 
 function modeloEfetivo(payload, env, provedor) {
   const pedido = String(payload?.model || '').trim();
   if (pedido && MODELOS_PERMITIDOS.has(pedido)) return pedido;
-  const padraoEnv = String(env.AI_MODEL || '').trim();
+  const padraoEnv = modeloDoAmbiente(env);
   if (padraoEnv && MODELOS_PERMITIDOS.has(padraoEnv)) return padraoEnv;
   if (padraoEnv && /^deepseek-/i.test(padraoEnv)) return padraoEnv;
   return provedor === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_MODEL;
@@ -482,7 +520,9 @@ async function normalizarTurmaComIA(env, linhas, turmas) {
   try {
     const saida = await chamarDeepSeek(
       env,
-      env.AI_MODEL && /^deepseek-/i.test(env.AI_MODEL) ? env.AI_MODEL : DEEPSEEK_DEFAULT_MODEL,
+      /* Aparado: sem isso, um valor com espaço no fim era enviado como
+         nome de modelo e a API recusava a chamada. */
+      /^deepseek-/i.test(modeloDoAmbiente(env)) ? modeloDoAmbiente(env) : DEEPSEEK_DEFAULT_MODEL,
       [
         {
           role: 'system',
@@ -716,14 +756,13 @@ export default {
     }
 
     if (request.method === 'GET' && url.pathname === '/health') {
-      const provedor = String(env.AI_PROVIDER || '').toLowerCase() === 'deepseek' ? 'deepseek' : 'gemini';
+      const provedor = provedorDoAmbiente(env);
       return json(
         {
           status: 'ok',
           provider: provedor,
           model:
-            String(env.AI_MODEL || '').trim() ||
-            (provedor === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_MODEL),
+            modeloDoAmbiente(env) || (provedor === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_MODEL),
           deepseek: !!env.DEEPSEEK_API_KEY,
           tts: !!env.GOOGLE_TTS_KEY,
           pagamento: env.MP_ACCESS_TOKEN ? 'mercadopago' : 'simulado',
