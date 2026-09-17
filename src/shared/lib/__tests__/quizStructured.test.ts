@@ -99,6 +99,49 @@ describe('parseQuizJson', () => {
     ]);
     expect(parseQuizJson(raw, 'História')[0].fonte).toBe('ENEM 2022');
   });
+  /* ============================================================
+   * RESPOSTA CORTADA NO LIMITE DE TOKENS
+   * ------------------------------------------------------------
+   * Era o "as vezes nao gera dependendo das questoes": o pedido
+   * estourava o teto de saida do back-end, o array voltava sem o `]`
+   * final, `JSON.parse` falhava no todo e a tela recebia lista VAZIA -
+   * mesmo havendo questoes inteiras dentro da resposta.
+   * ============================================================ */
+  it('recupera as questoes inteiras de uma resposta truncada', () => {
+    // Array valido, cortado no meio da terceira questao.
+    const cortado = QUIZ_OK.slice(0, QUIZ_OK.length - 1) + ',{"tema":"Geometria","enunciado":"Um triangulo ret';
+    const qs = parseQuizJson(cortado, 'Matemática');
+    expect(qs).toHaveLength(2);
+    expect(qs[0].alternativas).toHaveLength(4);
+    expect(qs[1].correta).toBe(2);
+  });
+
+  it('descarta o objeto incompleto em vez de gerar questao quebrada', () => {
+    const cortado = '[{"enunciado":"Questao completa e valida aqui","alternativas":["a","b","c","d"],"correta":0,"explicacao":"x"},{"enunciado":"corta';
+    const qs = parseQuizJson(cortado, 'Física');
+    expect(qs).toHaveLength(1);
+    expect(qs[0].enunciado).toContain('completa');
+  });
+
+  it('resgata tambem quando o modelo embrulha num objeto e corta', () => {
+    const cortado = '{"questoes":[{"enunciado":"Enunciado suficientemente longo","alternativas":["a","b","c","d"],"correta":3,"explicacao":"y"},{"enunc';
+    const qs = parseQuizJson(cortado, 'Química');
+    expect(qs).toHaveLength(1);
+    expect(qs[0].correta).toBe(3);
+  });
+
+  it('enunciado com chaves nao atrapalha o resgate', () => {
+    const cortado = '[{"enunciado":"Dado o conjunto {1,2,3}, quantos subconjuntos","alternativas":["2","4","6","8"],"correta":3,"explicacao":"2^3"},{"en';
+    const qs = parseQuizJson(cortado, 'Matemática');
+    expect(qs).toHaveLength(1);
+    expect(qs[0].enunciado).toContain('{1,2,3}');
+  });
+
+  it('resposta sem nada aproveitavel segue devolvendo vazio', () => {
+    expect(parseQuizJson('desculpe, nao consigo gerar isso', 'Matemática')).toEqual([]);
+    expect(parseQuizJson('{"erro":"cota', 'Matemática')).toEqual([]);
+  });
+
 });
 
 describe('generateQuizStructured (banca + antirrepeticao)', () => {

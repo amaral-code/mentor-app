@@ -1,5 +1,12 @@
 import { ChatPersona, Dificuldade, QuizQuestion } from '../types';
-import { montarBlocoAntirrepeticao } from './quizHistory';
+import { montarBlocoAntirrepeticao, hashEnunciado } from './quizHistory';
+import {
+  QUIZ_LOTES_SIMULTANEOS,
+  emParalelo,
+  objetosJsonCompletos,
+  planoDeLotes,
+  tokensParaLote,
+} from './quizLotes';
 import { StudentMonthlyRecord } from './dropoutRisk';
 import { promptRoteiroAudio, montarPedidoTTS } from './audioPills';
 import { SYSTEM_PROMPT_DESCOMPRESSAO, promptDescompressao } from './decompressionReport';
@@ -444,6 +451,24 @@ export function parseQuizJson(raw: string, materia: string): QuizQuestion[] {
     const m = texto.match(/\[[\s\S]*\]/);
     if (m) arr = tentar(m[0]);
   }
+  /*
+   * RESGATE DE RESPOSTA CORTADA.
+   *
+   * Passando daqui, o texto nao e JSON valido - e o caso mais comum e a
+   * resposta ter sido truncada no limite de tokens, deixando o array sem
+   * o `]` final. Antes isso virava lista VAZIA: o aluno pedia 20 questoes
+   * e recebia "nao foi possivel gerar", mesmo com 15 questoes inteiras
+   * dentro da resposta.
+   *
+   * Aqui os objetos completos sao extraidos um a um e o pedaco incompleto
+   * do fim e descartado. Entregar 15 de 20 e melhor que entregar nada.
+   */
+  if (!Array.isArray(arr)) {
+    const resgatados = objetosJsonCompletos(texto)
+      .map((t) => { try { return JSON.parse(t); } catch { return null; } })
+      .filter((o) => o && typeof o === 'object');
+    if (resgatados.length > 0) arr = resgatados;
+  }
   if (!Array.isArray(arr)) return [];
 
   const out: QuizQuestion[] = [];
@@ -509,11 +534,12 @@ const TEXTO_NIVEL: Record<NivelQuiz, string> = {
  * "inédita, estilo <banca>" e NUNCA se apresenta como oficial - inventar
  * enunciado, ano ou número de questão é proibido.
  */
-export async function generateQuizStructured(
+/** Um lote: UMA chamada a IA. O orquestrador esta em generateQuizStructured. */
+async function gerarLoteQuiz(
   subject: string,
   topic: string,
   apiKey: string,
-  count: number = 10,
+  count: number,
   opcoes: OpcoesQuiz = {},
 ): Promise<QuizEstruturado> {
   const systemInstruction =
@@ -539,7 +565,17 @@ export async function generateQuizStructured(
 
   const gen: Record<string, unknown> = {
     temperature: 0.45,
-    maxOutputTokens: Math.max(4096, count * 500),
+    /*
+     * `tokensParaLote` NUNCA passa do teto de 8192 do back-end.
+     *
+     * A conta anterior era `Math.max(4096, count * 500)`, que estourava
+     * o teto a partir de 17 questoes (8.500 > 8.192) e chegava a 15.000
+     * no maximo da tela (30). O servidor cortava em silencio, o JSON
+     * voltava pela metade e o app mostrava "nao foi possivel gerar" -
+     * com mais frequencia em questao dificil, que e mais longa. Era o
+     * "as vezes nao gera dependendo das questoes".
+     */
+    maxOutputTokens: tokensParaLote(count),
     topP: 0.9,
     topK: 20,
     // So o caminho DeepSeek recebe: modo JSON estrito da API.
@@ -563,6 +599,74 @@ export async function generateQuizStructured(
 
   const raw = extractGeminiText(res.data) || '';
   return { questions: parseQuizJson(raw, subject), raw };
+}
+
+/**
+ * Gera as questoes do quiz, em LOTES PARALELOS quando o pedido e grande.
+ *
+ * ------------------------------------------------------------------
+ * POR QUE NAO UMA CHAMADA SO
+ * ------------------------------------------------------------------
+ * Pedir 30 questoes de uma vez tinha dois problemas somados: estourava o
+ * teto de saida do back-end (e o JSON voltava cortado) e era lento por
+ * natureza, porque o modelo escreve token a token e nao ha paralelismo
+ * DENTRO de uma chamada.
+ *
+ * Em lotes de 8, cada chamada cabe folgada no teto e as chamadas correm
+ * ao mesmo tempo: o tempo total passa a ser o do lote mais lento em vez
+ * da soma de todos. A concorrencia e limitada porque disparar tudo junto
+ * convida o 429 do provedor - e o retry devolveria a lentidao.
+ *
+ * TOLERA FALHA PARCIAL: um lote que falhe nao derruba os outros. So
+ * lanca se TODOS falharem, caso em que o erro do primeiro e propagado
+ * para a tela poder explicar o que aconteceu.
+ */
+export async function generateQuizStructured(
+  subject: string,
+  topic: string,
+  apiKey: string,
+  count: number = 10,
+  opcoes: OpcoesQuiz = {},
+): Promise<QuizEstruturado> {
+  const lotes = planoDeLotes(count);
+
+  // Pedido pequeno: uma chamada, sem orquestracao nenhuma.
+  if (lotes.length <= 1) return gerarLoteQuiz(subject, topic, apiKey, count, opcoes);
+
+  const resultados = await emParalelo(lotes, QUIZ_LOTES_SIMULTANEOS, (n) =>
+    gerarLoteQuiz(subject, topic, apiKey, n, opcoes),
+  );
+
+  /*
+   * Os lotes correm em paralelo e recebem o MESMO bloco de
+   * antirrepeticao, entao nenhum sabe o que o outro gerou: dois lotes
+   * podem produzir a mesma questao. A deduplicacao usa o hash do
+   * enunciado normalizado, o mesmo critério do historico por conta.
+   */
+  const vistos = new Set<string>();
+  const questions: QuizQuestion[] = [];
+  const brutos: string[] = [];
+  let primeiroErro: unknown = null;
+
+  for (const r of resultados) {
+    if (r.erro !== undefined) {
+      primeiroErro ??= r.erro;
+      continue;
+    }
+    if (!r.valor) continue;
+    brutos.push(r.valor.raw);
+    for (const q of r.valor.questions) {
+      const hash = hashEnunciado(q.enunciado);
+      if (vistos.has(hash)) continue;
+      vistos.add(hash);
+      questions.push(q);
+    }
+  }
+
+  // Nada aproveitavel em lote nenhum: a tela precisa do erro real.
+  if (questions.length === 0 && primeiroErro !== null) throw primeiroErro;
+
+  return { questions: questions.slice(0, count), raw: brutos.join('\n') };
 }
 
 /* ============================================================
