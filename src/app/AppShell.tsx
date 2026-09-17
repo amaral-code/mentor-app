@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, Headphones, House, LogOut, Menu, NotebookPen, PenLine, ShieldCheck, ShoppingBag, Target, Timer, Trophy, User, Users, X } from 'lucide-react';
 import { MoonLogo } from '../shared/ui/MoonLogo';
@@ -15,6 +15,7 @@ import { safeGet, safeSet } from '../shared/lib/safeStorage';
 import { travarRolagem } from '../shared/lib/scrollLock';
 import { AnimatedNumber } from '../shared/ui/AnimatedNumber';
 import { pageEnter } from '../shared/lib/motionPresets';
+import { proximoIndiceFoco } from '../shared/lib/navegacaoAbas';
 
 /*
  * Cada pagina entra por import dinamico.
@@ -153,26 +154,77 @@ function SidebarNav({
   const itemRefs = useRef(new Map<TabId, HTMLButtonElement>());
   const [follower, setFollower] = useState({ top: 0, height: 0, opacity: 0 });
 
+  /* A aba vive num ref para o callback abaixo ficar ESTAVEL. Com ela na
+     dependencia, os listeners de resize/scroll eram removidos e
+     readicionados a cada troca de aba, sem necessidade. */
+  const abaRef = useRef(activeTab);
+  abaRef.current = activeTab;
+
   const atualizarSeguidor = useCallback(() => {
     const wrap = wrapRef.current;
-    const el = itemRefs.current.get(activeTab);
+    const el = itemRefs.current.get(abaRef.current);
     if (!wrap || !el) return;
     const wrapRect = wrap.getBoundingClientRect();
     const itemRect = el.getBoundingClientRect();
-    setFollower({ top: itemRect.top - wrapRect.top, height: itemRect.height, opacity: 1 });
-  }, [activeTab]);
+    const top = itemRect.top - wrapRect.top;
+    /* Sai cedo quando nada mudou: o ResizeObserver dispara em qualquer
+       mudanca de tamanho, e um setState incondicional ali vira laco de
+       render. */
+    setFollower((ant) =>
+      ant.top === top && ant.height === itemRect.height && ant.opacity === 1
+        ? ant
+        : { top, height: itemRect.height, opacity: 1 },
+    );
+  }, []);
 
-  useLayoutEffect(() => {
-    const t = window.setTimeout(atualizarSeguidor, 120);
+  /*
+   * Medicao SINCRONA, antes da pintura.
+   *
+   * A versao anterior media dentro de um `setTimeout(..., 120)` - o que
+   * anulava o proposito do useLayoutEffect e deixava a pilula amarela
+   * 120ms na posicao ANTIGA a cada troca de aba. Trocando rapido, ela
+   * corria atras do clique o tempo todo. Agora a posicao certa ja esta
+   * no primeiro quadro.
+   */
+  useLayoutEffect(atualizarSeguidor, [activeTab, compacta, atualizarSeguidor]);
+
+  useEffect(() => {
     window.addEventListener('resize', atualizarSeguidor);
     const nav = navRef.current;
-    nav?.addEventListener('scroll', atualizarSeguidor);
+    nav?.addEventListener('scroll', atualizarSeguidor, { passive: true });
+
+    /* O timeout de 120ms existia para esperar a transicao de recolher a
+       sidebar (300ms - nem dava conta). O observador pega o tamanho
+       final sempre, sem adivinhar duracao nenhuma. */
+    const observador =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(atualizarSeguidor) : null;
+    if (wrapRef.current) observador?.observe(wrapRef.current);
+
     return () => {
-      window.clearTimeout(t);
       window.removeEventListener('resize', atualizarSeguidor);
       nav?.removeEventListener('scroll', atualizarSeguidor);
+      observador?.disconnect();
     };
   }, [atualizarSeguidor]);
+
+  /*
+   * Teclado: setas movem o foco pela lista, Home/End vao aos extremos.
+   *
+   * Mantemos `nav` + `aria-current="page"` em vez de role="tablist":
+   * cada item troca a PAGINA inteira, entao a semantica honesta e de
+   * navegacao, nao de painel de abas. Anunciar "tab" a um leitor de tela
+   * prometeria um painel associado que nao existe.
+   */
+  function aoTeclar(e: React.KeyboardEvent<HTMLElement>) {
+    const botoes = TABS.map((t) => itemRefs.current.get(t.id)).filter(Boolean) as HTMLButtonElement[];
+    const atual = botoes.indexOf(document.activeElement as HTMLButtonElement);
+    const destino = proximoIndiceFoco(e.key, atual, botoes.length);
+    /* `null` = tecla que nao nos interessa, ou foco fora da lista: deixa
+       a tecla seguir seu caminho normal em vez de engoli-la. */
+    if (destino === null) return;
+    e.preventDefault();
+    botoes[destino]?.focus();
+  }
 
   return (
     <div className="relative px-3 py-1" ref={wrapRef}>
@@ -188,7 +240,12 @@ function SidebarNav({
       />
       <nav
         ref={navRef}
-        className="space-y-0.5 overflow-y-auto overscroll-contain max-h-[calc(100vh-270px)] md:max-h-[calc(100vh-250px)] relative z-10 hide-scrollbar pb-6"
+        onKeyDown={aoTeclar}
+        aria-label="Navegação principal"
+        /* `dvh` e nao `vh`: no celular a barra de endereco recolhe e o
+           `vh` nao acompanha, entao a lista mudava de altura sozinha e o
+           seguidor saía do lugar. */
+        className="space-y-0.5 overflow-y-auto overscroll-contain max-h-[calc(100dvh-270px)] md:max-h-[calc(100dvh-250px)] relative z-10 hide-scrollbar pb-6"
         data-purpose="sidebar-nav"
       >
         {TABS.map((tab) => {
@@ -206,10 +263,13 @@ function SidebarNav({
               aria-current={ativa ? 'page' : undefined}
               aria-label={tab.label}
               title={tab.label}
-              className={`sidebar-link nav-item flex items-center px-4 py-3 rounded-xl text-sm font-medium group cursor-pointer transition-colors ${
+              /* `focus-visible` proprio: o anel global do app tem 30% de
+                 opacidade e some contra a sidebar escura. Aqui ele e
+                 solido, para quem navega por teclado saber onde esta. */
+              className={`sidebar-link nav-item flex items-center px-4 py-3 rounded-xl text-sm font-medium group cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-midnight-900 ${
                 compacta ? 'justify-center px-2' : 'justify-between'
               } ${
-                ativa ? 'active-nav text-amber-300 font-semibold' : 'text-slate-400 hover:text-slate-100'
+                ativa ? 'text-amber-300 font-semibold' : 'text-slate-400 hover:text-slate-100'
               }`}
             >
               <div className="flex items-center gap-3.5">
@@ -227,9 +287,23 @@ function SidebarNav({
   );
 }
 
-/* Rodape de gamificacao (code.html): card, nivel mono e barra com
-   shimmer interno animado. */
-function XpFooter({ level, remainder, xpForNext, progresso, compacto }: { level: number; remainder: number; xpForNext: number; progresso: number; compacto?: boolean }) {
+/*
+ * Rodape de gamificacao: card, nivel mono e barra com shimmer interno.
+ *
+ * ASSINA A GAMIFICACAO AQUI DENTRO, de proposito.
+ *
+ * Antes o AppShell assinava `gamification` para passar o XP por prop.
+ * Como e ele quem renderiza a pagina ativa, CADA ganho de XP
+ * re-renderizava a arvore inteira - a tela de quiz, o chat, o ranking,
+ * tudo - por causa de uma barrinha no rodape da sidebar. Assinando aqui,
+ * so este rodape re-renderiza; a pagina aberta nem fica sabendo.
+ */
+function XpFooter({ compacto }: { compacto?: boolean }) {
+  const gamification = useAppStore((s) => s.gamification);
+  const { level, remainder } = calcLevel(gamification.xp);
+  const xpForNext = 100 * level;
+  const progresso = Math.min(100, (remainder / xpForNext) * 100);
+
   if (compacto) {
     return (
       <div className="p-2 border-t border-white/5 bg-midnight-950/50 flex justify-center">
@@ -264,15 +338,42 @@ function XpFooter({ level, remainder, xpForNext, progresso, compacto }: { level:
   );
 }
 
+/*
+ * Pagina ativa MEMOIZADA.
+ *
+ * Fora do AppShell e envolta em `memo`: re-render do shell (abrir o
+ * drawer, recolher a sidebar, ganhar XP) nao propaga mais para a pagina.
+ * Ela so re-renderiza quando a ABA muda, que e a unica coisa que de fato
+ * a afeta.
+ */
+const PaginaAtiva = memo(function PaginaAtiva({ aba }: { aba: TabId }) {
+  switch (aba) {
+      case 'dashboard': return <DashboardPage />;
+      case 'chat': return <ChatPage />;
+      case 'essay': return <EssayPage />;
+      case 'notebook': return <NotebookPage />;
+      case 'quiz': return <QuizPage />;
+      case 'estatisticas': return <EstatisticasPage />;
+      case 'profile': return <ProfilePage />;
+      case 'ranking': return <RankingPage />;
+      case 'foco': return <FocoPage />;
+      case 'store': return <StudentStore />;
+      case 'comunidade': return <ComunidadePage />;
+      case 'escudo': return <EscudoPage />;
+      case 'audio': return <AudioPillsPage />;
+      case 'calendario': return <CalendarioPage />;
+      case 'cuidado': return <CuidadoPage />;
+      case 'agenda': return <AgendaPage />;
+      // Aba corrompida (store persistido): tela em branco virava "bug".
+      default: return <DashboardPage />;
+  }
+});
+
 export function AppShell() {
   const activeTab = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const session = useAppStore((s) => s.session);
   const logout = useAppStore((s) => s.logout);
-  const gamification = useAppStore((s) => s.gamification);
-  const { level, remainder } = calcLevel(gamification.xp);
-  const xpForNext = 100 * level;
-  const progresso = Math.min(100, (remainder / xpForNext) * 100);
 
   /* Drawer do mobile (spec v2.4): menu lateral retratil. */
   const [drawerAberto, setDrawerAberto] = useState(false);
@@ -321,28 +422,19 @@ export function AppShell() {
     setDrawerAberto(false);
   }
 
-  function renderPage() {
-    switch (activeTab) {
-      case 'dashboard': return <DashboardPage />;
-      case 'chat': return <ChatPage />;
-      case 'essay': return <EssayPage />;
-      case 'notebook': return <NotebookPage />;
-      case 'quiz': return <QuizPage />;
-      case 'estatisticas': return <EstatisticasPage />;
-      case 'profile': return <ProfilePage />;
-      case 'ranking': return <RankingPage />;
-      case 'foco': return <FocoPage />;
-      case 'store': return <StudentStore />;
-      case 'comunidade': return <ComunidadePage />;
-      case 'escudo': return <EscudoPage />;
-      case 'audio': return <AudioPillsPage />;
-      case 'calendario': return <CalendarioPage />;
-      case 'cuidado': return <CuidadoPage />;
-      case 'agenda': return <AgendaPage />;
-      // Aba corrompida (store persistido): tela em branco virava "bug".
-      default: return <DashboardPage />;
-    }
-  }
+  /*
+   * Rolagem volta ao topo a cada troca de aba.
+   *
+   * Sem isto, sair do fim do Ranking e abrir o Perfil largava o aluno no
+   * meio da pagina nova, sem cabecalho a vista - parecia que a tela
+   * abriu quebrada.
+   *
+   * `instant`: a rolagem suave, aqui, brigaria com a animacao de entrada
+   * da pagina e produziria um deslize duplo.
+   */
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [activeTab]);
 
   const inicial = session?.nome?.charAt(0)?.toUpperCase() || '?';
 
@@ -401,7 +493,7 @@ export function AppShell() {
 
           <SidebarNav activeTab={activeTab} irPara={irPara} reduzir={reduzir === true} compacta={sidebarColapsada} />
 
-          <XpFooter level={level} remainder={remainder} xpForNext={xpForNext} progresso={progresso} compacto={sidebarColapsada} />
+          <XpFooter compacto={sidebarColapsada} />
 
           <div className={`flex items-center gap-3 px-3 py-2.5 glass-light rounded-xl ${sidebarColapsada ? 'justify-center' : ''}`}>
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center text-amber-400 font-bold text-sm shrink-0">
@@ -501,6 +593,16 @@ export function AppShell() {
         }`}
       >
         <div id="conteudo" tabIndex={-1} className={`${activeTab === 'chat' ? 'max-w-none' : 'max-w-5xl'} mx-auto min-h-[calc(100dvh-3rem)]`}>
+          {/*
+            Troca de aba nao recarrega a pagina, entao o leitor de tela
+            nao anuncia nada por conta propria: quem nao ve a pilula
+            amarela mudar de lugar nao sabe que a secao mudou. Esta
+            regiao diz o nome da nova secao, sem roubar o foco de onde a
+            pessoa esta.
+          */}
+          <span aria-live="polite" aria-atomic="true" className="sr-only">
+            {TABS.find((t) => t.id === activeTab)?.label ?? 'Central'}
+          </span>
           {/* mode="wait": a pagina que sai termina antes de a nova entrar.
               Com as duas ao mesmo tempo o conteudo se sobrepoe e a leitura
               fica confusa. */}
@@ -513,7 +615,7 @@ export function AppShell() {
               exit={reduzir ? undefined : 'sair'}
             >
               <Suspense fallback={<PageSkeleton />}>
-                {renderPage()}
+                <PaginaAtiva aba={activeTab} />
               </Suspense>
             </m.div>
           </AnimatePresence>
@@ -578,7 +680,7 @@ export function AppShell() {
               </div>
 
               <div className="space-y-2">
-                <XpFooter level={level} remainder={remainder} xpForNext={xpForNext} progresso={progresso} />
+                <XpFooter />
                 <button
                   onClick={() => { setDrawerAberto(false); logout(); }}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 press"
