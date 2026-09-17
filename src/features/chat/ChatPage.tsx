@@ -717,8 +717,15 @@ export function ChatPage() {
   const userInicial = (session?.nome?.charAt(0)?.toUpperCase()) || 'M';
   const vazio = chatMessages.length === 0;
 
+  /*
+   * A altura desconta EXATAMENTE o respiro que o <main> do AppShell reserva
+   * no mobile: 5rem para o header fixo + 0.5rem embaixo, mais as duas
+   * safe-areas. O valor antigo era um 6rem fixo, que ignorava os insets —
+   * num iPhone com notch o workspace do Mentor passava da viewport e a barra
+   * de digitar ficava abaixo da dobra.
+   */
   return (
-    <div className="flex gap-2 md:gap-3 h-[calc(100dvh-6rem)] md:h-[calc(100dvh-2rem)] animate-fade-up relative">
+    <div className="flex gap-2 md:gap-3 h-[calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-2rem)] animate-fade-up relative">
       {historicoAberto && (
         <button
           aria-hidden="true"
