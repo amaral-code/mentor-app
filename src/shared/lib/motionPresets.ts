@@ -44,6 +44,28 @@ export const EASE_SAIDA = [0.16, 1, 0.3, 1] as const;
  * encolheu (12 -> 8px), porque movimento vertical grande em pagina
  * inteira chama mais atencao que o proprio conteudo.
  */
+/*
+ * Versao para quem pede MOVIMENTO REDUZIDO.
+ *
+ * Antes, com a preferencia ligada, a troca de aba nao animava NADA: o
+ * conteudo era substituido de uma vez, sem nenhuma pista visual de que a
+ * secao mudou. Isso e mais do que a preferencia pede.
+ *
+ * O que incomoda quem ativa "reduzir movimento" e DESLOCAMENTO -
+ * parallax, deslize, escala, coisas que o sistema vestibular le como
+ * movimento real. Opacidade nao desloca nada, e por isso a recomendacao
+ * corrente e justamente trocar o deslize por um crossfade, nao remover a
+ * transicao.
+ *
+ * Entao aqui sai o `y` e fica so o fade, mais curto - quem pediu menos
+ * movimento tambem nao quer esperar por ele.
+ */
+export const pageEnterSuave: Variants = {
+  inicial: { opacity: 0 },
+  animar: { opacity: 1, transition: { duration: 0.16, ease: 'linear' } },
+  sair: { opacity: 0, transition: { duration: 0.09, ease: 'linear' } },
+};
+
 export const pageEnter: Variants = {
   inicial: { opacity: 0, y: 8 },
   animar: {

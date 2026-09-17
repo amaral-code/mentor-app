@@ -14,7 +14,7 @@ import { calcLevel } from '../shared/lib/utils';
 import { safeGet, safeSet } from '../shared/lib/safeStorage';
 import { travarRolagem } from '../shared/lib/scrollLock';
 import { AnimatedNumber } from '../shared/ui/AnimatedNumber';
-import { pageEnter } from '../shared/lib/motionPresets';
+import { pageEnter, pageEnterSuave } from '../shared/lib/motionPresets';
 import { proximoIndiceFoco } from '../shared/lib/navegacaoAbas';
 
 /*
@@ -607,12 +607,21 @@ export function AppShell() {
               Com as duas ao mesmo tempo o conteudo se sobrepoe e a leitura
               fica confusa. */}
           <AnimatePresence mode="wait" initial={false}>
+            {/*
+              Com movimento reduzido a transicao NAO e removida: ela troca
+              de forma. Sai o deslize (que e o que incomoda de verdade) e
+              fica so o crossfade de opacidade, que nao desloca nada.
+
+              Antes as quatro props viravam `undefined` nesse caso, e a
+              troca de aba acontecia sem nenhuma pista visual - quem pediu
+              menos movimento ficava sem saber que a secao mudou.
+            */}
             <m.div
               key={activeTab}
-              variants={reduzir ? undefined : pageEnter}
-              initial={reduzir ? false : 'inicial'}
-              animate={reduzir ? undefined : 'animar'}
-              exit={reduzir ? undefined : 'sair'}
+              variants={reduzir ? pageEnterSuave : pageEnter}
+              initial="inicial"
+              animate="animar"
+              exit="sair"
             >
               <Suspense fallback={<PageSkeleton />}>
                 <PaginaAtiva aba={activeTab} />
