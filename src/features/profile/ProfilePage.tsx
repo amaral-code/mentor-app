@@ -345,7 +345,7 @@ export function ProfilePage() {
                 <span className="text-emerald-400 shrink-0"><Check size={16} className="inline-block align-[-0.15em]" /></span>
                 <span>{hasProxy()
                   ? 'Back-end: worker publicado (produção).'
-                  : 'Back-end: proxy local de desenvolvimento (DEEPSEEK_API_KEY no .env + restart). Em produção, publique o worker e defina VITE_AI_BASE_URL.'}</span>
+                  : 'Back-end de IA fora do ar. Defina DEEPSEEK_API_KEY nas Environment Variables do projeto e refaça o deploy.'}</span>
               </div>
             )}
 

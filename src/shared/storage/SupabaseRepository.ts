@@ -1,4 +1,5 @@
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+import { aiProxyToken, temBackendIA, urlBackendIA } from '../lib/runtimeConfig';
 import { hashEnunciado } from '../lib/quizHistory';
 import type {
   ChallengeResult,
@@ -1012,7 +1013,7 @@ export class SupabaseRepository {
    * Envia a lista ao worker, que normaliza com IA, cria as contas
    * (aluno/responsavel/docente) e dispara os convites por email.
    *
-   * Exige o worker publicado (VITE_AI_BASE_URL): as senhas temporarias
+   * Exige o back-end de IA (`/api`, ou worker externo): as senhas temporarias
    * e os links magicos so nascem no servidor, nunca no navegador.
    */
   async importarTurma(alunos: {
@@ -1032,19 +1033,23 @@ export class SupabaseRepository {
     resultados?: { linha: number; nome: string; tipo: string; ok: boolean; login?: string; turma?: string | null; codigoTurma?: string | null; erro?: string; emailEnviado?: boolean; senhaTemporaria?: string; loginResponsavel?: string; senhaResponsavel?: string }[];
     erro?: string;
   }> {
-    const base = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
-    if (!base) return { ok: false, erro: 'Importação automática indisponível: publique o worker e defina VITE_AI_BASE_URL.' };
+    if (!temBackendIA()) {
+      return {
+        ok: false,
+        erro: 'Importação automática indisponível: o back-end não respondeu. Confira as Environment Variables do projeto (SUPABASE_SERVICE_KEY e RESEND_API_KEY).',
+      };
+    }
     if (!this.ativo()) return { ok: false, erro: 'Sem conexao com o banco.' };
     const sb = getSupabase()!;
     const { data: sessao } = await sb.auth.getSession();
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
+    const token = aiProxyToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (sessao?.session?.access_token) headers['X-Supabase-Auth'] = sessao.session.access_token;
 
     try {
-      const resposta = await fetch(`${base}/api/turmas/import`, {
+      const resposta = await fetch(urlBackendIA('/api/turmas/import'), {
         method: 'POST',
         headers,
         body: JSON.stringify({ alunos }),

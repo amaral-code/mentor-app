@@ -80,9 +80,13 @@ describe('gerarRoteiroAudio', () => {
 });
 
 describe('sintetizarAudio', () => {
-  it('exige o proxy: a chave do TTS nao pode ir para o navegador', async () => {
+  it('exige o back-end: a chave do TTS nao pode ir para o navegador', async () => {
     const { sintetizarAudio } = await carregarAi('');
-    await expect(sintetizarAudio('texto')).rejects.toThrow(/VITE_AI_BASE_URL/);
+    // O erro precisa apontar a variavel DE SERVIDOR (sem prefixo VITE_).
+    // Citar uma VITE_* aqui seria instruir o usuario a colocar no bundle
+    // exatamente a chave que esta funcao existe para manter fora dele.
+    await expect(sintetizarAudio('texto')).rejects.toThrow(/GOOGLE_TTS_KEY/);
+    await expect(sintetizarAudio('texto')).rejects.not.toThrow(/VITE_/);
   });
 
   it('chama /tts no worker e devolve data URL pronta para o player', async () => {

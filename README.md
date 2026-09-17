@@ -134,22 +134,31 @@ npm install
 
 ### 2. Configurar variáveis de ambiente
 
-```bash
-cp .env.example .env
-```
+Em produção nada disso vive num arquivo: as variáveis ficam no painel da
+hospedagem (**Vercel → Settings → Environment Variables**) e o app as lê em
+tempo de execução. Para desenvolver, `cp .env.example .env` — ou apenas
+exporte as variáveis no terminal, que funciona igual.
 
-| Variável                  | Obrigatória | Descrição                                              |
-| ------------------------- | ----------- | ------------------------------------------------------ |
-| `VITE_SUPABASE_URL`       | Sim         | URL do projeto Supabase                                |
-| `VITE_SUPABASE_ANON_KEY`  | Sim         | Chave anônima do Supabase (pública por design; quem protege é a RLS) |
-| `VITE_AI_PROVIDER`        | Não         | `deepseek` (padrão) ou `gemini`                        |
-| `VITE_AI_MODEL`           | Não         | Modelo efetivo (ex: `deepseek-v4-flash`)               |
-| `DEEPSEEK_API_KEY`        | Sim (dev)   | Chave DeepSeek **só no servidor** (sem prefixo `VITE_`, nunca vai ao bundle) |
-| `VITE_AI_BASE_URL`        | Sim (prod)  | URL do worker publicado (back-end de produção)         |
-| `VITE_AI_PROXY_TOKEN`     | Não         | Senha anti-abuso (igual ao `API_TOKEN` do worker)      |
-| `VITE_N8N_WEBHOOK_URL`    | Não         | Reserva para criação de contas (professor)             |
+| Variável               | Obrigatória | Vai ao navegador? | Descrição                                                        |
+| ---------------------- | ----------- | ----------------- | ---------------------------------------------------------------- |
+| `SUPABASE_URL`         | Sim         | Sim (é pública)   | URL raiz do projeto Supabase                                     |
+| `SUPABASE_ANON_KEY`    | Sim         | Sim (é pública)   | Chave anon; quem protege os dados é a RLS                        |
+| `AI_PROVIDER`          | Não         | Sim               | `deepseek` (padrão) ou `gemini`                                  |
+| `AI_MODEL`             | Não         | Sim               | Modelo efetivo (ex.: `deepseek-v4-flash`)                        |
+| `DEEPSEEK_API_KEY`     | Sim         | **Nunca**         | Chave do chat/quiz. Só o back-end (`/api/*`) a enxerga           |
+| `GEMINI_API_KEY`       | Não         | **Nunca**         | Visão: redação por foto e OCR do caderno                         |
+| `GOOGLE_TTS_KEY`       | Não         | **Nunca**         | Vozes neurais das Pílulas de Áudio                               |
+| `SUPABASE_SERVICE_KEY` | Não         | **Nunca**         | Importação de turmas (ignora RLS)                                |
+| `RESEND_API_KEY`       | Não         | **Nunca**         | Emails de boas-vindas da importação                              |
+| `MP_ACCESS_TOKEN`      | Não         | **Nunca**         | Pagamento das consultas; sem ela, modo simulado                  |
+| `N8N_WEBHOOK_URL`      | Não         | Sim               | Reserva para criação de contas (professor)                       |
 
-Depois de criar/alterar o `.env`, **reinicie o dev server** (o Vite lê o `.env` só na inicialização).
+**A regra que importa:** variável com prefixo `VITE_` é gravada dentro do
+bundle durante o build e qualquer visitante lê com F12. Variável **sem** o
+prefixo é lida só no servidor, dentro de `/api/*`. Por isso nenhum segredo
+acima leva `VITE_`. As versões `VITE_*` continuam aceitas apenas como
+reserva para hospedagem sem funções serverless (ver `.env.example`, seção 5).
+
 Sem Supabase configurado, o login mostra aviso e o app não entra.
 
 ### 3. Aplicar o banco de dados
@@ -229,26 +238,44 @@ npm run preview
 
 ## API de IA
 
-O padrão é **DeepSeek V4 Flash via back-end** — o navegador nunca chama a API direto
-e a chave nunca vai ao bundle:
-- Dev (`npm run dev`): proxy local do Vite (`/deepseek-api`) com `DEEPSEEK_API_KEY` do `.env`
-- Produção: worker `server/worker.js` publicado, com o secret `DEEPSEEK_API_KEY`
+O padrão é **DeepSeek V4 Flash via back-end** — o navegador nunca chama a API
+direto e a chave nunca vai ao bundle.
 
-### Publicar o worker (produção)
+O back-end é `server/worker.js`, e **o mesmo arquivo roda nos três ambientes**
+(não há duas implementações para divergir):
+
+| Ambiente           | Quem executa                        | De onde vêm as variáveis     |
+| ------------------ | ----------------------------------- | ---------------------------- |
+| `npm run dev`      | middleware do Vite (`/api/*`)       | `.env` ou o shell            |
+| Vercel (produção)  | Serverless Function (`/api/*`)      | Environment Variables        |
+| Cloudflare Worker  | `wrangler deploy` (opcional)        | `wrangler secret`            |
+
+O navegador sempre chama `/api/...` na **mesma origem** do site. Isso elimina
+CORS, elimina o "Failed to fetch" por adblock e dispensa o `API_TOKEN` — não
+existe origem terceira para barrar.
+
+Rotas: `/api/config`, `/api/health`, `/api/generate`, `/api/tts`,
+`/api/chat/completions`, `/api/ocr-process`, `/api/essays/upload-and-grade`,
+`/api/turmas/import`, `/api/pagamento`.
+
+### Publicar num Cloudflare Worker (opcional)
+
+Só é necessário se você quiser o back-end **fora** da Vercel:
 
 ```bash
 npx wrangler login
 npx wrangler deploy server/worker.js --name midnight-mentor-ia
 npx wrangler secret put DEEPSEEK_API_KEY  # chave do servidor
-npx wrangler secret put API_TOKEN        # senha anti-abuso (vai no VITE_AI_PROXY_TOKEN)
+npx wrangler secret put API_TOKEN         # senha anti-abuso (vai no AI_PROXY_TOKEN)
 ```
 
-No worker, defina também `ALLOWED_ORIGIN=https://seu-site` para que só o seu
-site use a sua cota de IA.
+Depois aponte o app para ele com `AI_BASE_URL=https://seu-worker.workers.dev`
+e defina `ALLOWED_ORIGIN=https://seu-site` no worker, para que só o seu site
+use a sua cota de IA.
 
 ### Fallback: chave do próprio usuário (Gemini)
 
-Sem `VITE_AI_BASE_URL`, cada aluno cola a própria chave grátis do
+Sem nenhum back-end alcançável, cada aluno cola a própria chave grátis do
 [Google AI Studio](https://aistudio.google.com/apikey) no **Perfil**
 (Provedor `gemini`).
 
@@ -293,7 +320,11 @@ App nativo do Escudo de Dopamina: [`mobile/react-native/`](mobile/react-native/R
 ## Segurança
 
 - Toda variável `VITE_*` vai ao bundle: **nunca** coloque `service_role` ou
-  `DEEPSEEK_API_KEY` com esse prefixo
+  `DEEPSEEK_API_KEY` com esse prefixo. Segredo mora em variável sem prefixo,
+  lida só dentro de `/api/*`
+- `/api/config` devolve exclusivamente configuração pública (URL e chave anon
+  do Supabase, provedor/modelo). Das chaves de servidor ela informa apenas
+  *se* estão configuradas — booleano, nunca o valor
 - Cadastro sempre nasce `student`; promoção a educador/admin só pelo SQL Editor
 - XP, loja, foco e burnout só por funções do servidor (`SECURITY DEFINER`)
 - RLS ligada em todas as tabelas; nenhuma tabela sem policy passa no teste
@@ -301,12 +332,31 @@ App nativo do Escudo de Dopamina: [`mobile/react-native/`](mobile/react-native/R
 
 ## Deploy
 
-Build estático (Vite). Compatível com:
+### Vercel (recomendado)
 
-- Vercel, Netlify, Cloudflare Pages, GitHub Pages
-- Serve a pasta `dist/` como conteúdo estático
-- Lembre de configurar `VITE_AI_BASE_URL` + `VITE_AI_PROXY_TOKEN` no painel
-  da hospedagem e fazer redeploy
+O repositório já traz `vercel.json` e as funções em `api/`. O fluxo é:
+
+1. Importe o repositório na Vercel (ela detecta Vite sozinha).
+2. Em **Settings → Environment Variables**, cadastre as variáveis da tabela
+   do *Getting Started*. No mínimo: `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
+   `DEEPSEEK_API_KEY`.
+3. Deploy.
+
+Verifique com `https://seu-app.vercel.app/api/health` — ele responde quais
+recursos estão ligados (`deepseek`, `tts`, `email`, `pagamento`) sem
+revelar nenhuma chave.
+
+**Mudou uma variável no painel?** Configuração pública (Supabase, provedor,
+modelo) passa a valer no próximo carregamento da página, sem rebuild —
+`/api/config` é lida a cada requisição. Chave de servidor exige um novo
+deploy, porque a função precisa reiniciar para recebê-la.
+
+### Outras hospedagens
+
+Em host **com** funções serverless, o mesmo arranjo vale. Em host
+**estático puro** (GitHub Pages), `/api/*` não existe: publique o worker no
+Cloudflare, aponte `AI_BASE_URL` para ele e preencha as variáveis `VITE_*`
+de reserva antes do build (elas ficam congeladas no bundle).
 
 ```bash
 npm run build

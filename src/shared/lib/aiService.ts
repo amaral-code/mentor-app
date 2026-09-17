@@ -5,8 +5,6 @@ import { promptRoteiroAudio, montarPedidoTTS } from './audioPills';
 import { SYSTEM_PROMPT_DESCOMPRESSAO, promptDescompressao } from './decompressionReport';
 import type { MetricasDescompressao } from '../types';
 import {
-  AI_MODEL,
-  AI_PROVIDER,
   DEEPSEEK_DEV_PROXY_PATH,
   DEEPSEEK_TIMEOUT_MS,
   GEMINI_CHAT_CONFIG,
@@ -18,33 +16,41 @@ import {
   geminiGenConfigToDeepSeek,
   isDeepSeekProvider,
   mensagemErroRede,
+  modeloAtual,
+  provedorAtual,
   sinalComTimeout,
   toChatCompletionsMessages,
   wrapAsGeminiResponse,
 } from './aiProvider';
+import { aiProxyToken, destinoBackendIA, temBackendIA, urlBackendIA } from './runtimeConfig';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 const MAX_RETRIES = 3;
 
 /* ============================================================
- PROXY SERVERLESS (grátis - a chave fica no servidor)
- Defina no.env:
- VITE_AI_BASE_URL = URL do seu Worker/Function
- (ex.: https://midnight-mentor-ia.workers.dev)
- VITE_AI_PROXY_TOKEN = token opcional de autenticação
- Quando VITE_AI_BASE_URL está definido, o app usa o proxy e o
- usuário NÃO precisa informar chave. Caso contrário, cai no
- Gemini direto (chave do usuário).
- ============================================================ */
-const PROXY_URL = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
-const PROXY_TOKEN = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
-const PROXY_MODEL = ((import.meta.env.VITE_AI_MODEL as string) || '').trim() || AI_MODEL;
+ BACK-END DE IA (a chave fica no servidor, nunca no navegador)
 
-/** Proxy configurado? (modo "sem chave do usuário"). */
-export const hasProxy = () => PROXY_URL.length > 0;
+ Por padrao o back-end e a rota `/api/*` DESTE MESMO dominio
+ (Vercel Functions rodando server/worker.js). Nesse arranjo:
+
+   - DEEPSEEK_API_KEY / GEMINI_API_KEY sao Environment Variables do
+     projeto, SEM prefixo VITE_ - logo nunca entram no bundle;
+   - nao ha CORS nem preflight (mesma origem);
+   - AI_PROXY_TOKEN e dispensavel, porque nao existe origem terceira
+     para barrar.
+
+ Definir AI_BASE_URL aponta o app de volta para um Cloudflare Worker
+ externo, com o mesmo contrato de rotas.
+
+ Tudo isto e lido por FUNCAO (runtimeConfig), nunca por constante de
+ modulo: constante congelaria o valor antes de /api/config responder.
+ ============================================================ */
+
+/** Back-end de IA alcancavel? (modo "sem chave do usuário"). */
+export const hasProxy = () => temBackendIA();
 
 /** Provedor/modelo efetivos (para UI, diagnostico e testes). */
-export const getAIProviderInfo = () => ({ provider: AI_PROVIDER, model: PROXY_MODEL });
+export const getAIProviderInfo = () => ({ provider: provedorAtual(), model: modeloAtual() });
 
 /** Mensagem de chave invalida conforme o provedor ativo. */
 function mensagemChaveInvalida(): string {
@@ -120,7 +126,7 @@ async function fetchViaWorker(url: string, init: RequestInit, signal?: AbortSign
     const combinado = sinalComTimeout(signal, DEEPSEEK_TIMEOUT_MS);
     return await fetchGemini(url, { ...init, signal: combinado }, combinado);
   } catch (e) {
-    const diag = diagnosticarErroRede(PROXY_URL || 'worker', e, !!signal?.aborted);
+    const diag = diagnosticarErroRede(destinoBackendIA(), e, !!signal?.aborted);
     console.debug('[ia] falha de rede (worker)', { ...diag });
     throw new Error(mensagemErroRede(diag), { cause: e });
   }
@@ -144,15 +150,16 @@ async function sendToAI(
 ): Promise<RetryResult> {
   if (hasProxy()) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+    const token = aiProxyToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     return fetchViaWorker(
-      `${PROXY_URL}/generate`,
+      urlBackendIA('/generate'),
       {
         method: 'POST',
         headers,
         // O worker decide o upstream (Gemini x DeepSeek) por este campo.
         // Os prompts (systemInstruction/contents) viajam intactos.
-        body: JSON.stringify({ provider: AI_PROVIDER, model: PROXY_MODEL, ...body }),
+        body: JSON.stringify({ provider: provedorAtual(), model: modeloAtual(), ...body }),
       },
       signal,
     );
@@ -200,13 +207,14 @@ async function sendToDeepSeekViaBackend(
 
   if (backend === 'worker') {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+    const token = aiProxyToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     return fetchViaWorker(
-      `${PROXY_URL}/generate`,
+      urlBackendIA('/generate'),
       {
         method: 'POST',
         headers,
-        body: JSON.stringify({ provider: 'deepseek', model: PROXY_MODEL, ...body }),
+        body: JSON.stringify({ provider: 'deepseek', model: modeloAtual(), ...body }),
       },
       signal,
     );
@@ -231,12 +239,12 @@ async function sendToDeepSeekViaBackend(
             // SEM Authorization de proposito: a chave e injetada pelo Vite no
             // servidor (vite.config.ts). Nada de segredo no navegador.
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: PROXY_MODEL, messages, ...gen }),
+            body: JSON.stringify({ model: modeloAtual(), messages, ...gen }),
           },
           {
             sinalUsuario: signal,
             rotuloDestino: 'proxy local (/deepseek-api)',
-            contexto: { model: PROXY_MODEL, mensagens: messages.length, via: 'aiService-devProxy' },
+            contexto: { model: modeloAtual(), mensagens: messages.length, via: 'aiService-devProxy' },
           },
         );
       } catch (e) {
@@ -1234,13 +1242,16 @@ export async function sintetizarAudio(
   opcoes: { voz?: string; velocidade?: number; signal?: AbortSignal } = {},
 ): Promise<AudioSintetizado> {
   if (!hasProxy()) {
-    throw new Error('TTS indisponivel: configure VITE_AI_BASE_URL para usar as vozes neurais.');
+    throw new Error(
+      'TTS indisponível: o back-end de IA não respondeu. Defina GOOGLE_TTS_KEY nas Environment Variables do projeto para usar as vozes neurais.',
+    );
   }
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+  const token = aiProxyToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const resposta = await fetch(`${PROXY_URL}/tts`, {
+  const resposta = await fetch(urlBackendIA('/tts'), {
     method: 'POST',
     headers,
     signal: opcoes.signal,

@@ -223,7 +223,10 @@ export default function App() {
    */
   useEffect(() => {
     // Precedencia: chave digitada em Perfil > IA (localStorage) vence o
-    // padrao do ambiente (VITE_GEMINI_API_KEY no .env). Sem nenhuma, a
+    // padrao do build (VITE_GEMINI_API_KEY). Este e o unico VITE_* de
+    // chave que sobrou: e a chave PESSOAL do usuario para o modo Gemini
+    // direto, sem back-end. A chave do servidor (GEMINI_API_KEY, sem
+    // prefixo) vive so dentro de /api e nunca chega aqui. Sem nenhuma, a
     // correcao de redacao pede a chave em vez de falhar muda.
     const savedApiKey = safeGet('mm_api_key');
     const envApiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
