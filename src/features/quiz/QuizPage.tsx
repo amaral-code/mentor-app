@@ -6,6 +6,7 @@ import { BarChart3, BookOpen, Target, TriangleAlert } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { Dificuldade, QuizQuestion, QuizResult } from '../../shared/types';
 import { generateQuizStructured, aiAvailable, NivelQuiz, explicarErroComTutor } from '../../shared/lib/aiService';
+import { QUIZ_LOTES_SIMULTANEOS, emParalelo } from '../../shared/lib/quizLotes';
 import {
   filtrarIneditas,
   salvarRascunhoSimulado,
@@ -375,28 +376,52 @@ export function QuizPage() {
     setProgressoGeracao('');
     mascotStore.getState().setState('loading', 'Montando seu simulado oficial');
     try {
-      const blocos: QuizQuestion[][] = [];
-      for (let i = 0; i < MATERIAS_SIMULADO.length; i++) {
-        const mat = MATERIAS_SIMULADO[i];
-        const n = base + (i < resto ? 1 : 0);
-        setProgressoGeracao(`Gerando bloco ${i + 1} de ${MATERIAS_SIMULADO.length} (${mat})`);
-        let hist: { hash: string; preview: string }[] = [];
-        try {
-          hist = await supabaseRepository.loadHistoricoQuiz(mat, 30);
-        } catch { /* offline: segue sem historico */ }
-        const { questions: geradas, raw } = await generateQuizStructured(
-          mat, 'Geral', apiKey, n, { dificuldade, historico: hist.map((h) => h.preview) },
-        );
-        let lote = geradas.slice(0, n);
-        if (lote.length === 0) {
-          lote = parseQuestions(raw).map((q) => ({ ...q, materia: mat })).slice(0, n);
-        }
-        if (lote.length > 0 && hist.length > 0) {
-          lote = filtrarIneditas(lote, new Set(hist.map((h) => h.hash)));
-        }
-        blocos.push(lote.map((q) => ({ ...q, materia: mat })));
-      }
-      const todas = blocos.flat();
+      /*
+       * Os blocos por materia correm EM PARALELO.
+       *
+       * Antes era um `for` sequencial: sete chamadas de IA em fila, uma
+       * esperando a outra, e o aluno olhando a tela de carregamento pela
+       * soma de todas. Os blocos sao independentes (cada um pede sua
+       * materia, com seu proprio historico), entao nada justificava a
+       * fila - o tempo total passa a ser o do bloco mais lento.
+       *
+       * A concorrencia e limitada por `emParalelo`: disparar as sete de
+       * uma vez convida o 429 do provedor, e o retry devolveria a
+       * lentidao pela porta dos fundos.
+       */
+      let prontos = 0;
+      const resultados = await emParalelo(
+        MATERIAS_SIMULADO.map((mat, i) => ({ mat, n: base + (i < resto ? 1 : 0) })),
+        QUIZ_LOTES_SIMULTANEOS,
+        async ({ mat, n }) => {
+          let hist: { hash: string; preview: string }[] = [];
+          try {
+            hist = await supabaseRepository.loadHistoricoQuiz(mat, 30);
+          } catch { /* offline: segue sem historico */ }
+          const { questions: geradas, raw } = await generateQuizStructured(
+            mat, 'Geral', apiKey, n, { dificuldade, historico: hist.map((h) => h.preview) },
+          );
+          let lote = geradas.slice(0, n);
+          if (lote.length === 0) {
+            lote = parseQuestions(raw).map((q) => ({ ...q, materia: mat })).slice(0, n);
+          }
+          if (lote.length > 0 && hist.length > 0) {
+            lote = filtrarIneditas(lote, new Set(hist.map((h) => h.hash)));
+          }
+          /* Em paralelo o progresso conta o que TERMINOU, nao "o bloco
+             i de N" - em ordem eles nao chegam. */
+          prontos++;
+          if (montadoRef.current) {
+            setProgressoGeracao(`${prontos} de ${MATERIAS_SIMULADO.length} blocos prontos`);
+          }
+          return lote.map((q) => ({ ...q, materia: mat }));
+        },
+      );
+
+      /* Bloco que falhou nao derruba o simulado: o de baixo confere se o
+         total ficou curto demais e avisa. Melhor um simulado menor que
+         nenhum. */
+      const todas = resultados.flatMap((r) => r.valor ?? []);
       // Saiu da tela no meio da geração (7+ chamadas IA): não commita nada
       // — antes dava setState pós-unmount e `generating` preso.
       if (!montadoRef.current) return;
