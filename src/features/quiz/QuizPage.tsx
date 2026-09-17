@@ -229,6 +229,9 @@ export function QuizPage() {
 
     setMateria(mat);
     setGenerating(true);
+    /* Zera aqui: sem isso, a contagem da geracao ANTERIOR aparecia no
+       botao antes do primeiro lote novo chegar. */
+    setProgressoGeracao('');
     mascotStore.getState().setState('loading', 'Gerando suas questões com a IA');
     try {
       if (!aiAvailable(apiKey)) {
@@ -255,7 +258,15 @@ export function QuizPage() {
        * chamada).
        */
       const { questions: geradas, raw } = await generateQuizStructured(
-        mat, topicPrompt, apiKey, qtd, { dificuldade: nivel, historico: historico.map(h => h.preview) },
+        mat, topicPrompt, apiKey, qtd, {
+          dificuldade: nivel,
+          historico: historico.map(h => h.preview),
+          /* Espera longa com spinner so diz "aguarde". Com a contagem, o
+             aluno ve que ha avanco e quanto falta. */
+          onProgresso: (prontas, total) => {
+            if (montadoRef.current) setProgressoGeracao(`${prontas} de ${total} questões prontas`);
+          },
+        },
       );
       let parsed = geradas.slice(0, qtd);
       if (parsed.length === 0) {
@@ -313,6 +324,9 @@ export function QuizPage() {
       mascotStore.getState().setState('error', 'Ops! Algo deu errado ao gerar as questões.');
     }
     setGenerating(false);
+    /* A contagem some junto com o estado de geracao: deixa-la para tras
+       mostraria "18 de 30 prontas" num botao que ja voltou ao normal. */
+    setProgressoGeracao('');
   }, [materia, selectedTopics, quantidade, dificuldade, apiKey, setToast, conteudoDensoBloqueado]);
 
   /*
@@ -941,7 +955,7 @@ export function QuizPage() {
           <div className="flex gap-2 pt-2">
             <button onClick={() => startQuiz()} disabled={selectedTopics.length === 0 || generating} className="btn-primary flex-1">
               {generating ? (
-                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> Gerando questões...</>
+                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> {progressoGeracao || 'Gerando questões...'}</>
               ) : `Gerar Quiz (${quantidade} ${quantidade === 1 ? 'questão' : 'questões'})`}
             </button>
           </div>

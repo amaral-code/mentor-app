@@ -137,6 +137,45 @@ describe('animacoes do CSS', () => {
     expect(keyframesNoCss.has('shimmer')).toBe(true);
   });
 
+  /* ============================================================
+   * INDICADOR DE CARREGAMENTO x MOVIMENTO REDUZIDO
+   * ------------------------------------------------------------
+   * A regra geral de `prefers-reduced-motion` zera animacao em TUDO
+   * (`animation-duration: 0.01ms`, `iteration-count: 1`). Isso e certo
+   * para enfeite e ERRADO para indicador de espera: o spinner de
+   * "Gerando questoes..." congelava, e spinner parado nao comunica
+   * "respeitei sua preferencia" - comunica "travou".
+   *
+   * A preferencia continua respeitada: o que muda e o TIPO de
+   * movimento. Sai rotacao, entra pulsacao de opacidade, que nao
+   * desloca nada e por isso nao dispara desconforto vestibular.
+   * ============================================================ */
+  it('o spinner continua animando com movimento reduzido', () => {
+    const blocos = [...css.matchAll(/@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/g)]
+      .map((m) => m[1])
+      .join('\n');
+    expect(blocos).toMatch(/\.animate-spin/);
+    expect(blocos).toMatch(/pulsarCarregando/);
+  });
+
+  it('o skeleton tambem continua animando com movimento reduzido', () => {
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.skeleton[\s\S]*?pulsarCarregando/);
+  });
+
+  it('a chave de acessibilidade do app poupa os indicadores de carregamento', () => {
+    // A classe .a11y-sem-movimento tambem zerava tudo com !important.
+    expect(css).toMatch(/html\.a11y-sem-movimento\s+\.animate-spin[\s\S]*?pulsarCarregando/);
+  });
+
+  it('a pulsacao de carregamento nao desloca nada (so opacidade)', () => {
+    // Se alguem trocar por transform/translate, volta o risco vestibular
+    // que a preferencia existe para evitar.
+    const kf = css.match(/@keyframes pulsarCarregando \{([\s\S]*?)\n\}/);
+    expect(kf, 'keyframes pulsarCarregando nao encontrado').toBeTruthy();
+    expect(kf![1]).toMatch(/opacity/);
+    expect(kf![1]).not.toMatch(/transform|translate|rotate|scale/);
+  });
+
   it('o movimento continua desligavel por acessibilidade', () => {
     // O respeito a quem pediu menos movimento nao pode ter sido perdido
     // no meio do conserto.

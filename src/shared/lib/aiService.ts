@@ -515,6 +515,14 @@ export interface OpcoesQuiz {
   dificuldade?: NivelQuiz;
   /** Previews de enunciados ja aplicados (antirrepeticao por conta). */
   historico?: string[];
+  /**
+   * Avisa a cada lote concluido.
+   *
+   * Espera longa com spinner so diz "aguarde"; com "12 de 30 questoes
+   * prontas" o usuario sabe que ha avanco e quanto falta. So e chamado
+   * quando ha mais de um lote - num pedido pequeno nao ha o que informar.
+   */
+  onProgresso?: (prontas: number, total: number) => void;
 }
 
 const TEXTO_NIVEL: Record<NivelQuiz, string> = {
@@ -633,9 +641,18 @@ export async function generateQuizStructured(
   // Pedido pequeno: uma chamada, sem orquestracao nenhuma.
   if (lotes.length <= 1) return gerarLoteQuiz(subject, topic, apiKey, count, opcoes);
 
-  const resultados = await emParalelo(lotes, QUIZ_LOTES_SIMULTANEOS, (n) =>
-    gerarLoteQuiz(subject, topic, apiKey, n, opcoes),
-  );
+  /*
+   * O progresso e contado em QUESTOES, nao em lotes: "18 de 30" diz mais
+   * ao aluno que "lote 3 de 4". Em paralelo os lotes nao terminam em
+   * ordem, entao o que se conta e o que ja chegou.
+   */
+  let prontas = 0;
+  const resultados = await emParalelo(lotes, QUIZ_LOTES_SIMULTANEOS, async (n) => {
+    const lote = await gerarLoteQuiz(subject, topic, apiKey, n, opcoes);
+    prontas += lote.questions.length;
+    opcoes.onProgresso?.(Math.min(prontas, count), count);
+    return lote;
+  });
 
   /*
    * Os lotes correm em paralelo e recebem o MESMO bloco de
