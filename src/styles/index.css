@@ -1830,3 +1830,52 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
+
+/* =========================================================
+   CARREGAMENTO CONTINUA VIVO COM MOVIMENTO REDUZIDO
+
+   As regras gerais de `prefers-reduced-motion` e `.a11y-sem-movimento`
+   zeram animação em TUDO — o que era certo para enfeite (orbes,
+   partículas, respiro do mascote) e errado para indicador de espera.
+
+   Um spinner congelado não comunica "respeitei sua preferência": ele
+   comunica "travou". O usuário fica olhando um círculo parado sem saber
+   se o app está trabalhando ou morreu, e essa dúvida é pior que a
+   animação que ele quis evitar.
+
+   A preferência continua respeitada, e por inteiro: o que a reduz é o
+   TIPO de movimento, não a existência dele. Rotação e deslocamento saem;
+   entra uma pulsação de opacidade, que não desloca nada na tela e por
+   isso não dispara desconforto vestibular — o motivo de existir dessa
+   preferência.
+   ========================================================= */
+
+@keyframes pulsarCarregando {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* `animate-spin` é a classe do Tailwind usada em todos os botões de
+     ação em andamento ("Gerando questões...", "Salvando...", etc.). */
+  .animate-spin {
+    animation: pulsarCarregando 1.4s ease-in-out infinite !important;
+    /* Sem o giro, a borda assimétrica viraria um detalhe torto parado. */
+    border-color: currentColor !important;
+    opacity: 0.6;
+  }
+
+  .skeleton {
+    animation: pulsarCarregando 1.8s ease-in-out infinite !important;
+  }
+}
+
+html.a11y-sem-movimento .animate-spin,
+html.a11y-sem-movimento .skeleton {
+  animation: pulsarCarregando 1.6s ease-in-out infinite !important;
+}
+
+html.a11y-sem-movimento .animate-spin {
+  border-color: currentColor !important;
+  opacity: 0.6;
+}
