@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, memo, useRef, useCallback } from 'react';
 import { m, useReducedMotion } from 'motion/react';
-import { atrasoDoItem, listContainer, listItem } from '../../shared/lib/motionPresets';
-import { AnimatedNumber, BarraProgresso } from '../../shared/ui/AnimatedNumber';
-import { BarChart3, BookOpen, Camera, ClipboardList, Flame, Frown, Moon, PenLine, Sparkles, Target, Timer, X } from 'lucide-react';
+import { listContainer, listItem } from '../../shared/lib/motionPresets';
+import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
+import { BarChart3, BookOpen, Camera, Flame, Frown, Moon, Sparkles, Target, Timer, X } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { getSSCColor, getSSCLabel } from '../../shared/lib/sscCalculator';
-import { DailyPlan, MicroTask, QuizResult } from '../../shared/types';
+import { MicroTask, QuizResult } from '../../shared/types';
 import { calcLevel, getToday, MOOD_LABEL, MOOD_COLOR } from '../../shared/lib/utils';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { safeSet } from '../../shared/lib/safeStorage';

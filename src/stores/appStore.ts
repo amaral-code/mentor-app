@@ -21,7 +21,6 @@ import { analyzeMoodWithAI } from '../shared/lib/aiService';
 import { generatePlan, XP_PER_TASK } from '../shared/lib/plannerEngine';
 import { userRepository } from '../shared/storage/UserRepository';
 import { supabaseRepository } from '../shared/storage/SupabaseRepository';
-import { isSupabaseConfigured } from '../shared/lib/supabase';
 import { safeSet } from '../shared/lib/safeStorage';
 import { calcLevel, getToday } from '../shared/lib/utils';
 

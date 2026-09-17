@@ -120,7 +120,6 @@ export function ProfilePage() {
     setToast(keyInput.trim() ? 'Chave API salva!' : 'Chave removida', 'success');
   }
 
-  const turmasFiltradas = turmas.filter(t => t.escolaId === escolaId);
 
   return (
     <div className="space-y-5 animate-fade-up max-w-lg mx-auto">

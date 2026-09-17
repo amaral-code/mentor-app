@@ -12,7 +12,8 @@ import { DoomscrollGuard } from '../shared/ui/DoomscrollGuard';
 import { PageSkeleton } from '../shared/ui/Skeleton';
 import { calcLevel } from '../shared/lib/utils';
 import { safeGet, safeSet } from '../shared/lib/safeStorage';
-import { AnimatedNumber, BarraProgresso } from '../shared/ui/AnimatedNumber';
+import { travarRolagem } from '../shared/lib/scrollLock';
+import { AnimatedNumber } from '../shared/ui/AnimatedNumber';
 import { pageEnter } from '../shared/lib/motionPresets';
 
 /*
@@ -289,15 +290,17 @@ export function AppShell() {
   }
 
   // Esc fecha o menu, e o scroll do fundo trava enquanto ele esta aberto.
+  // A trava e CONTADA (scrollLock): um modal aberto por cima do drawer
+  // tambem trava, e antes o primeiro a fechar destravava a pagina para os
+  // dois.
   useEffect(() => {
     if (!drawerAberto) return;
     const aoTeclar = (e: KeyboardEvent) => { if (e.key === 'Escape') setDrawerAberto(false); };
     document.addEventListener('keydown', aoTeclar);
-    const overflowAnterior = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const soltar = travarRolagem();
     return () => {
       document.removeEventListener('keydown', aoTeclar);
-      document.body.style.overflow = overflowAnterior;
+      soltar();
     };
   }, [drawerAberto]);
 

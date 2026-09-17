@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { m, useReducedMotion } from 'motion/react';
-import { atrasoDoItem, springTap } from '../../shared/lib/motionPresets';
+import { atrasoDoItem } from '../../shared/lib/motionPresets';
 import { useAppStore } from '../../stores/appStore';
 import { Flame, Gift, Lightbulb, Lock, Target, Zap } from 'lucide-react';
 import { useStoreStore } from '../../stores/storeStore';
