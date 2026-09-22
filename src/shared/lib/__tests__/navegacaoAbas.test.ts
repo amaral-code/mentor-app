@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ehTeclaNavegacao, proximoIndiceFoco, TECLAS_NAVEGACAO } from '../navegacaoAbas';
 
-/** A sidebar tem 15 abas; os casos usam esse tamanho real. */
-const TOTAL = 15;
+/** A sidebar tem 16 abas (a Sala de Foco entrou na lista); os casos usam esse tamanho real. */
+const TOTAL = 16;
 
 describe('proximoIndiceFoco', () => {
   it('seta para baixo anda um item', () => {
@@ -15,7 +15,7 @@ describe('proximoIndiceFoco', () => {
   });
 
   /*
-   * Circular nos dois sentidos: numa lista de 15, parar na ponta
+   * Circular nos dois sentidos: numa lista de 16, parar na ponta
    * obrigaria a percorrer tudo de volta para chegar ao outro extremo.
    */
   it('do ultimo para baixo volta ao primeiro', () => {

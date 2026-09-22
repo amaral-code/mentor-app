@@ -1,6 +1,6 @@
 import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
-import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, Headphones, House, LogOut, Menu, NotebookPen, PenLine, ShieldCheck, ShoppingBag, Target, Timer, Trophy, User, Users, X } from 'lucide-react';
+import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, Headphones, House, LogOut, Menu, NotebookPen, PenLine, ShieldCheck, ShoppingBag, Target, Timer, Trophy, User, Users, UsersRound, X } from 'lucide-react';
 import { MoonLogo } from '../shared/ui/MoonLogo';
 import { useAppStore } from '../stores/appStore';
 import { TabId } from '../shared/types';
@@ -34,6 +34,7 @@ const EstatisticasPage = lazy(() => import('../features/estatisticas/Estatistica
 const ProfilePage = lazy(() => import('../features/profile/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const RankingPage = lazy(() => import('../features/ranking/RankingPage').then(m => ({ default: m.RankingPage })));
 const FocoPage = lazy(() => import('../features/foco/FocoPage').then(m => ({ default: m.FocoPage })));
+const SalaFocoPage = lazy(() => import('../features/sala/SalaFocoPage').then(m => ({ default: m.SalaFocoPage })));
 const StudentStore = lazy(() => import('../features/store/StudentStore').then(m => ({ default: m.StudentStore })));
 const ComunidadePage = lazy(() => import('../features/comunidade/ComunidadePage').then(m => ({ default: m.ComunidadePage })));
 const EscudoPage = lazy(() => import('../features/escudo/EscudoPage').then(m => ({ default: m.EscudoPage })));
@@ -61,6 +62,7 @@ const TABS: Aba[] = [
   { id: 'chat', label: 'Mentor', icon: BookMarked },
   { id: 'essay', label: 'Redação', icon: PenLine },
   { id: 'foco', label: 'Foco', icon: Timer },
+  { id: 'sala', label: 'Sala de Foco', icon: UsersRound },
   { id: 'escudo', label: 'Escudo', icon: ShieldCheck },
   { id: 'quiz', label: 'Quiz', icon: Target },
   { id: 'estatisticas', label: 'Estatísticas', icon: BarChart3 },
@@ -357,6 +359,7 @@ const PaginaAtiva = memo(function PaginaAtiva({ aba }: { aba: TabId }) {
       case 'profile': return <ProfilePage />;
       case 'ranking': return <RankingPage />;
       case 'foco': return <FocoPage />;
+      case 'sala': return <SalaFocoPage />;
       case 'store': return <StudentStore />;
       case 'comunidade': return <ComunidadePage />;
       case 'escudo': return <EscudoPage />;
