@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Clock, MoonStar, Rocket, Sunrise, Sunset, Target } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Cake, Check, Clock, MoonStar, Rocket, Sunrise, Sunset, Target } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { safeSet } from '../../shared/lib/safeStorage';
 import { marcarOnboardingLocal } from '../../shared/lib/onboardingLocal';
+import { validarDataNascimento } from '../../shared/lib/vinculoCodigo';
 
 /**
  * ONBOARDING INTELIGENTE — wizard de primeiro acesso (tela cheia).
@@ -37,13 +38,14 @@ const TURNOS = [
   { id: 'noite', rotulo: 'Noite', icone: MoonStar },
 ] as const;
 
-const TOTAL_PASSOS = 4;
+const TOTAL_PASSOS = 5;
 
 export function OnboardingFlow() {
   const [passo, setPasso] = useState(1);
   const [metas, setMetas] = useState<string[]>([]);
   const [tempo, setTempo] = useState<string | null>(null);
   const [turno, setTurno] = useState<string | null>(null);
+  const [nascimento, setNascimento] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
@@ -55,8 +57,20 @@ export function OnboardingFlow() {
     setMetas((atuais) => (atuais.includes(meta) ? atuais.filter((m) => m !== meta) : [...atuais, meta]));
   }
 
+  /* Data em branco passa: a pergunta e obrigatoria de fazer, nao de
+     responder. Data PREENCHIDA e invalida trava - deixar passar
+     gravaria um ano errado, que e pior que nao ter data. */
+  const erroNascimento =
+    nascimento.trim() && !validarDataNascimento(nascimento).ok
+      ? (validarDataNascimento(nascimento) as { erro: string }).erro
+      : '';
+
   const podeAvancar =
-    passo === 1 || passo === 4 || (passo === 2 && metas.length > 0) || (passo === 3 && !!tempo && !!turno);
+    passo === 1 ||
+    passo === 5 ||
+    (passo === 2 && metas.length > 0) ||
+    (passo === 3 && !!tempo && !!turno) ||
+    (passo === 4 && !erroNascimento);
 
   async function finalizar() {
     if (!tempo || !turno || salvando) return;
@@ -65,7 +79,12 @@ export function OnboardingFlow() {
     try {
       // Persiste no perfil; se o banco falhar (offline, migration pendente),
       // segue local — ninguém fica preso no wizard por causa de infra.
-      const ok = await userRepository.concluirOnboarding({ metas, tempoDiario: tempo, turno });
+      const ok = await userRepository.concluirOnboarding({
+        metas,
+        tempoDiario: tempo,
+        turno,
+        dataNascimento: nascimento.trim() || null,
+      });
       concluirLocal({ metas, tempoDiario: tempo, turno });
       /* Marca DURAVEL, nao so em memoria: a volta para a aba recarrega o
          perfil do banco e sobrescreve a memoria. Sem isto, banco que nao
@@ -213,6 +232,53 @@ export function OnboardingFlow() {
           )}
 
           {passo === 4 && (
+            <div>
+              <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center mb-4">
+                <Cake size={20} className="text-white" />
+              </span>
+              <h1 className="text-xl font-extrabold text-white">Quando você nasceu?</h1>
+              {/* Dizer PARA QUE serve muda a taxa de resposta: sem o
+                  motivo, um campo de data no meio do cadastro parece
+                  coleta gratuita de dado pessoal. */}
+              <p className="text-sm text-gray-500 mt-1 mb-4 leading-relaxed">
+                Serve para uma coisa só: se você tem menos de 16 anos, falar com um
+                psicólogo pelo app precisa da autorização de um responsável. É a lei
+                (LGPD). Nada disso aparece para colegas ou professores.
+              </p>
+              <label htmlFor="ob-nascimento" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+                Data de nascimento
+              </label>
+              <input
+                id="ob-nascimento"
+                type="date"
+                value={nascimento}
+                onChange={(e) => setNascimento(e.target.value)}
+                aria-invalid={!!erroNascimento}
+                aria-describedby={erroNascimento ? 'ob-nascimento-erro' : undefined}
+                className={`w-full px-3 py-3 rounded-xl glass-light border text-sm text-white outline-none transition-colors min-h-[52px] ${
+                  erroNascimento ? 'border-red-500/50' : 'border-white/10 focus:border-amber-400/40'
+                }`}
+              />
+              {erroNascimento && (
+                <p id="ob-nascimento-erro" role="alert" className="text-xs text-red-400 mt-2">
+                  {erroNascimento}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => { setNascimento(''); setPasso(5); }}
+                className="text-xs text-gray-500 hover:text-amber-400 underline underline-offset-4 mt-4 min-h-[44px]"
+              >
+                Prefiro não informar agora
+              </button>
+              <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
+                Sem a data, o app pede a autorização do responsável por segurança.
+                Dá para preencher depois no Perfil.
+              </p>
+            </div>
+          )}
+
+          {passo === 5 && (
             <div className="text-center">
               <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(16,185,129,0.25)]">
                 <Rocket size={24} className="text-white" />

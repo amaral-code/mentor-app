@@ -122,6 +122,67 @@ trava isso (`aiService.bemestar.test.ts`).
   `SECURITY DEFINER`.
 - Foto de redação em bucket privado por dono (`essay_scans/<uid>/...`).
 
+## Perfis e áreas
+
+Seis papéis no banco; quatro aparecem na tela de login (`AuthPage`). O
+roteamento é por papel em `App.tsx`, não por rota de URL.
+
+| Papel | Tela | Escopo |
+| --- | --- | --- |
+| `student` | `AppShell` (16 abas) | Só os próprios dados. **Área completa.** |
+| `teacher` | `EducatorPage` | Só as turmas que leciona |
+| `educator` | `EducatorPage` | A escola inteira (secretaria) |
+| `parent` | `ParentPage` | Só os filhos com vínculo aceito |
+| `psychologist` | `PsicologoPage` | Só pacientes com consentimento vigente |
+| `admin` | — | Promoção de papel, só por SQL |
+
+`teacher` e `educator` compartilham a mesma tela **de propósito**: o que muda
+é o escopo dos dados, não o conjunto de funcionalidades. Quem decide o que
+cada um enxerga é a RLS, nunca o front — esconder um botão não protege nada.
+
+### Decisões de produto (não reabra sem falar com o dono)
+
+**Vínculo responsável ↔ aluno: por código gerado pelo ALUNO.**
+O aluno vê um código no Perfil e entrega a quem quiser; o responsável digita
+no painel. Implementado: funções `vincular_por_codigo`,
+`regenerar_codigo_vinculo`, `revogar_vinculo` e `meus_responsaveis`
+(migration 024). Quem controla o acesso aos próprios dados é o aluno. O fluxo
+antigo (responsável digita o email do aluno, aluno aprova) continua no
+`MarketplaceRepository.solicitarVinculo` e não deve ser removido sem migrar
+os vínculos existentes.
+
+**Relatório dos pais: números reais + parágrafo da IA.**
+Hoje `ParentsDashboard` é **100% mock** (`parentMockData.ts`, "Pedro
+Henrique"). Ligar aos dados verdadeiros é pré-requisito de qualquer coisa
+nova ali — relatório de IA sobre dado falso é pior que não ter relatório.
+
+**Consentimento do psicólogo: o aluno autoriza; menor de 16 exige o
+responsável.** É a regra da LGPD para dados de criança e adolescente.
+`perfis.data_nascimento` **já existe** (migration 024) e o onboarding
+pergunta. Data ausente conta como menor, no banco e na tela.
+O consentimento é revogável, tem escopo e validade — acesso a dado de saúde
+mental de menor não pode ser permanente nem implícito.
+
+### Tabelas planejadas (marketplace e acompanhamento)
+
+Já existem: `psicologos`, `psicologo_disponibilidade`, `agendamentos`,
+`vinculos_responsavel`, `alertas_saude_mental`, `telemetria_estudo`,
+`indice_burnout` (migrations 010/011).
+
+Faltam:
+
+| Tabela | Para quê |
+| --- | --- |
+| `consentimentos_dados` | Aluno/responsável libera psicólogo; escopo + validade + revogação |
+| `prontuario_notas` | Anotação confidencial de sessão. RLS: **só o psicólogo autor lê** |
+| `mensagens_apoio` | Canal psicólogo ↔ aluno/responsável |
+| `avaliacoes_psicologo` | Alimenta `psicologos.nota_media`, que hoje é coluna sem fonte |
+| ~~`perfis.data_nascimento`~~ | Feito na migration 024 |
+
+**Prontuário tem exigência legal** (CFP Res. 001/2009). O sigilo técnico está
+na RLS, mas conformidade legal precisa de validação profissional antes de uso
+com paciente real — isto é produto, não parecer jurídico.
+
 ## Testes
 
 Vitest. A lógica pura de `shared/lib/` é o que tem cobertura — mantenha a
@@ -130,6 +191,56 @@ lógica nova lá em vez de dentro do componente. Testes que mexem em env usam
 compatível com esse padrão.
 
 `server/__tests__/` cobre o worker com Node puro.
+
+## Changelog
+
+Registre aqui toda alteração relevante: rota nova, schema novo, componente
+principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-22 (tarde) — Vínculo por código, na tela
+- **Aluno**: `Perfil → Responsáveis` (`features/profile/SecaoResponsaveis.tsx`)
+  mostra o código, copia, gera um novo, lista quem acompanha e revoga.
+  Trocar o código **não** expulsa quem já entrou — a tela diz isso, porque
+  confundir as duas coisas faria o aluno achar que se livrou de um
+  acompanhamento que continua ativo.
+- **Responsável**: `EntrarPorCodigo` vira o caminho principal no
+  `PainelCuidado`; o pedido por e-mail continua existindo, recolhido num
+  `<details>`.
+- **Onboarding**: passo 5 pergunta a data de nascimento, com o motivo
+  escrito (regra dos 16 anos). **Responder é opcional** — sem data o app
+  trata como menor, que é o lado conservador; quem pula preenche depois
+  no Perfil.
+- `shared/lib/vinculoCodigo.ts`: normalização do código e a regra de
+  idade, espelhando `e_menor_de_16`. A idade é calculada sem
+  `new Date('AAAA-MM-DD')` — essa forma é meia-noite UTC e, num fuso a
+  oeste, volta um dia; na véspera do aniversário de 16 isso trocaria a
+  resposta da regra.
+- `perfis.data_nascimento` entrou no `select` de `carregarPerfil`: **exige
+  a migration 024 aplicada**, senão o login cai no fallback legado.
+
+### 2026-09-22
+- **Termômetro Cognitivo** (aba do painel educacional) e **Sala de Foco**
+  (body doubling do aluno, sem chat). Migrations **022** e **023** — precisam
+  ser rodadas no SQL Editor do Supabase. Feito por outra sessão; não revisado.
+- Arquitetura multi-perfil decidida e registrada acima.
+
+### 2026-09-18
+- Sistema de abas: `PaginaAtiva` memoizado, `XpFooter` assina o XP sozinho
+  (antes cada ganho re-renderizava a árvore inteira), seguidor medido sem
+  `setTimeout`, setas/Home/End no teclado, `aria-live` anunciando a seção.
+- Transição de aba mantém crossfade com movimento reduzido — desligar tudo
+  tirava a única pista de que a seção mudou.
+
+### 2026-09-17
+- **Configuração em runtime**: `/api/config` lê `process.env` a cada
+  requisição. `import.meta.env` é build-time e congelava valores no bundle.
+- **Back-end de IA na Vercel**: `server/worker.js` passa a rodar em três
+  ambientes; **um arquivo por rota** em `api/` (rota coringa capturava só um
+  segmento e derrubava `/api/chat/completions` com 404).
+- Quiz em lotes paralelos (`count * 500` tokens estourava o teto de 8192 do
+  servidor e nunca gerava acima de 17 questões).
+- Onboarding deixou de repetir a cada troca de aba; 9 animações mortas
+  revividas; safe-area no notch; zoom por pinça liberado.
 
 ## Pendências conhecidas
 

@@ -7,6 +7,7 @@ import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { calcLevel } from '../../shared/lib/utils';
 import { AppIcon } from '../../shared/ui/AppIcon';
 import { AcessibilidadePanel } from '../../shared/ui/AcessibilidadePanel';
+import { SecaoResponsaveis } from './SecaoResponsaveis';
 import { hasProxy, testGeneration, getAIProviderInfo } from '../../shared/lib/aiService';
 import type { Escola, Turma } from '../../shared/types';
 
@@ -60,6 +61,7 @@ export function ProfilePage() {
   const SECOES = [
     { id: 'secao-conta', rotulo: 'Conta' },
     { id: 'secao-escola', rotulo: 'Escola e códigos' },
+    { id: 'secao-responsaveis', rotulo: 'Responsáveis' },
     { id: 'secao-acessibilidade', rotulo: 'Acessibilidade' },
     { id: 'secao-ia', rotulo: 'IA' },
   ];
@@ -183,6 +185,8 @@ export function ProfilePage() {
           <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 xp-bar" style={{ width: `${(xpResto / xpMeta) * 100}%` }} />
         </div>
       </div>
+
+      <SecaoResponsaveis />
 
       {/* Escola e codigos: vinculo por codigo confidencial (email da secretaria) */}
       <div id="secao-escola" className="glass-card rounded-2xl p-5 scroll-mt-24">

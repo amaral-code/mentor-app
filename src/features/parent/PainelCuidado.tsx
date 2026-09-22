@@ -4,6 +4,7 @@ import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { bemEstarRepository } from '../../shared/storage/BemEstarRepository';
 import { focoOfflineRepository } from '../../shared/storage/FocoOfflineRepository';
 import { COR_CLASSE, ROTULO_CLASSE, FADIGA_ZERADA } from '../../shared/lib/burnoutModel';
+import { EntrarPorCodigo } from './EntrarPorCodigo';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
 import type { IndiceBurnout, RelatorioSemanal, SessaoOffline, SeveridadeAlerta } from '../../shared/types';
@@ -96,32 +97,39 @@ export function PainelCuidado() {
     return (
       <section className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-4">
         <div className="glass rounded-2xl p-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Link2 size={18} className="text-violet-400" /> Vincule a conta do estudante
-          </h2>
-          <p className="text-sm text-gray-400 mt-2 leading-relaxed">
-            Informe o e-mail que ele usa no app. Ele recebe o pedido e decide se aceita - e so entao os
-            dados de bem-estar aparecem aqui. Nem antes, nem sem que ele saiba.
-          </p>
+          <EntrarPorCodigo variante="destaque" aoVincular={() => void carregarVinculos()} />
 
-          <div className="flex flex-col sm:flex-row gap-2 mt-4">
-            <input
-              type="email"
-              value={emailAluno}
-              onChange={(e) => setEmailAluno(e.target.value)}
-              placeholder="email-do-estudante@exemplo.com"
-              className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-violet-500/40"
-            />
-            <button onClick={pedirVinculo} className="btn-primary px-5 text-sm">
-              Enviar pedido
-            </button>
-          </div>
-
-          {pendentes.length > 0 && (
-            <p className="text-xs text-amber-400/80 mt-3">
-              {pendentes.length} pedido(s) aguardando resposta do estudante.
+          {/* O pedido por e-mail continua aqui, recolhido: e o caminho de
+              quem nao tem o estudante por perto na hora. Fica em segundo
+              plano porque nele quem comeca e o adulto, e o estudante so
+              reage a um pedido que nao escolheu receber. */}
+          <details className="mt-5 group">
+            <summary className="text-xs text-gray-500 hover:text-violet-300 cursor-pointer list-none inline-flex items-center gap-1.5 min-h-[40px]">
+              <Link2 size={13} /> Não tem o código? Pedir por e-mail
+            </summary>
+            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+              O estudante recebe o pedido e decide se aceita — e só então os dados
+              aparecem aqui. Nem antes, nem sem que ele saiba.
             </p>
-          )}
+            <div className="flex flex-col sm:flex-row gap-2 mt-3">
+              <input
+                type="email"
+                value={emailAluno}
+                onChange={(e) => setEmailAluno(e.target.value)}
+                placeholder="email-do-estudante@exemplo.com"
+                aria-label="E-mail do estudante"
+                className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-violet-500/40 min-h-[44px]"
+              />
+              <button onClick={pedirVinculo} className="btn-secondary px-5 text-sm min-h-[44px]">
+                Enviar pedido
+              </button>
+            </div>
+            {pendentes.length > 0 && (
+              <p className="text-xs text-amber-400/80 mt-3">
+                {pendentes.length} pedido(s) aguardando resposta do estudante.
+              </p>
+            )}
+          </details>
         </div>
       </section>
     );
@@ -284,21 +292,26 @@ export function PainelCuidado() {
 
       {/* Vincular outro filho */}
       <div className="glass rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-          <Link2 size={15} className="text-violet-400" /> Vincular outro estudante
-        </h2>
-        <div className="flex flex-col sm:flex-row gap-2 mt-3">
-          <input
-            type="email"
-            value={emailAluno}
-            onChange={(e) => setEmailAluno(e.target.value)}
-            placeholder="email-do-estudante@exemplo.com"
-            className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-violet-500/40"
-          />
-          <button onClick={pedirVinculo} className="btn-secondary px-5 text-sm">
-            Enviar pedido
-          </button>
-        </div>
+        <EntrarPorCodigo aoVincular={() => void carregarVinculos()} />
+
+        <details className="mt-4">
+          <summary className="text-xs text-gray-500 hover:text-violet-300 cursor-pointer list-none inline-flex items-center gap-1.5 min-h-[40px]">
+            <Link2 size={13} /> Não tem o código? Pedir por e-mail
+          </summary>
+          <div className="flex flex-col sm:flex-row gap-2 mt-3">
+            <input
+              type="email"
+              value={emailAluno}
+              onChange={(e) => setEmailAluno(e.target.value)}
+              placeholder="email-do-estudante@exemplo.com"
+              aria-label="E-mail do estudante"
+              className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-violet-500/40 min-h-[44px]"
+            />
+            <button onClick={pedirVinculo} className="btn-secondary px-5 text-sm min-h-[44px]">
+              Enviar pedido
+            </button>
+          </div>
+        </details>
       </div>
     </section>
   );

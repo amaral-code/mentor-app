@@ -45,6 +45,11 @@ const ARQUIVOS = [
   '017_reiniciar_indice.sql',
   '018_instituicao_convites.sql',
   '019_focus_metrics.sql',
+  '020_insights_turma.sql',
+  '021_onboarding.sql',
+  '022_termometro_cognitivo.sql',
+  '023_sala_foco.sql',
+  '024_vinculo_por_codigo.sql',
 ];
 
 let db;
@@ -121,6 +126,163 @@ beforeAll(async () => {
   );
 }, 120_000);
 
+describe('vinculo por codigo (024)', () => {
+  /*
+   * Fixtures PROPRIAS, nao as compartilhadas.
+   *
+   * Estes testes criam e revogam vinculos entre aluno e responsavel. Com
+   * as fixtures comuns, o vinculo ativo que eles deixam para tras fazia
+   * o teste antigo de `solicitar_vinculo` (que espera nascer 'pendente')
+   * falhar - um teste sabotando o outro por ordem de execucao.
+   */
+  let filho;
+  let mae;
+  let intruso;
+
+  beforeAll(async () => {
+    const criar = async (email, nome) =>
+      (await db.query(
+        `insert into auth.users (email, raw_user_meta_data)
+         values ($1::text, jsonb_build_object('nome', $2::text)) returning id`,
+        [email, nome],
+      )).rows[0].id;
+
+    filho = await criar('filho024@test.br', 'Bia Aluna');
+    mae = await criar('mae024@test.br', 'Cida Mae');
+    intruso = await criar('intruso024@test.br', 'Ze Intruso');
+    await db.query(`update public.perfis set papel='parent' where id=$1`, [mae]);
+  });
+
+  /** Codigo do aluno, lido direto no banco (o dono le pela RLS). */
+  const codigoDoAluno = async () =>
+    (await db.query(`select codigo_vinculo from public.perfis where id=$1`, [filho])).rows[0].codigo_vinculo;
+
+  it('todo perfil nasce com um codigo de 8 caracteres', async () => {
+    const codigo = await codigoDoAluno();
+    expect(codigo).toMatch(/^[0-9A-F]{8}$/);
+  });
+
+  it('o responsavel entra com o codigo e o vinculo nasce ATIVO', async () => {
+    // Entregar o codigo JA E o consentimento: nao pede segunda aprovacao.
+    const r = await comoUsuario(mae, `select * from public.vincular_por_codigo($1)`, [
+      await codigoDoAluno(),
+    ]);
+    expect(r.rows[0].status).toBe('ativo');
+    expect(r.rows[0].aluno_id).toBe(filho);
+  });
+
+  it('o aluno e notificado - vinculo silencioso seria vigilancia', async () => {
+    const r = await db.query(
+      `select titulo from public.notificacoes where user_id=$1 and tipo='vinculo'`,
+      [filho],
+    );
+    expect(r.rows.length).toBeGreaterThan(0);
+  });
+
+  it('o aluno ve quem o acompanha', async () => {
+    const r = await comoUsuario(filho, `select * from public.meus_responsaveis()`);
+    expect(r.rows.map((x) => x.email)).toContain('mae024@test.br');
+  });
+
+  it('codigo invalido e recusado', async () => {
+    await expect(
+      comoUsuario(mae, `select public.vincular_por_codigo('NAOEXISTE')`),
+    ).rejects.toThrow(/codigo invalido/);
+  });
+
+  /*
+   * Sem esta trava, um aluno com o codigo de outro viraria "responsavel"
+   * dele e leria tudo - humor, burnout, horarios de estudo.
+   */
+  it('quem NAO e responsavel nao usa codigo de vinculo', async () => {
+    await expect(
+      comoUsuario(intruso, `select public.vincular_por_codigo($1)`, [await codigoDoAluno()]),
+    ).rejects.toThrow(/apenas responsaveis/);
+  });
+
+  it('o aluno revoga o vinculo', async () => {
+    const v = (await comoUsuario(filho, `select id from public.meus_responsaveis()`)).rows[0].id;
+    await comoUsuario(filho, `select public.revogar_vinculo($1)`, [v]);
+    const r = await db.query(`select status from public.vinculos_responsavel where id=$1`, [v]);
+    expect(r.rows[0].status).toBe('revogado');
+  });
+
+  /*
+   * Reentrante de proposito: quem revogou por engano so digita o codigo
+   * de novo, em vez de bater no unique (responsavel_id, aluno_id).
+   */
+  it('vincular de novo depois de revogar reativa', async () => {
+    const r = await comoUsuario(mae, `select * from public.vincular_por_codigo($1)`, [
+      await codigoDoAluno(),
+    ]);
+    expect(r.rows[0].status).toBe('ativo');
+  });
+
+  it('o responsavel tambem pode sair do vinculo', async () => {
+    const v = (await comoUsuario(filho, `select id from public.meus_responsaveis()`)).rows[0].id;
+    await comoUsuario(mae, `select public.revogar_vinculo($1)`, [v]);
+    const r = await db.query(`select status from public.vinculos_responsavel where id=$1`, [v]);
+    expect(r.rows[0].status).toBe('revogado');
+  });
+
+  it('estranho nao revoga vinculo alheio', async () => {
+    await comoUsuario(mae, `select public.vincular_por_codigo($1)`, [await codigoDoAluno()]);
+    const v = (await comoUsuario(filho, `select id from public.meus_responsaveis()`)).rows[0].id;
+    await expect(
+      comoUsuario(intruso, `select public.revogar_vinculo($1)`, [v]),
+    ).rejects.toThrow(/nao encontrado/);
+  });
+
+  it('regenerar troca o codigo e invalida o antigo', async () => {
+    const antigo = await codigoDoAluno();
+    const novo = (await comoUsuario(filho, `select public.regenerar_codigo_vinculo() as c`)).rows[0].c;
+    expect(novo).not.toBe(antigo);
+    expect(novo).toMatch(/^[0-9A-F]{8}$/);
+    await expect(
+      comoUsuario(mae, `select public.vincular_por_codigo($1)`, [antigo]),
+    ).rejects.toThrow(/codigo invalido/);
+  });
+
+  /*
+   * Regra de consentimento (LGPD art. 14): o aluno autoriza, mas menor
+   * de 16 exige o responsavel. Sem data de nascimento devolve TRUE - o
+   * erro seguro e exigir responsavel de quem ja podia consentir, nunca
+   * liberar dado de saude mental de um menor sem base legal.
+   */
+  describe('e_menor_de_16', () => {
+    it('sem data de nascimento trata como MENOR', async () => {
+      await db.query(`update public.perfis set data_nascimento=null where id=$1`, [filho]);
+      const r = await db.query(`select public.e_menor_de_16($1) as m`, [filho]);
+      expect(r.rows[0].m).toBe(true);
+    });
+
+    it('15 anos e menor', async () => {
+      await db.query(
+        `update public.perfis set data_nascimento = current_date - interval '15 years' where id=$1`,
+        [filho],
+      );
+      expect((await db.query(`select public.e_menor_de_16($1) as m`, [filho])).rows[0].m).toBe(true);
+    });
+
+    it('17 anos NAO e menor', async () => {
+      await db.query(
+        `update public.perfis set data_nascimento = current_date - interval '17 years' where id=$1`,
+        [filho],
+      );
+      expect((await db.query(`select public.e_menor_de_16($1) as m`, [filho])).rows[0].m).toBe(false);
+    });
+
+    it('exatamente 16 anos hoje NAO e menor', async () => {
+      // Fronteira: quem faz 16 hoje ja consente sozinho.
+      await db.query(
+        `update public.perfis set data_nascimento = current_date - interval '16 years' where id=$1`,
+        [filho],
+      );
+      expect((await db.query(`select public.e_menor_de_16($1) as m`, [filho])).rows[0].m).toBe(false);
+    });
+  });
+});
+
 describe('estrutura', () => {
   it('cria as 17 tabelas do modulo', async () => {
     const esperadas = [
@@ -143,8 +305,18 @@ describe('estrutura', () => {
   });
 
   it('o trigger de signup cria perfil para cada conta', async () => {
-    const r = await db.query('select count(*)::int n from public.perfis');
-    expect(r.rows[0].n).toBe(4);
+    /*
+     * Compara as duas contagens em vez de fixar um numero.
+     *
+     * Antes esperava `4`, o total de fixtures da epoca - entao qualquer
+     * suite que criasse um usuario proprio derrubava este teste, que nao
+     * tem nada a ver com quantas contas existem. O que ele afirma, e o
+     * que o nome dele promete, e que NENHUMA conta fica sem perfil.
+     */
+    const contas = await db.query('select count(*)::int n from auth.users');
+    const perfis = await db.query('select count(*)::int n from public.perfis');
+    expect(perfis.rows[0].n).toBe(contas.rows[0].n);
+    expect(contas.rows[0].n).toBeGreaterThan(0);
   });
 
   it('a persona ativa cabe em texto (professores embutidos tem id nao-numerico)', async () => {
