@@ -36,6 +36,13 @@ export interface DadosOnboarding {
   metas: string[];
   tempoDiario: string;
   turno: string;
+  /**
+   * Opcional de proposito: quem prefere nao dizer segue no app. A regra
+   * de consentimento trata ausencia como menor de 16, que e o lado
+   * conservador - ninguem fica de fora, so passa a precisar do
+   * responsavel para liberar o psicologo.
+   */
+  dataNascimento?: string | null;
 }
 
 export class UserRepository {
@@ -44,13 +51,14 @@ export class UserRepository {
     const sb = getSupabase();
     if (!sb) return null;
 
-    // Colunas do onboarding (migration 021). Banco ainda sem a migration:
+    // Colunas do onboarding (021) e a data de nascimento (024). Banco
+    // ainda sem a migration:
     // o select completo falha e o fallback legado mantem o login de pe,
     // marcando primeiro-acesso para o wizard aparecer de qualquer forma.
     const { data, error } = await comTimeout(
       sb
         .from('perfis')
-        .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha, onboarding_completed, metas_estudo, tempo_diario_estudo, turno_estudo')
+        .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha, onboarding_completed, metas_estudo, tempo_diario_estudo, turno_estudo, data_nascimento')
         .eq('id', uid)
         .maybeSingle(),
       TIMEOUT_AUTH_MS,
@@ -73,6 +81,7 @@ export class UserRepository {
         metasEstudo: Array.isArray(data.metas_estudo) ? data.metas_estudo : [],
         tempoDiarioEstudo: data.tempo_diario_estudo ?? null,
         turnoEstudo: data.turno_estudo ?? null,
+        dataNascimento: data.data_nascimento ?? null,
       };
     }
 
@@ -258,7 +267,26 @@ export class UserRepository {
         metas_estudo: dados.metas,
         tempo_diario_estudo: dados.tempoDiario,
         turno_estudo: dados.turno,
+        // Sem data informada o campo nem entra no update: gravar null
+        // apagaria uma data que o perfil ja tivesse.
+        ...(dados.dataNascimento ? { data_nascimento: dados.dataNascimento } : {}),
       })
+      .eq('id', auth.user.id);
+    return !error;
+  }
+
+  /**
+   * Usada pelo Perfil, para quem pulou a pergunta no onboarding ou
+   * digitou errado. `false` quando o banco recusou (offline, RLS).
+   */
+  async salvarDataNascimento(iso: string): Promise<boolean> {
+    const sb = getSupabase();
+    if (!sb) return false;
+    const { data: auth } = await sb.auth.getUser();
+    if (!auth.user) return false;
+    const { error } = await sb
+      .from('perfis')
+      .update({ data_nascimento: iso })
       .eq('id', auth.user.id);
     return !error;
   }

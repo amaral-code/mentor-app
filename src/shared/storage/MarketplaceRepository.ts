@@ -1,11 +1,13 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
 import { aiProxyToken, temBackendIA, urlBackendIA } from '../lib/runtimeConfig';
+import { normalizarCodigo } from '../lib/vinculoCodigo';
 import type {
   Agendamento,
   AlertaSaudeMental,
   JanelaDisponibilidade,
   Notificacao,
   Psicologo,
+  ResponsavelVinculado,
   SlotAgenda,
   StatusAlerta,
   VinculoResponsavel,
@@ -359,6 +361,91 @@ export class MarketplaceRepository {
     return vinculos
       .filter((v) => v.status === 'ativo' && v.responsavelId === uid)
       .map((v) => ({ id: v.alunoId, nome: v.alunoNome ?? 'Estudante' }));
+  }
+
+  // -----------------------------------------------------------------
+  // Vinculo POR CODIGO (migration 024) - caminho principal
+  //
+  // Inverte quem comeca: em vez de o responsavel pedir pelo email do
+  // aluno, o ALUNO gera um codigo e entrega a quem quiser. Entregar o
+  // codigo ja e o consentimento, entao o vinculo nasce ativo.
+  // -----------------------------------------------------------------
+
+  /** Codigo do proprio aluno. `null` = banco sem a migration 024. */
+  async meuCodigoVinculo(): Promise<string | null> {
+    if (!clienteAtivo()) return null;
+    const sb = getSupabase()!;
+    const uid = await uidAtual();
+    if (!uid) return null;
+    const { data, error } = await sb
+      .from('perfis')
+      .select('codigo_vinculo')
+      .eq('id', uid)
+      .maybeSingle();
+    if (error) {
+      falhou('meuCodigoVinculo', error);
+      return null;
+    }
+    return (data as { codigo_vinculo?: string } | null)?.codigo_vinculo ?? null;
+  }
+
+  /** Invalida o codigo vazado. Nao expulsa quem ja esta vinculado. */
+  async regenerarCodigoVinculo(): Promise<string> {
+    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('regenerar_codigo_vinculo');
+    if (error) exigir('regenerar_codigo_vinculo', error);
+    return String(data ?? '');
+  }
+
+  /** Chamada pelo RESPONSAVEL, com o codigo que o aluno entregou. */
+  async vincularPorCodigo(codigo: string, parentesco = 'responsavel'): Promise<VinculoResponsavel> {
+    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('vincular_por_codigo', {
+      p_codigo: normalizarCodigo(codigo),
+      p_parentesco: parentesco,
+    });
+    if (error) exigir('vincular_por_codigo', error);
+    const r: any = Array.isArray(data) ? data[0] : data;
+    return {
+      id: r.id,
+      responsavelId: r.responsavel_id,
+      alunoId: r.aluno_id,
+      parentesco: r.parentesco,
+      status: r.status,
+      criadoEm: r.criado_em,
+    };
+  }
+
+  /**
+   * Quem acompanha o aluno logado. Sem esta lista o codigo seria porta
+   * sem olho magico: da para abrir, nao da para saber quem entrou.
+   */
+  async meusResponsaveis(): Promise<ResponsavelVinculado[]> {
+    if (!clienteAtivo()) return [];
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('meus_responsaveis');
+    if (error) {
+      falhou('meus_responsaveis', error);
+      return [];
+    }
+    return (data ?? []).map((r: any) => ({
+      id: r.id,
+      nome: r.responsavel ?? 'Responsável',
+      email: r.email ?? '',
+      parentesco: r.parentesco ?? 'responsavel',
+      status: r.status,
+      desde: r.desde ?? null,
+    }));
+  }
+
+  /** Encerra o vinculo. Os DOIS lados podem chamar (RLS confere). */
+  async revogarVinculo(id: string): Promise<void> {
+    if (!clienteAtivo()) return;
+    const sb = getSupabase()!;
+    const { error } = await sb.rpc('revogar_vinculo', { p_vinculo: id });
+    if (error) exigir('revogar_vinculo', error);
   }
 
   // =================================================================

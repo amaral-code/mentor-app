@@ -144,7 +144,9 @@ cada um enxerga é a RLS, nunca o front — esconder um botão não protege nada
 
 **Vínculo responsável ↔ aluno: por código gerado pelo ALUNO.**
 O aluno vê um código no Perfil e entrega a quem quiser; o responsável digita
-no cadastro. Quem controla o acesso aos próprios dados é o aluno. O fluxo
+no painel. Implementado: funções `vincular_por_codigo`,
+`regenerar_codigo_vinculo`, `revogar_vinculo` e `meus_responsaveis`
+(migration 024). Quem controla o acesso aos próprios dados é o aluno. O fluxo
 antigo (responsável digita o email do aluno, aluno aprova) continua no
 `MarketplaceRepository.solicitarVinculo` e não deve ser removido sem migrar
 os vínculos existentes.
@@ -156,7 +158,8 @@ nova ali — relatório de IA sobre dado falso é pior que não ter relatório.
 
 **Consentimento do psicólogo: o aluno autoriza; menor de 16 exige o
 responsável.** É a regra da LGPD para dados de criança e adolescente.
-Implica guardar `data_nascimento` em `perfis`, que **ainda não existe**.
+`perfis.data_nascimento` **já existe** (migration 024) e o onboarding
+pergunta. Data ausente conta como menor, no banco e na tela.
 O consentimento é revogável, tem escopo e validade — acesso a dado de saúde
 mental de menor não pode ser permanente nem implícito.
 
@@ -174,7 +177,7 @@ Faltam:
 | `prontuario_notas` | Anotação confidencial de sessão. RLS: **só o psicólogo autor lê** |
 | `mensagens_apoio` | Canal psicólogo ↔ aluno/responsável |
 | `avaliacoes_psicologo` | Alimenta `psicologos.nota_media`, que hoje é coluna sem fonte |
-| `perfis.data_nascimento` | Regra dos 16 anos do consentimento |
+| ~~`perfis.data_nascimento`~~ | Feito na migration 024 |
 
 **Prontuário tem exigência legal** (CFP Res. 001/2009). O sigilo técnico está
 na RLS, mas conformidade legal precisa de validação profissional antes de uso
@@ -193,6 +196,27 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-22 (tarde) — Vínculo por código, na tela
+- **Aluno**: `Perfil → Responsáveis` (`features/profile/SecaoResponsaveis.tsx`)
+  mostra o código, copia, gera um novo, lista quem acompanha e revoga.
+  Trocar o código **não** expulsa quem já entrou — a tela diz isso, porque
+  confundir as duas coisas faria o aluno achar que se livrou de um
+  acompanhamento que continua ativo.
+- **Responsável**: `EntrarPorCodigo` vira o caminho principal no
+  `PainelCuidado`; o pedido por e-mail continua existindo, recolhido num
+  `<details>`.
+- **Onboarding**: passo 5 pergunta a data de nascimento, com o motivo
+  escrito (regra dos 16 anos). **Responder é opcional** — sem data o app
+  trata como menor, que é o lado conservador; quem pula preenche depois
+  no Perfil.
+- `shared/lib/vinculoCodigo.ts`: normalização do código e a regra de
+  idade, espelhando `e_menor_de_16`. A idade é calculada sem
+  `new Date('AAAA-MM-DD')` — essa forma é meia-noite UTC e, num fuso a
+  oeste, volta um dia; na véspera do aniversário de 16 isso trocaria a
+  resposta da regra.
+- `perfis.data_nascimento` entrou no `select` de `carregarPerfil`: **exige
+  a migration 024 aplicada**, senão o login cai no fallback legado.
 
 ### 2026-09-22
 - **Termômetro Cognitivo** (aba do painel educacional) e **Sala de Foco**
