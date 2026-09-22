@@ -335,6 +335,8 @@ export interface CommunityChatFilter {
 export type TabId =
   | 'dashboard' | 'chat' | 'essay' | 'notebook' | 'quiz' | 'profile' | 'ranking'
   | 'foco' | 'comunidade' | 'store'
+  // Sala de Foco (body doubling, migration 023)
+  | 'sala'
   // Modulo de bem-estar (migracoes 010/011)
   | 'escudo' | 'audio' | 'calendario' | 'cuidado'
   // Agenda de consultas com psicologos (marketplace)

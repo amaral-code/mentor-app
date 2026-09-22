@@ -5,6 +5,7 @@ import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { hasProxy } from '../../shared/lib/aiService';
 import { EducatorInsights } from './EducatorInsights';
+import { TermometroCognitivo } from './TermometroCognitivo';
 import { n8nWebhookUrl } from '../../shared/lib/runtimeConfig';
 import Papa from 'papaparse';
 
@@ -146,7 +147,7 @@ export function EducatorPage() {
   const session = useAppStore((s) => s.session);
   const logout = useAppStore((s) => s.logout);
   /** EPICO 3: `/educador/dashboard` do spec = esta aba no SPA. */
-  const [aba, setAba] = useState<'turmas' | 'insights'>('turmas');
+  const [aba, setAba] = useState<'turmas' | 'insights' | 'termometro'>('turmas');
   const [modo, setModo] = useState<ModoEntrada>('csv');
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
@@ -511,9 +512,9 @@ export function EducatorPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 md:px-8 py-8 space-y-6 animate-fade-up">
-        {/* EPICO 3: abas Onboarding | Insights (dashboard em lote). */}
+        {/* EPICO 3: abas Onboarding | Insights | Termometro (dashboard em lote). */}
         <div role="tablist" aria-label="Painel educacional" className="flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 w-fit">
-          {(['turmas', 'insights'] as const).map((t) => (
+          {(['turmas', 'insights', 'termometro'] as const).map((t) => (
             <button
               key={t}
               role="tab"
@@ -523,13 +524,15 @@ export function EducatorPage() {
                 aba === t ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:text-white border border-transparent'
               }`}
             >
-              {t === 'turmas' ? 'Onboarding' : 'Insights da turma'}
+              {t === 'turmas' ? 'Onboarding' : t === 'insights' ? 'Insights da turma' : 'Termômetro'}
             </button>
           ))}
         </div>
 
         {aba === 'insights' ? (
           <EducatorInsights />
+        ) : aba === 'termometro' ? (
+          <TermometroCognitivo />
         ) : (
         <>
         {/* Welcome */}
