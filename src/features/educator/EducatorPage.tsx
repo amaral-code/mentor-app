@@ -6,6 +6,8 @@ import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { hasProxy } from '../../shared/lib/aiService';
 import { EducatorInsights } from './EducatorInsights';
 import { TermometroCognitivo } from './TermometroCognitivo';
+import { ProfessoresDaTurma } from './ProfessoresDaTurma';
+import { docenteRepository } from '../../shared/storage/DocenteRepository';
 import { n8nWebhookUrl } from '../../shared/lib/runtimeConfig';
 import Papa from 'papaparse';
 
@@ -147,7 +149,10 @@ export function EducatorPage() {
   const session = useAppStore((s) => s.session);
   const logout = useAppStore((s) => s.logout);
   /** EPICO 3: `/educador/dashboard` do spec = esta aba no SPA. */
-  const [aba, setAba] = useState<'turmas' | 'insights' | 'termometro'>('turmas');
+  const [aba, setAba] = useState<'turmas' | 'insights' | 'termometro' | 'professores'>('turmas');
+  /* `null` enquanto carrega: sem isso o aviso de "nenhuma turma" pisca
+     na tela de todo professor no primeiro render. */
+  const [turmasDoEscopo, setTurmasDoEscopo] = useState<number | null>(null);
   const [modo, setModo] = useState<ModoEntrada>('csv');
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
@@ -185,6 +190,14 @@ export function EducatorPage() {
   const [tutorialAberto, setTutorialAberto] = useState(() => safeGet(CHAVE_TUTORIAL) !== '1');
   const [passoTutorial, setPassoTutorial] = useState(0);
   const [destaque, setDestaque] = useState<string | null>(null);
+
+  useEffect(() => {
+    let vivo = true;
+    void docenteRepository.minhasTurmas().then((t) => vivo && setTurmasDoEscopo(t.length));
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   // Rascunho da tabela sobrevive ao F5 (só neste navegador).
   useEffect(() => {
@@ -513,23 +526,51 @@ export function EducatorPage() {
 
       <main className="max-w-3xl mx-auto px-4 md:px-8 py-8 space-y-6 animate-fade-up">
         {/* EPICO 3: abas Onboarding | Insights | Termometro (dashboard em lote). */}
-        <div role="tablist" aria-label="Painel educacional" className="flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 w-fit">
-          {(['turmas', 'insights', 'termometro'] as const).map((t) => (
+        {/* `w-fit` sozinho estourava a largura no celular: com a quarta aba
+            (Docentes) a fila passa de 390px e empurrava a pagina inteira
+            para o lado. Rola na horizontal em vez de vazar. */}
+        <div role="tablist" aria-label="Painel educacional" className="flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 w-fit max-w-full overflow-x-auto">
+          {(podeGerenciar
+            ? (['turmas', 'insights', 'termometro', 'professores'] as const)
+            : (['turmas', 'insights', 'termometro'] as const)
+          ).map((t) => (
             <button
               key={t}
               role="tab"
               aria-selected={aba === t}
               onClick={() => setAba(t)}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+              className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
                 aba === t ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:text-white border border-transparent'
               }`}
             >
-              {t === 'turmas' ? 'Onboarding' : t === 'insights' ? 'Insights da turma' : 'Termômetro'}
+              {t === 'turmas'
+                ? 'Onboarding'
+                : t === 'insights'
+                  ? 'Insights da turma'
+                  : t === 'termometro'
+                    ? 'Termômetro'
+                    : 'Docentes'}
             </button>
           ))}
         </div>
 
-        {aba === 'insights' ? (
+        {/* Professor recem-criado nao tem turma nenhuma ate a secretaria
+            vincular (migration 026). Sem este aviso, o painel dele fica
+            vazio e parece defeito do app. */}
+        {!podeGerenciar && turmasDoEscopo === 0 && (
+          <div className="glass rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-5" role="status">
+            <h2 className="text-sm font-bold text-amber-300">Você ainda não está em nenhuma turma</h2>
+            <p className="text-sm text-amber-200/80 mt-2 leading-relaxed">
+              Os painéis abaixo só mostram dados das turmas em que você leciona. Peça à
+              secretaria da escola para te vincular às suas turmas: é na aba Docentes, no
+              painel dela.
+            </p>
+          </div>
+        )}
+
+        {aba === 'professores' ? (
+          <ProfessoresDaTurma />
+        ) : aba === 'insights' ? (
           <EducatorInsights />
         ) : aba === 'termometro' ? (
           <TermometroCognitivo />

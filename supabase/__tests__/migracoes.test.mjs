@@ -51,6 +51,7 @@ const ARQUIVOS = [
   '023_sala_foco.sql',
   '024_vinculo_por_codigo.sql',
   '025_resumo_para_responsavel.sql',
+  '026_professor_por_turma.sql',
 ];
 
 let db;
@@ -967,5 +968,168 @@ describe('resumo do aluno para o responsavel (025)', () => {
     await expect(
       comoUsuario(vizinho, `select * from public.ficha_aluno($1)`, [aluna]),
     ).rejects.toThrow(/sem permissao/);
+  });
+});
+
+describe('professor por turma (026)', () => {
+  /*
+   * O buraco que a 026 fecha: antes da vinculacao existir, QUALQUER
+   * teacher lia o termometro de todas as turmas do colegio. Estes casos
+   * provam que agora o escopo e o vinculo, e que quem vincula e so a
+   * secretaria.
+   */
+  let escola;
+  let turmaA;
+  let turmaB;
+  let secretaria;
+  let profA;
+  let profIntruso;
+  let alunoQualquer;
+
+  beforeAll(async () => {
+    const criar = async (email, nome) =>
+      (await db.query(
+        `insert into auth.users (email, raw_user_meta_data)
+         values ($1::text, jsonb_build_object('nome', $2::text)) returning id`,
+        [email, nome],
+      )).rows[0].id;
+
+    escola = (await db.query(
+      `insert into public.escolas (nome) values ('EE Teste 026') returning id`,
+    )).rows[0].id;
+    turmaA = (await db.query(
+      `insert into public.turmas (escola_id, nome) values ($1, '3A') returning id`, [escola],
+    )).rows[0].id;
+    turmaB = (await db.query(
+      `insert into public.turmas (escola_id, nome) values ($1, '3B') returning id`, [escola],
+    )).rows[0].id;
+
+    secretaria = await criar('sec026@test.br', 'Sec Escola');
+    profA = await criar('prof026a@test.br', 'Prof da 3A');
+    profIntruso = await criar('prof026b@test.br', 'Prof de outra sala');
+    alunoQualquer = await criar('aluno026@test.br', 'Aluno Teste');
+
+    await db.query(`update public.perfis set papel='educator', escola_id=$2 where id=$1`, [secretaria, escola]);
+    await db.query(`update public.perfis set papel='teacher', escola_id=$2 where id=$1`, [profA, escola]);
+    await db.query(`update public.perfis set papel='teacher', escola_id=$2 where id=$1`, [profIntruso, escola]);
+    await db.query(`update public.perfis set escola_id=$2, turma_id=$3 where id=$1`, [alunoQualquer, escola, turmaA]);
+  });
+
+  it('professor sem vinculo nao tem turma nenhuma', async () => {
+    const turmas = await linhas(profA, `select * from public.minhas_turmas()`);
+    expect(turmas).toHaveLength(0);
+  });
+
+  it('a secretaria enxerga a escola inteira sem precisar de vinculo', async () => {
+    const turmas = await linhas(secretaria, `select * from public.minhas_turmas()`);
+    expect(turmas.map((t) => t.nome).sort()).toEqual(['3A', '3B']);
+  });
+
+  it('a secretaria vincula o professor a uma turma', async () => {
+    await comoUsuario(secretaria,
+      `select public.atribuir_professor_turma($1, $2)`, [profA, turmaA]);
+    const turmas = await linhas(profA, `select * from public.minhas_turmas()`);
+    expect(turmas.map((t) => t.nome)).toEqual(['3A']);
+  });
+
+  /* O caso que da nome ao arquivo: vinculado a 3A, nao enxerga a 3B. */
+  it('professor vinculado a uma turma nao enxerga a outra', async () => {
+    const turmas = await linhas(profA, `select * from public.minhas_turmas()`);
+    expect(turmas.map((t) => t.id)).not.toContain(turmaB);
+    const podeA = await primeira(profA, `select public.leciona_na_turma($1) as ok`, [turmaA]);
+    const podeB = await primeira(profA, `select public.leciona_na_turma($1) as ok`, [turmaB]);
+    expect(podeA.ok).toBe(true);
+    expect(podeB.ok).toBe(false);
+  });
+
+  it('professor nao se auto-vincula', async () => {
+    await expect(
+      comoUsuario(profIntruso, `select public.atribuir_professor_turma($1, $2)`, [profIntruso, turmaB]),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  it('nem vincula um colega', async () => {
+    await expect(
+      comoUsuario(profIntruso, `select public.atribuir_professor_turma($1, $2)`, [profA, turmaB]),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  it('aluno nao entra como docente de turma', async () => {
+    await expect(
+      comoUsuario(secretaria, `select public.atribuir_professor_turma($1, $2)`, [alunoQualquer, turmaA]),
+    ).rejects.toThrow(/docente/);
+  });
+
+  it('docente de outra escola nao pode ser vinculado', async () => {
+    const fora = (await db.query(
+      `insert into auth.users (email, raw_user_meta_data)
+       values ('prof026fora@test.br', jsonb_build_object('nome','Prof de Fora')) returning id`,
+    )).rows[0].id;
+    await db.query(`update public.perfis set papel='teacher' where id=$1`, [fora]);
+
+    await expect(
+      comoUsuario(secretaria, `select public.atribuir_professor_turma($1, $2)`, [fora, turmaA]),
+    ).rejects.toThrow(/mesma escola/);
+  });
+
+  it('vincular duas vezes nao estoura: e reentrante', async () => {
+    await comoUsuario(secretaria, `select public.atribuir_professor_turma($1, $2)`, [profA, turmaA]);
+    const turmas = await linhas(profA, `select * from public.minhas_turmas()`);
+    expect(turmas).toHaveLength(1);
+  });
+
+  it('a secretaria desvincula e o acesso some', async () => {
+    await comoUsuario(secretaria, `select public.atribuir_professor_turma($1, $2)`, [profIntruso, turmaB]);
+    expect(await linhas(profIntruso, `select * from public.minhas_turmas()`)).toHaveLength(1);
+
+    await comoUsuario(secretaria, `select public.remover_professor_turma($1, $2)`, [profIntruso, turmaB]);
+    expect(await linhas(profIntruso, `select * from public.minhas_turmas()`)).toHaveLength(0);
+  });
+
+  it('professores_da_turma so responde para quem leciona nela', async () => {
+    const lista = await linhas(profA, `select * from public.professores_da_turma($1)`, [turmaA]);
+    expect(lista.map((p) => p.nome)).toContain('Prof da 3A');
+
+    await expect(
+      comoUsuario(profA, `select * from public.professores_da_turma($1)`, [turmaB]),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  it('so a secretaria lista os docentes da escola', async () => {
+    const lista = await linhas(secretaria, `select * from public.docentes_da_escola()`);
+    expect(lista.length).toBeGreaterThanOrEqual(3);
+    await expect(
+      comoUsuario(profA, `select * from public.docentes_da_escola()`),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  /* O termometro e o motivo de tudo isto existir. */
+  it('o termometro respeita o escopo do professor', async () => {
+    const doProf = await linhas(profA, `select * from public.termometro_cognitivo(7)`);
+    for (const linha of doProf) {
+      expect(linha.turma_id).toBe(turmaA);
+    }
+  });
+
+  it('aluno continua barrado no termometro', async () => {
+    await expect(
+      comoUsuario(alunoQualquer, `select * from public.termometro_cognitivo(7)`),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  it('insights agora aceitam o professor, e nao so a secretaria', async () => {
+    const r = await linhas(profA, `select * from public.insights_turma_24h(24)`);
+    expect(Array.isArray(r)).toBe(true);
+    await expect(
+      comoUsuario(alunoQualquer, `select * from public.insights_turma_24h(24)`),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  it('professor nao escreve direto na tabela de vinculo', async () => {
+    await expect(
+      comoUsuario(profIntruso,
+        `insert into public.turma_professores (turma_id, professor_id) values ($1, $2)`,
+        [turmaB, profIntruso]),
+    ).rejects.toThrow();
   });
 });
