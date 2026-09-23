@@ -269,6 +269,17 @@ compatível com esse padrão.
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
 
+### 2026-09-24 (4) — Índice de cansaço religado
+- **`FADIGA_ZERADA = false`** (decisão do dono). Desligado, nada chegava a
+  `indice_burnout` e ficavam vazios o termômetro do professor e da
+  secretaria, o índice que o psicólogo vê e o escopo `bem_estar` do
+  consentimento. Para desligar de novo é só voltar a flag para `true`:
+  todas as telas já tratam os dois estados.
+- Com o índice de volta, o card do aluno reaparece; os botões de "Conteúdo
+  denso pausado" estouravam a largura do cartão no celular (`flex-wrap`).
+- Acentos nos textos que voltam à tela (motivos do índice e sugestões de
+  pausa: "o melhor estudo é dormir").
+
 ### 2026-09-24 (3) — Uma tela por perfil, e o percurso de cada um
 - **Professor ganhou tela própria** (`ProfessorPage`); a antiga virou
   Painel da Secretaria. `CodigosEscola` saiu do cadastro e serve aos dois.
@@ -443,11 +454,6 @@ principal, regra de permissão. Mais recente no topo.
   commitada** (linhas ~20-24), válida até 2036, e ela está no histórico do git.
   Precisa ser **rotacionada no painel do Supabase** — remover do arquivo não
   basta.
-- **Índice de cansaço desligado (`FADIGA_ZERADA`) x o resto do produto.**
-  Com a flag ligada nada é gravado em `indice_burnout`. Em produção, isso
-  deixa VAZIOS o termômetro do professor e da secretaria, o índice que o
-  psicólogo vê e o escopo `bem_estar` do consentimento. Só a demonstração
-  (028) tem dados, porque insere direto. Decisão do dono pendente.
 - Muitos warnings de `react-hooks/exhaustive-deps` (`npm run lint`). Alguns são
   intencionais, outros causam estado velho — avaliar caso a caso.
 - `SESSAO-RESUMO.md` e os `.zip` na raiz são de sessões antigas e descrevem um
