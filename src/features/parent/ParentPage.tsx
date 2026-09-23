@@ -1,11 +1,37 @@
+import { useEffect, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { LogOut, Moon } from 'lucide-react';
+import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { ParentsDashboard } from './ParentsDashboard';
 import { PainelCuidado } from './PainelCuidado';
+import { EntrarPorCodigo } from './EntrarPorCodigo';
 
+/**
+ * A escolha de QUAL filho está sendo visto vive aqui, e não dentro de
+ * cada painel.
+ *
+ * Antes cada painel resolvia isso por conta própria, e com dado de
+ * verdade isso vira um bug com cara de dado errado: o painel de cuidado
+ * mostrando um filho e o de desempenho mostrando outro, sem nada na tela
+ * dizendo que são pessoas diferentes.
+ */
 export function ParentPage() {
   const session = useAppStore((s) => s.session);
   const logout = useAppStore((s) => s.logout);
+  const vinculos = useMarketplaceStore((s) => s.vinculos);
+  const carregarVinculos = useMarketplaceStore((s) => s.carregarVinculos);
+
+  const [alunoId, setAlunoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void carregarVinculos();
+  }, [carregarVinculos]);
+
+  const alunos = vinculos
+    .filter((v) => v.status === 'ativo')
+    .map((v) => ({ id: v.alunoId, nome: v.alunoNome ?? 'Estudante' }));
+
+  const aluno = alunos.find((a) => a.id === alunoId) ?? alunos[0] ?? null;
 
   return (
     <div className="min-h-screen" style={{ background: '#0b1120' }}>
@@ -35,12 +61,52 @@ export function ParentPage() {
         </div>
       </header>
 
-      {/* Cuidado vem ANTES dos graficos: quem abre este painel depois de
-          um alerta precisa do caminho para agir, nao de uma serie
-          historica. Os graficos continuam logo abaixo. */}
-      <PainelCuidado />
+      {!aluno ? (
+        <section className="max-w-5xl mx-auto px-4 md:px-8 py-6">
+          <div className="glass rounded-2xl p-6">
+            <EntrarPorCodigo variante="destaque" aoVincular={() => void carregarVinculos()} />
+          </div>
+        </section>
+      ) : (
+        <>
+          {alunos.length > 1 && (
+            <section className="max-w-5xl mx-auto px-4 md:px-8 pt-6">
+              <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Estudantes acompanhados">
+                {alunos.map((a) => (
+                  <button
+                    key={a.id}
+                    role="tab"
+                    aria-selected={aluno.id === a.id}
+                    onClick={() => setAlunoId(a.id)}
+                    className={`shrink-0 px-3 py-2 rounded-xl text-sm border min-h-[44px] ${
+                      aluno.id === a.id
+                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-200'
+                        : 'border-white/[0.04] glass-light text-gray-400'
+                    }`}
+                  >
+                    {a.nome}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
-      <ParentsDashboard />
+          {/* Cuidado vem ANTES dos graficos: quem abre este painel depois de
+              um alerta precisa do caminho para agir, nao de uma serie
+              historica. Os graficos continuam logo abaixo. */}
+          <PainelCuidado aluno={aluno} />
+
+          <ParentsDashboard aluno={aluno} />
+
+          <section className="max-w-5xl mx-auto px-4 md:px-8 pb-10">
+            <div className="glass rounded-2xl p-5">
+              {/* O proprio EntrarPorCodigo ja traz o titulo "Vincular
+                  outro estudante": um h2 aqui virava titulo em dobro. */}
+              <EntrarPorCodigo aoVincular={() => void carregarVinculos()} />
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

@@ -21,22 +21,31 @@ import type { DropoutProjection } from '../../shared/lib/dropoutRisk';
 import { analyzeStudentData, aiAvailable } from '../../shared/lib/aiService';
 import type { StudentRiskAnalysis } from '../../shared/lib/aiService';
 import { useAppStore } from '../../stores/appStore';
+import { acompanhamentoRepository } from '../../shared/storage/AcompanhamentoRepository';
+import type { FichaAluno, MateriaResumo, ResumoMensal, ResumoSemanal } from '../../shared/storage/AcompanhamentoRepository';
 import {
-  STUDENT_NAME,
-  STUDENT_TURMA,
-  STUDENT_SCHOOL,
-  LOGIC_ACCURACY,
-  cognitiveHistory,
-  toMonthlyRecord,
-  weeklyStudyHours,
-  monthLabel,
-  PERIOD_OPTIONS,
-  PeriodKey,
-} from './parentMockData';
+  dadosSuficientes,
+  faltaParaTendencia,
+  horasPorSemana,
+  paraRegistrosMensais,
+  rotuloMes,
+  semAtividade,
+  totaisDoPeriodo,
+} from '../../shared/lib/acompanhamentoAluno';
+
+type PeriodKey = 3 | 6 | 12;
+
+const PERIOD_OPTIONS: { value: PeriodKey; label: string }[] = [
+  { value: 3, label: 'Últimos 3 meses' },
+  { value: 6, label: 'Últimos 6 meses' },
+  { value: 12, label: 'Últimos 12 meses' },
+];
+
+/** 'AAAA-MM' do motor de evasao -> 'Set'. */
+const rotuloMesCurto = (mes: string) => rotuloMes(`${mes}-01`);
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend, Filler);
 
-const AMBER = '#f59e0b';
 const AMBER_LIGHT = '#fbbf24';
 const EMERALD = '#10b981';
 const GRID = 'rgba(255,255,255,0.05)';
@@ -65,7 +74,9 @@ const lineOptions: ChartOptions<'line'> = {
   },
   scales: {
     x: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 11 } } },
-    y: { min: 40, max: 90, grid: { color: GRID }, ticks: { color: TICK, font: { size: 11 } }, title: { display: true, text: 'Nota (0-100)', color: TICK, font: { size: 10 } } },
+    // 0-100 fixo: a escala apertada de antes (40-90) transformava
+    // variacao de 3 pontos em despenhadeiro visual.
+    y: { min: 0, max: 100, grid: { color: GRID }, ticks: { color: TICK, font: { size: 11 } }, title: { display: true, text: 'Acerto (%)', color: TICK, font: { size: 10 } } },
   },
 };
 
@@ -203,15 +214,54 @@ const AI_RISK = {
   },
 } as const;
 
-export function ParentsDashboard() {
+interface Props {
+  aluno: { id: string; nome: string };
+}
+
+export function ParentsDashboard({ aluno }: Props) {
   const session = useAppStore((s) => s.session);
   const apiKey = useAppStore((s) => s.apiKey);
   const [period, setPeriod] = useState<PeriodKey>(6);
 
-  const records = useMemo(() => cognitiveHistory.slice(-period), [period]);
-  const projection = useMemo(() => calculateDropoutRisk(toMonthlyRecord(records)), [records]);
-  const totalFocus = records.reduce((acc, r) => acc + r.tempoUso, 0);
+  const [mensal, setMensal] = useState<ResumoMensal[]>([]);
+  const [semanal, setSemanal] = useState<ResumoSemanal[]>([]);
+  const [materias, setMaterias] = useState<MateriaResumo[]>([]);
+  const [ficha, setFicha] = useState<FichaAluno | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    let vivo = true;
+    setCarregando(true);
+    void Promise.all([
+      acompanhamentoRepository.resumoMensal(aluno.id, period),
+      acompanhamentoRepository.resumoSemanal(aluno.id, 4),
+      acompanhamentoRepository.materias(aluno.id, 3),
+      acompanhamentoRepository.ficha(aluno.id).catch(() => null),
+    ])
+      .then(([m, s, mat, f]) => {
+        if (!vivo) return;
+        setMensal(m);
+        setSemanal(s);
+        setMaterias(mat);
+        setFicha(f);
+      })
+      .finally(() => vivo && setCarregando(false));
+    return () => {
+      vivo = false;
+    };
+  }, [aluno.id, period]);
+
+  const records = useMemo(() => paraRegistrosMensais(mensal), [mensal]);
+  const totais = useMemo(() => totaisDoPeriodo(mensal), [mensal]);
+  /* A projecao so existe com historico que a sustente. Regressao sobre
+     tres pontos quase vazios devolve uma reta com inclinacao enorme e um
+     "Alto risco" com cara de conclusao -- assustar um pai com estatistica
+     de nada e pior que nao mostrar. */
+  const podeProjetar = useMemo(() => dadosSuficientes(mensal), [mensal]);
+  const projection = useMemo(() => calculateDropoutRisk(records), [records]);
+  const totalFocus = totais.minutos / 60;
   const risk = RISK_META[projection.riskLevel];
+  const vazio = !carregando && semAtividade(mensal);
 
   // Analise preditiva de evasao (regressao linear)
   const [aiState, setAiState] = useState<{
@@ -227,13 +277,13 @@ export function ParentsDashboard() {
     abortRef.current?.abort();
     abortRef.current = controller;
 
-    if (!aiAvailable(apiKey)) {
+    if (!aiAvailable(apiKey) || !podeProjetar) {
       setAiState({ status: 'idle' });
       return;
     }
 
     setAiState({ status: 'loading' });
-    analyzeStudentData(toMonthlyRecord(records), { apiKey, signal: controller.signal })
+    analyzeStudentData(records, { apiKey, signal: controller.signal })
       .then(result => setAiState({ status: 'ready', result }))
       .catch(err => {
         if (err?.name !== 'AbortError') {
@@ -243,14 +293,16 @@ export function ParentsDashboard() {
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [records, apiKey, analysisNonce]);
+  }, [records, apiKey, analysisNonce, podeProjetar]);
+
+  const semanas = horasPorSemana(semanal);
 
   const frequencyData: ChartData<'bar'> = {
-    labels: weeklyStudyHours.map(w => w.week),
+    labels: semanas.map(w => w.rotulo),
     datasets: [
       {
         label: 'Horas estudadas',
-        data: weeklyStudyHours.map(w => w.horas),
+        data: semanas.map(w => w.horas),
         backgroundColor: 'rgba(245,158,11,0.7)',
         hoverBackgroundColor: AMBER_LIGHT,
         borderRadius: 8,
@@ -259,29 +311,21 @@ export function ParentsDashboard() {
     ],
   };
 
+  /* Uma serie so, e ela e o acerto NO APP.
+     A segunda linha do painel antigo se chamava "Desempenho Escolar" e
+     nao tinha de onde vir: nenhuma tabela deste banco guarda boletim. */
   const evolutionData: ChartData<'line'> = {
-    labels: records.map(r => monthLabel(r.month)),
+    labels: mensal.map(r => rotuloMes(r.mes)),
     datasets: [
       {
-        label: 'Desempenho Escolar',
-        data: records.map(r => r.notaEscolar),
-        borderColor: AMBER,
-        backgroundColor: 'rgba(245,158,11,0.06)',
-        pointBackgroundColor: AMBER,
+        label: 'Acerto nos exercícios do app (%)',
+        data: mensal.map(r => r.taxaAcerto),
+        borderColor: EMERALD,
+        backgroundColor: 'rgba(16,185,129,0.06)',
+        pointBackgroundColor: EMERALD,
         borderWidth: 2.5,
         tension: 0.35,
         fill: true,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-      },
-      {
-        label: 'Exercícios no App',
-        data: records.map(r => r.notaApp),
-        borderColor: EMERALD,
-        borderDash: [6, 4],
-        borderWidth: 2,
-        tension: 0.35,
-        fill: false,
         pointRadius: 3,
         pointHoverRadius: 5,
       },
@@ -289,19 +333,26 @@ export function ParentsDashboard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 space-y-6 animate-fade-up">
+    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-6 animate-fade-up">
       {/* ── Cabeçalho: aluno + seletor de período ── */}
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1">Painel do Responsável</p>
           <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3 flex-wrap">
-            {STUDENT_NAME}
-            <span className="px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-300 text-[10px] font-semibold border border-violet-500/20">
-              {STUDENT_SCHOOL}
-            </span>
+            {ficha?.nome ?? aluno.nome}
+            {ficha?.escola && (
+              <span className="px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-300 text-[10px] font-semibold border border-violet-500/20">
+                {ficha.escola}
+              </span>
+            )}
           </h1>
           <p className="text-xs text-gray-500 mt-1">
-            {STUDENT_TURMA}<span className="text-gray-600"> · </span> Responsável: <span className="text-gray-400">{session?.nome || '-'}</span>
+            {/* Sem escola vinculada nao inventa turma: o estudante pode
+                estar usando o app por conta propria. */}
+            {ficha?.turma ? (
+              <>{ficha.turma}<span className="text-gray-600"> · </span></>
+            ) : null}
+            Responsável: <span className="text-gray-400">{session?.nome || '-'}</span>
           </p>
         </div>
 
@@ -324,12 +375,36 @@ export function ParentsDashboard() {
         </div>
       </div>
 
+      {carregando && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="glass rounded-2xl p-5 border border-white/5">
+              <div className="h-4 w-24 rounded bg-white/5 animate-pulse" />
+              <div className="h-8 w-20 rounded bg-white/5 animate-pulse mt-4" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Nunca estudou pelo app: a tela DIZ isso, em vez de desenhar
+          graficos zerados que parecem queda de desempenho. */}
+      {vazio && (
+        <div className="glass rounded-2xl p-6 border border-white/5 text-center">
+          <h2 className="text-lg font-bold text-white">Ainda não há atividade para mostrar</h2>
+          <p className="text-sm text-gray-400 mt-2 leading-relaxed max-w-lg mx-auto">
+            {ficha?.nome ?? aluno.nome} ainda não respondeu exercícios pelo app neste período.
+            Os números aparecem sozinhos assim que os estudos começarem — não há nada para
+            configurar aqui.
+          </p>
+        </div>
+      )}
+
       {/* ── Métricas rápidas ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${vazio || carregando ? 'hidden' : ''}`}>
         <MetricCard
           label="Tempo de Foco Total"
-          value={`${Math.round(totalFocus)}h`}
-          sub={`Somado ao longo dos últimos ${period} meses de uso na plataforma.`}
+          value={totalFocus >= 1 ? `${Math.round(totalFocus)}h` : `${totais.minutos}min`}
+          sub={`Em ${totais.diasAtivos} dia(s) de estudo nos últimos ${period} meses.`}
           gradient="from-amber-500/15 to-orange-600/10"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
@@ -339,9 +414,13 @@ export function ParentsDashboard() {
         </MetricCard>
 
         <MetricCard
-          label="Taxa de Acerto Lógico"
-          value={`${LOGIC_ACCURACY}%`}
-          sub="Média de acertos nos exercícios de raciocínio lógico do app."
+          label="Acerto nos Exercícios"
+          value={totais.questoes > 0 ? `${totais.taxaAcerto}%` : '—'}
+          sub={
+            totais.questoes > 0
+              ? `${totais.acertos} acertos em ${totais.questoes} questões respondidas no app.`
+              : 'Nenhuma questão respondida neste período.'
+          }
           gradient="from-emerald-500/15 to-cyan-600/10"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
@@ -351,7 +430,29 @@ export function ParentsDashboard() {
           </svg>
         </MetricCard>
 
-        {/* Status de Risco Atual */}
+        {/* Status de Risco Atual -- so com historico que o sustente */}
+        {!podeProjetar ? (
+          <div className="glass rounded-2xl p-5 border border-white/5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center">
+                <BarChart3 size={18} className="text-gray-500" />
+              </div>
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status de Risco</span>
+            </div>
+            <p className="text-xl font-extrabold text-gray-300">Ainda não dá para dizer</p>
+            <p className="text-xs text-gray-500 mt-1.5 leading-snug">
+              {(() => {
+                const f = faltaParaTendencia(mensal);
+                const partes = [];
+                if (f.meses > 0) partes.push(`mais ${f.meses} mês(es) de uso`);
+                if (f.questoes > 0) partes.push(`mais ${f.questoes} questões`);
+                return partes.length
+                  ? `Falta ${partes.join(' e ')} para a tendência significar alguma coisa.`
+                  : 'Falta histórico para a tendência significar alguma coisa.';
+              })()}
+            </p>
+          </div>
+        ) : (
         <div className={`glass rounded-2xl p-5 border ${risk.border} transition-all relative overflow-hidden`}>
           <div className={`absolute inset-0 bg-gradient-to-br ${risk.gradient} pointer-events-none`} />
           <div className="relative">
@@ -376,15 +477,16 @@ export function ParentsDashboard() {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* ── Gráficos ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${vazio || carregando ? 'hidden' : ''}`}>
         <div className="glass rounded-2xl p-5 border border-white/5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold text-white">Frequência Semanal no App</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Horas estudadas por semana no último mês</p>
+              <p className="text-xs text-gray-500 mt-0.5">Horas por semana, nas últimas 4 semanas</p>
             </div>
             <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
@@ -402,8 +504,11 @@ export function ParentsDashboard() {
         <div className="glass rounded-2xl p-5 border border-white/5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Evolução Cognitiva</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Desempenho escolar vs. exercícios do app ({period} meses)</p>
+              <h3 className="text-sm font-bold text-white">Evolução no app</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Proporção de acerto nos exercícios do app, mês a mês ({period} meses).
+                Não é boletim escolar — o app não recebe notas da escola.
+              </p>
             </div>
             <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
@@ -418,7 +523,48 @@ export function ParentsDashboard() {
         </div>
       </div>
 
+      {/* ── Onde ele acerta e onde ele apanha ──
+          Nome de materia e padrao, nao conteudo: dizer "matematica vai
+          mal" nao entrega nenhuma resposta do estudante. E o dado que
+          vira conversa ("quer ajuda em matematica?") em vez de cobranca. */}
+      {materias.length > 0 && (
+        <div className="glass rounded-2xl p-5 border border-white/5">
+          <h3 className="text-sm font-bold text-white">Por matéria</h3>
+          <p className="text-xs text-gray-500 mt-0.5 mb-4">
+            Últimos 3 meses, da matéria com mais dificuldade para a com menos.
+            Matérias com poucas questões ficam de fora — pouca amostra assusta sem significar.
+          </p>
+          <ul className="space-y-2">
+            {materias.map((m) => (
+              <li key={m.materia} className="glass-light rounded-xl px-3 py-2.5 border border-white/[0.04]">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-white font-medium truncate">{m.materia}</span>
+                  <span className="text-sm font-bold tabular-nums shrink-0" style={{
+                    color: m.taxaAcerto >= 70 ? '#10b981' : m.taxaAcerto >= 50 ? '#f59e0b' : '#f87171',
+                  }}>
+                    {m.taxaAcerto}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/5 overflow-hidden mt-2">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${m.taxaAcerto}%`,
+                      background: m.taxaAcerto >= 70 ? '#10b981' : m.taxaAcerto >= 50 ? '#f59e0b' : '#f87171',
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-gray-600 mt-1.5 tabular-nums">
+                  {m.acertos} de {m.questoes} questões
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* ── Projeção Cognitiva de 4 Meses ── */}
+      {podeProjetar && (
       <div className="glass rounded-2xl p-6 border border-white/5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
           <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500/15 to-purple-600/10 flex items-center justify-center shrink-0">
@@ -429,13 +575,13 @@ export function ParentsDashboard() {
             </svg>
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-extrabold text-white">Projeção Cognitiva de 4 Meses</h3>
+            <h3 className="text-lg font-extrabold text-white">Projeção de 4 meses</h3>
             <p className="text-xs text-gray-500 mt-0.5">
               {aiState.status === 'ready'
-                ? `Previsão inteligente do Gemini com base em ${records.length} meses de notas e tempo de uso.`
+                ? `Leitura da IA sobre ${records.length} meses de acerto no app e tempo de estudo.`
                 : aiState.status === 'loading'
-                  ? `Enviando ${records.length} meses de dados para análise do Gemini...`
-                  : `Estimativa local sobre ${records.length} meses de notas e tempo de uso.`}
+                  ? `Enviando ${records.length} meses de dados para a IA...`
+                  : `Estimativa local sobre ${records.length} meses de acerto no app e tempo de estudo.`}
             </p>
           </div>
 
@@ -476,7 +622,8 @@ export function ParentsDashboard() {
           /* Resultado da IA renderizado dinamicamente */
           <div className="animate-fade-up">
             <div className={`rounded-2xl border ${AI_RISK[aiState.result.risk].border} ${AI_RISK[aiState.result.risk].bg} p-6`}>
-              <p className="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-2"> Previsão de risco de evasão · próximos 4 meses
+              <p className="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-2">
+                Previsão de risco de evasão · próximos 4 meses
               </p>
               <p className={`text-4xl font-extrabold ${AI_RISK[aiState.result.risk].text}`}>
                 {aiState.result.risk}
@@ -486,7 +633,8 @@ export function ParentsDashboard() {
               </p>
             </div>
             <div className="flex items-center justify-between gap-3 mt-4">
-              <p className="text-[10px] text-gray-500"> Recomendação gerada por IA (Gemini) · baseada nos dados reais do aluno
+              <p className="text-[10px] text-gray-500">
+                Recomendação gerada por IA sobre o uso do app — não substitui a escola nem um profissional.
               </p>
               <button
                 onClick={() => setAnalysisNonce(n => n + 1)}
@@ -513,14 +661,18 @@ export function ParentsDashboard() {
               </button>
             </div>
 
-            {/* Notas projetadas mês a mês (regressão local) */}
+            <p className="text-[11px] text-gray-500">
+              Acerto projetado nos exercícios do app, mês a mês (regressão sobre o histórico acima).
+            </p>
+
+            {/* Projecao mes a mes (regressao local) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {projection.projection.map((p, i) => {
                 const prev = i === 0 ? projection.currentAverage : projection.projection[i - 1].notaMedia;
                 const delta = p.notaMedia - prev;
                 return (
                   <div key={p.month} className="rounded-2xl bg-white/[0.03] border border-white/5 p-4 text-center hover:border-white/10 transition-all">
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">{monthLabel(p.month)}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">{rotuloMesCurto(p.month)}</p>
                     <p className={`text-2xl font-extrabold tabular-nums ${
                       delta < -0.5 ? 'text-red-400' : delta > 0.5 ? 'text-emerald-400' : 'text-gray-300'
                     }`}>
@@ -540,6 +692,7 @@ export function ParentsDashboard() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

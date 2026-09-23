@@ -1252,7 +1252,12 @@ export async function analyzeStudentData(
   }));
 
   const prompt = [
-    'Analise os dados recentes de frequência e notas deste aluno do ensino médio noturno. Com base nesses dados, gere uma previsão de risco de evasão (Baixo, Médio, Alto) para os próximos 4 meses e escreva uma recomendação de apenas 2 frases para os pais.',
+    /* O prompt dizia "notas". Nao ha nota escolar neste banco: o numero
+       que chega e a proporcao de acerto nos exercicios do app. Com o
+       painel em dado real, descrever isso como boletim faria a IA
+       escrever para os pais uma frase sobre a escola que ninguem mediu. */
+    'Analise o uso recente do aplicativo de estudos por este aluno do ensino médio noturno. `notaMedia` é a PROPORÇÃO DE ACERTO (0-100) nos exercícios DO APLICATIVO no mês, e não nota escolar — o app não recebe boletim. `horasDeUso` é o tempo de estudo no app. Com base nisso, estime o risco de evasão (Baixo, Médio, Alto) para os próximos 4 meses e escreva uma recomendação de apenas 2 frases para os pais.',
+    'Fale do que os números mostram (constância, ritmo, acerto no app). Não afirme nada sobre notas da escola, frequência às aulas ou diagnóstico de saúde.',
     '',
     'Responda APENAS com um objeto JSON válido, sem markdown e sem comentários, no formato:',
     '{ "riscoEvasao": "Baixo"| "Médio"| "Alto", "recomendacao": "<recomendação de 2 frases para os pais>"}',
@@ -1266,7 +1271,7 @@ export async function analyzeStudentData(
       systemInstruction: {
         parts: [
           {
-            text: 'Você é um cientista de dados educacional especializado em evasão escolar do ensino médio noturno brasileiro. Responda apenas com o JSON solicitado.',
+            text: 'Você é um cientista de dados educacional especializado em evasão escolar do ensino médio noturno brasileiro. Você só tem dados de uso de um aplicativo de estudos, não da escola. Responda apenas com o JSON solicitado.',
           },
         ],
       },
