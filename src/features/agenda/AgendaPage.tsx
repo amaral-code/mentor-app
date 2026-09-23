@@ -74,7 +74,7 @@ export function AgendaPage() {
         inicio,
         fim,
         psicologoNome: a.psicologoNome ?? 'Psicólogo(a)',
-        crp: crpPorId.get(a.psicologoId) ?? 'CRP —',
+        crp: crpPorId.get(a.psicologoId) ?? 'CRP não informado',
         duracaoMinutos: a.duracaoMinutos,
         meetingUrl: a.meetingUrl ?? null,
         status: a.status,
@@ -199,7 +199,7 @@ export function AgendaPage() {
 
   const feedback: FeedbackDia = useMemo(() => {
     if (!selecionado) {
-      return { titulo: 'Nenhum dia selecionado', detalhe: ' — toque em um dia para ver a programação', tom: 'neutro', confirmado: false };
+      return { titulo: 'Nenhum dia selecionado', detalhe: 'Toque em um dia para ver a programação', tom: 'neutro', confirmado: false };
     }
     const chave = `${selecionado.ano}-${selecionado.mes}-${selecionado.dia}`;
     const sessao = sessoesNoMes.get(chave)?.[0];

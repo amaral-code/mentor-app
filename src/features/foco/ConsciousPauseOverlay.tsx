@@ -126,7 +126,7 @@ export function ConsciousPauseOverlay({
           id="pausa-consciente-descricao"
           className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-300/90"
         >
-          Percebemos {distractionCount} idas e vindas em poucos minutos — e está tudo bem.
+          Percebemos {distractionCount} idas e vindas em poucos minutos, e está tudo bem.
           Sua mente não está falhando, ela só está cansada. A cobrança pode esperar:
           por 2 minutinhos, a única tarefa é respirar. Sem culpa, sem pressa.
         </p>

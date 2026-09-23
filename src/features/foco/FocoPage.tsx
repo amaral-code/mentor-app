@@ -183,7 +183,7 @@ const TravaFocoModal = memo(function TravaFocoModal({
         </span>
         <h2 className="mt-3 text-lg font-bold text-white">Foco Interrompido</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">
-          Você saiu do app e o cronômetro <strong className="text-white">pausou em {restantes}</strong> —
+          Você saiu do app e o cronômetro <strong className="text-white">pausou em {restantes}</strong>.
           nenhum segundo foi perdido. O Modo Aula exige atenção exclusiva.
         </p>
         <p className="mt-2 text-xs text-slate-500">
@@ -249,7 +249,7 @@ export function FocoPage() {
     onDistraction: (n) => {
       const estagio = distractionStage(n);
       if (estagio === 'aviso-leve') {
-        setToast('Uma ida e volta — sem culpa. Volte no seu ritmo.', 'info');
+        setToast('Uma ida e volta, sem culpa. Volte no seu ritmo.', 'info');
       } else if (estagio === 'aviso-final') {
         setToast('Segunda distração em poucos minutos. Na próxima, faremos uma pausa para respirar juntos.', 'info');
       }

@@ -106,7 +106,7 @@ async function direto(
   if (isDeepSeekProvider()) {
     throw new Error(
       'Correção por foto indisponível no modo DeepSeek sem back-end (o modelo configurado é de texto). ' +
-        'Defina GEMINI_API_KEY nas Environment Variables do projeto — o back-end usa o Gemini Vision para a foto, mesmo com o chat no DeepSeek.',
+        'Defina GEMINI_API_KEY nas Environment Variables do projeto. O back-end usa o Gemini Vision para a foto, mesmo com o chat no DeepSeek.',
     );
   }
 

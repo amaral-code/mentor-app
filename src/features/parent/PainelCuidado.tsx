@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, BellRing, HeartPulse, Link2, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { Activity, BellRing, HeartPulse, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { bemEstarRepository } from '../../shared/storage/BemEstarRepository';
 import { focoOfflineRepository } from '../../shared/storage/FocoOfflineRepository';
 import { COR_CLASSE, ROTULO_CLASSE, FADIGA_ZERADA } from '../../shared/lib/burnoutModel';
-import { EntrarPorCodigo } from './EntrarPorCodigo';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
 import type { IndiceBurnout, RelatorioSemanal, SessaoOffline, SeveridadeAlerta } from '../../shared/types';
@@ -36,42 +35,31 @@ const CORES_SEVERIDADE: Record<SeveridadeAlerta, { borda: string; texto: string;
   critico: { borda: 'border-red-500/30', texto: 'text-red-300', fundo: 'bg-red-500/[0.09]' },
 };
 
-export function PainelCuidado() {
-  const { alertas, carregarAlertas, marcarAlertaVisto, vinculos, carregarVinculos, solicitarVinculo } =
-    useMarketplaceStore();
+interface Props {
+  /** Quem esta sendo acompanhado. A escolha vive no `ParentPage`, para
+   *  este painel e o de desempenho nunca mostrarem filhos diferentes. */
+  aluno: { id: string; nome: string };
+}
 
-  const [alunos, setAlunos] = useState<{ id: string; nome: string }[]>([]);
-  const [alunoAtivo, setAlunoAtivo] = useState<{ id: string; nome: string } | null>(null);
+export function PainelCuidado({ aluno }: Props) {
+  const { alertas, carregarAlertas, marcarAlertaVisto } = useMarketplaceStore();
+
   const [burnout, setBurnout] = useState<IndiceBurnout[]>([]);
   const [offline, setOffline] = useState<SessaoOffline[]>([]);
   const [relatorios, setRelatorios] = useState<RelatorioSemanal[]>([]);
-  const [emailAluno, setEmailAluno] = useState('');
   const [alertaEmFoco, setAlertaEmFoco] = useState<string | null>(null);
   const [mostrarCatalogo, setMostrarCatalogo] = useState(false);
 
   useEffect(() => {
-    void carregarVinculos();
-  }, []);
-
-  useEffect(() => {
-    const ativos = vinculos
-      .filter((v) => v.status === 'ativo')
-      .map((v) => ({ id: v.alunoId, nome: v.alunoNome ?? 'Estudante' }));
-    setAlunos(ativos);
-    if (!alunoAtivo && ativos.length > 0) setAlunoAtivo(ativos[0]);
-  }, [vinculos]);
-
-  useEffect(() => {
-    if (!alunoAtivo) return;
-    void carregarAlertas(alunoAtivo.id);
+    void carregarAlertas(aluno.id);
     // Fadiga zerada (ver burnoutModel.FADIGA_ZERADA): a curva nasce e fica
     // em 0/saudável em vez de refletir o histórico antigo do servidor.
-    void bemEstarRepository.carregarBurnout(30, alunoAtivo.id).then((lista) =>
+    void bemEstarRepository.carregarBurnout(30, aluno.id).then((lista) =>
       setBurnout(FADIGA_ZERADA ? lista.map((d) => ({ ...d, score: 0, classe: 'saudavel' as const })) : lista),
     );
-    void focoOfflineRepository.listarSessoes(30, alunoAtivo.id).then(setOffline);
-    void bemEstarRepository.listarRelatorios(3, alunoAtivo.id).then(setRelatorios);
-  }, [alunoAtivo?.id]);
+    void focoOfflineRepository.listarSessoes(30, aluno.id).then(setOffline);
+    void bemEstarRepository.listarRelatorios(3, aluno.id).then(setRelatorios);
+  }, [aluno.id]);
 
   const atual = burnout.at(-1);
   const abertos = alertas.filter((a) => a.status === 'aberto' || a.status === 'visto');
@@ -83,78 +71,8 @@ export function PainelCuidado() {
       .reduce((a, s) => a + s.minutosOffline, 0);
   }, [offline]);
 
-  const pendentes = vinculos.filter((v) => v.status === 'pendente');
-
-  async function pedirVinculo() {
-    const email = emailAluno.trim();
-    if (!email) return;
-    const ok = await solicitarVinculo(email, 'responsavel');
-    if (ok) setEmailAluno('');
-  }
-
-  // Sem nenhum filho vinculado, o painel e a tela de vinculo.
-  if (alunos.length === 0) {
-    return (
-      <section className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-4">
-        <div className="glass rounded-2xl p-6">
-          <EntrarPorCodigo variante="destaque" aoVincular={() => void carregarVinculos()} />
-
-          {/* O pedido por e-mail continua aqui, recolhido: e o caminho de
-              quem nao tem o estudante por perto na hora. Fica em segundo
-              plano porque nele quem comeca e o adulto, e o estudante so
-              reage a um pedido que nao escolheu receber. */}
-          <details className="mt-5 group">
-            <summary className="text-xs text-gray-500 hover:text-violet-300 cursor-pointer list-none inline-flex items-center gap-1.5 min-h-[40px]">
-              <Link2 size={13} /> Não tem o código? Pedir por e-mail
-            </summary>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              O estudante recebe o pedido e decide se aceita — e só então os dados
-              aparecem aqui. Nem antes, nem sem que ele saiba.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 mt-3">
-              <input
-                type="email"
-                value={emailAluno}
-                onChange={(e) => setEmailAluno(e.target.value)}
-                placeholder="email-do-estudante@exemplo.com"
-                aria-label="E-mail do estudante"
-                className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-violet-500/40 min-h-[44px]"
-              />
-              <button onClick={pedirVinculo} className="btn-secondary px-5 text-sm min-h-[44px]">
-                Enviar pedido
-              </button>
-            </div>
-            {pendentes.length > 0 && (
-              <p className="text-xs text-amber-400/80 mt-3">
-                {pendentes.length} pedido(s) aguardando resposta do estudante.
-              </p>
-            )}
-          </details>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-5">
-      {alunos.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {alunos.map((a) => (
-            <button
-              key={a.id}
-              onClick={() => setAlunoAtivo(a)}
-              className={`shrink-0 px-3 py-2 rounded-xl text-sm border ${
-                alunoAtivo?.id === a.id
-                  ? 'border-violet-500/40 bg-violet-500/10 text-violet-200'
-                  : 'border-white/[0.04] glass-light text-gray-400'
-              }`}
-            >
-              {a.nome}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Curva de estresse */}
       <div className="glass rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-4">
@@ -162,7 +80,7 @@ export function PainelCuidado() {
             <HeartPulse size={18} className="text-rose-400" />
           </div>
           <div className="flex-1">
-            <h2 className="text-sm font-semibold text-gray-300">Curva de estresse de {alunoAtivo?.nome}</h2>
+            <h2 className="text-sm font-semibold text-gray-300">Curva de estresse de {aluno.nome}</h2>
             <p className="text-[11px] text-gray-500">Indice diario de fadiga dos ultimos 30 dias</p>
           </div>
           {atual && (
@@ -285,34 +203,11 @@ export function PainelCuidado() {
           </button>
         ) : (
           <div className="mt-4">
-            <CatalogoPsicologos aluno={alunoAtivo} alertaId={alertaEmFoco} />
+            <CatalogoPsicologos aluno={aluno} alertaId={alertaEmFoco} />
           </div>
         )}
       </div>
 
-      {/* Vincular outro filho */}
-      <div className="glass rounded-2xl p-5">
-        <EntrarPorCodigo aoVincular={() => void carregarVinculos()} />
-
-        <details className="mt-4">
-          <summary className="text-xs text-gray-500 hover:text-violet-300 cursor-pointer list-none inline-flex items-center gap-1.5 min-h-[40px]">
-            <Link2 size={13} /> Não tem o código? Pedir por e-mail
-          </summary>
-          <div className="flex flex-col sm:flex-row gap-2 mt-3">
-            <input
-              type="email"
-              value={emailAluno}
-              onChange={(e) => setEmailAluno(e.target.value)}
-              placeholder="email-do-estudante@exemplo.com"
-              aria-label="E-mail do estudante"
-              className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-violet-500/40 min-h-[44px]"
-            />
-            <button onClick={pedirVinculo} className="btn-secondary px-5 text-sm min-h-[44px]">
-              Enviar pedido
-            </button>
-          </div>
-        </details>
-      </div>
     </section>
   );
 }

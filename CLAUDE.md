@@ -101,6 +101,30 @@ Mensagem de erro deve citar a variável **sem** prefixo — mandar o usuário
 definir uma `VITE_*` secreta é instruí-lo a publicar a chave. Há teste que
 trava isso (`aiService.bemestar.test.ts`).
 
+## Regra de escrita (o dono pediu, e há teste travando)
+
+**Travessão (—), meia-risca (–) e hífen solto são proibidos em todo texto
+que o usuário lê.** Vale para tela, toast, mensagem de erro, rótulo,
+placeholder e para o que a IA responde. Use vírgula, dois-pontos ou ponto
+final, ou quebre em duas frases.
+
+Comentário de código e documentação **não** entram na regra: são para
+quem mantém o repositório, não para quem usa o app.
+
+Quem garante isso não é boa vontade:
+
+- `src/shared/lib/__tests__/regraPontuacao.test.ts` varre `src/`, tira os
+  comentários e falha o build se achar um travessão. Duas exceções, as
+  duas sobre o caractere em si: a linha que ensina a regra à IA e a
+  classe de caractere do parser de gabarito.
+- `comRegraDeEscrita` (em `aiService.ts`) injeta a regra no
+  `systemInstruction` de **toda** chamada de IA. Fica no ponto único de
+  envio de propósito: são mais de dez chamadas, e a próxima nasceria sem
+  a linha.
+
+Não há placeholder com travessão. Campo vazio escreve o que está
+faltando: `'sem código'`, `'sem dados'`, `'CRP não informado'`.
+
 ## Convenções
 
 - Comentários explicam **por que**, não o quê. O padrão do repo é comentar a
@@ -151,10 +175,12 @@ antigo (responsável digita o email do aluno, aluno aprova) continua no
 `MarketplaceRepository.solicitarVinculo` e não deve ser removido sem migrar
 os vínculos existentes.
 
-**Relatório dos pais: números reais + parágrafo da IA.**
-Hoje `ParentsDashboard` é **100% mock** (`parentMockData.ts`, "Pedro
-Henrique"). Ligar aos dados verdadeiros é pré-requisito de qualquer coisa
-nova ali — relatório de IA sobre dado falso é pior que não ter relatório.
+**Relatório dos pais: números reais + parágrafo da IA.** Feito
+(migration 025). O mock foi removido. O que o responsável vê é
+**agregado**: minutos, proporção de acerto, dias ativos, matérias. Nunca
+a `telemetria_estudo` linha a linha, e nunca conversa, caderno ou humor
+escrito pelo estudante. **Não existe nota escolar neste banco** — não
+reintroduza "desempenho escolar" em gráfico nenhum sem uma fonte real.
 
 **Consentimento do psicólogo: o aluno autoriza; menor de 16 exige o
 responsável.** É a regra da LGPD para dados de criança e adolescente.
@@ -196,6 +222,37 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-23 (2) — Regra de escrita: sem travessão
+- Pedido do dono. 34 textos de tela reescritos (não foi troca de
+  caractere: cada frase virou vírgula, dois-pontos ou duas frases).
+- Teste `regraPontuacao` varre `src/` e falha o build se voltar.
+- `comRegraDeEscrita` aplica a regra a toda chamada de IA, no ponto único
+  de envio. A resposta do Mentor é texto do produto como qualquer outro.
+- Placeholders `'—'` viraram `'sem código'`, `'sem dados'` e
+  `'CRP não informado'`.
+
+### 2026-09-23 — Painel dos pais com números reais (Etapa 2)
+- **`parentMockData.ts` foi DELETADO.** O painel mostrava "Pedro
+  Henrique" e 12 meses de nota escrita à mão, com análise de IA por
+  cima. Agora vem de `resumo_mensal_aluno`, `resumo_semanal_aluno`,
+  `materias_aluno` e `ficha_aluno` (**migration 025 — rodar no Supabase**).
+- **O responsável continua SEM ler `telemetria_estudo`.** As funções são
+  `SECURITY DEFINER` e devolvem agregado; a tabela segue fechada, porque
+  cada linha ali é uma questão específica — conteúdo, não padrão. Há
+  teste provando as duas coisas ao mesmo tempo.
+- **"Desempenho Escolar" saiu do gráfico.** Nenhuma tabela deste banco
+  guarda boletim; a série não tinha de onde vir. Ficou uma linha só,
+  chamada pelo que é: acerto nos exercícios do app.
+- **A projeção de evasão agora tem piso** (`dadosSuficientes`: 3 meses
+  com atividade E 20 questões). Regressão sobre três pontos quase vazios
+  devolvia "Alto risco" com cara de conclusão. Sem o piso, a tela diz
+  "ainda não dá para dizer" e quanto falta.
+- O prompt de `analyzeStudentData` dizia "notas": com dado real, a IA
+  escreveria para os pais uma frase sobre a escola que ninguém mediu.
+  Agora o prompt explica que o número é acerto no app.
+- Qual filho está sendo visto passou para o `ParentPage`: os dois
+  painéis mostravam filhos diferentes sem nada dizer na tela.
 
 ### 2026-09-22 (tarde) — Vínculo por código, na tela
 - **Aluno**: `Perfil → Responsáveis` (`features/profile/SecaoResponsaveis.tsx`)

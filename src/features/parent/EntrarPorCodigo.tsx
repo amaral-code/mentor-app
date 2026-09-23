@@ -26,7 +26,7 @@ import { CODIGO_TAMANHO, codigoValido, normalizarCodigo, soHexadecimal } from '.
 function mensagemDoErro(e: unknown): string {
   const bruto = (e instanceof Error ? e.message : String(e ?? '')).toLowerCase();
   if (bruto.includes('codigo invalido')) {
-    return 'Código não encontrado. Confira com o estudante — ele pode ter gerado um novo.';
+    return 'Código não encontrado. Confira com o estudante, que pode ter gerado um novo.';
   }
   if (bruto.includes('apenas responsaveis')) {
     return 'Esta conta não é de responsável. Entre com a conta de responsável para vincular.';
@@ -87,7 +87,7 @@ export function EntrarPorCodigo({ aoVincular, variante = 'compacto' }: Props) {
       {destaque && (
         <p className="text-sm text-gray-400 mt-2 leading-relaxed">
           O estudante abre <strong className="text-gray-200">Perfil → Responsáveis</strong> no
-          app dele e te passa o código de 8 caracteres. Só ele pode gerar esse código — é
+          app dele e te passa o código de 8 caracteres. Só ele pode gerar esse código, e é
           assim que a decisão de ser acompanhado fica com quem está sendo acompanhado.
         </p>
       )}

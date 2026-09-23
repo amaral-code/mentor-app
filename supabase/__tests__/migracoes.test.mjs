@@ -50,6 +50,7 @@ const ARQUIVOS = [
   '022_termometro_cognitivo.sql',
   '023_sala_foco.sql',
   '024_vinculo_por_codigo.sql',
+  '025_resumo_para_responsavel.sql',
 ];
 
 let db;
@@ -821,5 +822,150 @@ describe('modo foco consciente — focus_metrics (019)', () => {
     const depois = await linhas(aluno,
       'select * from public.focus_metrics where user_id=$1', [aluno]);
     expect(depois.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('resumo do aluno para o responsavel (025)', () => {
+  /*
+   * Fixtures proprias pelo mesmo motivo da 024: estes testes criam
+   * vinculo ativo e telemetria, e nao podem mexer no estado que os
+   * testes de bem-estar ja esperam encontrar.
+   */
+  let aluna;
+  let pai;
+  let vizinho;
+
+  beforeAll(async () => {
+    const criar = async (email, nome) =>
+      (await db.query(
+        `insert into auth.users (email, raw_user_meta_data)
+         values ($1::text, jsonb_build_object('nome', $2::text)) returning id`,
+        [email, nome],
+      )).rows[0].id;
+
+    aluna = await criar('aluna025@test.br', 'Duda Aluna');
+    pai = await criar('pai025@test.br', 'Rui Pai');
+    vizinho = await criar('vizinho025@test.br', 'Vizinho Curioso');
+    await db.query(`update public.perfis set papel='parent' where id=$1`, [pai]);
+
+    // O pai entra pelo codigo: mesmo caminho do app.
+    const codigo = (await db.query(
+      `select codigo_vinculo from public.perfis where id=$1`, [aluna],
+    )).rows[0].codigo_vinculo;
+    await comoUsuario(pai, `select public.vincular_por_codigo($1, 'pai')`, [codigo]);
+
+    /* 6 questoes hoje (4 certas) e 2 no mes passado (1 certa). O mes
+       passado existe para provar que a serie separa por mes, e nao
+       joga tudo no atual. */
+    const inserir = async (materia, acertou, segundos, diasAtras) =>
+      db.query(
+        `insert into public.telemetria_estudo
+           (user_id, question_id, materia, tempo_gasto_segundos, acertou, hora_local, criado_em)
+         values ($1, 'q' || random()::text, $2, $3, $4, 20, now() - ($5 || ' days')::interval)`,
+        [aluna, materia, segundos, acertou, diasAtras],
+      );
+
+    for (let i = 0; i < 4; i++) await inserir('Matematica', true, 60, 0);
+    for (let i = 0; i < 2; i++) await inserir('Matematica', false, 60, 0);
+    await inserir('Historia', true, 120, 40);
+    await inserir('Historia', false, 120, 40);
+  });
+
+  it('o responsavel vinculado ve o resumo mensal', async () => {
+    const rows = await linhas(pai, `select * from public.resumo_mensal_aluno($1, 3)`, [aluna]);
+    expect(rows).toHaveLength(3);
+    const atual = rows.at(-1);
+    expect(atual.questoes).toBe(6);
+    expect(atual.acertos).toBe(4);
+    expect(atual.taxa_acerto).toBe(67);
+    expect(atual.minutos).toBe(6);
+  });
+
+  /* Um buraco no meio da serie E o sinal. Se o mes sem atividade nao
+     virar linha, o grafico emenda os meses e o sumico desaparece. */
+  it('mes sem atividade vira linha zerada, e nao some da serie', async () => {
+    const rows = await linhas(pai, `select * from public.resumo_mensal_aluno($1, 6)`, [aluna]);
+    expect(rows).toHaveLength(6);
+    expect(rows.every((r) => r.questoes !== null)).toBe(true);
+    // Os meses mais antigos nao tem nada: precisam existir zerados.
+    expect(rows[0].questoes).toBe(0);
+    expect(rows[0].taxa_acerto).toBe(0);
+  });
+
+  it('o proprio aluno tambem ve o seu resumo', async () => {
+    const rows = await linhas(aluna, `select * from public.resumo_mensal_aluno($1, 3)`, [aluna]);
+    expect(rows.at(-1).questoes).toBe(6);
+  });
+
+  /* O ponto da migration: agregado e liberado, a tabela NAO. */
+  it('o responsavel continua sem ler a telemetria linha a linha', async () => {
+    const cru = await linhas(pai,
+      `select * from public.telemetria_estudo where user_id=$1`, [aluna]);
+    expect(cru).toHaveLength(0);
+  });
+
+  it('estranho sem vinculo nao ve resumo nenhum', async () => {
+    await expect(
+      comoUsuario(vizinho, `select * from public.resumo_mensal_aluno($1, 3)`, [aluna]),
+    ).rejects.toThrow(/sem permissao/);
+  });
+
+  it('vinculo revogado tira o acesso ao resumo', async () => {
+    const vinculo = (await db.query(
+      `select id from public.vinculos_responsavel where aluno_id=$1 and responsavel_id=$2`,
+      [aluna, pai],
+    )).rows[0].id;
+    await comoUsuario(pai, `select public.revogar_vinculo($1)`, [vinculo]);
+
+    await expect(
+      comoUsuario(pai, `select * from public.resumo_mensal_aluno($1, 3)`, [aluna]),
+    ).rejects.toThrow(/sem permissao/);
+
+    // Devolve o vinculo para os proximos casos.
+    const codigo = (await db.query(
+      `select codigo_vinculo from public.perfis where id=$1`, [aluna],
+    )).rows[0].codigo_vinculo;
+    await comoUsuario(pai, `select public.vincular_por_codigo($1, 'pai')`, [codigo]);
+  });
+
+  it('resumo semanal soma a semana corrente', async () => {
+    const rows = await linhas(pai, `select * from public.resumo_semanal_aluno($1, 4)`, [aluna]);
+    expect(rows).toHaveLength(4);
+    expect(rows.at(-1).questoes).toBe(6);
+  });
+
+  /* 1 de 1 errada viraria "0% em Historia" e assustaria sem significar
+     nada: materia com menos de 5 questoes fica fora. */
+  it('materia com pouca questao nao entra na lista', async () => {
+    const rows = await linhas(pai, `select * from public.materias_aluno($1, 3)`, [aluna]);
+    const nomes = rows.map((r) => r.materia);
+    expect(nomes).toContain('Matematica');
+    expect(nomes).not.toContain('Historia');
+  });
+
+  it('a lista de materias comeca pela pior taxa', async () => {
+    for (let i = 0; i < 6; i++) {
+      await db.query(
+        `insert into public.telemetria_estudo
+           (user_id, question_id, materia, tempo_gasto_segundos, acertou, hora_local)
+         values ($1, 'qx' || random()::text, 'Fisica', 30, false, 21)`,
+        [aluna],
+      );
+    }
+    const rows = await linhas(pai, `select * from public.materias_aluno($1, 3)`, [aluna]);
+    expect(rows[0].materia).toBe('Fisica');
+    expect(rows[0].taxa_acerto).toBe(0);
+  });
+
+  it('ficha do aluno devolve nome, e nao a linha inteira do perfil', async () => {
+    const f = await primeira(pai, `select * from public.ficha_aluno($1)`, [aluna]);
+    expect(f.nome).toBe('Duda Aluna');
+    expect(Object.keys(f).sort()).toEqual(['desde', 'escola', 'nome', 'turma']);
+  });
+
+  it('estranho nao pega a ficha', async () => {
+    await expect(
+      comoUsuario(vizinho, `select * from public.ficha_aluno($1)`, [aluna]),
+    ).rejects.toThrow(/sem permissao/);
   });
 });

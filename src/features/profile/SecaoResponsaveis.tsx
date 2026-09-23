@@ -124,7 +124,7 @@ export function SecaoResponsaveis() {
         <ShieldCheck size={15} className="text-violet-400" /> Responsáveis
       </h2>
       <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-        Quem tem seu código vê seu ritmo de estudo e seus sinais de cansaço — nunca suas
+        Quem tem seu código vê seu ritmo de estudo e seus sinais de cansaço. Nunca suas
         conversas, seu caderno ou o que você escreve sobre como está se sentindo.
       </p>
 
@@ -155,7 +155,7 @@ export function SecaoResponsaveis() {
 
         <p className="text-xs text-gray-500 mt-3 leading-relaxed">
           Entregue este código a quem você quer que acompanhe seus estudos. Quem digitar
-          passa a te acompanhar na hora — só dê a quem você confia.
+          passa a te acompanhar na hora, então só dê a quem você confia.
         </p>
 
         {codigo &&
@@ -165,7 +165,7 @@ export function SecaoResponsaveis() {
                   remove quem ja entrou. */}
               <p className="text-xs text-amber-200/90 leading-relaxed">
                 O código atual para de funcionar. Quem <strong>já</strong> acompanha você
-                continua na lista abaixo — para tirar alguém, use “Remover”.
+                continua na lista abaixo. Para tirar alguém, use “Remover”.
               </p>
               <div className="flex gap-2 mt-3">
                 <button

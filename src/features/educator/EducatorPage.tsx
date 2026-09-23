@@ -73,24 +73,24 @@ const PASSOS_TUTORIAL: PassoTutorial[] = [
     texto: 'Aqui você cadastra os alunos para criar as contas automaticamente. Este guia leva menos de 1 minuto e mostra exatamente onde clicar, passo a passo.',
   },
   {
-    titulo: 'Passo 1 — Escolha como cadastrar',
+    titulo: 'Passo 1: escolha como cadastrar',
     texto: 'Use Upload CSV para turmas grandes (planilha pronta) ou Tabela manual para poucos alunos ou ajustes rápidos. Dá para trocar de modo a hora que quiser, sem perder nada.',
     alvo: 'edu-modo-tabs',
   },
   {
-    titulo: 'Passo 2 — Se for CSV: baixe o modelo e envie',
+    titulo: 'Passo 2: se for CSV, baixe o modelo e envie',
     texto: 'Baixe o modelo, preencha uma linha por aluno (nome, sala, email e telefone do responsável) e arraste o arquivo para a área de upload. O app valida tudo antes de enviar.',
     modo: 'csv',
     alvo: 'edu-upload',
   },
   {
-    titulo: 'Passo 3 — Se for tabela: adicione e preencha',
-    texto: 'Clique em + Adicionar aluno e preencha os 4 campos. Borda vermelha significa campo inválido — passe o olho antes de enviar. O rascunho salva sozinho neste navegador: pode continuar depois.',
+    titulo: 'Passo 3: se for tabela, adicione e preencha',
+    texto: 'Clique em + Adicionar aluno e preencha os 4 campos. Borda vermelha significa campo inválido, então passe o olho antes de enviar. O rascunho salva sozinho neste navegador: pode continuar depois.',
     modo: 'tabela',
     alvo: 'edu-tabela',
   },
   {
-    titulo: 'Passo 4 — Confira e envie',
+    titulo: 'Passo 4: confira e envie',
     texto: 'Revise a lista e clique em Enviar para processamento. Só entram na fila de criação de contas as linhas 100% válidas.',
     modo: 'tabela',
     alvo: 'edu-enviar',
@@ -355,11 +355,11 @@ export function EducatorPage() {
     Promise.all([supabaseRepository.loadEscolas(), supabaseRepository.loadTurmas()])
       .then(([escolas, turmas]) => {
         const e = (escolas as { id: string; nome: string; codigo_instituicao?: string }[]).find((x) => x.id === escolaId) ?? null;
-        setEscolaCod(e ? { id: e.id, nome: e.nome, codigo: e.codigo_instituicao ?? '—' } : null);
+        setEscolaCod(e ? { id: e.id, nome: e.nome, codigo: e.codigo_instituicao ?? 'sem código' } : null);
         setTurmasCod(
           (turmas as { id: string; nome: string; escolaId: string; codigo?: string }[])
             .filter((t) => t.escolaId === escolaId)
-            .map((t) => ({ id: t.id, nome: t.nome, codigo: t.codigo ?? '—' })),
+            .map((t) => ({ id: t.id, nome: t.nome, codigo: t.codigo ?? 'sem código' })),
         );
       })
       .catch(() => {})
@@ -872,7 +872,7 @@ export function EducatorPage() {
 
               {linhasComErro > 0 && (
                 <p className="text-xs text-amber-400">
-                  {linhasComErro} linha{linhasComErro !== 1 ? 's' : ''} com erro — só linhas válidas serão enviadas.
+                  {linhasComErro} linha{linhasComErro !== 1 ? 's' : ''} com erro. Só linhas válidas serão enviadas.
                   Corrija os campos com borda vermelha.
                 </p>
               )}

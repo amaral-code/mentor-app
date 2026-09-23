@@ -782,7 +782,7 @@ export function ChatPage() {
 
         {personaCustomizada && (
           <p className="relative z-10 text-[11px] text-gray-500 px-4 pt-1.5 shrink-0">
-            Falando com o seu professor <strong className="text-gray-300">{personaCustomizada.name}</strong> — volte às categorias acima para o modo temático.
+            Falando com o seu professor <strong className="text-gray-300">{personaCustomizada.name}</strong>. Volte às categorias acima para o modo temático.
           </p>
         )}
 
@@ -834,7 +834,7 @@ export function ChatPage() {
             onTranscrito={aoTranscritoChat}
             onErro={aoErroOcr}
           />
-          <span className="text-[10px] text-slate-500">Foto do caderno vira texto aqui — sem digitar.</span>
+          <span className="text-[10px] text-slate-500">Foto do caderno vira texto aqui, sem digitar.</span>
         </div>
 
         <PremiumInput
