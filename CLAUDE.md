@@ -154,7 +154,7 @@ roteamento é por papel em `App.tsx`, não por rota de URL.
 | Papel | Tela | Escopo |
 | --- | --- | --- |
 | `student` | `AppShell` (16 abas) | Só os próprios dados. **Área completa.** |
-| `teacher` | `EducatorPage` | Só as turmas que leciona |
+| `teacher` | `EducatorPage` | Só as turmas vinculadas em `turma_professores` (026) |
 | `educator` | `EducatorPage` | A escola inteira (secretaria) |
 | `parent` | `ParentPage` | Só os filhos com vínculo aceito |
 | `psychologist` | `PsicologoPage` | Só pacientes com consentimento vigente |
@@ -222,6 +222,26 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-23 (3) — Escopo do docente (Etapa 3)
+- **`teacher` via os dados de TODAS as turmas da escola.** O CLAUDE.md
+  dizia "só as turmas que leciona", mas não existia vínculo nenhum entre
+  professor e turma no banco: `termometro_cognitivo` filtrava por escola.
+  **Migration 026 — rodar no Supabase.**
+- `turma_professores` + `minhas_turmas()` viram a fonte única do escopo.
+  `teacher` só vê o que a secretaria vinculou; `educator` continua com a
+  escola inteira, que é o trabalho dela.
+- `insights_turma_24h` passou a aceitar o professor (antes era só
+  secretaria), no escopo dele. É quem faz algo com "metade da turma
+  errou função afim".
+- Nova aba **Docentes** no painel, só para educator/admin: vincula e
+  desvincula professor de turma.
+- **Ao rodar a 026, todo professor fica sem turma até a secretaria
+  vincular.** É barulhento de propósito: o contrário manteria o acesso
+  amplo que a migration existe para fechar. A tela do professor explica
+  o que fazer.
+- Corrigido de quebra: a fila de abas do painel estourava 109px na
+  largura do celular com a quarta aba.
 
 ### 2026-09-23 (2) — Regra de escrita: sem travessão
 - Pedido do dono. 34 textos de tela reescritos (não foi troca de
