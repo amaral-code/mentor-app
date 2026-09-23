@@ -8,6 +8,8 @@ import { calcLevel } from '../../shared/lib/utils';
 import { AppIcon } from '../../shared/ui/AppIcon';
 import { AcessibilidadePanel } from '../../shared/ui/AcessibilidadePanel';
 import { SecaoResponsaveis } from './SecaoResponsaveis';
+import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';
+import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { hasProxy, testGeneration, getAIProviderInfo } from '../../shared/lib/aiService';
 import type { Escola, Turma } from '../../shared/types';
 
@@ -62,6 +64,7 @@ export function ProfilePage() {
     { id: 'secao-conta', rotulo: 'Conta' },
     { id: 'secao-escola', rotulo: 'Escola e códigos' },
     { id: 'secao-responsaveis', rotulo: 'Responsáveis' },
+    { id: 'secao-psicologo', rotulo: 'Psicólogo' },
     { id: 'secao-acessibilidade', rotulo: 'Acessibilidade' },
     { id: 'secao-ia', rotulo: 'IA' },
   ];
@@ -187,6 +190,17 @@ export function ProfilePage() {
       </div>
 
       <SecaoResponsaveis />
+
+      {/* Quem vê os meus dados, num lugar só: responsáveis e psicólogo. As
+          notificações de acesso mandam o aluno "encerrar em Perfil", e até
+          aqui o controle do psicólogo só existia na Rede de Apoio, que não
+          tem entrada no menu do aluno. */}
+      {session && (
+        <div id="secao-psicologo" className="scroll-mt-24 space-y-3">
+          <AvisoMensagens />
+          <AcessoPsicologo aluno={{ id: session.uid, nome: session.nome }} papel="aluno" />
+        </div>
+      )}
 
       {/* Escola e codigos: vinculo por codigo confidencial (email da secretaria) */}
       <div id="secao-escola" className="glass-card rounded-2xl p-5 scroll-mt-24">

@@ -19,6 +19,9 @@ import { PageSkeleton } from './shared/ui/Skeleton';
 const EducatorPage = lazy(() =>
   import('./features/educator/EducatorPage').then((m) => ({ default: m.EducatorPage })),
 );
+const ProfessorPage = lazy(() =>
+  import('./features/educator/ProfessorPage').then((m) => ({ default: m.ProfessorPage })),
+);
 const ParentPage = lazy(() =>
   import('./features/parent/ParentPage').then((m) => ({ default: m.ParentPage })),
 );
@@ -375,7 +378,10 @@ export default function App() {
             </div>
           }
         >
-          <EducatorPage />
+          {/* Secretaria e professor tinham a MESMA tela. O professor via
+              upload de planilha de matricula e troca de codigo, coisas
+              que o servidor nem deixa ele fazer. Cada um tem a sua. */}
+          {userRole === 'teacher' ? <ProfessorPage /> : <EducatorPage />}
         </Suspense>
         <Toast />
       </LazyMotion>

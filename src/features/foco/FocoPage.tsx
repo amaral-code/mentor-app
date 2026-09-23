@@ -391,7 +391,7 @@ export function FocoPage() {
       // historico de foco sem o aluno perceber que perdeu o registro.
       persistir(supabaseRepository.saveSessaoFoco('foco', FOCO_MIN), {
         aoFalhar: () => setHistorico(h => h.filter(x => x !== entry)),
-        mensagem: 'O ciclo valeu XP, mas nao entrou no seu historico de foco.',
+        mensagem: 'O ciclo valeu XP, mas não entrou no seu histórico de foco.',
       });
       setCicles(p => p + 1);
       setToast(`+${xp} XP por ciclo de foco!`, 'success');

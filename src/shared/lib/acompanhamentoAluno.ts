@@ -51,9 +51,20 @@ export function paraMesCurto(iso: string): string {
 /**
  * O que o motor de evasão consome. `notaMedia` recebe a taxa de acerto
  * no app, e não nota escolar — que não existe no banco.
+ *
+ * Os meses ANTES da primeira atividade saem da série. O banco devolve
+ * todo mês do período, inclusive os de antes de o aluno começar a usar
+ * o app, com acerto 0. Na regressão isso virava "0, 0, 0, 70, 60, 49",
+ * uma reta que parte do zero e SOBE: o painel dos pais dizia "tendência
+ * de alta confirmada" para um aluno caindo três meses seguidos.
+ *
+ * Mês vazio DEPOIS que o aluno já usava continua na série: aí o vazio é
+ * informação (ele parou), e é exatamente o sinal que o motor procura.
  */
 export function paraRegistrosMensais(resumo: ResumoMensal[]): StudentMonthlyRecord[] {
-  return resumo.map((r) => ({
+  const primeiro = resumo.findIndex((r) => r.questoes > 0);
+  if (primeiro === -1) return [];
+  return resumo.slice(primeiro).map((r) => ({
     month: paraMesCurto(r.mes),
     notaMedia: r.taxaAcerto,
     tempoUso: Math.round((r.minutos / 60) * 10) / 10,

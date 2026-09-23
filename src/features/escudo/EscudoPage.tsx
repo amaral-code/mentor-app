@@ -90,7 +90,7 @@ export function EscudoPage() {
         registrarInterrupcao();
         if (!alertouSaida.current) {
           alertouSaida.current = true;
-          setToast('Voce voltou ao app. A sessao continua, mas cada retorno reduz as moedas.', 'info');
+          setToast('Você voltou ao app. A sessão continua, mas cada retorno reduz as moedas.', 'info');
         }
       }
     };
@@ -134,7 +134,7 @@ export function EscudoPage() {
       });
       setToast(`+${r.moedas} moedas de foco por ${r.minutos} min offline.`, 'success');
     } else {
-      setToast(`Sessao de ${r.minutos} min registrada. A partir de 5 min ja rende moedas.`, 'info');
+      setToast(`Sessão de ${r.minutos} min registrada. A partir de 5 min ja rende moedas.`, 'info');
     }
   }
 
@@ -151,7 +151,7 @@ export function EscudoPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-xl md:text-2xl font-bold text-white">Escudo de Dopamina</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Ganhe moedas pelo tempo em que voce NAO olha a tela</p>
+          <p className="text-sm text-gray-500 mt-0.5">Ganhe moedas pelo tempo em que você NÃO olha a tela</p>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400">
           <Coins size={16} />
@@ -245,7 +245,7 @@ export function EscudoPage() {
               <button
                 onClick={() => {
                   cancelarEscudo();
-                  setToast('Sessao descartada.', 'info');
+                  setToast('Sessão descartada.', 'info');
                 }}
                 className="btn-ghost text-sm text-gray-400 hover:text-red-400"
               >
@@ -259,13 +259,13 @@ export function EscudoPage() {
       {resultado && (
         <div className="glass rounded-2xl p-5 text-center border border-cyan-500/20 animate-fade-up">
           <p className="text-sm text-gray-300">
-            Voce ficou <strong className="text-white">{resultado.minutos} min</strong> longe da tela e ganhou{' '}
+            Você ficou <strong className="text-white">{resultado.minutos} min</strong> longe da tela e ganhou{' '}
             <strong className="text-amber-400">{resultado.moedas} moedas</strong>.
           </p>
           {jaHoje >= TETO_DIARIO_MOEDAS && (
             <p className="text-xs text-gray-500 mt-2">
-              Voce chegou ao teto de {TETO_DIARIO_MOEDAS} moedas de hoje. As proximas sessoes continuam
-              contando no historico.
+              Você chegou ao teto de {TETO_DIARIO_MOEDAS} moedas de hoje. As próximas sessões continuam
+              contando no histórico.
             </p>
           )}
         </div>
@@ -274,9 +274,9 @@ export function EscudoPage() {
       {/* Estatisticas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { valor: resumo.sessoesHoje, rotulo: 'Sessoes hoje' },
+          { valor: resumo.sessoesHoje, rotulo: 'Sessões hoje' },
           { valor: `${Math.floor(resumo.totalMinutos / 60)}h`, rotulo: 'Total offline' },
-          { valor: `${resumo.melhorSessao}min`, rotulo: 'Melhor sessao' },
+          { valor: `${resumo.melhorSessao}min`, rotulo: 'Melhor sessão' },
           { valor: carteira.totalGanho, rotulo: 'Moedas ganhas' },
         ].map((s) => (
           <div key={s.rotulo} className="glass rounded-xl px-4 py-3 text-center">
@@ -327,14 +327,14 @@ export function EscudoPage() {
           <EmptyState
             pose="meditando"
             compacto
-            titulo="Nenhuma sessao offline ainda"
+            titulo="Nenhuma sessão offline ainda"
             descricao="Ative o escudo, tranque a tela e volte depois. O tempo longe vira moeda."
           />
         </div>
       ) : (
         <div className="glass rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-            <Smartphone size={16} className="text-cyan-400" /> Ultimas sessoes
+            <Smartphone size={16} className="text-cyan-400" /> Últimas sessões
           </h2>
           <div className="space-y-1.5">
             {sessoesOffline.slice(0, 8).map((s, i) => (

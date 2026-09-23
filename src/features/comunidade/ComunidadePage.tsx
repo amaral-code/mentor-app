@@ -213,7 +213,7 @@ export function ComunidadePage() {
       if (!soLocal) {
         persistir(supabaseRepository.entrarNaLiga(liga.id), {
           aoFalhar: () => { setLigas(ligas); setSelectedLeagueId(null); setViewMode('list'); },
-          mensagem: 'Nao foi possivel entrar na liga. Tente de novo.',
+          mensagem: 'Não foi possível entrar na liga. Tente de novo.',
         });
         addXP(updated.xpReward);
         addLog({ timestamp: Date.now(), type: 'atividade', description: `Entrou na liga "${updated.title}"`, xp: updated.xpReward });
@@ -287,7 +287,7 @@ export function ComunidadePage() {
       supabaseRepository.atualizarLiga(updated.id, updated as unknown as Record<string, unknown>),
       {
         aoFalhar: () => setLigas(anterior),
-        mensagem: 'Nao foi possivel salvar a alteracao na liga.',
+        mensagem: 'Não foi possível salvar a alteração na liga.',
       },
     );
   }

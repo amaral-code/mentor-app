@@ -16,7 +16,7 @@ interface Step {
 }
 
 const STEPS: Step[] = [
-  { id: 'welcome', title: 'Bem-vindo ao Midnight Mentor!', description: 'Vamos fazer um tour rápido pelo seu novo assistente de estudos para o ENEM. Conheça cada ferramenta e comece a estudar com inteligência.', icon: 'luaCheia', tab: 'dashboard' },
+  { id: 'welcome', title: 'Boas-vindas ao Midnight Mentor!', description: 'Vamos fazer um tour rápido pelo seu novo assistente de estudos para o ENEM. Conheça cada ferramenta e comece a estudar com inteligência.', icon: 'luaCheia', tab: 'dashboard' },
   { id: 'dashboard', title: 'Central de Estudos', description: 'Seu painel principal. Veja o plano de estudos do dia, registre seu humor, acompanhe seu SSC e gerencie suas tarefas diárias.', icon: 'bussola', tab: 'dashboard', targetSelector: '[data-tab="dashboard"]' },
   { id: 'chat', title: 'Mentor', description: 'Converse com o sagui. Tire dúvidas, receba dicas de estudo e suporte emocional personalizado.', icon: 'marcador', tab: 'chat', targetSelector: '[data-tab="chat"]' },
   { id: 'essay', title: 'Redação 1000', description: 'Pratique redação no formato ENEM. Receba correção automática com nota por cada competência.', icon: 'escrita', tab: 'essay', targetSelector: '[data-tab="essay"]' },
@@ -211,7 +211,10 @@ export function OnboardingTour() {
             className={`fixed z-[201] ${hasTarget ? 'hidden md:block' : 'block'}`}
             style={{ width: mascotSize, height: mascotSize, ...mascotStyle }}
           >
-            <Mascot state="typing" talking message="Vou te guiar, um passo de cada vez!" speech variant="floating" size={mascotSize} />
+            {/* O balão "floating" abre para a ESQUERDA do sagui. No celular o
+                sagui fica centralizado, e metade do balão saía da tela
+                ("...m passo de ...ez!"). Lá o cartão já traz o texto. */}
+            <Mascot state="typing" talking message="Vou te guiar, um passo de cada vez!" speech={!telaEstreita} variant="floating" size={mascotSize} />
           </div>
         );
       })()}

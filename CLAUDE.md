@@ -9,7 +9,7 @@ Publicada na **Vercel**. Todo o texto do produto e dos comentários é em
 ```bash
 npm run dev      # dev server na porta 5180 (já inclui o back-end /api)
 npm run build    # tsc -b && vite build
-npm test         # vitest run  (425 testes)
+npm test         # vitest run  (773 testes)
 npm run lint     # oxlint
 ```
 
@@ -161,15 +161,27 @@ roteamento é por papel em `App.tsx`, não por rota de URL.
 | Papel | Tela | Escopo |
 | --- | --- | --- |
 | `student` | `AppShell` (16 abas) | Só os próprios dados. **Área completa.** |
-| `teacher` | `EducatorPage` | Só as turmas vinculadas em `turma_professores` (026) |
-| `educator` | `EducatorPage` | A escola inteira (secretaria) |
+| `teacher` | `ProfessorPage` | Só as turmas vinculadas em `turma_professores` (026) |
+| `educator` | `EducatorPage` (Painel da Secretaria) | A escola inteira |
 | `parent` | `ParentPage` | Só os filhos com vínculo aceito |
 | `psychologist` | `PsicologoPage` | Só pacientes com consentimento vigente |
 | `admin` | — | Promoção de papel, só por SQL |
 
-`teacher` e `educator` compartilham a mesma tela **de propósito**: o que muda
-é o escopo dos dados, não o conjunto de funcionalidades. Quem decide o que
-cada um enxerga é a RLS, nunca o front — esconder um botão não protege nada.
+**Professor e secretaria têm telas diferentes** (decisão do dono em
+2026-09-24, revertendo a tela compartilhada). Antes, o professor abria o
+painel da secretaria, com upload de matrícula e troca de código que o
+servidor nem deixa ele usar.
+
+| | Secretaria (`EducatorPage`) | Professor (`ProfessorPage`) |
+| --- | --- | --- |
+| 1 | Matrículas | Como a turma está (termômetro) |
+| 2 | Turmas e códigos (troca) | O que revisar (insights) |
+| 3 | Docentes | Códigos (só das turmas dele, só leitura) |
+| 4 | Visão da escola (termômetro) | |
+
+Os componentes compartilhados recebem o escopo só para ajustar o TEXTO
+(`TermometroCognitivo escopo`, `CodigosEscola modo`). Quem decide os
+DADOS continua sendo a RLS (`minhas_turmas()`), nunca o front.
 
 ### Decisões de produto (não reabra sem falar com o dono)
 
@@ -256,6 +268,37 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-24 (3) — Uma tela por perfil, e o percurso de cada um
+- **Professor ganhou tela própria** (`ProfessorPage`); a antiga virou
+  Painel da Secretaria. `CodigosEscola` saiu do cadastro e serve aos dois.
+- **Migration 029 — rodar no Supabase.** A 026 reescreveu
+  `insights_turma_24h` e mudou o cálculo sem querer: a taxa virou fração
+  de 0 a 1, e a tela mostrava "1% da turma" para 5 de 7 alunos. A 029
+  devolve o corpo da 020, com o escopo da 026. Há teste que falha sem ela.
+  O cartão agora diz "5 de 7 alunos erraram" e, à parte, a taxa de erro.
+- **Painel dos pais dizia "tendência de alta" para aluno caindo.** Os
+  meses antes da primeira atividade entravam na regressão como 0% de
+  acerto (0, 0, 0, 70, 60, 49 sobe). `paraRegistrosMensais` corta os
+  meses anteriores ao início; mês vazio DEPOIS do início fica (é sinal de
+  que parou). No gráfico, mês sem questão é lacuna, não 0%.
+- Painel dos pais em abas (Estudos · Bem-estar e apoio · Outro
+  estudante). Passava de 5 mil pixels no celular. Com alerta aberto, abre
+  em Bem-estar; o aviso de alerta aparece em qualquer aba.
+- Linguagem de pai e mãe: sem "R²", "inclinação", "proxy serverless".
+- **Cadastro de matrícula fingia sucesso**: sem serviço de envio, esperava
+  1,5 s e mostrava "enviado" sem criar conta. Agora é erro honesto.
+- Aluno não achava as mensagens da psicóloga: a Rede de Apoio não tem
+  entrada no menu. `AvisoMensagens` aparece na Central e no Perfil só com
+  mensagem não lida; o controle do psicólogo também foi para o Perfil.
+- Com `FADIGA_ZERADA`, telas diziam "0 · Ritmo saudável" sobre algo que o
+  app não mede. O cartão do aluno some; o da família diz que está desligado.
+- Página do aluno rolava para o lado no celular (orbe de fundo): o
+  contêiner usa `overflow-x-clip` (não `hidden`, que quebra o `sticky`).
+- 54 textos de tela ganharam acento (varredura pela árvore sintática, só
+  em texto, nunca em string comparada pelo código).
+- E-mail de matrícula: o aluno importado já está na turma e não precisa
+  digitar código; o responsável é orientado a pedir o código do aluno.
 
 ### 2026-09-24 (2) — Contas de demonstração
 - **Migration 028 — rodar no Supabase.** Ver a seção Demonstração.
@@ -400,6 +443,11 @@ principal, regra de permissão. Mais recente no topo.
   commitada** (linhas ~20-24), válida até 2036, e ela está no histórico do git.
   Precisa ser **rotacionada no painel do Supabase** — remover do arquivo não
   basta.
+- **Índice de cansaço desligado (`FADIGA_ZERADA`) x o resto do produto.**
+  Com a flag ligada nada é gravado em `indice_burnout`. Em produção, isso
+  deixa VAZIOS o termômetro do professor e da secretaria, o índice que o
+  psicólogo vê e o escopo `bem_estar` do consentimento. Só a demonstração
+  (028) tem dados, porque insere direto. Decisão do dono pendente.
 - Muitos warnings de `react-hooks/exhaustive-deps` (`npm run lint`). Alguns são
   intencionais, outros causam estado velho — avaliar caso a caso.
 - `SESSAO-RESUMO.md` e os `.zip` na raiz são de sessões antigas e descrevem um

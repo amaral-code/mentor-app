@@ -43,6 +43,9 @@ const CORES: Record<NivelCalor, { barra: string; texto: string; borda: string; c
 interface Props {
   turma: TurmaTermometro;
   janela: 'hoje' | 'semana';
+  /** A sugestão é de sala de aula. Para a secretaria, ela vira algo a
+   *  levar ao professor da turma: quem corta lista de exercício é ele. */
+  escopo?: 'escola' | 'professor';
 }
 
 /**
@@ -54,7 +57,7 @@ interface Props {
  * Nunca recebe (nem tem como exibir) aluno individual: o que chega aqui
  * e o agregado da RPC 022, que ja descartou turma pequena demais.
  */
-export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela }: Props) {
+export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo = 'professor' }: Props) {
   const pct = percentualExaustao(turma);
   const pctAlerta = percentualAlerta(turma);
   const nivel = nivelDeCalor(pct);
@@ -113,11 +116,12 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela }: Prop
           <dt className="flex items-center gap-1 text-[10px] text-slate-500">
             <AlarmClock size={11} /> Distrações
           </dt>
-          <dd className="text-sm font-bold text-white tabular-nums">{turma.distracoesMedia.toFixed(1)}/sessão</dd>
+          <dd className="text-sm font-bold text-white tabular-nums">{/* toFixed usa ponto; em português o decimal é vírgula. */}
+            {turma.distracoesMedia.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}/sessão</dd>
         </div>
         <div className="rounded-xl bg-white/[0.03] px-3 py-2">
           <dt className="flex items-center gap-1 text-[10px] text-slate-500">
-            <MoonStar size={11} /> Madrugada
+            <MoonStar size={11} /> Estudo de madrugada
           </dt>
           <dd className="text-sm font-bold text-white tabular-nums">{Math.round(turma.fracaoMadrugada * 100)}%</dd>
         </div>
@@ -133,7 +137,7 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela }: Prop
       {/* Intervencao pedagogica sugerida (a razao de o painel existir). */}
       <div className="mt-4 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] p-3">
         <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-300">
-          <Lightbulb size={12} /> Intervenção sugerida
+          <Lightbulb size={12} /> {escopo === 'escola' ? 'Para conversar com o professor da turma' : 'Sugestão para a aula'}
         </p>
         <p className="mt-1 text-sm font-semibold text-white">{intervencao.titulo}</p>
         <p className="mt-1 text-xs leading-relaxed text-slate-400">{intervencao.acao}</p>

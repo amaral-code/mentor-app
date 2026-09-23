@@ -416,12 +416,12 @@ export function sugestaoPausa(classe: ClasseBurnout): { minutos: number; texto: 
     case 'alerta':
       return { minutos: 20, texto: 'Vinte minutos de pausa e uma revisao curta depois. So isso.' };
     default:
-      return { minutos: 5, texto: 'Ritmo saudavel. Uma pausa curta a cada bloco mantem assim.' };
+      return { minutos: 5, texto: 'Ritmo saudável. Uma pausa curta a cada bloco mantém assim.' };
   }
 }
 
 export const ROTULO_CLASSE: Record<ClasseBurnout, string> = {
-  saudavel: 'Ritmo saudavel',
+  saudavel: 'Ritmo saudável',
   alerta: 'Sinal amarelo',
   fadiga: 'Fadiga acumulada',
   esgotamento: 'Risco de esgotamento',

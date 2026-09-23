@@ -122,26 +122,21 @@ function ProjectionAlert({ projection }: { projection: DropoutProjection }) {
     return (
       <div className="rounded-2xl border border-red-500/25 bg-gradient-to-br from-red-500/10 to-transparent p-5 animate-fade-up" role="alert">
         <p className="flex items-center gap-2 text-red-400 font-bold text-sm"><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /> Tendência de queda detectada: intervenção recomendada</p>
-        <p className="text-sm text-red-200/80 mt-2 leading-relaxed"> A projeção dos próximos 4 meses indica declínio no desempenho (queda estimada de até <b>{dropPct}%</b>).
-          Recomenda-se: conversar com o estudante, alinhar com a escola, incentivar a rotina de estudos no app e
-          monitorar presença no ensino noturno.
+        <p className="text-sm text-red-200/80 mt-2 leading-relaxed"> O acerto nos exercícios do app vem caindo. Se nada mudar, em 4 meses ele pode ficar <b>{dropPct}% menor</b> do que é hoje.
+          O que costuma ajudar: conversar com o estudante sem cobrança, perguntar como está a rotina e, se
+          fizer sentido, falar com a escola.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 text-center">
+        {/* "Inclinação" e "Ajuste R²" saíram: jargão de estatística para
+            quem só quer saber se o filho vai bem. E R² de 100% com três
+            pontos não quer dizer nada, mas soa como certeza absoluta. */}
+        <div className="grid grid-cols-2 gap-2 mt-4 text-center">
           <div className="rounded-xl bg-black/30 py-2 px-1">
-            <p className="text-[10px] text-gray-500">Nota atual</p>
-            <p className="text-sm font-bold text-red-300 tabular-nums">{projection.currentAverage.toLocaleString('pt-BR')}</p>
+            <p className="text-[10px] text-gray-500">Acerto médio no app</p>
+            <p className="text-sm font-bold text-red-300 tabular-nums">{Math.round(projection.currentAverage)}%</p>
           </div>
           <div className="rounded-xl bg-black/30 py-2 px-1">
-            <p className="text-[10px] text-gray-500">Projeção (4m)</p>
-            <p className="text-sm font-bold text-red-300 tabular-nums">{projection.projectedAverage.toLocaleString('pt-BR')}</p>
-          </div>
-          <div className="rounded-xl bg-black/30 py-2 px-1">
-            <p className="text-[10px] text-gray-500">Inclinação</p>
-            <p className="text-sm font-bold text-red-300 tabular-nums">{Math.abs(projection.slope).toFixed(2).replace('.', ',')} pts/mês</p>
-          </div>
-          <div className="rounded-xl bg-black/30 py-2 px-1">
-            <p className="text-[10px] text-gray-500">Ajuste R²</p>
-            <p className="text-sm font-bold text-red-300 tabular-nums">{(projection.r2 * 100).toFixed(0)}%</p>
+            <p className="text-[10px] text-gray-500">Se nada mudar, em 4 meses</p>
+            <p className="text-sm font-bold text-red-300 tabular-nums">{Math.round(projection.projectedAverage)}%</p>
           </div>
         </div>
       </div>
@@ -164,7 +159,7 @@ const RISK_META = {
     text: 'text-emerald-400',
     border: 'border-emerald-500/25',
     chipBg: 'bg-emerald-500/10',
-    sub: 'Trajetória saudável. Continue monitorando semanalmente.',
+    sub: 'O acerto no app está estável ou subindo.',
     gradient: 'from-emerald-500/15 to-emerald-600/5',
     icon: 'text-emerald-400',
   },
@@ -174,7 +169,7 @@ const RISK_META = {
     text: 'text-amber-400',
     border: 'border-amber-500/25',
     chipBg: 'bg-amber-500/10',
-    sub: 'Sinais de queda. Acompanhe presença e rotina de estudos.',
+    sub: 'O acerto no app começou a cair. Vale acompanhar a rotina.',
     gradient: 'from-amber-500/15 to-orange-600/5',
     icon: 'text-amber-400',
   },
@@ -184,7 +179,7 @@ const RISK_META = {
     text: 'text-red-400',
     border: 'border-red-500/25',
     chipBg: 'bg-red-500/10',
-    sub: 'Risco elevado de evasão. Intervenção urgente recomendada.',
+    sub: 'O acerto no app caiu bastante nos últimos meses. Vale conversar esta semana.',
     gradient: 'from-red-500/15 to-rose-600/5',
     icon: 'text-red-400',
   },
@@ -319,7 +314,10 @@ export function ParentsDashboard({ aluno }: Props) {
     datasets: [
       {
         label: 'Acerto nos exercícios do app (%)',
-        data: mensal.map(r => r.taxaAcerto),
+        // Mes sem questao nenhuma e LACUNA, e nao "0% de acerto": o zero
+        // desenhava uma queda que nao aconteceu.
+        data: mensal.map(r => (r.questoes > 0 ? r.taxaAcerto : null)),
+        spanGaps: false,
         borderColor: EMERALD,
         backgroundColor: 'rgba(16,185,129,0.06)',
         pointBackgroundColor: EMERALD,
@@ -650,9 +648,12 @@ export function ParentsDashboard({ aluno }: Props) {
             <div className="rounded-xl bg-amber-500/5 border border-amber-500/10 px-4 py-3 text-xs text-amber-300/90 flex items-start gap-2">
               <span><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
               <span className="flex-1">
+                {/* O texto antigo pedia para "ativar a chave no Perfil ou o
+                    proxy serverless": recado de programador numa tela de
+                    mãe, que nem tem chave no Perfil. */}
                 {aiState.status === 'error'
-                  ? `Não foi possível conectar à IA (${aiState.error}). Exibindo estimativa local por regressão linear.`
-                  : 'IA não configurada. Ative a chave no Perfil ou o proxy serverless para análises inteligentes. Exibindo estimativa local.'}
+                  ? 'A análise com inteligência artificial não respondeu agora. Mostrando a estimativa feita pelo próprio app.'
+                  : 'Mostrando a estimativa feita pelo próprio app, a partir do histórico acima.'}
               </span>
               <button
                 onClick={() => setAnalysisNonce(n => n + 1)}
@@ -676,12 +677,12 @@ export function ParentsDashboard({ aluno }: Props) {
                     <p className={`text-2xl font-extrabold tabular-nums ${
                       delta < -0.5 ? 'text-red-400' : delta > 0.5 ? 'text-emerald-400' : 'text-gray-300'
                     }`}>
-                      {p.notaMedia.toLocaleString('pt-BR')}
+                      {Math.max(0, Math.round(p.notaMedia))}%
                     </p>
                     <p className={`text-[10px] mt-1 font-medium ${
                       delta < -0.5 ? 'text-red-500/70' : delta > 0.5 ? 'text-emerald-500/70' : 'text-gray-600'
                     }`}>
-                      {delta < -0.5 ? `− ${Math.abs(delta).toFixed(1).replace('.', ',')}` : delta > 0.5 ? `+ ${delta.toFixed(1).replace('.', ',')}` : 'estável'}
+                      {delta < -0.5 ? `caindo` : delta > 0.5 ? `subindo` : 'estável'}
                     </p>
                   </div>
                 );

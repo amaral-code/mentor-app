@@ -54,6 +54,7 @@ const ARQUIVOS = [
   '026_professor_por_turma.sql',
   '027_psicologo_consentimento_prontuario.sql',
   '028_conta_demonstracao.sql',
+  '029_corrige_insights_escala.sql',
 ];
 
 let db;
@@ -1733,5 +1734,54 @@ describe('contas de demonstracao (028)', () => {
     await preparar();
     const n = await db.query(`select count(*)::int as n from public.contas_demo where not da_equipe`);
     expect(n.rows[0].n).toBe(6);
+  });
+});
+
+describe('insights da turma: escala e regra (029)', () => {
+  /*
+   * A 026 mudou o calculo sem querer: a taxa virou fracao de 0 a 1 e a
+   * tela, que espera 0 a 100, mostrava "1% da turma" para 5 de 7 alunos.
+   * Estes casos travam o contrato que a tela usa.
+   */
+  let prof;
+  let a1;
+  let a2;
+
+  beforeAll(async () => {
+    const criar = async (email, nome) =>
+      (await db.query(
+        `insert into auth.users (email, raw_user_meta_data)
+         values ($1::text, jsonb_build_object('nome', $2::text)) returning id`,
+        [email, nome],
+      )).rows[0].id;
+
+    const escola = (await db.query(`insert into public.escolas (nome) values ('Escola 029') returning id`)).rows[0].id;
+    const turma = (await db.query(`insert into public.turmas (escola_id, nome) values ($1, 'T029') returning id`, [escola])).rows[0].id;
+    prof = await criar('prof029@test.br', 'Prof 029');
+    a1 = await criar('a1029@test.br', 'A1');
+    a2 = await criar('a2029@test.br', 'A2');
+    await db.query(`update public.perfis set papel='teacher', escola_id=$2 where id=$1`, [prof, escola]);
+    await db.query(`update public.perfis set escola_id=$2, turma_id=$3 where id = any($1)`, [[a1, a2], escola, turma]);
+    await db.query(`insert into public.turma_professores (turma_id, professor_id) values ($1, $2)`, [turma, prof]);
+
+    // a1: 1 acerto e 3 erros. a2: 3 acertos e 1 erro. Os dois erraram ao
+    // menos uma; so a1 errou mais do que acertou.
+    await db.query(
+      `insert into public.quiz_desempenho_topicos (user_id, materia, topico, acertos, erros)
+       values ($1, 'Matemática', 'Frações', 1, 3), ($2, 'Matemática', 'Frações', 3, 1)`,
+      [a1, a2]);
+  });
+
+  it('a taxa e percentual de erro, de 0 a 100', async () => {
+    const [r] = await linhas(prof, `select * from public.insights_turma_24h(24)`);
+    // 4 erros em 8 respostas = 50%, e nao 0,5.
+    expect(Number(r.taxa_dificuldade)).toBe(50);
+    expect(Number(r.total_erros)).toBe(4);
+  });
+
+  it('com dificuldade e quem errou ao menos uma', async () => {
+    const [r] = await linhas(prof, `select * from public.insights_turma_24h(24)`);
+    expect(r.alunos_com_dificuldade).toBe(2);
+    expect(r.total_alunos).toBe(2);
   });
 });
