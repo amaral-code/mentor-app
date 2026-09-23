@@ -87,14 +87,20 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
                   </p>
                 </div>
 
+                {/* `isento` (consulta sem custo) aparecia como "pagamento
+                    pendente": o selo so conhecia `pago`. */}
                 <span
                   className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                    a.statusPagamento === 'pago'
+                    a.statusPagamento === 'pago' || a.statusPagamento === 'isento'
                       ? 'bg-emerald-500/10 text-emerald-400'
                       : 'bg-amber-500/10 text-amber-400'
                   }`}
                 >
-                  {a.statusPagamento === 'pago' ? 'pago' : 'pagamento pendente'}
+                  {a.statusPagamento === 'pago'
+                    ? 'pago'
+                    : a.statusPagamento === 'isento'
+                      ? 'sem custo'
+                      : 'pagamento pendente'}
                 </span>
               </div>
 

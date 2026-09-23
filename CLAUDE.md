@@ -221,6 +221,28 @@ Feitas (024 e 027):
 na RLS, mas conformidade legal precisa de validação profissional antes de uso
 com paciente real — isto é produto, não parecer jurídico.
 
+## Demonstração (migration 028)
+
+A equipe apresenta o produto com **cinco contas, uma por perfil**, numa
+escola fictícia. Roteiro e comando prontos em
+`supabase/migrations/verificacao/preparar_demonstracao.sql`.
+
+- **Nenhuma conta troca de papel pelo app**, nem as de demonstração. Já
+  houve a proposta de um login só com seletor de papel; foi descartada
+  porque exigia abrir exceção na trava de `perfis`. Não reabra.
+- **Dois mundos que não se misturam.** Triggers em `agendamentos`,
+  `consentimentos_dados` e `vinculos_responsavel` recusam qualquer
+  ligação entre conta de demonstração e conta real, e a vitrine mostra
+  a cada mundo só os seus psicólogos. O motivo: o psicólogo de
+  demonstração não tem CRP, e um menor real não pode chegar até ele.
+- Conta de demonstração não sai da escola de demonstração
+  (`trava_escola_demo`): como secretaria, ela leria agregados reais.
+- `contas_demo` tem RLS e **nenhuma policy**; `preparar_demonstracao` e
+  `limpar_demonstracao` só rodam pelo SQL Editor.
+- Seis alunos fictícios, e não cinco: o termômetro esconde turma com
+  menos de 5 medidos, e no piso exato o painel sumiria na apresentação.
+- Alunos fictícios têm e-mail em `.invalid` (RFC 2606).
+
 ## Testes
 
 Vitest. A lógica pura de `shared/lib/` é o que tem cobertura — mantenha a
@@ -234,6 +256,14 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-24 (2) — Contas de demonstração
+- **Migration 028 — rodar no Supabase.** Ver a seção Demonstração.
+- A vitrine chama `psicologo_visivel`, e não `e_conta_demo`: função
+  dentro de view é checada com a permissão de quem consulta, e o
+  cliente não pode perguntar sobre qualquer id se ele é demonstração.
+- Consulta `isento` aparecia como "pagamento pendente" na lista: o selo
+  só conhecia `pago`. Agora é "sem custo".
 
 ### 2026-09-24 — Psicólogo (Etapa 4) e a regra do hífen de verdade
 - **Migration 027 — rodar no Supabase.** Consentimento, prontuário,

@@ -53,6 +53,7 @@ const ARQUIVOS = [
   '025_resumo_para_responsavel.sql',
   '026_professor_por_turma.sql',
   '027_psicologo_consentimento_prontuario.sql',
+  '028_conta_demonstracao.sql',
 ];
 
 let db;
@@ -113,6 +114,11 @@ beforeAll(async () => {
     -- desfaria o revoke da migration; aqui ele e reaplicado, como no
     -- Supabase, onde o revoke roda depois do grant padrao.
     revoke all on function public.e_menor_de_16(uuid) from authenticated;
+    -- 028: funcoes de demonstracao sao so do SQL Editor.
+    revoke all on function public.e_conta_demo(uuid) from authenticated;
+    revoke all on function public.mesmo_mundo(uuid, uuid) from authenticated;
+    revoke all on function public.preparar_demonstracao(text, text, text, text, text) from authenticated;
+    revoke all on function public.limpar_demonstracao() from authenticated;
   `);
 
   const criar = async (email, nome) =>
@@ -1521,5 +1527,211 @@ describe('psicologo: consentimento, prontuario, mensagens, avaliacoes (027)', ()
     expect(Object.keys(rows[0]).sort()).toEqual(['comentario', 'criado_em', 'nota']);
     const crua = await linhas(psi, `select * from public.avaliacoes_psicologo`);
     expect(crua).toHaveLength(0);
+  });
+});
+
+describe('contas de demonstracao (028)', () => {
+  /*
+   * Cinco contas da equipe, uma por perfil, num mundo isolado. O que
+   * estes casos precisam provar, alem de "cada painel abre com dado":
+   * NADA do mundo de demonstracao encosta num aluno real. O psicologo de
+   * demonstracao nao e profissional, e um menor de verdade nao pode
+   * chegar ate ele.
+   */
+  let aluno;
+  let resp;
+  let prof;
+  let sec;
+  let psiDemo;
+  let alunoReal;
+  let paiReal;
+  let psiReal;
+  let escolaReal;
+
+  const criar = async (email, nome) =>
+    (await db.query(
+      `insert into auth.users (email, raw_user_meta_data)
+       values ($1::text, jsonb_build_object('nome', $2::text)) returning id`,
+      [email, nome],
+    )).rows[0].id;
+
+  const preparar = () =>
+    db.query(`select public.preparar_demonstracao(
+      'demo.aluno@test.br', 'demo.pais@test.br', 'demo.prof@test.br', 'demo.sec@test.br', 'demo.psi@test.br') as r`);
+
+  beforeAll(async () => {
+    aluno = await criar('demo.aluno@test.br', 'Aluno Demo');
+    resp = await criar('demo.pais@test.br', 'Pais Demo');
+    prof = await criar('demo.prof@test.br', 'Prof Demo');
+    sec = await criar('demo.sec@test.br', 'Secretaria Demo');
+    psiDemo = await criar('demo.psi@test.br', 'Psi Demo');
+
+    alunoReal = await criar('real028@test.br', 'Aluno Real');
+    paiReal = await criar('paireal028@test.br', 'Pai Real');
+    psiReal = await criar('psireal028@test.br', 'Psi Real');
+    await db.query(`update public.perfis set papel='parent' where id=$1`, [paiReal]);
+    await db.query(`update public.perfis set papel='psychologist' where id=$1`, [psiReal]);
+    await db.query(`insert into public.psicologos (id, crp) values ($1, 'CRP 06/99999')`, [psiReal]);
+    await db.query(`update public.perfis set data_nascimento = current_date - interval '17 years' where id=$1`, [alunoReal]);
+    escolaReal = (await db.query(`insert into public.escolas (nome) values ('Escola Real 028') returning id`)).rows[0].id;
+  });
+
+  it('avisa quais contas ainda nao foram criadas', async () => {
+    await expect(db.query(`select public.preparar_demonstracao(
+      'demo.aluno@test.br', 'nao.existe@test.br', 'demo.prof@test.br', 'demo.sec@test.br', 'demo.psi@test.br')`))
+      .rejects.toThrow(/nao\.existe@test\.br/);
+  });
+
+  it('prepara a demonstracao e da a cada conta o seu papel', async () => {
+    await preparar();
+    const papeis = await db.query(
+      `select email, papel::text from public.perfis where email like 'demo.%@test.br' order by email`);
+    expect(Object.fromEntries(papeis.rows.map((r) => [r.email, r.papel]))).toEqual({
+      'demo.aluno@test.br': 'student',
+      'demo.pais@test.br': 'parent',
+      'demo.prof@test.br': 'teacher',
+      'demo.psi@test.br': 'psychologist',
+      'demo.sec@test.br': 'educator',
+    });
+  });
+
+  it('nao prepara duas vezes por cima', async () => {
+    await expect(preparar()).rejects.toThrow(/ja existe/);
+  });
+
+  it('pelo app ninguem prepara, limpa ou pergunta quem e demonstracao', async () => {
+    await expect(comoUsuario(aluno, `select public.limpar_demonstracao()`)).rejects.toThrow();
+    await expect(comoUsuario(aluno, `select public.e_conta_demo($1)`, [aluno])).rejects.toThrow();
+    await expect(comoUsuario(alunoReal, `select public.preparar_demonstracao('a','b','c','d','e')`)).rejects.toThrow();
+  });
+
+  it('nenhuma conta le a lista de demonstracao pelo app', async () => {
+    expect(await linhas(sec, `select * from public.contas_demo`)).toHaveLength(0);
+  });
+
+  // ---------------------------------------------------------------- cada painel abre com dado
+
+  it('responsavel ve o resumo do aluno de demonstracao', async () => {
+    const r = await linhas(resp, `select * from public.resumo_mensal_aluno($1, 3)`, [aluno]);
+    expect(r.reduce((a, m) => a + m.questoes, 0)).toBeGreaterThan(20);
+  });
+
+  it('professor tem a turma e o termometro aparece (6 alunos passam o piso de 5)', async () => {
+    const turmas = await linhas(prof, `select * from public.minhas_turmas()`);
+    expect(turmas).toHaveLength(1);
+    const termo = await linhas(prof, `select * from public.termometro_cognitivo(7)`);
+    expect(termo).toHaveLength(1);
+    expect(termo[0].com_indice).toBeGreaterThanOrEqual(5);
+  });
+
+  it('secretaria enxerga a escola de demonstracao', async () => {
+    const turmas = await linhas(sec, `select * from public.minhas_turmas()`);
+    expect(turmas.map((t) => t.nome)).toEqual(['3º Ano A (demonstração)']);
+  });
+
+  it('psicologo tem os dois pacientes: um sem escopo, outro com', async () => {
+    const ps = await linhas(psiDemo, `select * from public.pacientes()`);
+    expect(ps).toHaveLength(2);
+    expect(ps.find((p) => p.aluno_id === aluno).escopo).toBeNull();
+    expect(ps.find((p) => p.aluno_id !== aluno).escopo).toEqual(['bem_estar', 'estudo']);
+    const notas = await linhas(psiDemo, `select tipo from public.prontuario_notas`);
+    expect(notas.map((n) => n.tipo).sort()).toEqual(['evolucao', 'retificacao']);
+  });
+
+  /* O roteiro da apresentacao: o aluno tem 15 anos, entao quem libera
+     e o responsavel, ao vivo. */
+  it('o responsavel libera o psicologo ao vivo, e o aluno de 15 anos nao', async () => {
+    await expect(
+      comoUsuario(aluno, `select public.conceder_consentimento($1, $2, array['bem_estar'])`, [aluno, psiDemo]),
+    ).rejects.toThrow(/menor_de_16/);
+    await comoUsuario(resp, `select public.conceder_consentimento($1, $2, array['bem_estar'], 30)`, [aluno, psiDemo]);
+    const r = await linhas(psiDemo, `select * from public.bem_estar_paciente($1, 30)`, [aluno]);
+    expect(r.length).toBeGreaterThan(0);
+  });
+
+  // ---------------------------------------------------------------- os dois mundos
+
+  it('aluno real nao ve o psicologo de demonstracao na vitrine', async () => {
+    const ids = (await linhas(alunoReal, `select id from public.catalogo_psicologos`)).map((r) => r.id);
+    expect(ids).not.toContain(psiDemo);
+    expect(ids).toContain(psiReal);
+  });
+
+  it('aluno de demonstracao nao ve psicologo real na vitrine', async () => {
+    const ids = (await linhas(aluno, `select id from public.catalogo_psicologos`)).map((r) => r.id);
+    expect(ids).toEqual([psiDemo]);
+  });
+
+  it('consulta entre os mundos e recusada, venha de onde vier', async () => {
+    await expect(db.query(
+      `insert into public.agendamentos (aluno_id, psicologo_id, inicio, fim)
+       values ($1, $2, now() + interval '20 days', now() + interval '20 days' + interval '50 minutes')`,
+      [alunoReal, psiDemo])).rejects.toThrow(/demonstracao/);
+    await expect(db.query(
+      `insert into public.agendamentos (aluno_id, psicologo_id, inicio, fim)
+       values ($1, $2, now() + interval '21 days', now() + interval '21 days' + interval '50 minutes')`,
+      [aluno, psiReal])).rejects.toThrow(/demonstracao/);
+  });
+
+  /* O caso que motivou tudo: dado de saude mental de aluno real para
+     quem nao tem CRP. */
+  it('aluno real nao libera dado para o psicologo de demonstracao', async () => {
+    await expect(
+      comoUsuario(alunoReal, `select public.conceder_consentimento($1, $2, array['bem_estar'])`, [alunoReal, psiDemo]),
+    ).rejects.toThrow(/demonstracao/);
+  });
+
+  it('pai real nao se vincula ao aluno de demonstracao pelo codigo', async () => {
+    const codigo = (await db.query(`select codigo_vinculo from public.perfis where id=$1`, [aluno])).rows[0].codigo_vinculo;
+    await expect(
+      comoUsuario(paiReal, `select public.vincular_por_codigo($1)`, [codigo]),
+    ).rejects.toThrow(/demonstracao/);
+  });
+
+  it('responsavel de demonstracao nao se vincula a aluno real', async () => {
+    const codigo = (await db.query(`select codigo_vinculo from public.perfis where id=$1`, [alunoReal])).rows[0].codigo_vinculo;
+    await expect(
+      comoUsuario(resp, `select public.vincular_por_codigo($1)`, [codigo]),
+    ).rejects.toThrow(/demonstracao/);
+  });
+
+  it('conta de demonstracao nao entra em escola real', async () => {
+    await expect(db.query(`update public.perfis set escola_id=$2 where id=$1`, [sec, escolaReal]))
+      .rejects.toThrow(/escola de demonstracao/);
+  });
+
+  /* A trava de papel continua intacta: nem a conta de demonstracao
+     muda de papel pelo app. */
+  it('conta de demonstracao nao troca de papel pelo app', async () => {
+    await expect(
+      comoUsuario(aluno, `update public.perfis set papel='educator' where id=$1`, [aluno]),
+    ).rejects.toThrow(/papel/);
+  });
+
+  // ---------------------------------------------------------------- limpar
+
+  it('limpar desfaz tudo e as contas voltam a ser comuns', async () => {
+    await db.query(`select public.limpar_demonstracao()`);
+
+    const ficticios = await db.query(`select count(*)::int as n from auth.users where email like '%.demonstracao@midnightmentor.invalid'`);
+    expect(ficticios.rows[0].n).toBe(0);
+
+    const papeis = await db.query(
+      `select distinct papel::text as p, escola_id from public.perfis where email like 'demo.%@test.br'`);
+    expect(papeis.rows).toEqual([{ p: 'student', escola_id: null }]);
+
+    expect((await db.query(`select count(*)::int as n from public.contas_demo`)).rows[0].n).toBe(0);
+    expect((await db.query(`select count(*)::int as n from public.escolas where nome='Escola de Demonstração'`)).rows[0].n).toBe(0);
+
+    // Sem demonstracao, o aluno real volta a ver so os psicologos reais,
+    // e o ex psicologo de demonstracao nao existe mais como psicologo.
+    const ids = (await linhas(alunoReal, `select id from public.catalogo_psicologos`)).map((r) => r.id);
+    expect(ids).not.toContain(psiDemo);
+  });
+
+  it('depois de limpar, da para preparar de novo', async () => {
+    await preparar();
+    const n = await db.query(`select count(*)::int as n from public.contas_demo where not da_equipe`);
+    expect(n.rows[0].n).toBe(6);
   });
 });
