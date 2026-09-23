@@ -88,7 +88,7 @@ export function EducatorInsights() {
         <div className="rounded-2xl border border-white/10 bg-midnight-900/60 px-5 py-8 text-center">
           <p className="text-sm font-semibold text-white">Nenhum ponto crítico na janela 🎉</p>
           <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500">
-            Sem erros agregados nas últimas {horas}h — ou a turma ainda não respondeu quizzes.
+            Sem erros agregados nas últimas {horas}h, ou a turma ainda não respondeu quizzes.
             Sugestão de lote: revisar o tópico mais pedido da semana passada.
           </p>
         </div>

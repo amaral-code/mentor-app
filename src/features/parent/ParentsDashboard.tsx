@@ -393,7 +393,7 @@ export function ParentsDashboard({ aluno }: Props) {
           <h2 className="text-lg font-bold text-white">Ainda não há atividade para mostrar</h2>
           <p className="text-sm text-gray-400 mt-2 leading-relaxed max-w-lg mx-auto">
             {ficha?.nome ?? aluno.nome} ainda não respondeu exercícios pelo app neste período.
-            Os números aparecem sozinhos assim que os estudos começarem — não há nada para
+            Os números aparecem sozinhos assim que os estudos começarem. Não há nada para
             configurar aqui.
           </p>
         </div>
@@ -415,7 +415,7 @@ export function ParentsDashboard({ aluno }: Props) {
 
         <MetricCard
           label="Acerto nos Exercícios"
-          value={totais.questoes > 0 ? `${totais.taxaAcerto}%` : '—'}
+          value={totais.questoes > 0 ? `${totais.taxaAcerto}%` : 'sem dados'}
           sub={
             totais.questoes > 0
               ? `${totais.acertos} acertos em ${totais.questoes} questões respondidas no app.`
@@ -507,7 +507,7 @@ export function ParentsDashboard({ aluno }: Props) {
               <h3 className="text-sm font-bold text-white">Evolução no app</h3>
               <p className="text-xs text-gray-500 mt-0.5">
                 Proporção de acerto nos exercícios do app, mês a mês ({period} meses).
-                Não é boletim escolar — o app não recebe notas da escola.
+                Não é boletim escolar: o app não recebe notas da escola.
               </p>
             </div>
             <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
@@ -532,7 +532,7 @@ export function ParentsDashboard({ aluno }: Props) {
           <h3 className="text-sm font-bold text-white">Por matéria</h3>
           <p className="text-xs text-gray-500 mt-0.5 mb-4">
             Últimos 3 meses, da matéria com mais dificuldade para a com menos.
-            Matérias com poucas questões ficam de fora — pouca amostra assusta sem significar.
+            Matérias com poucas questões ficam de fora, porque pouca amostra assusta sem significar.
           </p>
           <ul className="space-y-2">
             {materias.map((m) => (
@@ -634,7 +634,7 @@ export function ParentsDashboard({ aluno }: Props) {
             </div>
             <div className="flex items-center justify-between gap-3 mt-4">
               <p className="text-[10px] text-gray-500">
-                Recomendação gerada por IA sobre o uso do app — não substitui a escola nem um profissional.
+                Recomendação gerada por IA sobre o uso do app. Não substitui a escola nem um profissional.
               </p>
               <button
                 onClick={() => setAnalysisNonce(n => n + 1)}

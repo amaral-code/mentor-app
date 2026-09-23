@@ -26,7 +26,7 @@ export function Diario() {
       return;
     }
     setSalvo(true);
-    setToast('Reflexão salva só neste navegador, sem criptografia — quem tiver acesso ao aparelho pode ler.', 'success');
+    setToast('Reflexão salva só neste navegador, sem criptografia: quem tiver acesso ao aparelho pode ler.', 'success');
     window.setTimeout(() => setSalvo(false), 3000);
   }
 

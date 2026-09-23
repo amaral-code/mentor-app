@@ -83,5 +83,5 @@ export function buildContextGreeting(materia?: string | null): string {
     return 'Olá! Sou seu mentor. O que vamos estudar hoje?';
   }
 
-  return `Olá! Sou seu mentor. Vi que você estava em **${materia}** — bora continuar?`;
+  return `Olá! Sou seu mentor. Vi que você estava em **${materia}**. Bora continuar?`;
 }

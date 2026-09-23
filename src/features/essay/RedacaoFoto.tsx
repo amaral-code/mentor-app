@@ -207,7 +207,7 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
             <TriangleAlert size={14} /> Não consegui ler esta foto
           </p>
           <p className="text-xs text-amber-200/70 mt-1.5 leading-relaxed">
-            A nota não foi calculada — o problema foi a imagem, não o seu texto. Tente de novo com mais
+            A nota não foi calculada. O problema foi a imagem, não o seu texto. Tente de novo com mais
             luz, sem sombra e com a folha reta.
           </p>
           <button onClick={recomecar} className="btn-secondary !px-3 !py-2 text-xs mt-3 inline-flex items-center gap-1.5">

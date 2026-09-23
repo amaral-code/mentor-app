@@ -112,7 +112,7 @@ export const ChatMessages = memo(function ChatMessages({
               {msg.text ? (
                 <TextoFormatado texto={msg.text} className="text-sm text-slate-200 leading-relaxed font-inter" />
               ) : (
-                <p className="text-sm text-slate-400 italic">Resposta vazia da IA — tente enviar de novo.</p>
+                <p className="text-sm text-slate-400 italic">Resposta vazia da IA. Tente enviar de novo.</p>
               )}
               {msg.role === 'assistant' && (msg.fontes?.length || msg.citouProva) && (
                 <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-2">

@@ -146,8 +146,32 @@ async function fetchViaWorker(url: string, init: RequestInit, signal?: AbortSign
  * permitido (worker publicado ou proxy local do Vite dev). body e
  * resposta mantem o envelope Gemini; a conversao para chat completions
  * acontece no back-end (worker) ou antes do envio (proxy local). */
+/**
+ * Regra de escrita do produto, aplicada a TODA chamada de IA.
+ *
+ * O texto que o modelo devolve e lido pelo aluno, pelo responsavel e
+ * pelo professor como texto do app: questao de quiz, devolutiva de
+ * redacao, resumo da semana, resposta do Mentor. Se a regra vale para a
+ * interface, vale para ele.
+ *
+ * Fica aqui, e nao repetida em cada prompt, porque ja sao mais de dez
+ * pontos de chamada: em cada um deles e questao de tempo ate alguem
+ * criar o proximo e esquecer da linha.
+ */
+const REGRA_PONTUACAO =
+  'PONTUAÇÃO (obrigatório): nunca use travessão (—), meia-risca (–) nem hífen solto para separar ideias. Use vírgula, dois-pontos ou ponto final.';
+
+/** Acrescenta a regra sem apagar a instrucao que o chamador montou. */
+function comRegraDeEscrita<T extends { systemInstruction?: { parts: { text: string }[] } }>(body: T): T {
+  const partes = body.systemInstruction?.parts ?? [];
+  return {
+    ...body,
+    systemInstruction: { parts: [...partes, { text: REGRA_PONTUACAO }] },
+  };
+}
+
 async function sendToAI(
-  body: {
+  bodyOriginal: {
     systemInstruction?: { parts: { text: string }[] };
     contents: { parts: any[] }[];
     generationConfig: Record<string, unknown>;
@@ -155,6 +179,7 @@ async function sendToAI(
   apiKey: string,
   signal?: AbortSignal,
 ): Promise<RetryResult> {
+  const body = comRegraDeEscrita(bodyOriginal);
   if (hasProxy()) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const token = aiProxyToken();
@@ -993,8 +1018,8 @@ export const QUIZ_TOPICS_CACHE_KEY = 'mm_quiz_topics_cache';
 
 const SAGUI_SYSTEM_PROMPT = [
   'Você é o Sagui, mentor educacional do projeto The Midnight Mentor, conversando com um estudante brasileiro do ensino médio noturno que se prepara para o ENEM.',
-  'TOM (obrigatório, sempre): empático, acolhedor e encorajador — como um professor particular amigo que acredita no aluno. Celebre o esforço ("boa, você veio estudar hoje, isso já conta"), nunca seja seco, frio ou robótico. Sem jargão, sem emoji.',
-  'RITMO CIRCADIANO: respeite o relógio do aluno sem comentar o horário. À noite/madrugada (19h–05h), respostas mais curtas e diretas — um conceito por vez, frase curtíssima — porque ele provavelmente veio do trabalho e está cansado. De dia, pode desenvolver um pouco mais. Acolher o cansaço vem antes do conteúdo, em qualquer horário.',
+  'TOM (obrigatório, sempre): empático, acolhedor e encorajador, como um professor particular amigo que acredita no aluno. Celebre o esforço ("boa, você veio estudar hoje, isso já conta"), nunca seja seco, frio ou robótico. Sem jargão, sem emoji.',
+  'RITMO CIRCADIANO: respeite o relógio do aluno sem comentar o horário. À noite e de madrugada (das 19h às 5h), respostas mais curtas e diretas, um conceito por vez, em frases curtíssimas, porque ele provavelmente veio do trabalho e está cansado. De dia, pode desenvolver um pouco mais. Acolher o cansaço vem antes do conteúdo, em qualquer horário.',
   'Cansaço, ansiedade e medo da prova nunca são fora de assunto: acolha em uma frase antes de voltar à matéria.',
   'Responda em português brasileiro, parágrafos curtos.',
 ].join('\n');
@@ -1256,7 +1281,7 @@ export async function analyzeStudentData(
        que chega e a proporcao de acerto nos exercicios do app. Com o
        painel em dado real, descrever isso como boletim faria a IA
        escrever para os pais uma frase sobre a escola que ninguem mediu. */
-    'Analise o uso recente do aplicativo de estudos por este aluno do ensino médio noturno. `notaMedia` é a PROPORÇÃO DE ACERTO (0-100) nos exercícios DO APLICATIVO no mês, e não nota escolar — o app não recebe boletim. `horasDeUso` é o tempo de estudo no app. Com base nisso, estime o risco de evasão (Baixo, Médio, Alto) para os próximos 4 meses e escreva uma recomendação de apenas 2 frases para os pais.',
+    'Analise o uso recente do aplicativo de estudos por este aluno do ensino médio noturno. `notaMedia` é a PROPORÇÃO DE ACERTO (0-100) nos exercícios DO APLICATIVO no mês, e não nota escolar, porque o app não recebe boletim. `horasDeUso` é o tempo de estudo no app. Com base nisso, estime o risco de evasão (Baixo, Médio, Alto) para os próximos 4 meses e escreva uma recomendação de apenas 2 frases para os pais.',
     'Fale do que os números mostram (constância, ritmo, acerto no app). Não afirme nada sobre notas da escola, frequência às aulas ou diagnóstico de saúde.',
     '',
     'Responda APENAS com um objeto JSON válido, sem markdown e sem comentários, no formato:',

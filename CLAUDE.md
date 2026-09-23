@@ -101,6 +101,30 @@ Mensagem de erro deve citar a variável **sem** prefixo — mandar o usuário
 definir uma `VITE_*` secreta é instruí-lo a publicar a chave. Há teste que
 trava isso (`aiService.bemestar.test.ts`).
 
+## Regra de escrita (o dono pediu, e há teste travando)
+
+**Travessão (—), meia-risca (–) e hífen solto são proibidos em todo texto
+que o usuário lê.** Vale para tela, toast, mensagem de erro, rótulo,
+placeholder e para o que a IA responde. Use vírgula, dois-pontos ou ponto
+final, ou quebre em duas frases.
+
+Comentário de código e documentação **não** entram na regra: são para
+quem mantém o repositório, não para quem usa o app.
+
+Quem garante isso não é boa vontade:
+
+- `src/shared/lib/__tests__/regraPontuacao.test.ts` varre `src/`, tira os
+  comentários e falha o build se achar um travessão. Duas exceções, as
+  duas sobre o caractere em si: a linha que ensina a regra à IA e a
+  classe de caractere do parser de gabarito.
+- `comRegraDeEscrita` (em `aiService.ts`) injeta a regra no
+  `systemInstruction` de **toda** chamada de IA. Fica no ponto único de
+  envio de propósito: são mais de dez chamadas, e a próxima nasceria sem
+  a linha.
+
+Não há placeholder com travessão. Campo vazio escreve o que está
+faltando: `'sem código'`, `'sem dados'`, `'CRP não informado'`.
+
 ## Convenções
 
 - Comentários explicam **por que**, não o quê. O padrão do repo é comentar a
@@ -198,6 +222,15 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-23 (2) — Regra de escrita: sem travessão
+- Pedido do dono. 34 textos de tela reescritos (não foi troca de
+  caractere: cada frase virou vírgula, dois-pontos ou duas frases).
+- Teste `regraPontuacao` varre `src/` e falha o build se voltar.
+- `comRegraDeEscrita` aplica a regra a toda chamada de IA, no ponto único
+  de envio. A resposta do Mentor é texto do produto como qualquer outro.
+- Placeholders `'—'` viraram `'sem código'`, `'sem dados'` e
+  `'CRP não informado'`.
 
 ### 2026-09-23 — Painel dos pais com números reais (Etapa 2)
 - **`parentMockData.ts` foi DELETADO.** O painel mostrava "Pedro
