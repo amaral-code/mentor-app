@@ -62,7 +62,7 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
 
         <div>
           <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-            <span>Valor maximo por sessao</span>
+            <span>Valor máximo por sessão</span>
             <span className="text-amber-400 font-semibold tabular-nums">{formatarPreco(teto)}</span>
           </div>
           <input
@@ -73,7 +73,7 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
             value={teto}
             onChange={(e) => setTeto(Number(e.target.value))}
             className="w-full accent-amber-500"
-            aria-label="Valor maximo por sessao"
+            aria-label="Valor máximo por sessão"
           />
         </div>
       </div>
@@ -86,7 +86,7 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
             pose="meditando"
             compacto
             titulo="Nenhum profissional nesta faixa"
-            descricao="Aumente o valor maximo ou limpe a busca. Se a lista estiver vazia mesmo assim, ainda nao ha psicologos cadastrados nesta instalacao."
+            descricao="Aumente o valor máximo ou limpe a busca. Se a lista estiver vazia mesmo assim, ainda não ha psicólogos cadastrados nesta instalacao."
           />
         </div>
       )}
@@ -145,7 +145,7 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
                 {formatarPreco(p.valorCentavos)}
               </span>
               <button onClick={() => setEscolhido(p)} className="btn-primary !px-4 !py-2 text-sm">
-                Ver horarios
+                Ver horários
               </button>
             </div>
           </div>

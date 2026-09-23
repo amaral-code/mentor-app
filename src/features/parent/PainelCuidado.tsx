@@ -80,10 +80,14 @@ export function PainelCuidado({ aluno }: Props) {
             <HeartPulse size={18} className="text-rose-400" />
           </div>
           <div className="flex-1">
-            <h2 className="text-sm font-semibold text-gray-300">Curva de estresse de {aluno.nome}</h2>
-            <p className="text-[11px] text-gray-500">Indice diario de fadiga dos ultimos 30 dias</p>
+            <h2 className="text-sm font-semibold text-gray-300">Cansaço de {aluno.nome}</h2>
+            <p className="text-[11px] text-gray-500">Índice diário de fadiga dos últimos 30 dias</p>
           </div>
-          {atual && (
+          {/* Com o índice desligado (FADIGA_ZERADA, decisão do dono), o
+              número era sempre "0 · Ritmo saudável": uma afirmação sobre
+              algo que o app NÃO está medindo, logo acima de um alerta de
+              esgotamento. Desligado, a tela diz que está desligado. */}
+          {atual && !FADIGA_ZERADA && (
             <div className="text-right">
               <p className="text-2xl font-extrabold tabular-nums" style={{ color: COR_CLASSE[atual.classe] }}>
                 {atual.score}
@@ -95,9 +99,14 @@ export function PainelCuidado({ aluno }: Props) {
           )}
         </div>
 
-        {burnout.length === 0 ? (
+        {FADIGA_ZERADA ? (
+          <p className="text-sm text-gray-500 py-4 text-center leading-relaxed">
+            O índice de cansaço está desligado no app por enquanto. Os alertas abaixo continuam
+            chegando quando há sinal de esgotamento.
+          </p>
+        ) : burnout.length === 0 ? (
           <p className="text-sm text-gray-500 py-4 text-center">
-            Ainda nao ha dados suficientes. O indice aparece depois de algumas sessoes de estudo no app.
+            Ainda não há dados suficientes. O índice aparece depois de algumas sessões de estudo no app.
           </p>
         ) : (
           <div className="flex items-end gap-[3px] h-20">
@@ -120,7 +129,7 @@ export function PainelCuidado({ aluno }: Props) {
           </div>
           <div className="glass-light rounded-xl py-2.5">
             <Activity size={14} className="text-violet-400 mx-auto" />
-            <p className="text-sm font-bold text-white tabular-nums mt-1">{burnout.length}</p>
+            <p className="text-sm font-bold text-white tabular-nums mt-1">{FADIGA_ZERADA ? 'desligado' : burnout.length}</p>
             <p className="text-[10px] text-gray-500">dias medidos</p>
           </div>
           <div className="glass-light rounded-xl py-2.5">
@@ -191,9 +200,9 @@ export function PainelCuidado({ aluno }: Props) {
       <ListaConsultas />
 
       <div className="glass rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300">Rede de psicologos</h2>
+        <h2 className="text-sm font-semibold text-gray-300">Rede de psicólogos</h2>
         <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-          Profissionais com CRP ativo, atendimento online. Voce escolhe o valor e o horario; o link da
+          Profissionais com CRP ativo, atendimento online. Você escolhe o valor e o horário; o link da
           videochamada e criado automaticamente e entra na agenda do estudante e do profissional.
         </p>
 

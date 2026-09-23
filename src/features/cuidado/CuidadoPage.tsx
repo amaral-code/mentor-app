@@ -61,7 +61,7 @@ export function CuidadoPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-xl md:text-2xl font-bold text-white">Rede de Apoio</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Quem acompanha voce, e com quem voce pode conversar</p>
+          <p className="text-sm text-gray-500 mt-0.5">Quem acompanha você, e com quem você pode conversar</p>
         </div>
       </div>
 
@@ -71,8 +71,8 @@ export function CuidadoPage() {
             <ShieldQuestion size={16} /> Pedido de acompanhamento
           </h2>
           <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-            Um responsavel pediu para acompanhar seu progresso. Se voce aceitar, ele passa a ver: dias de
-            estudo, tempo offline, indice de fadiga e alertas de esgotamento.{' '}
+            Um responsável pediu para acompanhar seu progresso. Se você aceitar, ele passa a ver: dias de
+            estudo, tempo offline, índice de fadiga e alertas de esgotamento.{' '}
             <strong className="text-gray-300">
               Ele nunca ve suas conversas com o Mentor, suas anotacoes nem seus registros de humor.
             </strong>
@@ -102,7 +102,7 @@ export function CuidadoPage() {
       {ativos.length > 0 && (
         <div className="glass rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
-            <UserCheck size={16} className="text-emerald-400" /> Acompanham voce
+            <UserCheck size={16} className="text-emerald-400" /> Acompanham você
           </h2>
           <div className="space-y-2">
             {ativos.map((v) => (
@@ -147,15 +147,17 @@ export function CuidadoPage() {
 
       {session && (
         <>
-          <AcessoPsicologo aluno={{ id: session.uid, nome: session.nome }} papel="aluno" />
+          {/* Mensagens antes do controle de acesso: quem chega aqui pelo
+              aviso de "mensagem nova" veio para ler e responder. */}
           <CaixaMensagens meuId={session.uid} psicologos={psicologos} />
+          <AcessoPsicologo aluno={{ id: session.uid, nome: session.nome }} papel="aluno" />
         </>
       )}
 
       <div className="glass rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300">Falar com um psicologo</h2>
+        <h2 className="text-sm font-semibold text-gray-300">Falar com um psicólogo</h2>
         <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-          Atendimento online, por videochamada, com profissional registrado no CRP. Voce pode marcar por
+          Atendimento online, por videochamada, com profissional registrado no CRP. Você pode marcar por
           conta própria: o valor e o horário aparecem antes de qualquer confirmação.
         </p>
         {!mostrarCatalogo ? (
@@ -172,7 +174,7 @@ export function CuidadoPage() {
       </div>
 
       <p className="text-center text-xs text-gray-600 leading-relaxed px-4 py-3 glass-light rounded-xl">
-        Em caso de crise, ligue 188 (CVV, 24h, gratuito) ou procure o CAPS mais proximo. Este app nao
+        Em caso de crise, ligue 188 (CVV, 24h, gratuito) ou procure o CAPS mais próximo. Este app não
         substitui atendimento de emergencia.
       </p>
     </div>

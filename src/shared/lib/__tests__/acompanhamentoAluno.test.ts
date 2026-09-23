@@ -11,6 +11,7 @@ import {
   totaisDoPeriodo,
 } from '../acompanhamentoAluno';
 import type { ResumoMensal } from '../../storage/AcompanhamentoRepository';
+import { calculateDropoutRisk } from '../dropoutRisk';
 
 const mes = (iso: string, questoes: number, acertos: number, minutos = 60, dias = 5): ResumoMensal => ({
   mes: iso,
@@ -49,6 +50,33 @@ describe('paraRegistrosMensais', () => {
   it('leva a taxa de acerto como desempenho e converte minutos em horas', () => {
     const r = paraRegistrosMensais([mes('2026-09-01', 10, 8, 90)]);
     expect(r).toEqual([{ month: '2026-09', notaMedia: 80, tempoUso: 1.5 }]);
+  });
+
+  /* O caso real que o painel dos pais errou: tres meses vazios antes de
+     o aluno comecar, e depois 70%, 60%, 49%. Com os vazios como 0% a
+     reta subia, e a tela dizia "tendencia de alta confirmada". */
+  it('meses antes da primeira atividade nao entram na tendencia', () => {
+    const resumo = [
+      mes('2026-04-01', 0, 0, 0, 0),
+      mes('2026-05-01', 0, 0, 0, 0),
+      mes('2026-06-01', 0, 0, 0, 0),
+      mes('2026-07-01', 100, 70),
+      mes('2026-08-01', 100, 60),
+      mes('2026-09-01', 100, 49),
+    ];
+    const r = paraRegistrosMensais(resumo);
+    expect(r.map((x) => x.month)).toEqual(['2026-07', '2026-08', '2026-09']);
+    expect(calculateDropoutRisk(r).trend).toBe('falling');
+  });
+
+  /* Parar de estudar E sinal. Mes vazio depois do inicio fica. */
+  it('mes vazio depois do inicio continua na serie', () => {
+    const r = paraRegistrosMensais([mes('2026-07-01', 50, 40), mes('2026-08-01', 0, 0, 0, 0), mes('2026-09-01', 30, 20)]);
+    expect(r).toHaveLength(3);
+  });
+
+  it('sem atividade nenhuma, nao ha serie', () => {
+    expect(paraRegistrosMensais([mes('2026-08-01', 0, 0, 0, 0)])).toEqual([]);
   });
 
   it('paraMesCurto corta o dia', () => {

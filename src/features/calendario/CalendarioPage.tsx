@@ -48,7 +48,7 @@ export function CalendarioPage() {
     // para agendarRevisao e recalcula a data.
     (window as any).__revisaoAtiva = { topicoId: r.topicoId, topicoNome: r.topicoNome, materia: r.materia };
     setActiveTab('quiz');
-    setToast(`Revisao de ${r.topicoNome}. O resultado reagenda a proxima data.`, 'info');
+    setToast(`Revisao de ${r.topicoNome}. O resultado reagenda a próxima data.`, 'info');
   }
 
   async function adiar(r: RevisaoEspacada) {
@@ -67,7 +67,7 @@ export function CalendarioPage() {
         <div className="flex-1">
           <h1 className="text-xl md:text-2xl font-bold text-white">Calendario Adaptativo</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            As revisoes entram sozinhas, no dia em que a memoria comeca a falhar
+            As revisões entram sozinhas, no dia em que a memória começa a falhar
           </p>
         </div>
       </div>
@@ -110,7 +110,7 @@ export function CalendarioPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{r.topicoNome}</p>
                     <p className="text-[11px] text-gray-500 truncate">
-                      {r.materia || 'Geral'} · {ROTULO_NIVEL[r.nivelMemoria]} · memoria {forca}%
+                      {r.materia || 'Geral'} · {ROTULO_NIVEL[r.nivelMemoria]} · memória {forca}%
                       {atrasada && ' · atrasada'}
                     </p>
                   </div>
@@ -121,7 +121,7 @@ export function CalendarioPage() {
                   <button
                     onClick={() => adiar(r)}
                     className="btn-ghost !px-2 !py-2 text-[11px] text-gray-500 shrink-0"
-                    title="Adiar para a proxima data calculada"
+                    title="Adiar para a próxima data calculada"
                   >
                     Adiar
                   </button>
@@ -210,13 +210,13 @@ export function CalendarioPage() {
         <p className="flex items-center gap-1.5 text-gray-400 font-medium mb-1">
           <Plus size={13} /> Como as datas sao escolhidas
         </p>
-        Nota 80 ou mais sobe um nivel (1, 3, 7, 21, 45 e 90 dias). Entre 60 e 79 mantem o nivel com o
-        intervalo ajustado pelo seu historico no topico. Abaixo de 60 o topico volta para amanha.
+        Nota 80 ou mais sobe um nível (1, 3, 7, 21, 45 e 90 dias). Entre 60 e 79 mantém o nível com o
+        intervalo ajustado pelo seu histórico no topico. Abaixo de 60 o topico volta para amanha.
         Exemplo com a sua ultima nota: {' '}
         <span className="text-gray-300">
           {(() => {
             const exemplo = proximaRevisao({ nivelMemoria: 1, facilidade: 2.5, intervaloDias: 3 }, 85);
-            return `nivel 1 + nota 85 = revisar em ${exemplo.intervaloDias} dias`;
+            return `nível 1 + nota 85 = revisar em ${exemplo.intervaloDias} dias`;
           })()}
         </span>
         .

@@ -441,8 +441,12 @@ export function AppShell() {
 
   const inicial = session?.nome?.charAt(0)?.toUpperCase() || '?';
 
+  /* overflow-x-clip: os orbes de fundo (360px de largura, a 15% da borda)
+     passavam da tela no celular e a pagina inteira deslizava para o lado.
+     `clip`, e nao `hidden`: hidden cria area de rolagem e quebra o
+     `sticky` do seletor de abas. */
   return (
-    <div className="min-h-screen flex relative">
+    <div className="min-h-screen flex relative overflow-x-clip">
       {/* Pular para o conteúdo: navegação por teclado e leitor de tela
           pulam a sidebar/bottom-nav e caem direto na página. */}
       <a

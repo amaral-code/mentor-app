@@ -103,7 +103,7 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
       setResultado(correcao);
 
       if (correcao.ilegivel) {
-        setToast('Nao consegui ler a folha. Tente outra foto com mais luz.', 'error');
+        setToast('Não consegui ler a folha. Tente outra foto com mais luz.', 'error');
         return;
       }
 
@@ -120,7 +120,7 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
       setLastCorrection(paraEssayCorrection(correcao));
       setToast(`Correção pronta: ${correcao.total_score}/1000`, 'success');
     } catch (erro: any) {
-      setToast(erro?.message || 'Nao foi possivel corrigir esta foto.', 'error');
+      setToast(erro?.message || 'Não foi possível corrigir esta foto.', 'error');
     } finally {
       setEnviando(false);
       setEtapa('');

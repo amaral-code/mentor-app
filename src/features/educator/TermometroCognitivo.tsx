@@ -30,7 +30,12 @@ const JANELAS = [
  * pelo menos 5 alunos medidos; este componente nem teria de onde tirar o
  * individual se quisesse.
  */
-export function TermometroCognitivo() {
+/**
+ * `escopo` só muda as palavras: quem decide QUAIS turmas entram é
+ * `minhas_turmas()` no banco (026). Para o professor, "Escola: 30%"
+ * seria falso, porque o número cobre só as turmas dele.
+ */
+export function TermometroCognitivo({ escopo = 'escola' }: { escopo?: 'escola' | 'professor' }) {
   const [dias, setDias] = useState<number>(1);
   const [dados, setDados] = useState<TurmaTermometro[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -59,16 +64,20 @@ export function TermometroCognitivo() {
   const janela = dias === 1 ? 'hoje' : 'semana';
 
   return (
-    <section aria-label="Termômetro cognitivo da escola" className="space-y-4">
+    <section aria-label={escopo === 'escola' ? 'Termômetro cognitivo da escola' : 'Termômetro cognitivo das suas turmas'} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
             <Thermometer size={20} />
           </span>
           <div>
-            <h2 className="text-lg font-bold text-white">Termômetro Cognitivo</h2>
+            <h2 className="text-lg font-bold text-white">
+              {escopo === 'escola' ? 'Como a escola está' : 'Como suas turmas estão'}
+            </h2>
             <p className="text-xs text-slate-500">
-              Mapa de calor anônimo por turma • mínimo de {AMOSTRA_MINIMA} alunos medidos
+              {escopo === 'escola'
+                ? `Cansaço por turma, anônimo, com mínimo de ${AMOSTRA_MINIMA} alunos medidos`
+                : `Cansaço de cada turma, anônimo, para ajustar a aula de hoje. Mínimo de ${AMOSTRA_MINIMA} alunos medidos`}
             </p>
           </div>
         </div>
@@ -98,11 +107,13 @@ export function TermometroCognitivo() {
         </div>
       </div>
 
-      {/* Numero do topo: a escola inteira, ponderada por aluno. */}
-      {!carregando && !erro && visiveis.length > 0 && (
+      {/* Numero do topo: todas as turmas juntas, ponderado por aluno. Com
+          UMA turma so ele repetia o cartao logo abaixo, palavra por
+          palavra; o caso comum do professor. */}
+      {!carregando && !erro && visiveis.length > 1 && (
         <div className="rounded-2xl border border-white/10 bg-midnight-900/60 px-5 py-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Escola • {ROTULO_CALOR[rede.nivel]}
+            {escopo === 'escola' ? 'Escola' : 'Suas turmas'} · {ROTULO_CALOR[rede.nivel]}
           </p>
           <p className="mt-1 text-sm text-slate-300">
             <span className="text-2xl font-black text-white tabular-nums">{rede.percentualExaustao}%</span>{' '}
@@ -136,7 +147,7 @@ export function TermometroCognitivo() {
         <>
           <div className="space-y-3">
             {visiveis.map((t) => (
-              <TurmaHeatCard key={t.turmaId} turma={t} janela={janela} />
+              <TurmaHeatCard key={t.turmaId} turma={t} janela={janela} escopo={escopo} />
             ))}
           </div>
           {ocultas > 0 && (

@@ -223,7 +223,7 @@ export function QuizPage() {
      */
     if (conteudoDensoBloqueado && qtd > 3) {
       qtd = 3;
-      setToast('Hoje o bloco vem menor: 3 questoes em vez do configurado. Seu indice de fadiga esta alto.', 'info');
+      setToast('Hoje o bloco vem menor: 3 questões em vez do configurado. Seu índice de fadiga esta alto.', 'info');
     }
     const nivel = opcoes?.dificuldade ?? dificuldade;
 

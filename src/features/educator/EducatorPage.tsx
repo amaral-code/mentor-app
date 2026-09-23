@@ -1,13 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { Check, ClipboardList, Copy, Download, Info, KeyRound, LogOut, Moon, PenLine, Plus, RefreshCw, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
+import { ClipboardList, Download, Info, LogOut, Moon, PenLine, Plus, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { hasProxy } from '../../shared/lib/aiService';
-import { EducatorInsights } from './EducatorInsights';
 import { TermometroCognitivo } from './TermometroCognitivo';
 import { ProfessoresDaTurma } from './ProfessoresDaTurma';
-import { docenteRepository } from '../../shared/storage/DocenteRepository';
+import { CodigosEscola } from './CodigosEscola';
 import { n8nWebhookUrl } from '../../shared/lib/runtimeConfig';
 import Papa from 'papaparse';
 
@@ -71,17 +70,17 @@ interface PassoTutorial {
 
 const PASSOS_TUTORIAL: PassoTutorial[] = [
   {
-    titulo: 'Bem-vindo ao Onboarding de Turmas',
-    texto: 'Aqui você cadastra os alunos para criar as contas automaticamente. Este guia leva menos de 1 minuto e mostra exatamente onde clicar, passo a passo.',
+    titulo: 'Como matricular os alunos',
+    texto: 'Aqui você cadastra os alunos e o app cria as contas sozinho. Este guia leva menos de 1 minuto e mostra onde clicar, passo a passo.',
   },
   {
     titulo: 'Passo 1: escolha como cadastrar',
-    texto: 'Use Upload CSV para turmas grandes (planilha pronta) ou Tabela manual para poucos alunos ou ajustes rápidos. Dá para trocar de modo a hora que quiser, sem perder nada.',
+    texto: 'Use Enviar planilha para turmas grandes, ou Digitar na tabela para poucos alunos e ajustes. Dá para trocar a hora que quiser, sem perder nada.',
     alvo: 'edu-modo-tabs',
   },
   {
-    titulo: 'Passo 2: se for CSV, baixe o modelo e envie',
-    texto: 'Baixe o modelo, preencha uma linha por aluno (nome, sala, email e telefone do responsável) e arraste o arquivo para a área de upload. O app valida tudo antes de enviar.',
+    titulo: 'Passo 2: se for planilha, baixe o modelo e envie',
+    texto: 'Baixe o modelo, preencha uma linha por aluno (nome, sala, e-mail e telefone do responsável), salve como CSV e arraste o arquivo para a área indicada. O app confere tudo antes de enviar.',
     modo: 'csv',
     alvo: 'edu-upload',
   },
@@ -149,10 +148,10 @@ export function EducatorPage() {
   const session = useAppStore((s) => s.session);
   const logout = useAppStore((s) => s.logout);
   /** EPICO 3: `/educador/dashboard` do spec = esta aba no SPA. */
-  const [aba, setAba] = useState<'turmas' | 'insights' | 'termometro' | 'professores'>('turmas');
-  /* `null` enquanto carrega: sem isso o aviso de "nenhuma turma" pisca
-     na tela de todo professor no primeiro render. */
-  const [turmasDoEscopo, setTurmasDoEscopo] = useState<number | null>(null);
+  /* Só a secretaria abre esta tela (o professor tem o ProfessorPage).
+     A ordem das abas é a ordem do trabalho: matricular, distribuir os
+     códigos, dizer quem dá aula onde, e então acompanhar. */
+  const [aba, setAba] = useState<'matriculas' | 'codigos' | 'docentes' | 'escola'>('matriculas');
   const [modo, setModo] = useState<ModoEntrada>('csv');
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
@@ -190,14 +189,6 @@ export function EducatorPage() {
   const [tutorialAberto, setTutorialAberto] = useState(() => safeGet(CHAVE_TUTORIAL) !== '1');
   const [passoTutorial, setPassoTutorial] = useState(0);
   const [destaque, setDestaque] = useState<string | null>(null);
-
-  useEffect(() => {
-    let vivo = true;
-    void docenteRepository.minhasTurmas().then((t) => vivo && setTurmasDoEscopo(t.length));
-    return () => {
-      vivo = false;
-    };
-  }, []);
 
   // Rascunho da tabela sobrevive ao F5 (só neste navegador).
   useEffect(() => {
@@ -345,10 +336,6 @@ export function EducatorPage() {
   }
 
   /* ---- Códigos confidenciais da escola ---- */
-  const [escolaCod, setEscolaCod] = useState<{ id: string; nome: string; codigo: string } | null>(null);
-  const [turmasCod, setTurmasCod] = useState<{ id: string; nome: string; codigo: string }[]>([]);
-  const [carregandoCodigos, setCarregandoCodigos] = useState(false);
-  const [copiado, setCopiado] = useState<string | null>(null);
   const [relatorio, setRelatorio] = useState<{
     escola?: string;
     codigoInstituicao?: string;
@@ -359,62 +346,8 @@ export function EducatorPage() {
     resultados?: ResultadoImportacao[];
   } | null>(null);
 
+  // Defesa extra: o servidor confere de novo, mas a tela nem oferece.
   const podeGerenciar = session?.role === 'educator' || session?.role === 'admin';
-
-  useEffect(() => {
-    const escolaId = session?.escolaId;
-    if (!escolaId) return;
-    setCarregandoCodigos(true);
-    Promise.all([supabaseRepository.loadEscolas(), supabaseRepository.loadTurmas()])
-      .then(([escolas, turmas]) => {
-        const e = (escolas as { id: string; nome: string; codigo_instituicao?: string }[]).find((x) => x.id === escolaId) ?? null;
-        setEscolaCod(e ? { id: e.id, nome: e.nome, codigo: e.codigo_instituicao ?? 'sem código' } : null);
-        setTurmasCod(
-          (turmas as { id: string; nome: string; escolaId: string; codigo?: string }[])
-            .filter((t) => t.escolaId === escolaId)
-            .map((t) => ({ id: t.id, nome: t.nome, codigo: t.codigo ?? 'sem código' })),
-        );
-      })
-      .catch(() => {})
-      .finally(() => setCarregandoCodigos(false));
-  }, [session?.escolaId]);
-
-  async function copiar(texto: string, chave: string) {
-    try {
-      await navigator.clipboard.writeText(texto);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = texto;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-    }
-    setCopiado(chave);
-    window.setTimeout(() => setCopiado((c) => (c === chave ? null : c)), 2000);
-  }
-
-  async function regenerarTurma(id: string) {
-    if (!podeGerenciar || !confirm('Gerar um novo código para esta turma? O antigo para de funcionar na hora.')) return;
-    try {
-      const novo = await supabaseRepository.regenerarCodigoTurma(id);
-      setTurmasCod((prev) => prev.map((t) => (t.id === id ? { ...t, codigo: novo } : t)));
-      setError('');
-    } catch (e: any) {
-      setError(e?.message || 'Não foi possível gerar um novo código.');
-    }
-  }
-
-  async function regenerarInstituicao() {
-    if (!podeGerenciar || !escolaCod || !confirm('Gerar um novo código da instituição? Todos os convites com o antigo param de funcionar.')) return;
-    try {
-      const novo = await supabaseRepository.regenerarCodigoInstituicao(escolaCod.id);
-      setEscolaCod({ ...escolaCod, codigo: novo });
-      setError('');
-    } catch (e: any) {
-      setError(e?.message || 'Não foi possível gerar um novo código.');
-    }
-  }
 
   async function sendToWebhook() {
     // Criar contas é ato da secretaria: docente só visualiza códigos.
@@ -469,17 +402,20 @@ export function EducatorPage() {
         remetente: session?.nome || 'Educador',
       };
 
-      if (n8nWebhookUrl()) {
-        const res = await fetch(n8nWebhookUrl(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error(`Webhook retornou ${res.status}`);
-      } else {
-        // Simulate when no webhook configured
-        await new Promise(r => setTimeout(r, 1500));
+      if (!n8nWebhookUrl()) {
+        /* Aqui o código antigo esperava 1,5s e mostrava SUCESSO sem criar
+           conta nenhuma. A secretaria saía achando que tinha matriculado
+           a turma, e os alunos nunca recebiam acesso. */
+        throw new Error(
+          'O cadastro automático ainda não está configurado neste site, e nenhuma conta foi criada. Fale com quem administra a plataforma.',
+        );
       }
+      const res = await fetch(n8nWebhookUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`O serviço de cadastro respondeu com erro (${res.status}). Nenhuma conta foi criada.`);
       setSent(true);
       setFile(null);
       setParsedData([]);
@@ -488,7 +424,7 @@ export function EducatorPage() {
         setTentouEnviarTabela(false);
       }
     } catch (e: any) {
-      setError(e.message || 'Erro ao enviar para o webhook');
+      setError(e.message || 'Não foi possível enviar agora. Nenhuma conta foi criada.');
     } finally {
       setSending(false);
     }
@@ -510,12 +446,13 @@ export function EducatorPage() {
               <h1 className="text-sm font-extrabold text-white">
                 <span className="text-gradient">Midnight Mentor</span>
               </h1>
-              <p className="text-[10px] text-gray-500 tracking-wide uppercase">Painel Educacional</p>
+              <p className="text-[10px] text-gray-500 tracking-wide uppercase">Painel da Secretaria</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400 hidden md:block">{session?.nome}</span>
-            <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-medium border border-emerald-500/20"> Educacional
+            <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-medium border border-emerald-500/20">
+              Secretaria
             </span>
             <button onClick={logout} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Sair">
               <LogOut size={16} />
@@ -529,51 +466,35 @@ export function EducatorPage() {
         {/* `w-fit` sozinho estourava a largura no celular: com a quarta aba
             (Docentes) a fila passa de 390px e empurrava a pagina inteira
             para o lado. Rola na horizontal em vez de vazar. */}
-        <div role="tablist" aria-label="Painel educacional" className="flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 w-fit max-w-full overflow-x-auto">
-          {(podeGerenciar
-            ? (['turmas', 'insights', 'termometro', 'professores'] as const)
-            : (['turmas', 'insights', 'termometro'] as const)
-          ).map((t) => (
+        {/* Grade 2x2 no celular: em fila, a rolagem cortava a primeira aba
+            no meio da palavra ("códigos"), e parecia tela quebrada. */}
+        <div role="tablist" aria-label="Painel da secretaria" className="grid grid-cols-2 sm:flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 sm:w-fit">
+          {([
+            ['matriculas', 'Matrículas'],
+            ['codigos', 'Turmas e códigos'],
+            ['docentes', 'Docentes'],
+            ['escola', 'Visão da escola'],
+          ] as const).map(([id, rotulo]) => (
             <button
-              key={t}
+              key={id}
               role="tab"
-              aria-selected={aba === t}
-              onClick={() => setAba(t)}
-              className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
-                aba === t ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:text-white border border-transparent'
+              aria-selected={aba === id}
+              onClick={() => setAba(id)}
+              className={`rounded-xl px-3 sm:px-4 py-2 text-sm font-semibold transition-all min-h-[44px] ${
+                aba === id ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:text-white border border-transparent'
               }`}
             >
-              {t === 'turmas'
-                ? 'Onboarding'
-                : t === 'insights'
-                  ? 'Insights da turma'
-                  : t === 'termometro'
-                    ? 'Termômetro'
-                    : 'Docentes'}
+              {rotulo}
             </button>
           ))}
         </div>
 
-        {/* Professor recem-criado nao tem turma nenhuma ate a secretaria
-            vincular (migration 026). Sem este aviso, o painel dele fica
-            vazio e parece defeito do app. */}
-        {!podeGerenciar && turmasDoEscopo === 0 && (
-          <div className="glass rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-5" role="status">
-            <h2 className="text-sm font-bold text-amber-300">Você ainda não está em nenhuma turma</h2>
-            <p className="text-sm text-amber-200/80 mt-2 leading-relaxed">
-              Os painéis abaixo só mostram dados das turmas em que você leciona. Peça à
-              secretaria da escola para te vincular às suas turmas: é na aba Docentes, no
-              painel dela.
-            </p>
-          </div>
-        )}
-
-        {aba === 'professores' ? (
+        {aba === 'docentes' ? (
           <ProfessoresDaTurma />
-        ) : aba === 'insights' ? (
-          <EducatorInsights />
-        ) : aba === 'termometro' ? (
-          <TermometroCognitivo />
+        ) : aba === 'codigos' ? (
+          <CodigosEscola modo="secretaria" />
+        ) : aba === 'escola' ? (
+          <TermometroCognitivo escopo="escola" />
         ) : (
         <>
         {/* Welcome */}
@@ -582,8 +503,11 @@ export function EducatorPage() {
             <Users size={20} className="text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Onboarding de Turmas</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Cadastre os alunos por planilha CSV ou direto na tabela.</p>
+            <h2 className="text-xl font-bold text-white">Matrículas</h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Cadastre os alunos por planilha ou direto na tabela. O acesso de cada aluno chega por
+              e-mail ao responsável dele, junto com o acesso do próprio responsável.
+            </p>
           </div>
         </div>
 
@@ -677,7 +601,7 @@ export function EducatorPage() {
               modo === 'csv' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-gray-400 hover:text-white border border-transparent'
             }`}
           >
-            <Upload size={15} /> Upload CSV
+            <Upload size={15} /> Enviar planilha
           </button>
           <button
             role="tab"
@@ -687,82 +611,8 @@ export function EducatorPage() {
               modo === 'tabela' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-gray-400 hover:text-white border border-transparent'
             }`}
           >
-            <PenLine size={15} /> Tabela manual
+            <PenLine size={15} /> Digitar na tabela
           </button>
-        </div>
-
-        {/* Códigos confidenciais: instituição + turmas (só a secretaria vê) */}
-        <div className="glass rounded-2xl p-5 border border-amber-500/10">
-          <div className="flex items-center gap-2 mb-1">
-            <KeyRound size={15} className="text-amber-400" />
-            <h3 className="text-sm font-semibold text-white">Códigos confidenciais</h3>
-          </div>
-          <p className="text-xs text-gray-500 mb-4">
-            O aluno digita esses códigos no Perfil para entrar. Não poste em grupo aberto: quem tiver o código entra.
-          </p>
-          {carregandoCodigos ? (
-            <p className="text-xs text-gray-500">Carregando códigos…</p>
-          ) : !escolaCod ? (
-            <p className="text-xs text-amber-300">Sua conta ainda não está vinculada a uma escola. Fale com o administrador.</p>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2 rounded-xl bg-black/25 border border-white/[0.06] px-3 py-2.5">
-                <div className="flex-1 min-w-[140px]">
-                  <p className="text-[10px] uppercase tracking-widest text-gray-500">Instituição • {escolaCod.nome}</p>
-                  <p className="text-base font-mono font-bold text-amber-300 tracking-[0.2em]">{escolaCod.codigo}</p>
-                </div>
-                <button
-                  onClick={() => void copiar(escolaCod.codigo, 'inst')}
-                  aria-label="Copiar código da instituição"
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 transition-all"
-                >
-                  {copiado === 'inst' ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                  {copiado === 'inst' ? 'Copiado!' : 'Copiar'}
-                </button>
-                {podeGerenciar && (
-                  <button
-                    onClick={() => void regenerarInstituicao()}
-                    title="Gerar um novo código (o antigo para de funcionar)"
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-500 hover:text-amber-300 transition-all"
-                  >
-                    <RefreshCw size={13} /> Trocar
-                  </button>
-                )}
-              </div>
-              {turmasCod.length === 0 ? (
-                <p className="text-xs text-gray-500">Nenhuma turma cadastrada para esta escola ainda.</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {turmasCod.map((t) => (
-                    <div key={t.id} className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg hover:bg-white/[0.02]">
-                      <span className="text-gray-200 flex-1 truncate">{t.nome}</span>
-                      <code className="font-mono font-bold text-cyan-300 tracking-[0.15em] text-sm">{t.codigo}</code>
-                      <button
-                        onClick={() => void copiar(t.codigo, t.id)}
-                        aria-label={`Copiar código da turma ${t.nome}`}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all"
-                      >
-                        {copiado === t.id ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                      </button>
-                      {podeGerenciar && (
-                        <button
-                          onClick={() => void regenerarTurma(t.id)}
-                          title="Gerar novo código (o antigo para de funcionar)"
-                          aria-label={`Gerar novo código para a turma ${t.nome}`}
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-amber-300 hover:bg-white/10 transition-all"
-                        >
-                          <RefreshCw size={13} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {!podeGerenciar && (
-                <p className="text-[11px] text-gray-600">Você visualiza os códigos como docente. Criar contas e trocar códigos é papel da secretaria.</p>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Instructions */}
@@ -1023,10 +873,14 @@ export function EducatorPage() {
           </div>
         )}
 
-        {!n8nWebhookUrl() && (
-          <div className="rounded-xl bg-amber-500/5 border border-amber-500/10 p-3 text-xs text-amber-400 flex items-center gap-2">
+        {/* So avisa quando NAO existe caminho nenhum de cadastro. Antes
+            aparecia sempre que faltava o webhook legado, mesmo com o
+            back-end cadastrando normalmente, e falava de variavel de
+            ambiente com quem so quer matricular aluno. */}
+        {!hasProxy() && !n8nWebhookUrl() && (
+          <div className="rounded-xl bg-amber-500/5 border border-amber-500/10 p-3 text-xs text-amber-400 flex items-center gap-2" role="status">
             <TriangleAlert size={14} className="shrink-0" />
-            <span>Webhook não configurado. Defina <code className="bg-black/30 px-1 rounded">N8N_WEBHOOK_URL</code> nas Environment Variables do projeto para enviar os dados.</span>
+            <span>O cadastro automático ainda não está ligado neste site. Dá para montar a lista, mas as contas só são criadas depois que quem administra a plataforma ativar o envio.</span>
           </div>
         )}
         </>

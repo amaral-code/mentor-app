@@ -630,8 +630,14 @@ function emailBoasVindas({ paraQuem, login, senha, linkMagico, escola, codigoIns
     `Senha temporária (uso único, troque no primeiro acesso): ${senha}`,
     linkMagico ? `Confirmação em 1 clique: ${linkMagico}` : '',
     '',
-    `Código da instituição (digite no Perfil): ${codigoInstituicao}`,
-    turma ? `Código da turma ${turma.nome} (digite no Perfil): ${turma.codigo}` : 'Sua turma será vinculada pela secretaria.',
+    // Aluno importado JÁ nasce na escola e na turma (perfilDoImportado).
+    // "Digite os códigos no Perfil" era um passo à toa, que ainda fazia
+    // parecer que a matrícula não tinha dado certo. Os códigos continuam
+    // no e-mail como reserva: se a gravação do perfil falhar, são o
+    // único jeito de o aluno entrar sozinho.
+    turma
+      ? `Você já está na turma ${turma.nome}. Só se o app pedir, os códigos são: escola ${codigoInstituicao}, turma ${turma.codigo}.`
+      : `Código da escola (digite no Perfil): ${codigoInstituicao}. Sua turma será vinculada pela secretaria.`,
     '',
     `Acesse: ${appUrl}`,
     'Guarde este email em sigilo e não repasse os códigos a ninguém de fora da escola.',
@@ -718,7 +724,11 @@ async function importarLinha(env, escola, turmas, linha) {
   });
   // O corpo do responsável carrega as duas credenciais + códigos.
   const corpoFinal = tipo === 'student' && loginResp
-    ? `${convite.corpo}\n\n--- Conta do responsável ---\nLogin: ${loginResp}\nSenha temporária: ${senhaResp}\nUse o link de confirmação acima para ativar.`
+    // Sem "---" de separador: e-mail é texto que o usuário lê, e a regra
+    // de escrita do produto vale aqui também. E o responsável precisa
+    // saber como começar a acompanhar: a importação cria a conta dele,
+    // mas o vínculo é pelo código que o ALUNO entrega (024).
+    ? `${convite.corpo}\n\nCONTA DO RESPONSÁVEL\nLogin: ${loginResp}\nSenha temporária: ${senhaResp}\nUse o link de confirmação acima para ativar.\n\nPara acompanhar os estudos, peça ao estudante o código que aparece no app dele, em Perfil, Responsáveis, e digite no seu painel.`
     : convite.corpo;
 
   let emailEnviado = false;

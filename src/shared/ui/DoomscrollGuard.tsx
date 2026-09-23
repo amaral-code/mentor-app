@@ -133,12 +133,12 @@ export function DoomscrollGuard() {
                 onClick={() => responderIntervencao(false)}
                 className="btn-ghost text-sm text-gray-500 hover:text-gray-300 py-2"
               >
-                Agora nao
+                Agora não
               </button>
             </div>
 
             <p className="text-[10px] text-gray-600 mt-4">
-              Aparece no maximo uma vez a cada 15 minutos.
+              Aparece no máximo uma vez a cada 15 minutos.
             </p>
           </m.div>
         </div>

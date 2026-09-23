@@ -114,7 +114,7 @@ export function AudioPillsPage() {
       }
       // Sem proxy: audio fica null e o player usa a voz do sistema.
     } catch (e: any) {
-      setToast(e?.message || 'Nao foi possivel preparar esta pilula.', 'error');
+      setToast(e?.message || 'Não foi possível preparar esta pílula.', 'error');
     } finally {
       setGerando(false);
     }
@@ -165,7 +165,7 @@ export function AudioPillsPage() {
           {gerando ? (
             <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400">
               <Loader2 size={16} className="animate-spin" />
-              Preparando o audio desta pilula...
+              Preparando o audio desta pílula...
             </div>
           ) : (
             <>
@@ -211,14 +211,14 @@ export function AudioPillsPage() {
         </div>
       )}
 
-      {carregando && <p className="text-sm text-gray-500 text-center py-8">Carregando catalogo...</p>}
+      {carregando && <p className="text-sm text-gray-500 text-center py-8">Carregando catálogo...</p>}
 
       {!carregando && modulos.length === 0 && (
         <div className="glass rounded-2xl p-5">
           <EmptyState
             pose="estudando"
-            titulo="Nenhuma pilula disponivel"
-            descricao="Rode a migracao 011 no Supabase para carregar o catalogo inicial de audios."
+            titulo="Nenhuma pílula disponivel"
+            descricao="Rode a migração 011 no Supabase para carregar o catálogo inicial de áudios."
           />
         </div>
       )}

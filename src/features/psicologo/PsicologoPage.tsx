@@ -194,7 +194,7 @@ export function PsicologoPage() {
             </label>
 
             <label className="text-[11px] text-gray-500">
-              As
+              Até
               <input
                 type="time"
                 value={fim}

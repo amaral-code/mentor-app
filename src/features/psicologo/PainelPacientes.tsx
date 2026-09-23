@@ -116,6 +116,12 @@ export function PainelPacientes() {
   }
 
   const escopo = selecionado?.escopo ?? [];
+  /* Menor de 16: quem libera é o responsável, não o paciente (LGPD,
+     027). Dizer "não liberado pelo paciente" mandava a psicóloga pedir
+     à pessoa que nem pode autorizar. */
+  const naoLiberado = selecionado?.menorDe16
+    ? 'Não liberado. Como tem menos de 16 anos, quem libera é o responsável.'
+    : 'Não liberado pelo paciente.';
   const idNotas = new Map(notas.map((n) => [n.id, n]));
 
   return (
@@ -186,7 +192,7 @@ export function PainelPacientes() {
                 </h3>
                 {!escopo.includes('bem_estar') ? (
                   <p className="text-sm text-gray-500 flex items-center gap-2">
-                    <Lock size={13} /> Não liberado pelo paciente.
+                    <Lock size={13} /> {naoLiberado}
                   </p>
                 ) : !bemEstar || bemEstar.length === 0 ? (
                   <p className="text-sm text-gray-500">Liberado, mas ainda sem medições.</p>
@@ -212,7 +218,7 @@ export function PainelPacientes() {
                 <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">Ritmo de estudo (3 meses)</h3>
                 {!escopo.includes('estudo') ? (
                   <p className="text-sm text-gray-500 flex items-center gap-2">
-                    <Lock size={13} /> Não liberado pelo paciente.
+                    <Lock size={13} /> {naoLiberado}
                   </p>
                 ) : !estudo ? (
                   <div className="h-12 rounded bg-white/5 animate-pulse" />

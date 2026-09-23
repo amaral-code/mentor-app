@@ -40,7 +40,7 @@ export function TrocarSenha() {
       await supabaseRepository.limparTrocaSenha();
       const novaSessao = await userRepository.getSession();
       if (novaSessao) setSession(novaSessao);
-      setToast('Senha atualizada! Bem-vindo ao Midnight Mentor.', 'success');
+      setToast('Senha atualizada! Boas-vindas ao Midnight Mentor.', 'success');
     } catch (e: any) {
       setErro(e?.message || 'Não foi possível trocar a senha.');
     } finally {

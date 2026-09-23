@@ -40,7 +40,7 @@ class LimiteDeErro extends Component<{ children: ReactNode }, { erro: boolean }>
     if (this.state.erro) {
       return (
         <div className="text-center py-8">
-          <p className="text-gray-300 font-medium">Nao foi possivel montar o relatorio</p>
+          <p className="text-gray-300 font-medium">Não foi possível montar o relatório</p>
           <p className="text-sm text-gray-500 mt-1">Seus dados da semana continuam salvos.</p>
           <button onClick={() => this.setState({ erro: false })} className="btn-primary mt-4 text-sm">
             Tentar de novo
@@ -172,7 +172,7 @@ function Conteudo() {
         </p>
         {gerando ? (
           <p className="flex items-center gap-2 text-sm text-gray-400">
-            <Loader2 size={14} className="animate-spin" /> Lendo o que voce fez nesta semana...
+            <Loader2 size={14} className="animate-spin" /> Lendo o que você fez nesta semana...
           </p>
         ) : (
           <p className="text-sm text-gray-200 leading-relaxed">{texto}</p>
@@ -200,8 +200,8 @@ function Conteudo() {
       </div>
 
       <p className="text-[11px] text-gray-600 text-center leading-relaxed">
-        Este relatorio nao mede acertos. Ele registra o que sustentou a sua semana, e isso também
-        chega para quem acompanha voce.
+        Este relatório não mede acertos. Ele registra o que sustentou a sua semana, e isso também
+        chega para quem acompanha você.
       </p>
     </div>
   );

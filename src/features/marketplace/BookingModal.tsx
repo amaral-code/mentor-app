@@ -99,11 +99,11 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
 
         {carregandoAgenda ? (
           <p className="flex items-center gap-2 text-sm text-gray-400 py-6 justify-center">
-            <Loader2 size={15} className="animate-spin" /> Buscando horarios livres...
+            <Loader2 size={15} className="animate-spin" /> Buscando horários livres...
           </p>
         ) : dias.length === 0 ? (
           <p className="text-sm text-gray-400 py-6 text-center">
-            Este profissional nao tem horarios abertos nos proximos 14 dias.
+            Este profissional não tem horários abertos nos próximos 14 dias.
           </p>
         ) : (
           <>
@@ -126,14 +126,14 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
                     }`}
                   >
                     {d.rotulo}
-                    <span className="block text-[10px] text-gray-500 mt-0.5">{d.slots.length} horarios</span>
+                    <span className="block text-[10px] text-gray-500 mt-0.5">{d.slots.length} horários</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-gray-500 mb-2">Horario</p>
+              <p className="text-[11px] uppercase tracking-wider text-gray-500 mb-2">Horário</p>
               <div className="grid grid-cols-4 gap-2">
                 {doDia.map((s) => (
                   <button

@@ -56,7 +56,7 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
           pose="meditando"
           compacto
           titulo="Nenhuma consulta agendada"
-          descricao="Quando um atendimento for marcado, o horario e o link da sala aparecem aqui."
+          descricao="Quando um atendimento for marcado, o horário e o link da sala aparecem aqui."
         />
       </div>
     );
@@ -78,9 +78,13 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
             <div key={a.id} className="rounded-xl glass-light border border-white/[0.03] p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
+                  {/* Quem atende procura o PACIENTE; quem é atendido, o
+                      profissional. Antes o psicólogo via o próprio nome
+                      primeiro e o do paciente cortado ("Miguel..."). */}
                   <p className="text-sm font-medium text-white truncate">
-                    {a.psicologoNome ?? 'Profissional'}
-                    {a.alunoNome ? ` · ${a.alunoNome}` : ''}
+                    {papel === 'psychologist'
+                      ? (a.alunoNome ?? 'Paciente')
+                      : `${a.psicologoNome ?? 'Profissional'}${papel === 'parent' && a.alunoNome ? ` · ${a.alunoNome}` : ''}`}
                   </p>
                   <p className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5">
                     <Clock size={11} /> {formatarDataHora(a.inicio)} · {tempoAte(a.inicio)}

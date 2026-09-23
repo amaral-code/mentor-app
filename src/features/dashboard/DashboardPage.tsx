@@ -4,6 +4,8 @@ import { listContainer, listItem } from '../../shared/lib/motionPresets';
 import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
 import { BarChart3, BookOpen, Camera, Flame, Frown, Moon, Sparkles, Target, Timer, X } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
+import { AvisoMensagens } from '../psicologia/AvisoMensagens';
+import { FADIGA_ZERADA } from '../../shared/lib/burnoutModel';
 import { getSSCColor, getSSCLabel } from '../../shared/lib/sscCalculator';
 import { MicroTask, QuizResult } from '../../shared/types';
 import { calcLevel, getToday, MOOD_LABEL, MOOD_COLOR } from '../../shared/lib/utils';
@@ -182,6 +184,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-5 animate-fade-up">
+      <AvisoMensagens />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
@@ -297,7 +300,11 @@ export function DashboardPage() {
       {/* Indice de fadiga: fica entre o estado fisico declarado (sono,
           cansaco) e o plano do dia, porque e ele que justifica um plano
           mais leve quando o modelo aponta risco. */}
-      <BurnoutCard />
+      {/* Com o índice desligado (FADIGA_ZERADA, decisão do dono: "o número
+          incomodava mais do que ajudava"), o cartão mostrava "0/100 · Ritmo
+          saudável, calculado com as suas últimas respostas": um número, e
+          uma afirmação sobre algo que o app não está medindo. */}
+      {!FADIGA_ZERADA && <BurnoutCard />}
 
       <div className="glass rounded-2xl p-4 md:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
