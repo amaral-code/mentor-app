@@ -287,7 +287,18 @@ export function AuthPage() {
         const r = await userRepository.login(email, senha, selectedRole);
         if (r.error || !r.session) { setError(r.error || 'E-mail ou senha incorretos'); setLoading(false); return; }
         if (r.papelDivergente) {
-          setAviso(`Sua conta é do tipo "${ROLE_CONFIG[r.papelDivergente as RoleEscolhivel]?.label ?? r.papelDivergente}". Entrando nesse perfil.`);
+          // Psicólogo e admin não têm porta na tela de login, então não
+          // estão no ROLE_CONFIG: sem este mapa o aviso mostrava o nome
+          // interno do papel, em inglês ("psychologist").
+          const ROTULO_FORA_DA_TELA: Partial<Record<string, string>> = {
+            psychologist: 'Psicólogo(a)',
+            admin: 'Administrador',
+          };
+          const rotulo =
+            ROLE_CONFIG[r.papelDivergente as RoleEscolhivel]?.label ??
+            ROTULO_FORA_DA_TELA[r.papelDivergente] ??
+            'outro perfil';
+          setAviso(`Sua conta é do tipo "${rotulo}". Entrando nesse perfil.`);
         }
         // Beat de comemoracao antes de trocar de tela: o sagui aparece
         // aprovando, o que torna a espera parte da recompensa.

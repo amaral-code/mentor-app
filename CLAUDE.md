@@ -255,6 +255,14 @@ principal, regra de permissão. Mais recente no topo.
   visível, `PainelPacientes` e `ConversasProfissional` no painel do
   psicólogo, avaliação na lista de consultas.
 - Consulta que já terminou aparecia como "sala pronta". Agora "realizada".
+- **O questionário de primeiro acesso era para TODOS os papéis.** O `App`
+  checava `onboardingCompleted` antes de olhar o papel, e a flag nasce
+  `false` para todo mundo (021): psicólogo, responsável e professor
+  respondiam "O que você quer conquistar? Passar no ENEM" no primeiro
+  login. Agora é `precisaOnboarding(session)`, só para `student`.
+  Provado renderizando o `App` inteiro com e sem a correção.
+- O aviso de login mostrava o papel em inglês ("psychologist"), porque
+  psicólogo e admin não têm porta na tela de login.
 - **A regra do travessão estava incompleta.** O teste só procurava `—` e
   `–`, e ficaram 139 hífens soltos na tela ("Excelente - nota dos
   sonhos"). O teste foi reescrito sobre a árvore sintática e todos foram

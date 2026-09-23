@@ -50,3 +50,21 @@ export function marcarOnboardingLocal(uid: string): void {
 export function onboardingConcluidoLocal(uid: string): boolean {
   return !!uid && safeGet(chave(uid)) === '1';
 }
+
+/**
+ * Quem passa pelo wizard de primeiro acesso: SÓ o estudante.
+ *
+ * O wizard pergunta meta de estudo, tempo por dia, turno e data de
+ * nascimento. Nada disso é pergunta para psicólogo, responsável,
+ * professor ou secretaria, e o App checava o wizard ANTES de olhar o
+ * papel: o psicólogo, no primeiro login, respondia "O que você quer
+ * conquistar? Passar no ENEM" antes de ver o próprio painel.
+ *
+ * A flag no banco nasce `false` para todo mundo (021), então não dava
+ * para contar com ela: a decisão precisa do papel.
+ */
+export function precisaOnboarding(
+  session: { role: string; onboardingCompleted: boolean } | null | undefined,
+): boolean {
+  return !!session && session.role === 'student' && !session.onboardingCompleted;
+}
