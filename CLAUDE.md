@@ -113,17 +113,24 @@ quem mantém o repositório, não para quem usa o app.
 
 Quem garante isso não é boa vontade:
 
-- `src/shared/lib/__tests__/regraPontuacao.test.ts` varre `src/`, tira os
-  comentários e falha o build se achar um travessão. Duas exceções, as
-  duas sobre o caractere em si: a linha que ensina a regra à IA e a
-  classe de caractere do parser de gabarito.
+- `src/shared/lib/__tests__/regraPontuacao.test.ts` lê `src/` pela
+  **árvore sintática do TypeScript** e olha só o que vira texto (`JsxText`,
+  string, parte literal de template). Por isso distingue
+  `partes.length - 1` (código) de `'Excelente - nota'` (tela), e `${ano}-${mes}`
+  (data) de `valor || '-'` (traço no lugar de valor vazio, que é tela).
+  A primeira versão era regex e deixou passar 139 hífens soltos.
+  Exceções ficam numa lista com o motivo de cada uma: a linha que ensina
+  a regra à IA, o parser de gabarito, `(1 - taxa)`, `calc(` e conta
+  aritmética entre números.
 - `comRegraDeEscrita` (em `aiService.ts`) injeta a regra no
   `systemInstruction` de **toda** chamada de IA. Fica no ponto único de
   envio de propósito: são mais de dez chamadas, e a próxima nasceria sem
   a linha.
 
-Não há placeholder com travessão. Campo vazio escreve o que está
-faltando: `'sem código'`, `'sem dados'`, `'CRP não informado'`.
+Não há placeholder com traço. Campo vazio escreve o que está faltando:
+`'sem código'`, `'sem dados'`, `'sem turma'`, `'CRP não informado'`.
+Separador entre dois valores na mesma linha é `·`, nunca `-`.
+Marcador de lista dentro de prompt é `•`.
 
 ## Convenções
 
@@ -188,6 +195,11 @@ responsável.** É a regra da LGPD para dados de criança e adolescente.
 pergunta. Data ausente conta como menor, no banco e na tela.
 O consentimento é revogável, tem escopo e validade — acesso a dado de saúde
 mental de menor não pode ser permanente nem implícito.
+**Implementado na 027.** As pontas são EXCLUSIVAS: menor de 16 só o
+responsável concede; 16 ou mais só o próprio aluno. Encerrar é aberto a
+todos que veem, inclusive ao menor, porque só reduz o acesso. Teto de
+180 dias. Escopos: `bem_estar` (índice de cansaço) e `estudo` (resumo da
+025). **Não existe escopo para conversa, caderno ou humor**: não reabra.
 
 ### Tabelas planejadas (marketplace e acompanhamento)
 
@@ -195,15 +207,15 @@ Já existem: `psicologos`, `psicologo_disponibilidade`, `agendamentos`,
 `vinculos_responsavel`, `alertas_saude_mental`, `telemetria_estudo`,
 `indice_burnout` (migrations 010/011).
 
-Faltam:
+Feitas (024 e 027):
 
-| Tabela | Para quê |
+| Tabela | Regra que não pode regredir |
 | --- | --- |
-| `consentimentos_dados` | Aluno/responsável libera psicólogo; escopo + validade + revogação |
-| `prontuario_notas` | Anotação confidencial de sessão. RLS: **só o psicólogo autor lê** |
-| `mensagens_apoio` | Canal psicólogo ↔ aluno/responsável |
-| `avaliacoes_psicologo` | Alimenta `psicologos.nota_media`, que hoje é coluna sem fonte |
-| ~~`perfis.data_nascimento`~~ | Feito na migration 024 |
+| `consentimentos_dados` | Um em aberto por par (índice parcial). Escrita só por função |
+| `prontuario_notas` | **Só o autor lê. Só acrescenta**: sem policy de update/delete; corrige com `retificacao`. Leitura NÃO depende do consentimento (a guarda é do profissional); escrever depende |
+| `mensagens_apoio` | Cada conversa tem DUAS pontas. O responsável fala com o psicólogo numa conversa própria e **não lê a do filho**. Notificação nunca leva o texto |
+| `avaliacoes_psicologo` | Uma por consulta, depois do fim. O profissional lê nota e comentário, **nunca o autor** |
+| `perfis.data_nascimento` | Migration 024 |
 
 **Prontuário tem exigência legal** (CFP Res. 001/2009). O sigilo técnico está
 na RLS, mas conformidade legal precisa de validação profissional antes de uso
@@ -222,6 +234,31 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-09-24 — Psicólogo (Etapa 4) e a regra do hífen de verdade
+- **Migration 027 — rodar no Supabase.** Consentimento, prontuário,
+  mensagens e avaliações. 42 casos novos no teste de migração.
+- **A faixa de idade deixou de ser pública.** A 024 liberou
+  `e_menor_de_16(uuid)` a qualquer logado, com qualquer id. Agora só
+  funções `SECURITY DEFINER` chamam; a tela usa `quem_autoriza`, que só
+  responde ao próprio aluno e aos responsáveis dele.
+- A policy do prontuário consultava a própria tabela e o Postgres
+  recusava como recursão infinita (mesmo defeito da 004). Foi para uma
+  função `SECURITY DEFINER`; o teste pegou antes do SQL Editor.
+- Vitrine mostrava 5,0 estrelas para quem nunca foi avaliado (default da
+  coluna). Agora há `total_avaliacoes` e a tela diz "sem avaliações".
+- `bem_estar` e `estudo` reaproveitam as guardas existentes:
+  `pode_ver_resumo` (025) passou a aceitar o psicólogo com escopo
+  `estudo`, em vez de uma cópia das funções de resumo.
+- Telas: `AcessoPsicologo` (aluno e responsável, quatro comportamentos
+  conforme idade e papel), `Conversa` com aviso do CVV 188 sempre
+  visível, `PainelPacientes` e `ConversasProfissional` no painel do
+  psicólogo, avaliação na lista de consultas.
+- Consulta que já terminou aparecia como "sala pronta". Agora "realizada".
+- **A regra do travessão estava incompleta.** O teste só procurava `—` e
+  `–`, e ficaram 139 hífens soltos na tela ("Excelente - nota dos
+  sonhos"). O teste foi reescrito sobre a árvore sintática e todos foram
+  corrigidos, frase por frase.
 
 ### 2026-09-23 (3) — Escopo do docente (Etapa 3)
 - **`teacher` via os dados de TODAS as turmas da escola.** O CLAUDE.md

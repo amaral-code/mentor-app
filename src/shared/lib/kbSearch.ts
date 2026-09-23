@@ -130,7 +130,7 @@ const FAQS: KBEntry[] = [
     id: 'faq_5',
     keywords: ['sono', 'estudar', 'impacto'],
     content:
-      'Dormir bem é essencial para a memorização. Durante o sono, o cérebro consolida o que aprendeu. Ideal: 7-9h por noite. Evite estudar até tarde - o rendimento cai drasticamente após as 22h.',
+      'Dormir bem é essencial para a memorização. Durante o sono, o cérebro consolida o que aprendeu. Ideal: 7-9h por noite. Evite estudar até tarde: o rendimento cai drasticamente após as 22h.',
     source: 'faq',
   },
   {
@@ -151,7 +151,7 @@ const FAQS: KBEntry[] = [
     id: 'faq_8',
     keywords: ['habito', 'estudo', 'como criar'],
     content:
-      'Criar hábito de estudo leva em média 21 dias. Comece pequeno: 5-10 minutos por dia no mesmo horário. Use gatilhos (ex: após o café, estudar 10 min). Registre seu progresso - ver a sequência de dias motiva a continuar.',
+      'Criar hábito de estudo leva em média 21 dias. Comece pequeno: 5-10 minutos por dia no mesmo horário. Use gatilhos (ex: após o café, estudar 10 min). Registre seu progresso: ver a sequência de dias motiva a continuar.',
     source: 'faq',
   },
   {
@@ -363,7 +363,7 @@ export const SPECIAL_RESPONSES: Record<string, string> = {
   obrigada: 'Por nada! Continue estudando que o resultado vem!',
   valeu: 'Disponha! Bora continuar!',
   'quem é você':
-    'Sou o Mentor ENEM, um assistente de estudos offline! Diferente de IAs generativas como ChatGPT, eu não tenho uma rede neural - funciono com base em um banco de conhecimento local com regras e buscas por palavras-chave. Não gero conteúdo novo, apenas busco na base de conhecimento preparada por educadores.',
+    'Sou o Mentor ENEM, um assistente de estudos offline! Diferente de IAs generativas como ChatGPT, eu não tenho uma rede neural: funciono com base em um banco de conhecimento local com regras e buscas por palavras-chave. Não gero conteúdo novo, apenas busco na base de conhecimento preparada por educadores.',
   'quem e voce':
     'Sou o Mentor ENEM, um assistente de estudos offline! Diferente de IAs generativas, funciono com base em um banco de conhecimento local com regras e buscas por palavras-chave.',
   'quem criou você':

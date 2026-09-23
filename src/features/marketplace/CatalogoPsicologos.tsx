@@ -107,12 +107,19 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
                 <p className="text-[11px] text-gray-500">CRP {p.crp}</p>
 
                 <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500">
-                  <span className="flex items-center gap-1 text-amber-400">
-                    <Star size={11} fill="currentColor" /> {p.notaMedia.toFixed(1)}
-                  </span>
-                  <span>-</span>
+                  {/* Nota sem avaliações por trás era o 5,0 padrão do banco,
+                      exibido como se fosse elogio. */}
+                  {p.totalAvaliacoes > 0 ? (
+                    <span className="flex items-center gap-1 text-amber-400" title={`${p.totalAvaliacoes} avaliação(ões)`}>
+                      <Star size={11} fill="currentColor" /> {p.notaMedia.toFixed(1)}
+                      <span className="text-gray-500">({p.totalAvaliacoes})</span>
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">sem avaliações</span>
+                  )}
+                  <span aria-hidden="true">·</span>
                   <span>{p.totalAtendimentos} atendimentos</span>
-                  <span>-</span>
+                  <span aria-hidden="true">·</span>
                   <span>{p.duracaoMinutos} min</span>
                 </div>
 

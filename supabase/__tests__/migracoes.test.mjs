@@ -52,6 +52,7 @@ const ARQUIVOS = [
   '024_vinculo_por_codigo.sql',
   '025_resumo_para_responsavel.sql',
   '026_professor_por_turma.sql',
+  '027_psicologo_consentimento_prontuario.sql',
 ];
 
 let db;
@@ -108,6 +109,10 @@ beforeAll(async () => {
     revoke insert, update, delete on public.gamificacao from authenticated;
     revoke insert, update, delete on public.carteira_foco from authenticated;
     revoke all on function public.confirmar_pagamento_consulta(uuid, text, text, text) from authenticated;
+    -- 027: a faixa de idade deixou de ser publica. O grant geral acima
+    -- desfaria o revoke da migration; aqui ele e reaplicado, como no
+    -- Supabase, onde o revoke roda depois do grant padrao.
+    revoke all on function public.e_menor_de_16(uuid) from authenticated;
   `);
 
   const criar = async (email, nome) =>
@@ -1131,5 +1136,390 @@ describe('professor por turma (026)', () => {
         `insert into public.turma_professores (turma_id, professor_id) values ($1, $2)`,
         [turmaB, profIntruso]),
     ).rejects.toThrow();
+  });
+});
+
+describe('psicologo: consentimento, prontuario, mensagens, avaliacoes (027)', () => {
+  /*
+   * Fixtures proprias: aqui se cria consulta, consentimento e vinculo,
+   * e nada disso pode vazar para os testes de marketplace antigos.
+   *
+   * Duas idades de proposito. A regra de consentimento muda de dono aos
+   * 16 anos, e so testando os dois lados da fronteira da para provar que
+   * as pontas sao exclusivas.
+   */
+  let psi;
+  let psiOutro;
+  let jovem;   // 17 anos: consente sozinho
+  let menor;   // 14 anos: so o responsavel consente
+  let semData; // sem data de nascimento: conta como menor
+  let mae;     // responsavel do menor
+  let estranho027;
+  let consultaPassada;
+
+  const criar = async (email, nome) =>
+    (await db.query(
+      `insert into auth.users (email, raw_user_meta_data)
+       values ($1::text, jsonb_build_object('nome', $2::text)) returning id`,
+      [email, nome],
+    )).rows[0].id;
+
+  const tornarPsicologo = async (id, crp) => {
+    await db.query(`update public.perfis set papel='psychologist' where id=$1`, [id]);
+    await db.query(`insert into public.psicologos (id, crp) values ($1, $2)`, [id, crp]);
+  };
+
+  beforeAll(async () => {
+    psi = await criar('psi027@test.br', 'Dra Ana Psi');
+    psiOutro = await criar('psi027b@test.br', 'Dr Outro Psi');
+    await tornarPsicologo(psi, 'CRP 06/11111');
+    await tornarPsicologo(psiOutro, 'CRP 06/22222');
+
+    jovem = await criar('jovem027@test.br', 'Leo Jovem');
+    menor = await criar('menor027@test.br', 'Bia Menor');
+    semData = await criar('semdata027@test.br', 'Sem Data');
+    mae = await criar('mae027@test.br', 'Rosa Mae');
+    estranho027 = await criar('estranho027@test.br', 'Estranho');
+
+    await db.query(`update public.perfis set data_nascimento = current_date - interval '17 years' where id=$1`, [jovem]);
+    await db.query(`update public.perfis set data_nascimento = current_date - interval '14 years' where id=$1`, [menor]);
+    await db.query(`update public.perfis set papel='parent' where id=$1`, [mae]);
+
+    const codigo = (await db.query(`select codigo_vinculo from public.perfis where id=$1`, [menor])).rows[0].codigo_vinculo;
+    await comoUsuario(mae, `select public.vincular_por_codigo($1, 'mae')`, [codigo]);
+
+    // Consulta que ja aconteceu: habilita avaliacao e da vinculo para
+    // prontuario e mensagens entre psi e jovem.
+    consultaPassada = (await db.query(
+      `insert into public.agendamentos (aluno_id, psicologo_id, inicio, fim, status)
+       values ($1, $2, now() - interval '3 days', now() - interval '3 days' + interval '50 minutes', 'concluido')
+       returning id`,
+      [jovem, psi],
+    )).rows[0].id;
+  });
+
+  // ---------------------------------------------------------------- consentimento
+
+  it('estudante de 16 ou mais concede sozinho', async () => {
+    const c = await primeira(jovem,
+      `select * from public.conceder_consentimento($1, $2, array['bem_estar'], 30)`, [jovem, psi]);
+    expect(c.escopo).toEqual(['bem_estar']);
+  });
+
+  it('menor de 16 NAO concede sozinho', async () => {
+    await expect(
+      comoUsuario(menor, `select public.conceder_consentimento($1, $2, array['bem_estar'])`, [menor, psi]),
+    ).rejects.toThrow(/menor_de_16/);
+  });
+
+  it('o responsavel concede pelo menor', async () => {
+    const c = await primeira(mae,
+      `select * from public.conceder_consentimento($1, $2, array['bem_estar','estudo'], 60)`, [menor, psi]);
+    expect(c.concedido_por).toBe(mae);
+  });
+
+  /* As pontas sao exclusivas: o responsavel nao libera dado de saude
+     mental de quem ja tem 16 anos. */
+  it('responsavel nao concede por quem tem 16 ou mais', async () => {
+    await expect(
+      comoUsuario(mae, `select public.conceder_consentimento($1, $2, array['bem_estar'])`, [jovem, psiOutro]),
+    ).rejects.toThrow(/maior_de_16/);
+  });
+
+  it('sem data de nascimento conta como menor', async () => {
+    await expect(
+      comoUsuario(semData, `select public.conceder_consentimento($1, $2, array['bem_estar'])`, [semData, psi]),
+    ).rejects.toThrow(/menor_de_16/);
+  });
+
+  it('consentimento nunca passa de 180 dias', async () => {
+    const c = await primeira(jovem,
+      `select * from public.conceder_consentimento($1, $2, array['estudo'], 5000)`, [jovem, psiOutro]);
+    const dias = (new Date(c.valido_ate) - new Date(c.criado_em)) / 86400000;
+    expect(dias).toBeLessThanOrEqual(180.01);
+  });
+
+  it('escopo fora da lista e recusado', async () => {
+    await expect(
+      comoUsuario(jovem, `select public.conceder_consentimento($1, $2, array['conversas'])`, [jovem, psi]),
+    ).rejects.toThrow();
+  });
+
+  it('conceder de novo substitui: so um em aberto por par', async () => {
+    await comoUsuario(jovem, `select public.conceder_consentimento($1, $2, array['bem_estar','estudo'], 30)`, [jovem, psi]);
+    const abertos = await db.query(
+      `select count(*)::int as n from public.consentimentos_dados
+        where aluno_id=$1 and psicologo_id=$2 and revogado_em is null`, [jovem, psi]);
+    expect(abertos.rows[0].n).toBe(1);
+  });
+
+  it('o aluno e notificado, mesmo quando quem concedeu foi o responsavel', async () => {
+    const n = await db.query(
+      `select count(*)::int as n from public.notificacoes where user_id=$1 and tipo='consentimento'`, [menor]);
+    expect(n.rows[0].n).toBeGreaterThanOrEqual(1);
+  });
+
+  // ---------------------------------------------------------------- escopo
+
+  it('escopo bem_estar libera o indice ao psicologo', async () => {
+    await db.query(
+      `insert into public.indice_burnout (user_id, data, score, classe) values ($1, current_date, 42, 'alerta')`, [jovem]);
+    const rows = await linhas(psi, `select * from public.bem_estar_paciente($1, 30)`, [jovem]);
+    expect(rows.length).toBeGreaterThan(0);
+  });
+
+  it('psicologo sem consentimento nao le bem-estar', async () => {
+    await expect(
+      comoUsuario(psiOutro, `select * from public.bem_estar_paciente($1, 30)`, [menor]),
+    ).rejects.toThrow(/sem_consentimento/);
+  });
+
+  /* psiOutro tem so 'estudo' do jovem: bem-estar continua fechado. */
+  it('escopo estudo nao abre bem-estar', async () => {
+    await expect(
+      comoUsuario(psiOutro, `select * from public.bem_estar_paciente($1, 30)`, [jovem]),
+    ).rejects.toThrow(/sem_consentimento/);
+  });
+
+  it('escopo estudo abre o resumo da 025 pela mesma guarda', async () => {
+    const rows = await linhas(psiOutro, `select * from public.resumo_mensal_aluno($1, 3)`, [jovem]);
+    expect(rows).toHaveLength(3);
+  });
+
+  it('pacientes lista quem tem consentimento, com o escopo', async () => {
+    const rows = await linhas(psi, `select * from public.pacientes()`);
+    const doMenor = rows.find((r) => r.aluno_id === menor);
+    expect(doMenor.menor_de_16).toBe(true);
+    expect(doMenor.escopo).toEqual(['bem_estar', 'estudo']);
+  });
+
+  it('aluno nao lista pacientes', async () => {
+    await expect(comoUsuario(jovem, `select * from public.pacientes()`)).rejects.toThrow(/sem_permissao/);
+  });
+
+  /* Revogar so reduz acesso: o menor pode, mesmo nao podendo conceder. */
+  it('o menor revoga o que o responsavel concedeu', async () => {
+    const c = (await db.query(
+      `select id from public.consentimentos_dados
+        where aluno_id=$1 and psicologo_id=$2 and revogado_em is null`, [menor, psi])).rows[0];
+    await comoUsuario(menor, `select public.revogar_consentimento($1)`, [c.id]);
+    await expect(
+      comoUsuario(psi, `select * from public.bem_estar_paciente($1, 30)`, [menor]),
+    ).rejects.toThrow(/sem_consentimento/);
+  });
+
+  it('estranho nao revoga consentimento alheio', async () => {
+    const c = (await db.query(
+      `select id from public.consentimentos_dados
+        where aluno_id=$1 and psicologo_id=$2 and revogado_em is null`, [jovem, psi])).rows[0];
+    await expect(
+      comoUsuario(estranho027, `select public.revogar_consentimento($1)`, [c.id]),
+    ).rejects.toThrow(/nao encontrado/);
+  });
+
+  // ---------------------------------------------------------------- prontuario
+
+  it('psicologo com vinculo escreve e le a propria nota', async () => {
+    await comoUsuario(psi,
+      `insert into public.prontuario_notas (psicologo_id, aluno_id, texto) values ($1, $2, 'Sessao 1: ansiedade de prova.')`,
+      [psi, jovem]);
+    const notas = await linhas(psi, `select * from public.prontuario_notas where aluno_id=$1`, [jovem]);
+    expect(notas).toHaveLength(1);
+  });
+
+  it('o proprio aluno nao le o prontuario', async () => {
+    const notas = await linhas(jovem, `select * from public.prontuario_notas where aluno_id=$1`, [jovem]);
+    expect(notas).toHaveLength(0);
+  });
+
+  it('outro psicologo nao le o prontuario', async () => {
+    const notas = await linhas(psiOutro, `select * from public.prontuario_notas where aluno_id=$1`, [jovem]);
+    expect(notas).toHaveLength(0);
+  });
+
+  it('o responsavel nao le o prontuario do filho', async () => {
+    const notas = await linhas(mae, `select * from public.prontuario_notas`);
+    expect(notas).toHaveLength(0);
+  });
+
+  it('sem vinculo nao escreve', async () => {
+    await expect(
+      comoUsuario(psiOutro,
+        `insert into public.prontuario_notas (psicologo_id, aluno_id, texto) values ($1, $2, 'x')`,
+        [psiOutro, semData]),
+    ).rejects.toThrow();
+  });
+
+  /* Apenas acrescimo: nem o autor reescreve ou apaga. */
+  it('nota nao e reescrita nem apagada', async () => {
+    await comoUsuario(psi, `update public.prontuario_notas set texto='reescrito' where aluno_id=$1`, [jovem]);
+    await comoUsuario(psi, `delete from public.prontuario_notas where aluno_id=$1`, [jovem]);
+    const notas = await linhas(psi, `select texto from public.prontuario_notas where aluno_id=$1`, [jovem]);
+    expect(notas).toHaveLength(1);
+    expect(notas[0].texto).toBe('Sessao 1: ansiedade de prova.');
+  });
+
+  it('retificacao aponta para a nota original', async () => {
+    const orig = (await linhas(psi, `select id from public.prontuario_notas where aluno_id=$1`, [jovem]))[0];
+    await comoUsuario(psi,
+      `insert into public.prontuario_notas (psicologo_id, aluno_id, tipo, retifica_id, texto)
+       values ($1, $2, 'retificacao', $3, 'Correcao: era ansiedade de desempenho.')`,
+      [psi, jovem, orig.id]);
+    const notas = await linhas(psi, `select tipo from public.prontuario_notas where aluno_id=$1`, [jovem]);
+    expect(notas.map((n) => n.tipo).sort()).toEqual(['evolucao', 'retificacao']);
+  });
+
+  it('retificacao sem nota original e recusada', async () => {
+    await expect(
+      comoUsuario(psi,
+        `insert into public.prontuario_notas (psicologo_id, aluno_id, tipo, texto)
+         values ($1, $2, 'retificacao', 'solta')`, [psi, jovem]),
+    ).rejects.toThrow();
+  });
+
+  /* A guarda do registro e do profissional: revogar nao apaga da vista
+     dele o que ele mesmo escreveu. */
+  it('apos revogar, o psicologo ainda le o que escreveu, mas nao escreve mais', async () => {
+    // Menor: psi teve consentimento (revogado acima) e nenhuma consulta.
+    await comoUsuario(mae, `select public.conceder_consentimento($1, $2, array['bem_estar'], 30)`, [menor, psi]);
+    await comoUsuario(psi,
+      `insert into public.prontuario_notas (psicologo_id, aluno_id, texto) values ($1, $2, 'Primeiro contato.')`,
+      [psi, menor]);
+    const c = (await db.query(
+      `select id from public.consentimentos_dados where aluno_id=$1 and psicologo_id=$2 and revogado_em is null`,
+      [menor, psi])).rows[0];
+    await comoUsuario(mae, `select public.revogar_consentimento($1)`, [c.id]);
+
+    const notas = await linhas(psi, `select * from public.prontuario_notas where aluno_id=$1`, [menor]);
+    expect(notas).toHaveLength(1);
+    await expect(
+      comoUsuario(psi,
+        `insert into public.prontuario_notas (psicologo_id, aluno_id, texto) values ($1, $2, 'depois')`,
+        [psi, menor]),
+    ).rejects.toThrow();
+  });
+
+  // ---------------------------------------------------------------- mensagens
+
+  it('psicologo e aluno conversam quando ha vinculo', async () => {
+    await comoUsuario(jovem, `select public.enviar_mensagem_apoio($1, $2, 'Oi, posso falar da prova?')`, [psi, jovem]);
+    await comoUsuario(psi, `select public.enviar_mensagem_apoio($1, $2, 'Claro. Na quinta falamos.')`, [psi, jovem]);
+    const msgs = await linhas(jovem, `select * from public.mensagens_apoio where psicologo_id=$1`, [psi]);
+    expect(msgs).toHaveLength(2);
+  });
+
+  it('estranho nao le a conversa', async () => {
+    const msgs = await linhas(estranho027, `select * from public.mensagens_apoio`);
+    expect(msgs).toHaveLength(0);
+  });
+
+  it('sem vinculo nao se envia mensagem', async () => {
+    await expect(
+      comoUsuario(estranho027, `select public.enviar_mensagem_apoio($1, $2, 'oi')`, [psi, estranho027]),
+    ).rejects.toThrow(/sem_vinculo/);
+  });
+
+  it('ninguem escreve em nome de outro', async () => {
+    await expect(
+      comoUsuario(estranho027, `select public.enviar_mensagem_apoio($1, $2, 'oi')`, [psi, jovem]),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  /* O sigilo do adolescente: o responsavel conversa com o psicologo
+     numa conversa PROPRIA, e nao le a do filho. */
+  it('o responsavel nao le a conversa do filho com o psicologo', async () => {
+    await comoUsuario(mae, `select public.conceder_consentimento($1, $2, array['bem_estar'], 30)`, [menor, psi]);
+    await comoUsuario(menor, `select public.enviar_mensagem_apoio($1, $2, 'segredo do menor')`, [psi, menor]);
+    await comoUsuario(mae, `select public.enviar_mensagem_apoio($1, $2, 'sou a mae')`, [psi, mae]);
+
+    const daMae = await linhas(mae, `select texto from public.mensagens_apoio`);
+    expect(daMae.map((m) => m.texto)).toEqual(['sou a mae']);
+  });
+
+  it('a notificacao nao carrega o texto da mensagem', async () => {
+    const n = await db.query(
+      `select corpo from public.notificacoes where user_id=$1 and tipo='mensagem_apoio'`, [psi]);
+    for (const r of n.rows) {
+      expect(r.corpo).not.toContain('segredo');
+      expect(r.corpo).not.toContain('prova');
+    }
+  });
+
+  it('nao lidas contam e zeram ao abrir a conversa', async () => {
+    let conv = await linhas(jovem, `select * from public.minhas_conversas()`);
+    expect(conv.find((c) => c.psicologo_id === psi).nao_lidas).toBe(1);
+
+    await comoUsuario(jovem, `select public.marcar_conversa_lida($1, $2)`, [psi, jovem]);
+    conv = await linhas(jovem, `select * from public.minhas_conversas()`);
+    expect(conv.find((c) => c.psicologo_id === psi).nao_lidas).toBe(0);
+  });
+
+  // ---------------------------------------------------------------- avaliacoes
+
+  it('consulta que nao aconteceu nao e avaliada', async () => {
+    const futura = (await db.query(
+      `insert into public.agendamentos (aluno_id, psicologo_id, inicio, fim)
+       values ($1, $2, now() + interval '5 days', now() + interval '5 days' + interval '50 minutes') returning id`,
+      [jovem, psiOutro])).rows[0].id;
+    await expect(
+      comoUsuario(jovem, `select public.avaliar_consulta($1, 5)`, [futura]),
+    ).rejects.toThrow(/ainda nao aconteceu/);
+  });
+
+  it('estranho nao avalia consulta alheia', async () => {
+    await expect(
+      comoUsuario(estranho027, `select public.avaliar_consulta($1, 1)`, [consultaPassada]),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  /* A vitrine mostrava 5 estrelas para quem nunca foi avaliado. */
+  it('avaliacao alimenta a media e a contagem', async () => {
+    const antes = (await db.query(`select total_avaliacoes from public.psicologos where id=$1`, [psi])).rows[0];
+    expect(antes.total_avaliacoes).toBe(0);
+
+    await comoUsuario(jovem, `select public.avaliar_consulta($1, 4, 'Me ajudou muito')`, [consultaPassada]);
+    const depois = (await db.query(`select nota_media, total_avaliacoes from public.psicologos where id=$1`, [psi])).rows[0];
+    expect(Number(depois.nota_media)).toBe(4);
+    expect(depois.total_avaliacoes).toBe(1);
+  });
+
+  it('a mesma consulta nao e avaliada duas vezes', async () => {
+    await expect(
+      comoUsuario(jovem, `select public.avaliar_consulta($1, 1)`, [consultaPassada]),
+    ).rejects.toThrow(/ja foi avaliada/);
+  });
+
+  /* A 024 deixava qualquer logado perguntar a faixa de idade de qualquer id. */
+  it('a faixa de idade nao e mais publica', async () => {
+    await expect(
+      comoUsuario(estranho027, `select public.e_menor_de_16($1)`, [menor]),
+    ).rejects.toThrow();
+    await expect(
+      comoUsuario(estranho027, `select public.quem_autoriza($1)`, [menor]),
+    ).rejects.toThrow(/sem_permissao/);
+  });
+
+  it('o aluno e o responsavel sabem quem autoriza', async () => {
+    expect((await primeira(menor, `select public.quem_autoriza($1) as q`, [menor])).q).toBe('responsavel');
+    expect((await primeira(mae, `select public.quem_autoriza($1) as q`, [menor])).q).toBe('responsavel');
+    expect((await primeira(jovem, `select public.quem_autoriza($1) as q`, [jovem])).q).toBe('aluno');
+  });
+
+  it('a vitrine expoe a contagem de avaliacoes', async () => {
+    const r = await primeira(jovem, `select total_avaliacoes from public.catalogo_psicologos where id=$1`, [psi]);
+    expect(r.total_avaliacoes).toBe(1);
+  });
+
+  it('o aluno sabe quais consultas ja avaliou', async () => {
+    const r = await linhas(jovem, `select * from public.consultas_avaliadas()`);
+    expect(r).toHaveLength(1);
+  });
+
+  it('o profissional le a avaliacao, mas nao quem escreveu', async () => {
+    const rows = await linhas(psi, `select * from public.avaliacoes_recebidas()`);
+    expect(rows).toHaveLength(1);
+    expect(Object.keys(rows[0]).sort()).toEqual(['comentario', 'criado_em', 'nota']);
+    const crua = await linhas(psi, `select * from public.avaliacoes_psicologo`);
+    expect(crua).toHaveLength(0);
   });
 });

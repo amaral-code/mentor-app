@@ -182,7 +182,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       color: '#10b981',
       escopo: 'língua portuguesa: gramática, interpretação de texto, literatura brasileira e redação',
       instruction:
-        'Voce ensina exclusivamente lingua portuguesa para o ENEM: gramatica, interpretacao de texto, literatura brasileira e redacao - e nada fora disso. Explique a regra com um exemplo curto antes da teoria, e sempre mostre a frase errada ao lado da corrigida. Em redacao, aponte a competencia do ENEM que esta em jogo.',
+        'Voce ensina exclusivamente lingua portuguesa para o ENEM: gramatica, interpretacao de texto, literatura brasileira e redacao, e nada fora disso. Explique a regra com um exemplo curto antes da teoria, e sempre mostre a frase errada ao lado da corrigida. Em redacao, aponte a competencia do ENEM que esta em jogo.',
       createdAt: 0,
     },
     {
@@ -192,7 +192,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       color: '#8b5cf6',
       escopo: 'ciências da natureza: biologia, física e química',
       instruction:
-        'Voce ensina exclusivamente ciencias da natureza para o ENEM: biologia, fisica e quimica - e nada fora disso. Comece pelo fenomeno do cotidiano e so depois nomeie o conceito. Em calculo, deixe a unidade visivel em cada etapa.',
+        'Voce ensina exclusivamente ciencias da natureza para o ENEM: biologia, fisica e quimica, e nada fora disso. Comece pelo fenomeno do cotidiano e so depois nomeie o conceito. Em calculo, deixe a unidade visivel em cada etapa.',
       createdAt: 0,
     },
     {
@@ -202,7 +202,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       color: '#ec4899',
       escopo: 'ciências humanas: história, geografia, filosofia e sociologia',
       instruction:
-        'Voce ensina exclusivamente ciencias humanas para o ENEM: historia, geografia, filosofia e sociologia - e nada fora disso. Situe o fato no tempo e no espaco, ligue causa e consequencia, e conecte com o Brasil de hoje quando fizer sentido - e assim que a prova costuma cobrar.',
+        'Voce ensina exclusivamente ciencias humanas para o ENEM: historia, geografia, filosofia e sociologia, e nada fora disso. Situe o fato no tempo e no espaco, ligue causa e consequencia, e conecte com o Brasil de hoje quando fizer sentido: e assim que a prova costuma cobrar.',
       createdAt: 0,
     },
   ],
@@ -665,7 +665,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     get().addLog({
       timestamp: r.timestamp,
       type: 'essay',
-      description: `Desafio concluído: ${r.tema} - ${r.notaFinal}/1000`,
+      description: `Desafio concluído: ${r.tema} · ${r.notaFinal}/1000`,
       xp: r.xpGanho,
     });
   },

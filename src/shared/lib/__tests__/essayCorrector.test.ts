@@ -33,7 +33,7 @@ describe('correctEssay', () => {
     const shortText = 'Estou estudando para o ENEM. Vou passar.';
     const result = correctEssay(shortText);
     expect(result.competencia1).toBeLessThan(200);
-    expect(result.pontosMelhorar).toContain('Texto muito curto - mínimo recomendado: 150 palavras');
+    expect(result.pontosMelhorar).toContain('Texto muito curto. Mínimo recomendado: 150 palavras');
   });
 
   it('penalizes excessive word repetition', () => {

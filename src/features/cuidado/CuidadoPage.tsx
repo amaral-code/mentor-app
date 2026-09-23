@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bell, HeartHandshake, ShieldQuestion, UserCheck } from 'lucide-react';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { useAppStore } from '../../stores/appStore';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
+import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';
+import { CaixaMensagens } from '../psicologia/CaixaMensagens';
 
 /**
  * REDE DE APOIO - tela do aluno.
@@ -33,6 +35,14 @@ export function CuidadoPage() {
   const carregarNotificacoes = useMarketplaceStore((s) => s.carregarNotificacoes);
   const marcarNotificacaoLida = useMarketplaceStore((s) => s.marcarNotificacaoLida);
   const [mostrarCatalogo, setMostrarCatalogo] = useState(false);
+  const agendamentos = useMarketplaceStore((s) => s.agendamentos);
+  const psicologos = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const a of agendamentos) {
+      if (a.alunoId === session?.uid && a.status !== 'cancelado') m.set(a.psicologoId, a.psicologoNome ?? 'Profissional');
+    }
+    return [...m].map(([id, nome]) => ({ id, nome }));
+  }, [agendamentos, session?.uid]);
 
   useEffect(() => {
     void carregarVinculos();
@@ -108,7 +118,7 @@ export function CuidadoPage() {
             ))}
           </div>
           <p className="text-[11px] text-gray-600 mt-3 leading-relaxed">
-            Voce pode encerrar esse acesso quando quiser - e o app avisa quem for desligado.
+            Você pode encerrar esse acesso quando quiser, e o app avisa quem for desligado.
           </p>
         </div>
       )}
@@ -135,11 +145,18 @@ export function CuidadoPage() {
 
       <ListaConsultas />
 
+      {session && (
+        <>
+          <AcessoPsicologo aluno={{ id: session.uid, nome: session.nome }} papel="aluno" />
+          <CaixaMensagens meuId={session.uid} psicologos={psicologos} />
+        </>
+      )}
+
       <div className="glass rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-300">Falar com um psicologo</h2>
         <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
           Atendimento online, por videochamada, com profissional registrado no CRP. Voce pode marcar por
-          conta propria - o valor e o horario aparecem antes de qualquer confirmacao.
+          conta própria: o valor e o horário aparecem antes de qualquer confirmação.
         </p>
         {!mostrarCatalogo ? (
           <button onClick={() => setMostrarCatalogo(true)} className="btn-primary text-sm mt-4">

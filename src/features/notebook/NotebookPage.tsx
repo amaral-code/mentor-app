@@ -98,7 +98,7 @@ export function NotebookPage() {
               type="text"
               value={newTag}
               onChange={e => setNewTag(e.target.value)}
-              placeholder="Tag (opcional) - chat, erro, resumo, revisão..."
+              placeholder="Tag (opcional): chat, erro, resumo, revisão..."
               className="w-full text-sm pr-8"
             />
             {newTag && (

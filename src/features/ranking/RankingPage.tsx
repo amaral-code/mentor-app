@@ -242,7 +242,7 @@ export function RankingPage() {
           </div>
           <div className="glass rounded-xl px-4 py-3 text-center">
             <p className="text-lg font-bold text-white tabular-nums">
-              {currentUserEntry?.posicao || '-'}°
+              {currentUserEntry?.posicao ? `${currentUserEntry.posicao}°` : 'sem posição'}
             </p>
             <p className="text-[10px] text-gray-500 mt-0.5">Sua posição</p>
           </div>

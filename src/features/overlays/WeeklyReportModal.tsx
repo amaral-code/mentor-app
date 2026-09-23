@@ -200,7 +200,7 @@ function Conteudo() {
       </div>
 
       <p className="text-[11px] text-gray-600 text-center leading-relaxed">
-        Este relatorio nao mede acertos. Ele registra o que sustentou a sua semana - e isso tambem
+        Este relatorio nao mede acertos. Ele registra o que sustentou a sua semana, e isso também
         chega para quem acompanha voce.
       </p>
     </div>

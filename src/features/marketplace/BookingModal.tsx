@@ -83,7 +83,7 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
           <div className="min-w-0">
             <p className="text-sm font-bold text-white">{psicologo.nome}</p>
             <p className="text-[11px] text-gray-500">
-              CRP {psicologo.crp} - {psicologo.duracaoMinutos} min por sessao
+              CRP {psicologo.crp} · {psicologo.duracaoMinutos} min por sessão
             </p>
             <p className="text-sm font-semibold text-amber-400 mt-1 tabular-nums">
               {formatarPreco(psicologo.valorCentavos)}

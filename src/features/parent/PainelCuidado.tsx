@@ -142,7 +142,7 @@ export function PainelCuidado({ aluno }: Props) {
                   <TriangleAlert size={18} className={`${cor.texto} shrink-0 mt-0.5`} />
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-bold ${cor.texto}`}>
-                      {a.severidade === 'critico' ? 'Alerta critico' : 'Sinal de esgotamento'} - indice {a.score}/100
+                      {a.severidade === 'critico' ? 'Alerta crítico' : 'Sinal de esgotamento'} · índice {a.score}/100
                     </p>
                     <p className="text-sm text-gray-300 mt-1.5 leading-relaxed">{a.mensagem}</p>
                     <p className="text-[11px] text-gray-500 mt-2">
@@ -182,8 +182,8 @@ export function PainelCuidado({ aluno }: Props) {
           <h2 className="text-sm font-semibold text-gray-300 mb-2">Resumo da semana</h2>
           <p className="text-sm text-gray-300 leading-relaxed">{relatorios[0].textoGerado}</p>
           <p className="text-[11px] text-gray-600 mt-3">
-            Mesmo texto que o estudante recebe. Ele fala do que sustentou a semana - sono, constancia,
-            tempo offline - e nao de notas.
+            Mesmo texto que o estudante recebe. Ele fala do que sustentou a semana (sono, constância,
+            tempo offline), e não de notas.
           </p>
         </div>
       )}

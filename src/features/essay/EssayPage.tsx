@@ -41,19 +41,19 @@ function getNotaColor(nota: number): string {
 }
 
 function getNotaLabel(nota: number): string {
-  if (nota >= 900) return 'Excelente - nota dos sonhos!';
+  if (nota >= 900) return 'Excelente, nota dos sonhos!';
   if (nota >= 700) return 'Excelente';
-  if (nota >= 600) return 'Bom - próximo do ideal';
-  if (nota >= 400) return 'Razoável - continue praticando';
-  return 'Precisa de atenção - estude os critérios';
+  if (nota >= 600) return 'Bom, próximo do ideal';
+  if (nota >= 400) return 'Razoável, continue praticando';
+  return 'Precisa de atenção: estude os critérios';
 }
 
 const competencias = [
-  { key: 'competencia1' as const, label: 'C1 - Norma Culta', short: 'C1' },
-  { key: 'competencia2' as const, label: 'C2 - Compreensão do Tema', short: 'C2' },
-  { key: 'competencia3' as const, label: 'C3 - Argumentação', short: 'C3' },
-  { key: 'competencia4' as const, label: 'C4 - Coesão', short: 'C4' },
-  { key: 'competencia5' as const, label: 'C5 - Proposta de Intervenção', short: 'C5' },
+  { key: 'competencia1' as const, label: 'C1: Norma Culta', short: 'C1' },
+  { key: 'competencia2' as const, label: 'C2: Compreensão do Tema', short: 'C2' },
+  { key: 'competencia3' as const, label: 'C3: Argumentação', short: 'C3' },
+  { key: 'competencia4' as const, label: 'C4: Coesão', short: 'C4' },
+  { key: 'competencia5' as const, label: 'C5: Proposta de Intervenção', short: 'C5' },
 ];
 
 function ScoreRing({ nota, size = 150 }: { nota: number; size?: number }) {
@@ -560,7 +560,7 @@ export function EssayPage() {
 
             {/* Coletânea */}
             <div className="mb-5">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-2"> Textos de Apoio (coletânea) - repertório sociocultural
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-2"> Textos de Apoio (coletânea): repertório sociocultural
                 <span className="badge badge-gray text-[9px] uppercase">use como base para seus argumentos</span>
               </h3>
               <div className="space-y-2.5">
@@ -729,7 +729,7 @@ export function EssayPage() {
             <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-xl mb-1"><BookMarked size={16} className="inline-block align-[-0.15em] text-amber-400" /></div>
               <h3 className="text-xs font-semibold text-gray-300 mb-1">Repertório de apoio</h3>
-              <p className="text-xs text-gray-500">Use a coletânea para embasar os seus argumentos - sua nota valoriza isso.</p>
+              <p className="text-xs text-gray-500">Use a coletânea para embasar os seus argumentos: sua nota valoriza isso.</p>
             </div>
             <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-xl mb-1"><PenLine size={16} className="inline-block align-[-0.15em] text-amber-400" /></div>

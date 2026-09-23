@@ -53,6 +53,7 @@ function linhaParaPsicologo(r: any): Psicologo {
     fotoUrl: r.foto_url,
     aceitaNovos: r.aceita_novos,
     notaMedia: Number(r.nota_media ?? 5),
+    totalAvaliacoes: Number(r.total_avaliacoes ?? 0),
     totalAtendimentos: r.total_atendimentos ?? 0,
   };
 }
@@ -95,7 +96,7 @@ export class MarketplaceRepository {
      */
     const { data, error } = await sb
       .from('catalogo_psicologos')
-      .select('id, nome, crp, bio, especialidades, abordagem, valor_centavos, duracao_minutos, foto_url, aceita_novos, nota_media, total_atendimentos')
+      .select('id, nome, crp, bio, especialidades, abordagem, valor_centavos, duracao_minutos, foto_url, aceita_novos, nota_media, total_avaliacoes, total_atendimentos')
       .eq('aceita_novos', true)
       .order('nota_media', { ascending: false });
 
@@ -204,7 +205,7 @@ export class MarketplaceRepository {
       body: JSON.stringify({
         agendamentoId: agendamento.id,
         valorCentavos: agendamento.valorCentavos,
-        descricao: 'Consulta psicologica - Ampli-IA',
+        descricao: 'Consulta psicológica · Ampli-IA',
         emailPagador,
         inicio: agendamento.inicio,
       }),

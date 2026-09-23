@@ -557,7 +557,7 @@ function MoodMiniGraph() {
               height: `${25 + (Object.values(MOOD_COLOR).indexOf(MOOD_COLOR[entry.mood] || '#475569') / Object.keys(MOOD_COLOR).length) * 40}%`,
               minHeight: '8px',
             }}
-            title={`${moodLabels[entry.mood] || entry.mood} - ${new Date(entry.timestamp).toLocaleTimeString()}`}>
+            title={`${moodLabels[entry.mood] || entry.mood} · ${new Date(entry.timestamp).toLocaleTimeString()}`}>
             <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         ))}
