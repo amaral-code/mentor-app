@@ -30,6 +30,7 @@ import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
+import { precisaOnboarding } from './shared/lib/onboardingLocal';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
 import { mascotStore } from './stores/mascotStore';
@@ -350,7 +351,8 @@ export default function App() {
   // Primeiro acesso: wizard exclusivo em tela cheia. Sem sidebar, sem
   // painel, sem dados — o recorrente (flag true) cai direto na interface
   // padrão abaixo. A troca de senha vem antes por segurança.
-  if (session && !session.onboardingCompleted) {
+  // Só para estudante: ver `precisaOnboarding`.
+  if (precisaOnboarding(session)) {
     return (
       <ErrorBoundary nome="onboarding">
         <OnboardingFlow />

@@ -203,7 +203,7 @@ export function ehLinkDeSalaValido(url: string | null | undefined): boolean {
 /** Quanto falta para a consulta, em texto curto ("em 2h", "amanha"). */
 export function tempoAte(inicio: string, agora: Date = new Date()): string {
   const min = Math.round((new Date(inicio).getTime() - agora.getTime()) / MS_MINUTO);
-  if (min < 0) return 'ja passou';
+  if (min < 0) return 'já passou';
   if (min < 60) return `em ${min} min`;
   if (min < 60 * 24) return `em ${Math.round(min / 60)}h`;
   const dias = Math.round(min / (60 * 24));

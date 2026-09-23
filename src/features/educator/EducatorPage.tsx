@@ -936,7 +936,7 @@ export function EducatorPage() {
                 <h3 className="text-sm font-semibold text-white">Pré-visualização</h3>
                 <p className="text-xs text-gray-500">{parsedData.length} aluno{parsedData.length !== 1 ? 's' : ''} encontrado{parsedData.length !== 1 ? 's' : ''}</p>
               </div>
-              <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400"> Sala: {parsedData[0]?.Sala || '-'}
+              <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400"> Sala: {parsedData[0]?.Sala || 'não informada'}
               </span>
             </div>
             <div className="max-h-40 overflow-y-auto space-y-1">

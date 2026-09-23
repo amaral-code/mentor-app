@@ -290,7 +290,7 @@ export function EscudoPage() {
       <div className="glass rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-300 mb-1">Trocar moedas de foco</h2>
         <p className="text-xs text-gray-500 mb-4">
-          Recompensas de descanso - nada aqui e mais conteudo para estudar.
+          Recompensas de descanso: nada aqui é mais conteúdo para estudar.
         </p>
         <div className="space-y-2">
           {RECOMPENSAS.map((r) => {
@@ -340,13 +340,13 @@ export function EscudoPage() {
             {sessoesOffline.slice(0, 8).map((s, i) => (
               <div key={s.id ?? i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02]">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-cyan-400">-</span>
+                  <span className="text-cyan-400">·</span>
                   <span className="text-gray-400 truncate">
-                    {new Date(s.inicio).toLocaleDateString('pt-BR')} - {s.modo}
+                    {new Date(s.inicio).toLocaleDateString('pt-BR')} · {s.modo}
                   </span>
                 </div>
                 <span className="text-gray-500 text-xs tabular-nums shrink-0">
-                  {s.minutosOffline} min - +{s.moedasCreditadas}
+                  {s.minutosOffline} min · +{s.moedasCreditadas}
                 </span>
               </div>
             ))}
@@ -356,7 +356,7 @@ export function EscudoPage() {
 
       <p className="text-center text-xs text-gray-600 leading-relaxed px-4 py-3 glass-light rounded-xl">
         No navegador o escudo mede o tempo com o app em segundo plano. No aplicativo nativo (Android/iOS)
-        ele le o estado real da tela bloqueada - o codigo esta em mobile/react-native.
+        ele lê o estado real da tela bloqueada. O código está em mobile/react-native.
       </p>
     </div>
   );

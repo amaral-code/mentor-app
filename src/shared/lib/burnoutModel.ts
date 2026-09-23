@@ -406,7 +406,7 @@ export function sugestaoPausa(classe: ClasseBurnout): { minutos: number; texto: 
     case 'esgotamento':
       return {
         minutos: 1440,
-        texto: 'Hoje o melhor estudo e dormir. Volte amanha - seu lugar continua aqui.',
+        texto: 'Hoje o melhor estudo e dormir. Volte amanhã: seu lugar continua aqui.',
       };
     case 'fadiga':
       return {

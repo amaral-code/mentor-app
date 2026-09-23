@@ -1,27 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, LogOut, Moon, Plus, Stethoscope, Trash2 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
 import { getSupabase } from '../../shared/lib/supabase';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
 import type { JanelaDisponibilidade } from '../../shared/types';
+import { PainelPacientes } from './PainelPacientes';
+import { ConversasProfissional } from './ConversasProfissional';
+import { AvaliacoesRecebidas } from './AvaliacoesRecebidas';
+import { useMarketplaceStore } from '../../stores/marketplaceStore';
 
 /**
  * Painel do profissional.
  *
  * Sem esta tela o papel `psychologist` cairia no app do aluno - ele
- * veria quiz e ranking, e nao teria onde declarar horario. Duas coisas
- * moram aqui, e so elas:
+ * veria quiz e ranking, e nao teria onde declarar horario.
  *
- *   1. AGENDA - as consultas dele, com o link da sala. A mesma lista do
- *      aluno e do responsavel; a RLS ja devolve so o que lhe diz respeito.
- *   2. JANELAS SEMANAIS - o insumo de onde os horarios sao derivados.
- *      Editar aqui muda o que o marketplace oferece, sem ninguem
- *      materializar slot nenhum.
+ *   1. AGENDA - as consultas dele, com o link da sala.
+ *   2. PACIENTES (027) - o que cada consentimento libera, e o prontuario.
+ *   3. MENSAGENS (027) - com estudantes e com responsaveis, separadas.
+ *   4. JANELAS SEMANAIS - o insumo de onde os horarios sao derivados.
+ *   5. AVALIACOES - sem o nome de quem avaliou.
  *
- * O que NAO existe aqui, de proposito: nenhuma visao do conteudo do
- * aluno. O profissional ve quem atende e quando - o resto e assunto da
- * sessao, nao do banco de dados.
+ * O que continua NAO existindo aqui, de proposito: conversa com o
+ * Mentor, caderno e humor escrito pelo aluno. Nenhum consentimento
+ * libera isso; nem existe escopo para esse pedido no banco.
  */
 
 const DIAS = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
@@ -35,6 +38,9 @@ export function PsicologoPage() {
   const [inicio, setInicio] = useState('14:00');
   const [fim, setFim] = useState('20:00');
   const [salvando, setSalvando] = useState(false);
+  const agendamentos = useMarketplaceStore((s) => s.agendamentos);
+  // Quem e estudante entre os interlocutores: o resto e responsavel.
+  const idsPacientes = useMemo(() => new Set(agendamentos.map((a) => a.alunoId)), [agendamentos]);
 
   useEffect(() => {
     if (!session) return;
@@ -45,7 +51,7 @@ export function PsicologoPage() {
     const sb = getSupabase();
     if (!sb || !session) return;
     if (fim <= inicio) {
-      setToast('O fim precisa ser depois do inicio.', 'error');
+      setToast('O fim precisa ser depois do início.', 'error');
       return;
     }
 
@@ -59,11 +65,11 @@ export function PsicologoPage() {
     setSalvando(false);
 
     if (error) {
-      setToast('Nao foi possivel salvar esta janela.', 'error');
+      setToast('Não foi possível salvar esta janela.', 'error');
       return;
     }
     setJanelas(await marketplaceRepository.carregarDisponibilidade(session.uid));
-    setToast('Janela adicionada. Os horarios ja aparecem no catalogo.', 'success');
+    setToast('Janela adicionada. Os horários já aparecem no catálogo.', 'success');
   }
 
   async function remover(janela: JanelaDisponibilidade) {
@@ -78,7 +84,7 @@ export function PsicologoPage() {
       .eq('hora_inicio', janela.horaInicio);
 
     if (error) {
-      setToast('Nao foi possivel remover.', 'error');
+      setToast('Não foi possível remover.', 'error');
       return;
     }
     setJanelas(await marketplaceRepository.carregarDisponibilidade(session.uid));
@@ -102,7 +108,7 @@ export function PsicologoPage() {
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400 hidden md:block">{session?.nome}</span>
             <span className="px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-medium border border-cyan-500/20">
-              Psicologo(a)
+              Psicólogo(a)
             </span>
             <button
               onClick={logout}
@@ -118,6 +124,10 @@ export function PsicologoPage() {
       <section className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-5">
         <ListaConsultas />
 
+        <PainelPacientes />
+
+        {session && <ConversasProfissional meuId={session.uid} idsPacientes={idsPacientes} />}
+
         <div className="glass rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
@@ -126,14 +136,14 @@ export function PsicologoPage() {
             <div>
               <h2 className="text-sm font-semibold text-gray-300">Disponibilidade semanal</h2>
               <p className="text-[11px] text-gray-500">
-                Os horarios oferecidos as familias saem daqui, ja descontando o que estiver ocupado.
+                Os horários oferecidos às famílias saem daqui, já descontando o que estiver ocupado.
               </p>
             </div>
           </div>
 
           {janelas.length === 0 ? (
             <p className="text-sm text-gray-500 py-3">
-              Nenhuma janela declarada - por enquanto voce nao aparece com horarios no catalogo.
+              Nenhuma janela declarada. Por enquanto você não aparece com horários no catálogo.
             </p>
           ) : (
             <div className="space-y-1.5 mb-4">
@@ -143,7 +153,7 @@ export function PsicologoPage() {
                   className="flex items-center justify-between text-sm py-2 px-3 rounded-xl glass-light"
                 >
                   <span className="text-gray-300">
-                    {DIAS[j.diaSemana]} - {j.horaInicio} as {j.horaFim}
+                    {DIAS[j.diaSemana]} · {j.horaInicio} às {j.horaFim}
                   </span>
                   <button
                     onClick={() => remover(j)}
@@ -199,12 +209,15 @@ export function PsicologoPage() {
           </div>
         </div>
 
+        <AvaliacoesRecebidas />
+
         <div className="glass-light rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed flex gap-2">
           <Stethoscope size={15} className="text-cyan-400 shrink-0 mt-0.5" />
           <span>
-            Voce enxerga apenas os estudantes com consulta marcada, e apenas nome e horario. Conversas
-            com o mentor, anotacoes e registros de humor nao sao acessiveis a nenhum perfil alem do
-            proprio estudante.
+            Com consulta marcada, você vê nome e horário. Índice de cansaço e ritmo de estudo só
+            aparecem se o paciente (ou o responsável, se ele tiver menos de 16 anos) autorizar, e
+            pelo prazo que ele escolher. Conversas com o Mentor, caderno e registros de humor não
+            são acessíveis a nenhum perfil além do próprio estudante.
           </span>
         </div>
       </section>

@@ -698,7 +698,7 @@ export function QuizPage() {
     setResult(res); addQuizResult(res); addXP(xpGanho);
     addLog({ timestamp: Date.now(), type: 'quiz', description: `Quiz de ${materia}: ${acertos}/${questions.length}`, xp: xpGanho });
     if (!isMuted && xpGanho > 0) playLevelUp();
-    mascotStore.getState().setState('success', ` Quiz concluído! +${xpGanho} XP de bônus - meta cumprida!`);
+    mascotStore.getState().setState('success', ` Quiz concluído! +${xpGanho} XP de bônus, meta cumprida!`);
     setStage('result');
     if (xpGanho > 0) setShowMilestone(true);
 

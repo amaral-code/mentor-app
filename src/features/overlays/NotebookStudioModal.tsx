@@ -405,7 +405,7 @@ export function NotebookStudioModal() {
         {!loading && !result && notasList.length > 0 && (
           <div className="text-center py-8">
             <p className="text-sm text-gray-400">Selecione uma ferramenta acima para processar suas anotações.</p>
-            {aiAvailable(apiKey) && <p className="text-xs text-amber-400 mt-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /> IA disponível - resultados mais precisos</p>}
+            {aiAvailable(apiKey) && <p className="text-xs text-amber-400 mt-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /> IA disponível: resultados mais precisos</p>}
           </div>
         )}
       </GlassCard>

@@ -308,7 +308,7 @@ export function ProfilePage() {
           <>
             <div className="flex items-start gap-2.5 text-xs text-emerald-300 bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/15">
               <span className="shrink-0"><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
-              <span><strong>IA via servidor (proxy grátis).</strong> A inteligência do Midnight Mentor já está configurada - nenhuma chave necessária e pronto para usar. A chave fica protegida no servidor.</span>
+              <span><strong>IA via servidor (proxy grátis).</strong> A inteligência do Midnight Mentor já está configurada, nenhuma chave necessária e pronto para usar. A chave fica protegida no servidor.</span>
             </div>
 
             <button

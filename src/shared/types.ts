@@ -372,6 +372,8 @@ export interface Psicologo {
   fotoUrl?: string | null;
   aceitaNovos: boolean;
   notaMedia: number;
+  /** Zero = nunca avaliado. Sem isto a média padrão (5,0) parecia elogio. */
+  totalAvaliacoes: number;
   totalAtendimentos: number;
 }
 

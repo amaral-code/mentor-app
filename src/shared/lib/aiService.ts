@@ -552,7 +552,7 @@ export interface OpcoesQuiz {
 
 const TEXTO_NIVEL: Record<NivelQuiz, string> = {
   facil: 'FÁCIL: conceitos diretos em uma etapa, sem pegadinha, linguagem simples.',
-  media: 'MÉDIO: padrão ENEM - interpretação de texto/gráfico com uma etapa de raciocínio.',
+  media: 'MÉDIO: padrão ENEM, interpretação de texto/gráfico com uma etapa de raciocínio.',
   dificil: 'DIFÍCIL: múltiplas etapas, interpretação fina e distratores fortes, nível FUVEST/UNICAMP segunda fase.',
 };
 
@@ -903,7 +903,7 @@ export async function explicarErroComTutor(
 ): Promise<string> {
   // Acerto nao precisa de diagnostico: economiza a chamada.
   if (erro.escolhida === erro.correta) {
-    return 'Resposta certa - nenhum erro conceitual para diagnosticar. Siga assim!';
+    return 'Resposta certa, nenhum erro conceitual para diagnosticar. Siga assim!';
   }
 
   const { system, user } = montarPromptTutorPosErro(erro);
@@ -1439,18 +1439,18 @@ export async function gerarIntervencaoDoomscroll(
   signal?: AbortSignal,
 ): Promise<IntervencaoEmpatica> {
   const prompt = [
-    'Um estudante do ensino medio noturno esta ha alguns minutos rolando os menus do app de estudos sem clicar em nada - sinal de duvida, cansaco ou paralisia por analise.',
+    'Um estudante do ensino medio noturno esta ha alguns minutos rolando os menus do app de estudos sem clicar em nada, sinal de dúvida, cansaco ou paralisia por analise.',
     '',
     `Contexto: ${contexto.segundosVagando} segundos navegando sem escolher nada; agora sao ${contexto.horaLocal}h; materia sugerida pelo historico: ${contexto.materiaSugerida}.` +
       (contexto.humor ? ` Humor recente relatado: ${contexto.humor}.` : ''),
     '',
     'Escreva uma intervencao empatica com TRES campos e nada mais.',
     'Regras:',
-    '- "titulo": no maximo 6 palavras, sem julgamento, reconhecendo o momento (ex: "Voce parece na duvida.").',
-    '- "convite": UMA proposta pequena e concreta, no maximo 20 palavras, que termine em pergunta. Sempre uma tarefa minima com fim claro (ex: 3 questoes e parar por hoje).',
-    '- "acao": texto do botao, no maximo 4 palavras, no infinitivo.',
-    '- Nao use emoji, nao use exclamacao, nao motive, nao pergunte como a pessoa esta.',
-    '- Nao ofereca mais de uma opcao: escolher e exatamente o que ela nao esta conseguindo fazer agora.',
+    '• "titulo": no maximo 6 palavras, sem julgamento, reconhecendo o momento (ex: "Voce parece na duvida.").',
+    '• "convite": UMA proposta pequena e concreta, no maximo 20 palavras, que termine em pergunta. Sempre uma tarefa minima com fim claro (ex: 3 questoes e parar por hoje).',
+    '• "acao": texto do botao, no maximo 4 palavras, no infinitivo.',
+    '• Nao use emoji, nao use exclamacao, nao motive, nao pergunte como a pessoa esta.',
+    '• Nao ofereca mais de uma opcao: escolher e exatamente o que ela nao esta conseguindo fazer agora.',
     '',
     'Responda APENAS com JSON: {"titulo": "...", "convite": "...", "acao": "...", "materia": "..."}',
   ].join('\n');
@@ -1532,12 +1532,12 @@ export async function gerarAlertaParaResponsavel(
     `Indice de fadiga detectado pelo app: ${dados.score}/100. Sinais que pesaram: ${dados.motivos.join('; ') || 'padrao de estudo irregular'}.`,
     '',
     'Regras:',
-    '- Duas ou tres frases, portugues brasileiro, tom calmo.',
-    '- Explique o que foi observado em termos de PADRAO (horario, ritmo, cansaco), nunca de conteudo privado.',
-    '- Sugira conversa antes de qualquer outra medida.',
-    '- Mencione que o painel permite agendar um atendimento com psicologo se fizer sentido, sem pressionar.',
-    '- Nao diagnostique, nao use termos clinicos, nao alarme.',
-    '- Sem emoji, sem lista.',
+    '• Duas ou tres frases, portugues brasileiro, tom calmo.',
+    '• Explique o que foi observado em termos de PADRAO (horario, ritmo, cansaco), nunca de conteudo privado.',
+    '• Sugira conversa antes de qualquer outra medida.',
+    '• Mencione que o painel permite agendar um atendimento com psicologo se fizer sentido, sem pressionar.',
+    '• Nao diagnostique, nao use termos clinicos, nao alarme.',
+    '• Sem emoji, sem lista.',
   ].join('\n');
 
   const res = await sendToAI(

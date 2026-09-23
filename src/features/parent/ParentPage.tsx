@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { LogOut, Moon } from 'lucide-react';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { ParentsDashboard } from './ParentsDashboard';
 import { PainelCuidado } from './PainelCuidado';
 import { EntrarPorCodigo } from './EntrarPorCodigo';
+import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';
+import { CaixaMensagens } from '../psicologia/CaixaMensagens';
 
 /**
  * A escolha de QUAL filho está sendo visto vive aqui, e não dentro de
@@ -32,6 +34,19 @@ export function ParentPage() {
     .map((v) => ({ id: v.alunoId, nome: v.alunoNome ?? 'Estudante' }));
 
   const aluno = alunos.find((a) => a.id === alunoId) ?? alunos[0] ?? null;
+
+  /* O responsavel conversa com o psicologo do filho numa conversa PROPRIA
+     (ele e a ponta "participante"), e nao na do filho. */
+  const agendamentos = useMarketplaceStore((s) => s.agendamentos);
+  const psicologosDoFilho = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const a of agendamentos) {
+      if (aluno && a.alunoId === aluno.id && a.status !== 'cancelado') {
+        m.set(a.psicologoId, a.psicologoNome ?? 'Profissional');
+      }
+    }
+    return [...m].map(([id, nome]) => ({ id, nome }));
+  }, [agendamentos, aluno]);
 
   return (
     <div className="min-h-screen" style={{ background: '#0b1120' }}>
@@ -95,6 +110,11 @@ export function ParentPage() {
               um alerta precisa do caminho para agir, nao de uma serie
               historica. Os graficos continuam logo abaixo. */}
           <PainelCuidado aluno={aluno} />
+
+          <section className="max-w-5xl mx-auto px-4 md:px-8 space-y-5">
+            <AcessoPsicologo aluno={aluno} papel="responsavel" />
+            {session && <CaixaMensagens meuId={session.uid} psicologos={psicologosDoFilho} />}
+          </section>
 
           <ParentsDashboard aluno={aluno} />
 

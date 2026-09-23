@@ -109,7 +109,7 @@ function ProjectionAlert({ projection }: { projection: DropoutProjection }) {
       <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-transparent p-5 animate-fade-up" role="status">
         <p className="flex items-center gap-2 text-emerald-400 font-bold text-sm"><PartyPopper size={16} className="inline-block align-[-0.15em] text-amber-400" /> Tendência de alta confirmada</p>
         <p className="text-sm text-emerald-200/80 mt-2 leading-relaxed"> Excelência! A projeção matemática aponta <b>evolução contínua</b> nas próximos 4 meses.
-          O estudante está em uma trajetória de alta - mantenha o incentivo e o acompanhamento diário.
+          O estudante está em uma trajetória de alta: mantenha o incentivo e o acompanhamento diário.
         </p>
       </div>
     );
@@ -121,7 +121,7 @@ function ProjectionAlert({ projection }: { projection: DropoutProjection }) {
       : 0;
     return (
       <div className="rounded-2xl border border-red-500/25 bg-gradient-to-br from-red-500/10 to-transparent p-5 animate-fade-up" role="alert">
-        <p className="flex items-center gap-2 text-red-400 font-bold text-sm"><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /> Tendência de queda detectada - intervenção recomendada</p>
+        <p className="flex items-center gap-2 text-red-400 font-bold text-sm"><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /> Tendência de queda detectada: intervenção recomendada</p>
         <p className="text-sm text-red-200/80 mt-2 leading-relaxed"> A projeção dos próximos 4 meses indica declínio no desempenho (queda estimada de até <b>{dropPct}%</b>).
           Recomenda-se: conversar com o estudante, alinhar com a escola, incentivar a rotina de estudos no app e
           monitorar presença no ensino noturno.
@@ -352,7 +352,7 @@ export function ParentsDashboard({ aluno }: Props) {
             {ficha?.turma ? (
               <>{ficha.turma}<span className="text-gray-600"> · </span></>
             ) : null}
-            Responsável: <span className="text-gray-400">{session?.nome || '-'}</span>
+            Responsável: <span className="text-gray-400">{session?.nome || 'não informado'}</span>
           </p>
         </div>
 

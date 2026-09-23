@@ -110,8 +110,8 @@ export function CalendarioPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{r.topicoNome}</p>
                     <p className="text-[11px] text-gray-500 truncate">
-                      {r.materia || 'Geral'} - {ROTULO_NIVEL[r.nivelMemoria]} - memoria {forca}%
-                      {atrasada && ' - atrasada'}
+                      {r.materia || 'Geral'} · {ROTULO_NIVEL[r.nivelMemoria]} · memoria {forca}%
+                      {atrasada && ' · atrasada'}
                     </p>
                   </div>
 
@@ -191,7 +191,7 @@ export function CalendarioPage() {
                 <div className="min-w-0">
                   <p className="text-gray-300 truncate">{r.topicoNome}</p>
                   <p className="text-[10px] text-gray-600">
-                    Nivel {r.nivelMemoria}/5 - intervalo de {r.intervaloDias} dia(s) - fator {r.facilidade.toFixed(2)}
+                    Nível {r.nivelMemoria}/5 · intervalo de {r.intervaloDias} dia(s) · fator {r.facilidade.toFixed(2)}
                   </p>
                 </div>
                 <span className="text-xs text-gray-500 tabular-nums shrink-0">
@@ -210,7 +210,7 @@ export function CalendarioPage() {
         <p className="flex items-center gap-1.5 text-gray-400 font-medium mb-1">
           <Plus size={13} /> Como as datas sao escolhidas
         </p>
-        Nota 80 ou mais sobe um nivel (1 - 3 - 7 - 21 - 45 - 90 dias). Entre 60 e 79 mantem o nivel com o
+        Nota 80 ou mais sobe um nivel (1, 3, 7, 21, 45 e 90 dias). Entre 60 e 79 mantem o nivel com o
         intervalo ajustado pelo seu historico no topico. Abaixo de 60 o topico volta para amanha.
         Exemplo com a sua ultima nota: {' '}
         <span className="text-gray-300">

@@ -164,7 +164,7 @@ export function FocusCompanion() {
       setShowRestAlert(true);
       addXP(CYCLE_XP);
       addLog({ timestamp: Date.now(), type: 'foco', description: `Ciclo de foco completo na Companhia (${FOCUS_MIN}min)`, xp: CYCLE_XP });
-      setToast(`+${CYCLE_XP} XP - ciclo completo! `, 'success');
+      setToast(`+${CYCLE_XP} XP, ciclo completo! `, 'success');
     }
   }, [phase, seconds, addXP, addLog, setToast]);
 

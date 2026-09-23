@@ -425,7 +425,7 @@ export function FocoPage() {
     const xp = Math.max(5, Math.round(seconds / 20));
     addXP(xp);
     addLog({ timestamp: Date.now(), type: 'foco', description: `Meditação guiada (${Math.round(seconds)}s)`, xp });
-    setToast(`+${xp} XP - mente renovada! `, 'success');
+    setToast(`+${xp} XP, mente renovada! `, 'success');
   }, [addXP, addLog, setToast]);
 
   return (
@@ -446,7 +446,7 @@ export function FocoPage() {
           <button
             onClick={() => setMeditando(true)}
             className="btn-secondary !px-4 !py-3 min-h-[44px] text-sm border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/10"
-            title="Você parece cansado - respire um pouco antes de continuar"
+            title="Você parece cansado. Respire um pouco antes de continuar"
           > Meditar
           </button>
         )}
