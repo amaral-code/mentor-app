@@ -71,10 +71,10 @@ export function AcessibilidadePanel() {
   }
 
   return (
-    <section id="secao-acessibilidade" aria-label="Acessibilidade" className="glass-card rounded-2xl p-5 scroll-mt-24">
+    <section id="secao-acessibilidade" aria-label="Acessibilidade" className="painel rounded-2xl p-5 scroll-mt-24">
       <div className="flex items-center gap-2.5 mb-1">
-        <div className="w-9 h-9 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-          <Accessibility size={17} className="text-cyan-300" />
+        <div className="w-9 h-9 rounded-xl bg-tinta-500/10 flex items-center justify-center shrink-0">
+          <Accessibility size={17} className="text-tinta-300" />
         </div>
         <div>
           <h2 className="text-sm font-semibold text-white">Acessibilidade</h2>
@@ -98,7 +98,7 @@ export function AcessibilidadePanel() {
                 onClick={() => mudar({ tamanhoFonte: f.id })}
                 className={`rounded-xl border px-2 py-2 text-center transition-all ${
                   ativo
-                    ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-200'
+                    ? 'border-tinta-400/50 bg-tinta-500/10 text-tinta-200'
                     : 'border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
                 }`}
               >
@@ -135,7 +135,7 @@ export function AcessibilidadePanel() {
           id="a11y-daltonismo"
           value={pref.daltonismo}
           onChange={(e) => mudar({ daltonismo: e.target.value as PreferenciasAcessibilidade['daltonismo'] })}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-cyan-400/50"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-tinta-400/50"
         >
           {['', 'Vermelho-Verde', 'Azul-Amarelo', 'Completo'].map((grupo) => (
             <optgroup key={grupo || 'sem'} label={grupo || 'Sem filtro'}>

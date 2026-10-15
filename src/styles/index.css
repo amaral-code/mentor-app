@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Folha global do Midnight Mentor.
+ *
+ * Direção de arte e regras: ver o topo do tailwind.config.js e a seção
+ * "Direção de arte" do CLAUDE.md. Resumo para quem mexe aqui: superfície
+ * plana, borda fina, raio curto, sombra só no que flutua, âmbar só para
+ * ação e "onde você está". Sem blur, sem gradiente, sem brilho.
+ */
+
 @layer base {
   *, *::before, *::after {
     margin: 0;
@@ -21,6 +30,7 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
+    color-scheme: dark;
   }
 
   button, a, input, textarea, select, [role='button'] {
@@ -28,45 +38,66 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Tokens exatos do Design System v2.4 (Midnight Glow). */
+  /* Tokens em CSS para o que não passa pelo Tailwind (style={{}}, SVG,
+     canvas de gráfico). Mesmos valores do tailwind.config.js. */
   :root {
-    --canvas: #0B0F19;
-    --surface: #0E131F;
-    --surface-subtle: #161B28;
-    --surface-highlight: #1E2538;
-    --surface-glass: rgba(22, 27, 40, 0.75);
-    --brand-gold: #F59E0B;
-    --brand-gold-hover: #D97706;
-    --gold-light: #FDE047;
-    --gold-glow: rgba(245, 158, 11, 0.25);
-    --accent-emerald: #10B981;
-    --emerald-light: #34D399;
-    --emerald-glow: rgba(16, 185, 129, 0.25);
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
-    --text-gold: #FBBF24;
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-glass: rgba(255, 255, 255, 0.12);
-    --border-active-gold: rgba(245, 158, 11, 0.5);
+    --mesa: #141310;
+    --folha: #1c1a16;
+    --folha-2: #24221d;
+    --folha-3: #2c2a24;
+    --linha: #33302a;
+    --linha-forte: #45413a;
+    --papel: #f3efe6;
+    --texto-2: #c4bdaf;
+    --texto-3: #968f81;
+    --luz: #e9a11c;
+    --luz-clara: #f3b53f;
+    --tinta: #86a2f2;
+    --acerto: #7cc78a;
+    --erro: #f08a70;
+    --fadiga: #f29a5e;
+    --raio: 8px;
+    --raio-grande: 10px;
+    --sombra-camada: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.35);
+    --ease: cubic-bezier(0.2, 0, 0, 1);
   }
 
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #060911;
-    background-image:
-      radial-gradient(circle at 20% 15%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
-      radial-gradient(circle at 85% 75%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
-      radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, 32px 32px;
-    color: #F8FAFC;
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    /* Fundo PLANO. Antes: dois brilhos radiais (âmbar e verde) e uma
+       malha de pontos de 32px por cima de tudo, que competiam com o
+       conteúdo e faziam cada tela parecer o mesmo template. */
+    background-color: var(--mesa);
+    color: var(--papel);
     min-height: 100dvh;
     overflow-x: hidden;
   }
 
-  /* Mono do design system (gabaritos, codigo, cronometros). */
+  /*
+   * Títulos de página e de seção em Literata. Só h1 e h2: daí para baixo
+   * é a sans, porque serifa pequena em tela escura perde legibilidade.
+   * `font-feature-settings` liga os algarismos de texto, que assentam
+   * melhor na serifa.
+   */
+  h1, h2 {
+    font-family: 'Literata Variable', Literata, Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+  h3, h4 {
+    letter-spacing: -0.005em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Mono (gabaritos, cronômetros, códigos, números tabulares). */
   code, pre, kbd, .font-mono-app {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
   }
 
   #root {
@@ -74,37 +105,45 @@
   }
 
   ::selection {
-    background: rgba(245, 158, 11, 0.25);
+    background: rgba(134, 162, 242, 0.35);
     color: #fff;
   }
 
-  /* Scrollbar global: versao do code.html (5px, thumb claro, hover ouro).
-     A regra detalhada vive no bloco transferido abaixo. */
-
   input, textarea, select {
-    background: rgba(30, 41, 59, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: #f1f5f9;
-    font-size: 0.875rem;
+    background: var(--folha-2);
+    border: 1px solid var(--linha-forte);
+    border-radius: 6px;
+    padding: 0.7rem 0.9rem;
+    color: var(--papel);
+    font-size: 0.9375rem;
     line-height: 1.5;
     outline: none;
-    transition: all 0.2s ease;
+    transition: border-color 120ms var(--ease), background-color 120ms var(--ease);
     width: 100%;
   }
-  input::placeholder, textarea::placeholder { color: rgba(148,163,184,0.4); }
+  input::placeholder, textarea::placeholder { color: #8a8376; }
+  input:hover:not(:focus):not(:disabled),
+  textarea:hover:not(:focus):not(:disabled),
+  select:hover:not(:focus):not(:disabled) { border-color: #5a554b; }
   input:focus, textarea:focus, select:focus {
-    border-color: rgba(245, 158, 11, 0.35);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.06), 0 1px 0 0 rgba(255,255,255,0.03) inset;
-    background: rgba(30, 41, 59, 0.7);
+    border-color: var(--luz);
+    background: var(--folha-3);
+  }
+  input:disabled, textarea:disabled, select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  /* Campo inválido: a borda vira caneta vermelha. Vale para validação
+     nativa depois que a pessoa mexeu no campo e para aria-invalid. */
+  input:user-invalid, textarea:user-invalid, select:user-invalid,
+  [aria-invalid='true'] {
+    border-color: var(--erro);
   }
   textarea { resize: vertical; min-height: 80px; }
 
   /*
    * iOS da zoom automatico em input com fonte < 16px - a tela "pula" para
-   * o campo e o usuario acha que travou. No mobile a fonte minima e 16px;
-   * no desktop mantem 14px do design system.
+   * o campo e o usuario acha que travou. No mobile a fonte minima e 16px.
    */
   @media (max-width: 768px) {
     input, textarea, select {
@@ -126,40 +165,38 @@
     align-items: center;
     touch-action: pan-y;
   }
+  input[type="range"]:focus { background: transparent; }
   input[type="range"]::-webkit-slider-runnable-track {
     height: 4px;
-    background: rgba(71, 85, 105, 0.3);
+    background: var(--linha-forte);
     border-radius: 2px;
-    transition: background 0.2s;
-  }
-  input[type="range"]:hover::-webkit-slider-runnable-track {
-    background: rgba(71, 85, 105, 0.5);
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, #fbbf24, #d97706);
+    width: 22px;
+    height: 22px;
+    background: var(--papel);
+    border: 5px solid var(--luz);
     border-radius: 50%;
-    margin-top: -12px;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), 0 2px 4px rgba(0,0,0,0.2);
+    margin-top: -9px;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 120ms var(--ease);
   }
-  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 28px rgba(245, 158, 11, 0.4); }
-  input[type="range"]::-moz-range-track { height: 4px; background: rgba(71,85,105,0.3); border-radius: 2px; border: none; }
-  input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; background: linear-gradient(135deg, #fbbf24, #d97706); border-radius: 50%; border: none; box-shadow: 0 0 20px rgba(245,158,11,0.3); cursor: pointer; }
+  input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.12); }
+  input[type="range"]::-moz-range-track { height: 4px; background: var(--linha-forte); border-radius: 2px; border: none; }
+  input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; background: var(--papel); border: 5px solid var(--luz); border-radius: 50%; cursor: pointer; }
 
   input[type="checkbox"] {
     -webkit-appearance: none;
     appearance: none;
-    width: 22px;
-    height: 22px;
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 0.375rem;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: var(--folha-2);
+    border: 1.5px solid #6a6458;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 120ms var(--ease), border-color 120ms var(--ease);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -167,18 +204,13 @@
     position: relative;
   }
   input[type="checkbox"]:checked {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    border-color: transparent;
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+    background: var(--luz);
+    border-color: var(--luz);
   }
   /*
-   * Tique DESENHADO, nao um caractere.
-   *
-   * Antes era `content: '✓'` (U+2713), que depende da fonte instalada: o
-   * mesmo checkbox saia com espessura e tamanho diferentes em cada
-   * sistema, e num aparelho sem o glifo apareceria o retangulo vazio. Duas
-   * bordas giradas 45 graus resolvem sem depender de fonte nenhuma e ficam
-   * nitidas em qualquer densidade de tela.
+   * Tique DESENHADO, nao um caractere: `content: '✓'` dependia da fonte
+   * instalada e saia diferente em cada sistema. Duas bordas giradas 45
+   * graus ficam nitidas em qualquer densidade de tela.
    */
   input[type="checkbox"]:checked::after {
     content: '';
@@ -187,11 +219,11 @@
     left: 50%;
     width: 5px;
     height: 9px;
-    border: solid #0f172a;
+    border: solid #1b1406;
     border-width: 0 2px 2px 0;
     transform: translate(-50%, -50%) rotate(45deg);
   }
-  input[type="checkbox"]:hover:not(:checked) { border-color: rgba(245, 158, 11, 0.35); }
+  input[type="checkbox"]:hover:not(:checked):not(:disabled) { border-color: var(--luz); }
 
   @media (max-width: 767px) {
     input, textarea, select { font-size: 16px; padding: 0.75rem; }
@@ -201,14 +233,14 @@
 
 /* ==== Acessibilidade (src/shared/lib/acessibilidade.ts) ==== */
 
-/* Guarda global: nenhum bloco decorativo (orbes, blobs fixed) cria
-   rolagem horizontal no iPhone. `clip` não quebra `position: sticky`. */
+/* Guarda global: nada cria rolagem horizontal no iPhone.
+   `clip` não quebra `position: sticky`. */
 body {
   overflow-x: clip;
 }
 
 /* Escolha do usuário vence o sistema: com a chave ligada, zera
-   animação e transição em tudo (o @media acima só cobre o padrão). */
+   animação e transição em tudo (o @media abaixo só cobre o padrão). */
 html.a11y-sem-movimento *,
 html.a11y-sem-movimento *::before,
 html.a11y-sem-movimento *::after {
@@ -217,191 +249,211 @@ html.a11y-sem-movimento *::after {
   scroll-behavior: auto !important;
 }
 
-/* Alto contraste: textos apagados (cinzas) sobem para tons legíveis
-   sobre o fundo midnight. Só mexe em cor; layout e tamanho intactos. */
-html.a11y-contraste .text-gray-500 { color: #c3cad4 !important; }
-html.a11y-contraste .text-gray-400 { color: #d7dce3 !important; }
-html.a11y-contraste .text-gray-600 { color: #aeb6c2 !important; }
-html.a11y-contraste .text-slate-500 { color: #c3cad4 !important; }
-html.a11y-contraste .text-slate-400 { color: #d7dce3 !important; }
-html.a11y-contraste .placeholder-gray-500::placeholder,
+/* Alto contraste: textos secundários sobem para tons de papel. Só mexe
+   em cor; layout e tamanho intactos. */
+html.a11y-contraste .text-gray-500 { color: #ddd7cb !important; }
+html.a11y-contraste .text-gray-400 { color: #ede9e1 !important; }
+html.a11y-contraste .text-gray-600 { color: #c4bdaf !important; }
+html.a11y-contraste .text-slate-500 { color: #ddd7cb !important; }
+html.a11y-contraste .text-slate-400 { color: #ede9e1 !important; }
 html.a11y-contraste .placeholder-slate-400::placeholder,
-html.a11y-contraste .placeholder-slate-500::placeholder { color: #9aa3b2 !important; }
-html.a11y-contraste .border-white\/5 { border-color: rgb(255 255 255 / 0.22) !important; }
-html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !important; }
+html.a11y-contraste .placeholder-slate-500::placeholder { color: #c4bdaf !important; }
+html.a11y-contraste .border-white\/5 { border-color: rgb(255 255 255 / 0.25) !important; }
+html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.32) !important; }
+html.a11y-contraste .painel,
+html.a11y-contraste .painel-suave { border-color: #6a6458 !important; }
 
 @layer components {
-  /* === Glass === */
-  .glass {
-    background: rgba(17, 24, 39, 0.75);
-    /*
-     * ORDEM IMPORTA: prefixo primeiro, propriedade padrao por ultimo.
-     *
-     * Com a ordem invertida o minificador do build descartava a
-     * propriedade padrao e publicava so a `-webkit-`, e o Chrome ignora a
-     * prefixada quando a padrao nao esta presente. Resultado: o desfoque
-     * do vidro funcionava em `npm run dev` e sumia em `npm run build`,
-     * onde raramente se olha. Medido com listras de alto contraste atras
-     * do painel (desvio padrao da luminancia, menor = mais borrado):
-     *   so -webkit-  : 19.2  (identico a nao ter filtro)
-     *   so padrao    :  0.3  (borrado)
-     *   sem nenhum   : 19.2
-     */
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    backdrop-filter: blur(24px) saturate(1.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  /*
+   * === Superfícies ===
+   *
+   * `painel` substitui o antigo `glass`/`glass-card`. O vidro fosco
+   * (backdrop-filter: blur(24px)) custava uma composição de GPU por
+   * cartão, em toda tela, e o que ele desfocava era só o fundo liso: a
+   * página parecia nebulosa e não ganhava nada com isso. Agora é folha
+   * sobre a mesa: cor plana e borda fina.
+   */
+  .painel {
+    background: var(--folha);
+    border: 1px solid var(--linha);
   }
-  .glass-light {
-    background: rgba(30, 41, 59, 0.35);
-    /* Prefixo antes do padrao: ver a nota em .glass. */
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  /* Subnível dentro de um painel (linha destacada, bloco de apoio). */
+  .painel-suave {
+    background: var(--folha-2);
+    border: 1px solid transparent;
   }
-  .glass-card {
-    background: rgba(17, 24, 39, 0.7);
-    /* Prefixo antes do padrao: ver a nota em .glass. */
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    backdrop-filter: blur(24px) saturate(1.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  /* Camada que flutua: modal, menu, aviso. Única com sombra. */
+  .camada {
+    background: var(--folha);
+    border: 1px solid var(--linha-forte);
+    box-shadow: var(--sombra-camada);
   }
-  .glass-card:hover:not(:has(button:hover)) {
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    transform: translateY(-1px);
+  /* Item clicável dentro de lista ou grade: reage à borda, não salta. */
+  .painel-clicavel {
+    transition: border-color 120ms var(--ease), background-color 120ms var(--ease);
+  }
+  .painel-clicavel:hover {
+    border-color: var(--linha-forte);
+    background: #201e1a;
   }
 
-  /* === Mood borders === */
-  .mood-stress { --mood-color: #ef4444; }
-  .mood-sad { --mood-color: #a855f7; }
-  .mood-focus { --mood-color: #10b981; }
-  .mood-anxiety { --mood-color: #f59e0b; }
-  .card-mood-stress { border-left: 3px solid #ef4444; box-shadow: inset 2px 0 0 rgba(239,68,68,0.05); }
-  .card-mood-sad { border-left: 3px solid #a855f7; box-shadow: inset 2px 0 0 rgba(168,85,247,0.05); }
-  .card-mood-focus { border-left: 3px solid #10b981; box-shadow: inset 2px 0 0 rgba(16,185,129,0.05); }
-  .card-mood-anxiety { border-left: 3px solid #f59e0b; box-shadow: inset 2px 0 0 rgba(245,158,11,0.05); }
+  /*
+   * Rótulo de seção (antigo "uppercase tracking-widest" de 10px, repetido
+   * em 80 cartões). Caixa alta espaçada em todo cartão é o sotaque mais
+   * comum de template; aqui o rótulo é texto normal, pequeno e firme.
+   */
+  .rotulo {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--texto-3);
+    letter-spacing: 0;
+  }
 
-  /* === Buttons === */
+  /* Número de destaque: Literata com algarismos tabulares. */
+  .numero {
+    font-family: 'Literata Variable', Literata, Georgia, serif;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* Divisória de caderno: linhas finas entre itens, no lugar de uma
+     caixa para cada item. */
+  .pauta > * + * {
+    border-top: 1px solid var(--linha);
+  }
+
+  /*
+   * Bolha do cartão-resposta do ENEM. É o elemento gráfico próprio do
+   * produto: marcar uma tarefa, uma alternativa ou um passo é preencher
+   * a bolha, como na prova.
+   */
+  .bolha {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: 1.5px solid #6a6458;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--texto-2);
+    transition: background-color 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
+  }
+  .bolha--marcada {
+    background: var(--papel);
+    border-color: var(--papel);
+    color: var(--mesa);
+  }
+
+  /* === Mood === */
+  .mood-stress { --mood-color: #f08a70; }
+  .mood-sad { --mood-color: #86a2f2; }
+  .mood-focus { --mood-color: #7cc78a; }
+  .mood-anxiety { --mood-color: #f3b53f; }
+
+  /* === Botões === */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    border-radius: 0.75rem;
+    border-radius: 6px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
-    border: none;
+    transition: background-color 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease), transform 120ms var(--ease);
+    border: 1px solid transparent;
     white-space: nowrap;
-    padding: 0.75rem 1.25rem;
-    line-height: 1.4;
+    padding: 0.7rem 1.1rem;
+    min-height: 44px;
+    line-height: 1.3;
   }
   .btn:disabled {
-    opacity: 0.35;
+    opacity: 0.4;
     cursor: not-allowed;
     transform: none !important;
-    box-shadow: none !important;
   }
+  /* Ação principal: a luz da luminária. Cor chapada, sem gradiente nem
+     halo: o contraste já diz que é aqui. */
   .btn-primary {
     @apply btn;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: #0f172a;
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+    background: var(--luz);
+    color: #1b1406;
   }
-  .btn-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 28px rgba(245, 158, 11, 0.3);
-  }
-  /* Resposta ao toque: a escala confirma o clique antes mesmo da acao
-     acontecer, o que faz a interface parecer mais rapida do que e. */
-  .btn-primary:active:not(:disabled) { transform: scale(0.96); }
+  .btn-primary:hover:not(:disabled) { background: var(--luz-clara); }
+  /* Resposta ao toque: a escala confirma o clique antes da ação. */
+  .btn-primary:active:not(:disabled),
   .btn-secondary:active:not(:disabled),
-  .btn-ghost:active:not(:disabled) { transform: scale(0.96); }
+  .btn-ghost:active:not(:disabled),
+  .btn-danger:active:not(:disabled) { transform: scale(0.98); }
   .btn-secondary {
     @apply btn;
-    background: rgba(255, 255, 255, 0.04);
-    color: #cbd5e1;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+    color: var(--papel);
+    border-color: var(--linha-forte);
   }
   .btn-secondary:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: #f1f5f9;
+    background: var(--folha-2);
+    border-color: #5a554b;
   }
   .btn-ghost {
     @apply btn;
     background: transparent;
-    color: #64748b;
-    padding: 0.5rem;
+    color: var(--texto-2);
+    padding: 0.5rem 0.6rem;
   }
-  .btn-ghost:hover { color: #e2e8f0; background: rgba(255, 255, 255, 0.04); }
+  .btn-ghost:hover:not(:disabled) { color: var(--papel); background: var(--folha-2); }
   .btn-danger {
     @apply btn;
-    background: rgba(239, 68, 68, 0.08);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.12);
+    background: transparent;
+    color: var(--erro);
+    border-color: rgba(240, 138, 112, 0.4);
   }
   .btn-danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.2);
-    color: #fef2f2;
+    background: rgba(224, 98, 63, 0.12);
+    border-color: var(--erro);
   }
 
-  /* === Badges === */
+  /* === Selos === */
   .badge {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.6875rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
     font-weight: 500;
     line-height: 1.5;
+    border: 1px solid currentColor;
+    border-color: color-mix(in srgb, currentColor 35%, transparent);
   }
-  .badge-amber { background: rgba(245,158,11,0.1); color: #fbbf24; }
-  .badge-emerald { background: rgba(16,185,129,0.1); color: #34d399; }
-  .badge-red { background: rgba(239,68,68,0.1); color: #f87171; }
-  .badge-purple { background: rgba(168,85,247,0.1); color: #c084fc; }
-  .badge-gray { background: rgba(255,255,255,0.04); color: #64748b; }
+  .badge-amber { color: #f3b53f; }
+  .badge-emerald { color: #7cc78a; }
+  .badge-red { color: #f08a70; }
+  .badge-purple, .badge-tinta { color: #86a2f2; }
+  .badge-gray { color: var(--texto-3); }
 
-  /* === Utility === */
+  /* === Utilitários === */
   .xp-bar {
-    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: width 0.6s var(--ease);
   }
-  .text-gradient {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b, #ea580c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .text-gradient-mood {
-    background: linear-gradient(135deg, var(--mood-color, #10b981), color-mix(in srgb, var(--mood-color, #10b981) 70%, white));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* Texto "em gradiente" vira texto na cor da luz: o efeito não dizia
+     nada que a cor sozinha não diga, e prejudicava a leitura. */
+  .text-gradient, .text-gradient-amber {
+    color: #f3b53f;
   }
   .tabular-nums { font-variant-numeric: tabular-nums; }
-  .truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: shimmer 2.5s linear infinite;
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  /* === Page transitions === */
-  .page-enter {
-    animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
-  }
-  .page-exit {
-    animation: fadeDown 0.2s ease-out forwards;
-  }
-
-  /* === Scrollbar hide === */
   .scrollbar-none {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -410,83 +462,22 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
     display: none;
   }
 
-  /* === Glass hover === */
-  .glass-hover {
-    transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+  /* Anel de carregamento que herda a cor do texto: escuro dentro do
+     botão âmbar, claro num botão secundário. O branco fixo de antes
+     sumia sobre o âmbar. Usar junto com `animate-spin`. */
+  .anel-carregando {
+    border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
+    border-top-color: currentColor;
   }
 
-  /* === Card hover glow === */
-  .card-hover-glow {
-    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
-  }
-  .card-hover-glow:hover {
-    border-color: rgba(245, 158, 11, 0.15);
-    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transform: translateY(-1px);
-  }
-
-  /* === Button press feedback === */
-  .btn-press {
-    transition: transform 0.1s ease;
-  }
-  .btn-press:active:not(:disabled) {
-    transform: scale(0.96);
-  }
-
-  /* === Status pulse === */
-  .status-dot {
+  .status-dot-active {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     display: inline-block;
-  }
-  .status-dot-active {
-    background: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
-    animation: pulseSubtle 2s ease-in-out infinite;
+    background: var(--acerto);
   }
 
-  /* === Gradient text variants === */
-  .text-gradient-amber {
-    background: linear-gradient(135deg, #fbbf24, #ea580c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .text-gradient-mood {
-    background: linear-gradient(135deg, var(--mood-color, #10b981), color-mix(in srgb, var(--mood-color, #10b981) 70%, white));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* === Notification dot === */
-  .notification-dot {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #ef4444;
-    border: 2px solid #0b1120;
-  }
-
-  /* === Line clamp utilities === */
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* === Number input reset === */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -494,37 +485,28 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   }
 
   /*
-   * === Focus visible ===
-   *
-   * A opacidade era 0.3 - um anel de 2px a 30% praticamente some sobre o
-   * fundo midnight, e quem navega por teclado perdia a referencia de
-   * onde estava. A WCAG 2.4.11 pede indicador de foco percebivel; agora
-   * o anel e solido e ganha um halo escuro por fora, para se destacar
-   * tambem sobre os cartoes claros de vidro.
+   * === Foco visível ===
+   * Anel sólido na cor da luz com respiro escuro por fora: aparece sobre
+   * a mesa, sobre a folha e sobre o botão âmbar (WCAG 2.4.11).
    */
   *:focus-visible {
-    outline: 2px solid rgb(251, 191, 36);
+    outline: 2px solid var(--luz-clara);
     outline-offset: 2px;
-    border-radius: 0.375rem;
-    box-shadow: 0 0 0 4px rgba(10, 15, 28, 0.85);
+  }
+  input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline-offset: 0;
   }
 
-  /* === Smooth image loading === */
+  /* === Imagens: entram sem piscar === */
   img {
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
   }
   img[src] {
     opacity: 1;
   }
 
-  /* === Selection === */
-  ::selection {
-    background: rgba(245, 158, 11, 0.25);
-    color: #fff;
-  }
-
-  /* === Reduced motion === */
+  /* === Movimento reduzido === */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -538,16 +520,7 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 .challenge-hero {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(1100px 480px at 85% -10%, rgba(16, 185, 129, 0.10), transparent 60%),
-    radial-gradient(760px 420px at 0% 115%, rgba(245, 158, 11, 0.07), transparent 55%);
-}
-.challenge-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(11, 17, 32, 0.92) 100%);
-  pointer-events: none;
+  background: var(--folha);
 }
 .challenge-timer {
   font-variant-numeric: tabular-nums;
@@ -562,15 +535,12 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   line-height: 1.25;
 }
 .challenge-note {
-  border-left: 3px solid rgba(16, 185, 129, 0.5);
-}
-.challenge-note--amber {
-  border-left-color: rgba(245, 158, 11, 0.5);
+  border-left: 3px solid var(--acerto);
 }
 /* Folha estilo prova: linhas-guia para a redação */
 .challenge-sheet {
   background:
-    repeating-linear-gradient(0deg, transparent 0 31px, rgba(148, 163, 184, 0.06) 31px 32px);
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(196, 189, 175, 0.09) 31px 32px);
   background-attachment: local;
 }
 /* Barra de progresso das palavras */
@@ -578,145 +548,17 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .challenge-stat {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 0.75rem;
-  transition: all 0.2s ease;
-}
-.challenge-stat:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--folha-2);
+  border: 1px solid var(--linha);
+  border-radius: 8px;
 }
 
 /* =====================================================================
-   Bloco visual do code.html (referencia v2.4): orbes, estrelas, pulsos,
-   cards magneticos, seguidores deslizantes e scrollbars. Transferido
-   1:1 para a folha global para valer em qualquer tela.
+   Navegação: indicador da aba ativa, pílulas deslizantes, scrollbar.
+   (Os orbes, estrelas, lua pulsando e brilhos que moravam aqui foram
+   removidos na direção de arte de 2026-10: animavam sem parar e não
+   diziam nada.)
    ===================================================================== */
-
-/* Orbes nebulosos flutuantes */
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(75px);
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.35;
-  animation: orbFloat 22s ease-in-out infinite alternate;
-}
-.orb-1 {
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.05) 60%, transparent 80%);
-  top: 10%;
-  left: 15%;
-}
-.orb-2 {
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.03) 65%, transparent 80%);
-  bottom: 8%;
-  right: 12%;
-  animation-duration: 28s;
-  animation-delay: -6s;
-}
-
-@keyframes orbFloat {
-  0% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(35px, -30px) scale(1.1); }
-  100% { transform: translate(-25px, 25px) scale(0.95); }
-}
-
-/* Particulas estelares magneticas flutuantes */
-.star-particle {
-  position: absolute;
-  background-color: #ffffff;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
-  box-shadow: 0 0 8px 1px rgba(254, 240, 138, 0.8);
-  animation: starTwinkle 4s ease-in-out infinite alternate;
-}
-@keyframes starTwinkle {
-  0% { opacity: 0.2; transform: translateY(0) scale(0.8); }
-  50% { opacity: 0.9; transform: translateY(-8px) scale(1.25); filter: drop-shadow(0 0 6px #F59E0B); }
-  100% { opacity: 0.3; transform: translateY(4px) scale(0.9); }
-}
-
-/* Logo da lua com glow pulsante */
-@keyframes moonGlowPulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.45)) drop-shadow(0 0 20px rgba(245, 158, 11, 0.2));
-    transform: scale(1);
-  }
-  50% {
-    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.75)) drop-shadow(0 0 28px rgba(253, 224, 71, 0.4));
-    transform: scale(1.04);
-  }
-}
-.animate-moon-pulse {
-  animation: moonGlowPulse 4.2s ease-in-out infinite;
-}
-
-/* Aura hipnotica do icone central */
-@keyframes centralAuraGlow {
-  0%, 100% {
-    box-shadow: 0 0 25px 2px rgba(245, 158, 11, 0.3), 0 0 50px 10px rgba(245, 158, 11, 0.15);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 45px 8px rgba(245, 158, 11, 0.55), 0 0 80px 22px rgba(245, 158, 11, 0.25);
-    transform: scale(1.05);
-  }
-}
-.animate-aura-glow {
-  animation: centralAuraGlow 4.8s ease-in-out infinite;
-}
-
-/* Mascote respirando suave */
-@keyframes mascotBreathe {
-  0%, 100% { transform: translateY(0px) scale(1.08); }
-  50% { transform: translateY(-3px) scale(1.12); }
-}
-.animate-mascot-breathe {
-  animation: mascotBreathe 3.4s ease-in-out infinite;
-}
-
-/* Shimmer do XP */
-@keyframes xpShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(250%); }
-}
-.animate-xp-shimmer {
-  animation: xpShimmer 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-/* Card magnetico com shimmer de borda no hover */
-.prompt-card {
-  position: relative;
-  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-  background: linear-gradient(135deg, rgba(19, 27, 46, 0.75) 0%, rgba(11, 15, 25, 0.85) 100%);
-}
-.prompt-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(245, 158, 11, 0));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  transition: background 0.35s ease;
-}
-.prompt-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.7), 0 0 26px -3px rgba(245, 158, 11, 0.35);
-}
-.prompt-card:hover::before {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(253, 224, 71, 0.3));
-}
 
 /* Indicador amarelo seguidor da sidebar (posicao via React; ver AppShell).
    Classe (nao id): desktop e drawer mobile montam o seguidor juntos. */
@@ -724,25 +566,23 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   position: absolute;
   left: 12px;
   right: 12px;
-  border-radius: 12px;
+  border-radius: 6px;
   pointer-events: none;
   z-index: 1;
-  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.25s ease, opacity 0.25s ease;
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.05) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.38);
-  box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.25);
+  transition: transform 0.24s var(--ease), height 0.2s ease, opacity 0.2s ease;
+  background: var(--folha-2);
 }
+/* Marcador da aba ativa: um traço de luz na margem, como o marca-texto
+   na lateral da folha. */
 .sidebar-follower::after {
   content: '';
   position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 18px;
-  border-radius: 9999px;
-  background-color: #F59E0B;
-  box-shadow: 0 0 12px 2px rgba(245, 158, 11, 0.9);
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--luz);
 }
 
 /* Pilula deslizante dos chips de materia (posicao via React; ver ChatPage) */
@@ -750,12 +590,11 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   position: absolute;
   top: 3px;
   bottom: 3px;
-  border-radius: 8px;
+  border-radius: 5px;
   pointer-events: none;
-  transition: left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-  background: rgba(245, 158, 11, 0.18);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  box-shadow: 0 0 14px -1px rgba(245, 158, 11, 0.3);
+  transition: left 0.24s var(--ease), width 0.24s var(--ease);
+  background: var(--folha-3);
+  border: 1px solid var(--linha-forte);
 }
 
 /* Esconde scrollbar mantendo a rolagem */
@@ -776,33 +615,11 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--linha-forte);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.4);
-}
-
-/* Shimmer da barra de XP do rodape (spec v2.4: gradiente ouro + brilho). */
-.xp-shimmer {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  overflow: hidden;
-  pointer-events: none;
-}
-.xp-shimmer::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(253, 224, 71, 0.5), transparent);
-  animation: xpShimmerSlide 2.4s ease-in-out infinite;
-}
-@keyframes xpShimmerSlide {
-  0% { left: -40%; }
-  100% { left: 100%; }
+  background: #6a6458;
 }
 
 /* Input do Mentor aderido ao rodape no mobile, com padding seguro para
@@ -813,27 +630,12 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   }
 }
 
-/* Orbes de iluminacao e estrelas de fundo (spec v2.4: float-ambient). */
-@keyframes floatAmbient {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.6; }
-  50% { transform: translate3d(0, -18px, 0) scale(1.06); opacity: 1; }
-}
-.animate-float-ambient {
-  animation: floatAmbient 8s ease-in-out infinite alternate;
-}
 @keyframes challengeBlink {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
-  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-}
-.challenge-card-decor {
-  animation: challengeFloat 5s ease-in-out infinite;
-}
-@keyframes challengeFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  0%, 100% { color: var(--erro); }
+  50% { color: var(--papel); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .challenge-timer--warn, .challenge-card-decor {
+  .challenge-timer--warn {
     animation: none;
   }
 }
@@ -881,14 +683,8 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   z-index: 0;
 }
 
-/* ---------- Idle (sagui meditando): flutuação suave / respiração ---------- */
-.mascot-anim-idle .mascot-img {
-  animation: mascotFloat 4.5s ease-in-out infinite;
-}
-@keyframes mascotFloat {
-  0%, 100% { transform: translateY(0) scaleY(1); }
-  50% { transform: translateY(-5px) scaleY(1.03) scaleX(0.98); }
-}
+/* ---------- Idle: parado. O sprite já carrega a expressão; flutuar o
+   tempo todo era movimento sem informação. ---------- */
 
 /* ---------- Typing (caderno + lápis): balanço focado esporádico ---------- */
 .mascot-anim-typing .mascot-img {
@@ -906,22 +702,9 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 .mascot-anim-loading .mascot-img {
   animation: mascotLoading 1.3s ease-in-out infinite;
 }
-.mascot-anim-loading::before {
-  content: '';
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.28), transparent 70%);
-  z-index: 0;
-  animation: mascotGlowPulse 1.3s ease-in-out infinite;
-}
 @keyframes mascotLoading {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(-6px) scale(1.04); }
-}
-@keyframes mascotGlowPulse {
-  0%, 100% { opacity: 0.35; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.1); }
 }
 
 /* ---------- Success (sagui pulando): bounce de entrada impactante ---------- */
@@ -997,11 +780,11 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   min-width: 160px;
   max-width: 240px;
   padding: 12px 15px;
-  border-radius: 18px;
-  background: rgba(17, 24, 39, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-  color: #f1f5f9;
+  border-radius: 10px;
+  background: var(--folha);
+  border: 1px solid var(--linha-forte);
+  box-shadow: var(--sombra-camada);
+  color: var(--papel);
   font-size: 0.8125rem;
   line-height: 1.45;
   font-weight: 500;
@@ -1017,8 +800,8 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   width: 14px;
   height: 14px;
   background: inherit;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid var(--linha-forte);
+  border-bottom: 1px solid var(--linha-forte);
   transform: translateX(-50%) rotate(45deg);
   border-radius: 2px;
 }
@@ -1048,8 +831,8 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   bottom: 50%;
   transform: translateY(50%) rotate(-45deg);
   border: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid var(--linha-forte);
+  border-bottom: 1px solid var(--linha-forte);
 }
 @keyframes mascotBubbleInFab {
   0% { opacity: 0; transform: translateY(50%) translateX(10px) scale(0.9); }
@@ -1070,7 +853,7 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #fbbf24;
+  background: var(--luz);
   animation: mascotDot 1s ease-in-out infinite;
 }
 .mascot-dots span:nth-child(2) { animation-delay: 0.15s; }
@@ -1080,31 +863,10 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   40% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* Brilho ambiente (flutuação constante nas bordas - modo flutuante) */
-.mascot-up-top::before,
-.mascot-up-top::after {
-  content: '';
-  position: absolute;
-  top: -6%;
-  width: 12px;
-  height: 12px;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.9), rgba(251, 191, 36, 0) 70%);
-  border-radius: 50%;
-  z-index: 0;
-  animation: mascotOrbit 6s ease-in-out infinite;
-}
-.mascot-up-top::before { left: 2%; animation-delay: 1s; }
-.mascot-up-top::after { right: 2%; animation-delay: 3.5s; }
-@keyframes mascotOrbit {
-  0%, 100% { opacity: 0; transform: translateY(0) scale(0.6); }
-  40% { opacity: 1; transform: translateY(-16px) scale(1); }
-  60% { opacity: 0; transform: translateY(-30px) scale(0.4); }
-}
-
 /* ---------- Redução de movimento (accessibilidade) ---------- */
 @media (prefers-reduced-motion: reduce) {
   .mascot-img, .mascot-bubble, .mascot-confetti, .mascot-shadow,
-  .mascot-up-top::before, .mascot-up-top::after, .mascot-dots span {
+  .mascot-dots span {
     animation: none !important;
     opacity: 1;
   }
@@ -1128,14 +890,14 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   width: 60%;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 2px solid rgba(16, 185, 129, 0.18);
+  border: 2px solid rgba(134, 162, 242, 0.25);
   transform: translateX(-50%) scale(0.6);
   opacity: 0;
   pointer-events: none;
   animation: mmBreathRing 8s ease-in-out infinite;
 }
 .mm-breathe-ring--2 { animation-delay: 4s; }
-.mm-breathe-ring--3 { animation-delay: 8s; border-color: rgba(245, 158, 11, 0.14); }
+.mm-breathe-ring--3 { animation-delay: 8s; border-color: rgba(243, 181, 63, 0.18); }
 @keyframes mmBreathRing {
   0%, 100% { opacity: 0; transform: translateX(-50%) scale(0.55); }
   25% { opacity: 0.9; transform: translateX(-50%) scale(1.35); }
@@ -1157,7 +919,7 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   position: absolute;
   inset: 4%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.22), transparent 72%);
+  background: rgba(134, 162, 242, 0.08);
   z-index: 0;
   animation: mmBreathGlow 8s ease-in-out infinite;
 }
@@ -1214,7 +976,7 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   width: 3px;
   height: 100%;
   border-radius: 2px;
-  background: #10b981;
+  background: var(--acerto);
   transform-origin: bottom;
   animation: mmTalkBar 0.55s ease-in-out infinite;
 }
@@ -1279,18 +1041,9 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Halo pulsante atrás do XP */
-.mm-milestone-glow {
-  position: absolute;
-  inset: -18%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.4), transparent 70%);
-  animation: mmGlowPulse 1.4s ease-in-out infinite;
-}
-@keyframes mmGlowPulse {
-  0%, 100% { opacity: 0.45; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.1); }
-}
+/* O halo pulsante atrás do XP saiu; a classe fica vazia para não
+   quebrar quem a usa. */
+.mm-milestone-glow { display: none; }
 
 /* Sagui cai do topo e se equilibra com um bounce de chegada */
 .mm-mascot-drop {
@@ -1338,21 +1091,20 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: rgba(10, 9, 8, 0.78);
   cursor: pointer;
 }
 .levelup-inner {
   position: relative;
   width: min(92vw, 420px);
   padding: 44px 28px 30px;
-  border-radius: 28px;
+  border-radius: 14px;
   text-align: center;
-  background: rgba(17, 24, 39, 0.96);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.7), 0 0 60px rgba(245, 158, 11, 0.15);
-  animation: levelupPanel 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  background: var(--folha);
+  border: 1px solid var(--linha-forte);
+  border-top: 3px solid var(--luz);
+  box-shadow: var(--sombra-camada);
+  animation: levelupPanel 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
 }
 @keyframes levelupPanel {
   0% { opacity: 0; transform: scale(0.8) translateY(30px); }
@@ -1361,12 +1113,13 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 .levelup-badge {
   display: inline-block;
   padding: 5px 16px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #0f172a;
+  border-radius: 4px;
+  background: var(--luz);
+  color: #1b1406;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   margin-bottom: 6px;
 }
 .levelup-mascot {
@@ -1394,17 +1147,17 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   position: absolute;
   inset: -14%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.5), transparent 70%);
-  animation: levelupGlow 1.3s ease-in-out infinite;
+  display: none;
 }
 @keyframes levelupGlow {
   0%, 100% { opacity: 0.5; transform: scale(0.95); }
   50% { opacity: 1; transform: scale(1.12); }
 }
 .levelup-title {
+  font-family: 'Literata Variable', Literata, Georgia, serif;
   font-size: 28px;
-  font-weight: 900;
-  color: #fff;
+  font-weight: 600;
+  color: var(--papel);
   margin-top: 14px;
   animation: levelupText 0.6s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
@@ -1414,7 +1167,7 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 }
 .levelup-sub {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--texto-2);
   margin-top: 6px;
 }
 .levelup-btn { margin-top: 22px; }
@@ -1433,13 +1186,6 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 /* =========================================================
    ASSISTENTE (Sagui): botão + chat embutido
    ========================================================= */
-.mascot-assist-idle {
-  animation: assistFloat 3.4s ease-in-out infinite;
-}
-@keyframes assistFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
 .assistant-chat {
   animation: assistChatIn 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transform-origin: top center;
@@ -1454,12 +1200,10 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   position: absolute;
   max-width: 190px;
   padding: 8px 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(252, 211, 77, 0.35);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  color: #fef3c7;
+  border-radius: 8px;
+  background: var(--folha);
+  border: 1px solid var(--linha-forte);
+  color: var(--papel);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
@@ -1479,7 +1223,7 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   .mm-milestone-glow, .mm-milestone-panel, .mascot-anim-breathing .mascot-img,
   .mm-approval-bubble,
   .levelup-inner, .levelup-mascot img, .levelup-glow, .levelup-title, .levelup-confetti,
-  .mascot-assist-idle, .assistant-chat {
+  .assistant-chat {
     animation: none !important;
   }
 }
@@ -1512,15 +1256,9 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   transform: scale(0.96);
 }
 
-/* Card clicavel sobe de leve no hover (so no desktop, onde ha ponteiro). */
-@media (hover: hover) and (pointer: fine) {
-  .lift {
-    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .lift:hover {
-    transform: translateY(-2px);
-  }
-}
+/* `lift` (cartão subindo no hover) saiu: cartão que salta parece
+   botão, e a maioria nem era clicável. Hover agora é na borda
+   (.painel-clicavel). */
 
 
 /* Tooltip do rail em tablet: so aparece no hover do icone. */
@@ -1548,15 +1286,13 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 
 @media (prefers-reduced-motion: reduce) {
   .press,
-  .lift,
   .skeleton,
   .sheet-backdrop,
   .rail-tip {
     animation: none !important;
     transition: none !important;
   }
-  .press:active,
-  .lift:hover {
+  .press:active {
     transform: none;
   }
 }
@@ -1604,13 +1340,13 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(255, 255, 255, 0.09) 45%,
-    rgba(255, 255, 255, 0.03) 90%
+    var(--folha-2) 0%,
+    var(--folha-3) 45%,
+    var(--folha-2) 90%
   );
   background-size: 200% 100%;
   animation: shimmer 1.2s linear infinite;
-  border-radius: 0.75rem;
+  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1664,41 +1400,23 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 #sidebarNav.collapsed > div:last-child > div.flex { justify-content: center; }
 #sidebarNav.collapsed > div:last-child > div.flex > div { justify-content: center; }
 
-/* Aliases do protótipo para os tokens do tailwind.config (mesmos nomes). */
-.animate-orb-1 { animation: orbFloat1 10s ease-in-out infinite; }
-.animate-orb-2 { animation: orbFloat2 12s ease-in-out infinite; }
-.animate-orb-3 { animation: orbFloat3 9s ease-in-out infinite; }
-.animate-hero-bulb { animation: pulseAuraHero 3.6s ease-in-out infinite; }
-.animate-spin-orbit { animation: ringSpinClockwise 16s linear infinite; }
-.animate-spin-orbit-rev { animation: ringSpinCounter 11s linear infinite; }
-.animate-particle-1 { animation: particleOrbit 7s linear infinite; }
-.animate-particle-2 { animation: particleOrbitReverse 9s linear infinite; }
-.twinkle-star-fast { animation: starTwinkleFast 3.2s ease-in-out infinite; }
-.twinkle-star-slow { animation: starTwinkleSlow 4.5s ease-in-out infinite; }
-.shimmer-sweep { animation: xpLiquidShimmer 2.2s cubic-bezier(0.4, 0.2, 1) infinite; }
-.mascot-interactive { animation: mascotBreatheAG 5s ease-in-out infinite; }
-.emerald-ping-glow { animation: pulseEmeraldDot 2s cubic-bezier(0.4, 0.6, 1) infinite; }
-
-/* Card 3D com lift no hover (hero do Mentor). */
+/* Sugestão de pergunta no Mentor: reage na borda, sem saltar. */
 .prompt-lift-card {
-  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transform-style: preserve-3d;
+  transition: border-color 120ms var(--ease), background-color 120ms var(--ease);
 }
-.prompt-lift-card:hover { transform: translateY(-6px) scale(1.02); }
-.prompt-lift-card:hover .card-arrow { transform: translateX(4px); }
+.prompt-lift-card:hover { border-color: var(--linha-forte); background: #201e1a; }
+.prompt-lift-card .card-arrow { transition: transform 120ms var(--ease); }
+.prompt-lift-card:hover .card-arrow { transform: translateX(3px); }
 
-/* Deslizamento dos links da sidebar ao hover. */
-.nav-item-link { transition: all 0.25s cubic-bezier(0.4, 0.2, 1); }
-.nav-item-link:hover { transform: translateX(5px); }
-
-/* Borda neon animada do input premium + flash ao preencher (fillPrompt). */
+/* Caixa de texto do Mentor. Era uma borda neon girando (âmbar, verde e
+   índigo) o tempo todo; agora é uma borda que acende quando o campo tem
+   foco, que é a única informação que ela tinha a dar. */
 .cyber-input-wrap {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(16, 185, 129, 0.3), rgba(99, 102, 241, 0.3), rgba(245, 158, 11, 0.5));
-  background-size: 300% 300%;
-  animation: cyberBorderGlowEffect 8s ease infinite;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  background: var(--linha-forte);
+  transition: background-color 120ms var(--ease);
 }
-.cyber-input-wrap.input-flash { animation: flashGlow 0.8s ease-out; }
+.cyber-input-wrap:focus-within { background: var(--luz); }
+.cyber-input-wrap.input-flash { background: var(--luz); }
 
 /* Pílula do modo Explicativo/Comunicativo + glider das abas de tópico
    (posição via React por getBoundingClientRect). */
@@ -1710,10 +1428,6 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-orb-1, .animate-orb-2, .animate-orb-3, .animate-hero-bulb,
-  .animate-spin-orbit, .animate-spin-orbit-rev, .animate-particle-1,
-  .animate-particle-2, .twinkle-star-fast, .twinkle-star-slow,
-  .shimmer-sweep, .mascot-interactive, .emerald-ping-glow,
   .cyber-input-wrap {
     animation: none !important;
   }
@@ -1737,25 +1451,17 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 }
 
 .xp-shimmer-bar {
-  background: linear-gradient(90deg, #F59E0B 0%, #FDE68A 50%, #F59E0B 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2.8s infinite linear;
+  background: var(--luz);
 }
 
 .day-cell {
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .day-cell:hover:not(.is-empty) {
-  transform: translateY(-2px);
+  border-color: var(--linha-forte);
 }
 .day-selected-ring {
-  box-shadow: 0 0 0 2px #F59E0B, 0 0 16px rgba(245, 158, 11, 0.5) !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .xp-shimmer-bar {
-    animation: none !important;
-  }
+  box-shadow: 0 0 0 2px var(--luz) !important;
 }
 
 /* =========================================================
@@ -1789,56 +1495,9 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   100% { background-position: 200% 0; }
 }
 
-/* Reflexo líquido atravessando a barra de XP. */
-@keyframes xpLiquidShimmer {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(250%); }
-}
-
-/* Halo pulsante do ponto verde "online". */
-@keyframes pulseEmeraldDot {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6); }
-  70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
-}
-
-/* Estrelas do fundo do Mentor: duas cadências para não pulsarem juntas. */
-@keyframes starTwinkleFast {
-  0%, 100% { opacity: 0.2; transform: scale(0.75); }
-  50% {
-    opacity: 1;
-    transform: scale(1.35);
-    filter: drop-shadow(0 0 8px rgba(253, 224, 71, 0.9));
-  }
-}
-
-@keyframes starTwinkleSlow {
-  0%, 100% { opacity: 0.15; transform: scale(0.85); }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.2);
-    filter: drop-shadow(0 0 6px rgba(103, 232, 249, 0.8));
-  }
-}
-
-/* Respiro do mascote: o que o faz parecer vivo em vez de figurinha. */
-@keyframes mascotBreatheAG {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-3px) scale(1.02); }
-}
-
 @keyframes fadeDown {
   0% { opacity: 1; }
   100% { opacity: 0; transform: translateY(8px); }
-}
-
-@keyframes flashGlow {
-  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
-  50% { filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.85)); }
-}
-
-@keyframes cyberBorderGlowEffect {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
 }
 
 /* =========================================================

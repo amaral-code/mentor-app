@@ -11,7 +11,7 @@ const ICONS = [
   'alvo', 'ideia', 'raio', 'foguete', 'trofeu', 'estrela', 'fogo',
   'musica', 'cafe', 'luaCheia', 'bussola', 'caderno', 'forca',
 ];
-const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#ef4444', '#06b6d4', '#84cc16', '#14b8a6', '#f97316'];
+const COLORS = ['#e9a11c', '#86a2f2', '#7cc78a', '#b5a3d6', '#e0919e', '#f08a70', '#86a2f2', '#97d3a2', '#7cc78a', '#f29a5e'];
 
 export function PersonaManager() {
   const personas = useAppStore((s) => s.personas);
@@ -24,7 +24,7 @@ export function PersonaManager() {
   const [name, setName] = useState('');
   const [instruction, setInstruction] = useState('');
   const [icon, setIcon] = useState('');
-  const [color, setColor] = useState('#3b82f6');
+  const [color, setColor] = useState('#86a2f2');
 
   if (!showPersonaManager) return null;
 
@@ -50,9 +50,9 @@ export function PersonaManager() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowPersonaManager(false)} />
+      <div className="absolute inset-0 bg-black/60" onClick={() => setShowPersonaManager(false)} />
       <div className="relative z-10 w-full max-w-lg animate-scale-in">
-        <div className="glass-card rounded-3xl max-h-[85dvh] overflow-y-auto">
+        <div className="painel rounded-3xl max-h-[85dvh] overflow-y-auto">
           <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
             <h2 className="text-lg font-bold text-white"> Gerenciar Personas</h2>
             <button onClick={() => setShowPersonaManager(false)} className="btn-ghost text-lg leading-none"></button>
@@ -105,7 +105,7 @@ export function PersonaManager() {
 
             {/* Create new */}
             <div className="pt-4 border-t border-white/5">
-              <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">Criar Nova Persona</p>
+              <p className="text-xs text-gray-500 font-medium mb-3">Criar Nova Persona</p>
               <div className="space-y-3">
                 <input
                   value={name}

@@ -44,7 +44,7 @@ export function FocusAnchorOverlay({ open, onClose }: Props) {
       <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-300">
         Guarde o celular e foque no caderno. Eu fico aqui marcando o tempo.
       </p>
-      <p className="mt-6 font-mono text-6xl font-black text-white tabular-nums" aria-live="off">
+      <p className="mt-6 font-mono text-6xl font-bold text-white tabular-nums" aria-live="off">
         {mm}:{ss}
       </p>
       <div

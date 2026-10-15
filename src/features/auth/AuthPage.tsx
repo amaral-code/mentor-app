@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, Fragment, memo } from 'react';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, GraduationCap, HeartHandshake, Moon, Users } from 'lucide-react';
+import { BookOpen, Building2, ChevronLeft, ChevronRight, Eye, EyeOff, GraduationCap, HeartHandshake } from 'lucide-react';
+import { MoonLogo } from '../../shared/ui/MoonLogo';
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { isSupabaseConfigured } from '../../shared/lib/supabase';
@@ -25,30 +26,30 @@ type AuthStep = 'role' | 'auth';
  */
 type RoleEscolhivel = Exclude<UserRole, 'admin' | 'psychologist'>;
 
-const ROLE_CONFIG: Record<RoleEscolhivel, { label: string; desc: string; icon: React.ReactNode; gradient: string }> = {
+/* Cada porta diz o que a pessoa vai encontrar do outro lado, e não um
+   adjetivo ("Estudante focado no ENEM", "Acompanhamento pedagógico"):
+   quem chega pela primeira vez escolhe pelo que vai fazer. Ícones na mesma
+   cor, sem gradiente: a cor não distinguia nada que o nome não distinga. */
+const ROLE_CONFIG: Record<RoleEscolhivel, { label: string; desc: string; icon: React.ReactNode }> = {
   student: {
-    label: 'Aluno',
-    desc: 'Estudante focado no ENEM',
-    icon: <GraduationCap size={24} />,
-    gradient: 'from-amber-400 to-orange-600',
-  },
-  educator: {
-    label: 'Educacional',
-    desc: 'Secretaria da escola',
-    icon: <Users size={24} />,
-    gradient: 'from-emerald-400 to-cyan-600',
+    label: 'Sou estudante',
+    desc: 'Plano do dia, Mentor para dúvidas, quiz e redação corrigida',
+    icon: <GraduationCap size={20} />,
   },
   teacher: {
-    label: 'Docente',
-    desc: 'Professor em sala',
-    icon: <Users size={24} />,
-    gradient: 'from-sky-400 to-blue-600',
+    label: 'Sou professor',
+    desc: 'Como as suas turmas estão e o que vale revisar em aula',
+    icon: <BookOpen size={20} />,
+  },
+  educator: {
+    label: 'Sou da secretaria',
+    desc: 'Matrículas, turmas, códigos de acesso e docentes',
+    icon: <Building2 size={20} />,
   },
   parent: {
-    label: 'Pais e responsáveis',
-    desc: 'Acompanhamento pedagógico',
-    icon: <HeartHandshake size={24} />,
-    gradient: 'from-violet-400 to-purple-600',
+    label: 'Sou responsável',
+    desc: 'Horas de estudo e acerto por matéria do estudante',
+    icon: <HeartHandshake size={20} />,
   },
 };
 
@@ -68,9 +69,8 @@ interface ValoresAuth {
    CampoAuth — input isolado e memorizado.
    ====================================================================
    Por que existe: antes o `value`/`onChange` de cada campo morava no
-   AuthPage raiz, entao CADA TECLA re-renderizava a pagina inteira —
-   fundo com blur, card `.glass` com backdrop-filter (o paint mais caro
-   no mobile) e todos os irmaos. Aqui o input e NAO-CONTROLADO
+   AuthPage raiz, entao CADA TECLA re-renderizava a pagina inteira e
+   todos os irmaos. Aqui o input e NAO-CONTROLADO
    (defaultValue + ref): digitar nao dispara setState nenhum, logo nao
    ha re-render por tecla. O unico setState no onChange limpa o erro do
    proprio campo — e so roda quando aquele erro esta visivel.
@@ -99,7 +99,7 @@ const CampoAuth = memo(function CampoAuth({
 }: CampoAuthProps) {
   return (
     <div>
-      <label htmlFor={id} className="block text-xs text-gray-500 mb-1.5 font-medium tracking-wide">
+      <label htmlFor={id} className="block text-sm text-gray-300 mb-1.5 font-medium">
         {label}
       </label>
       <div className="relative">
@@ -119,11 +119,11 @@ const CampoAuth = memo(function CampoAuth({
           aria-invalid={!!erro}
           aria-describedby={erro ? erroId : undefined}
           onChange={() => limparErro(campo)}
-          className={`w-full transition-all${comEspacoDireita ? ' pr-12' : ''}${erro ? ' border-red-500/40 focus:border-red-500/60' : ''}`}
+          className={`w-full${comEspacoDireita ? ' pr-12' : ''}`}
         />
         {acaoDireita}
       </div>
-      {erro && <p id={erroId} className="text-xs text-red-400 mt-1.5">{erro}</p>}
+      {erro && <p id={erroId} className="text-sm text-red-400 mt-1.5">{erro}</p>}
     </div>
   );
 });
@@ -240,11 +240,11 @@ const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthForm
 
       <button
         type="submit"
-        className="btn-primary w-full flex items-center justify-center gap-2 h-12 press"
+        className="btn-primary w-full h-12"
         disabled={loading}
       >
-        {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-        {loading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Criar conta')}
+        {loading && <span className="w-4 h-4 anel-carregando rounded-full animate-spin" aria-hidden="true" />}
+        {loading ? (isLogin ? 'Entrando...' : 'Criando a conta...') : (isLogin ? 'Entrar' : 'Criar conta')}
       </button>
     </form>
   );
@@ -348,66 +348,61 @@ export function AuthPage() {
     return (
       <Fragment>
         <ColorBlindnessToggle />
-        <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#0b1120' }}>
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-amber-500/5 blur-[100px]" />
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-orange-500/5 blur-[100px]" />
-          </div>
+        <div className="min-h-dvh bg-mesa">
+          <div className="mx-auto max-w-5xl px-5 py-10 md:py-16 grid gap-10 md:grid-cols-[1.1fr_1fr] md:gap-16 md:items-center min-h-dvh">
+            {/* Lado do produto: o que é, em frases que só caberiam neste
+                app. O sagui é a identidade e fica, pequeno. */}
+            <section className="animate-fade-in">
+              <div className="flex items-center gap-2.5">
+                <MoonLogo className="w-8 h-8" />
+                <span className="font-display text-xl font-semibold text-white">Midnight Mentor</span>
+              </div>
+              <h1 className="mt-8 text-[2rem] md:text-[2.5rem] leading-[1.15] text-white">
+                Estudo para o ENEM que cabe na rotina de quem estuda à noite.
+              </h1>
+              <p className="mt-4 text-[0.9375rem] text-gray-400 max-w-md">
+                Um plano por dia, montado com o seu sono e o seu cansaço. Um Mentor que responde dúvida de prova.
+                Redação corrigida pelas cinco competências. E a escola e a família vendo como você vai, sem ler as suas conversas.
+              </p>
+              <div className="mt-8 hidden md:flex items-end gap-4">
+                <img src="/assets/sagui_pulando_2.png" alt="" width={88} height={88} className="w-[88px] h-[88px] object-contain" />
+                <p className="text-sm text-gray-500 pb-3 max-w-[16rem]">O sagui é o mascote: aparece quando você acerta, quando precisa de pausa e quando é hora de dormir.</p>
+              </div>
+            </section>
 
-          <div className="w-full max-w-lg animate-fade-up relative z-10">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-7 text-center sm:text-left">
-              {/* O sagui e a identidade do produto: ele abre a tela.
-                  Empilhado no celular: lado a lado ele saia pela borda
-                  esquerda em 375px. */}
-              <img
-                src="/assets/sagui_pulando_2.png"
-                alt=""
-                width={104}
-                height={104}
-                className="w-24 h-24 shrink-0 object-contain drop-shadow-[0_8px_24px_rgba(245,158,11,0.18)] motion-safe:animate-float-suave"
-              />
-              <div className="min-w-0">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mb-3 mx-auto sm:mx-0 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                  <Moon size={22} className="text-gray-900" />
-                </div>
-                <h1 className="text-2xl font-extrabold text-white leading-tight">
-                  <span className="text-gradient">Midnight Mentor</span>
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  Estuda de dia, revisa de noite. O sagui acompanha.
+            <section aria-labelledby="entrar-titulo" className="animate-fade-in">
+              <h2 id="entrar-titulo" className="text-lg text-white">Como você vai usar</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Cada perfil tem a sua própria área.</p>
+              <ul className="mt-4 painel rounded-2xl overflow-hidden pauta">
+                {(Object.entries(ROLE_CONFIG) as [RoleEscolhivel, typeof ROLE_CONFIG['student']][]).map(([role, cfg]) => (
+                  <li key={role}>
+                    <button
+                      onClick={() => escolherPapel(role)}
+                      className="w-full px-4 py-4 text-left flex items-center gap-4 group hover:bg-folha-2 transition-colors"
+                    >
+                      <span className="w-10 h-10 rounded-md border border-linha-forte flex items-center justify-center text-gray-300 group-hover:text-amber-400 group-hover:border-amber-500/50 transition-colors shrink-0">
+                        {cfg.icon}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-[0.9375rem] font-semibold text-white">{cfg.label}</span>
+                        <span className="block text-sm text-gray-500 mt-0.5">{cfg.desc}</span>
+                      </span>
+                      <ChevronRight size={18} className="text-gray-600 group-hover:text-amber-400 transition-colors shrink-0" aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-gray-500 mt-4">
+                Psicólogos entram com a conta criada e conferida pela equipe, por qualquer uma das portas.
+              </p>
+              {/* "Conectado ao banco de dados" era dito a todo visitante;
+                  só a falha muda o que a pessoa pode fazer. */}
+              {!isSupabaseConfigured() && (
+                <p role="alert" className="mt-4 text-sm text-red-300 border-l-2 border-red-400 pl-3">
+                  O app está sem conexão com o banco de dados, então ninguém consegue entrar agora. Avise a escola.
                 </p>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-500 uppercase tracking-widest font-medium text-center mb-3">
-              Como você entra
-            </p>
-
-            <div className="space-y-3">
-              {(Object.entries(ROLE_CONFIG) as [RoleEscolhivel, typeof ROLE_CONFIG['student']][]).map(([role, cfg]) => (
-                <button
-                  key={role}
-                  onClick={() => escolherPapel(role)}
-                  className="w-full glass rounded-2xl p-5 text-left hover:border-amber-500/20 transition-all group border border-white/5 flex items-center gap-4 press lift"
-                >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cfg.gradient} flex items-center justify-center text-white shadow-lg shrink-0`}>
-                    {cfg.icon}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">{cfg.label}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{cfg.desc}</p>
-                  </div>
-                  <ChevronRight size={20} className="text-gray-600 group-hover:text-amber-400 transition-colors shrink-0" />
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6 text-xs text-center text-gray-400">
-              <div className="glass-light rounded-xl px-4 py-2.5 inline-flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConfigured() ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                {isSupabaseConfigured() ? 'Conectado ao banco de dados' : 'Banco não configurado'}
-              </div>
-            </div>
+              )}
+            </section>
           </div>
         </div>
       </Fragment>
@@ -422,32 +417,23 @@ export function AuthPage() {
   return (
     <Fragment>
       <ColorBlindnessToggle />
-      <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#0b1120' }}>
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-amber-500/5 blur-[100px]" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-orange-500/5 blur-[100px]" />
-        </div>
-
-        <div className="w-full max-w-sm animate-fade-up relative z-10">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-              <Moon size={28} className="text-gray-900" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-white">
-              <span className="text-gradient">Midnight Mentor</span>
-            </h1>
+      <div className="min-h-dvh flex items-center justify-center px-5 py-10 bg-mesa">
+        <div className="w-full max-w-sm animate-fade-in">
+          <div className="flex items-center gap-2.5 mb-8">
+            <MoonLogo className="w-7 h-7" />
+            <span className="font-display text-lg font-semibold text-white">Midnight Mentor</span>
           </div>
 
-          <div className="glass rounded-2xl p-7 relative overflow-hidden">
+          <div className="relative">
             {/* Estado de sucesso: o sagui aprova antes de entrar */}
             {sucesso && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#0b1120]/95 animate-fade-in">
+              <div className="absolute -inset-4 z-20 flex flex-col items-center justify-center gap-3 bg-mesa/95 animate-fade-in" role="status">
                 <img loading="lazy"
                   src="/assets/sagui_aprovacao_2.png"
                   alt=""
-                  width={128}
-                  height={128}
-                  className="w-32 h-32 object-contain motion-safe:animate-scale-in"
+                  width={112}
+                  height={112}
+                  className="w-28 h-28 object-contain motion-safe:animate-scale-in"
                 />
                 <p className="text-sm font-semibold text-amber-400">Boa. Bora estudar.</p>
               </div>
@@ -455,44 +441,26 @@ export function AuthPage() {
 
             <button
               onClick={voltarParaPapeis}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-amber-400 transition-colors mb-3 -ml-2 px-2 min-h-[44px] press"
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors -ml-2 px-2 min-h-[44px]"
             >
-              <ChevronLeft size={14} />
-              Trocar perfil
+              <ChevronLeft size={16} aria-hidden="true" />
+              {roleCfg.label}: trocar
             </button>
 
-            {/* O `/10` do Tailwind so afeta a ULTIMA cor do gradiente, entao
-                isto virava um bloco quase solido e a descricao sumia por
-                falta de contraste. Fundo neutro, cor fica so no icone. */}
-            <div className="rounded-xl bg-white/[0.04] border border-white/5 p-3 flex items-center gap-3 mb-5">
-              <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${roleCfg.gradient} flex items-center justify-center text-white shrink-0`}>
-                {roleCfg.icon}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">{roleCfg.label}</p>
-                <p className="text-xs text-gray-500">{roleCfg.desc}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-              <span className="text-xs text-gray-500 uppercase tracking-widest font-medium">
-                {isLogin ? 'Acessar' : 'Criar conta'}
-              </span>
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-            </div>
+            <h1 className="text-[1.75rem] text-white mt-2">{isLogin ? 'Entrar' : 'Criar conta'}</h1>
+            <p className="text-sm text-gray-500 mt-1 mb-6">{roleCfg.desc}.</p>
 
             {/* Banners de servidor/conexao (erros de campo vivem no form) */}
             {error && (
-              <div className="text-red-400 text-sm bg-red-500/10 rounded-xl px-4 py-2.5 border border-red-500/10 animate-slide-up mb-4" role="alert">
+              <p className="text-red-300 text-sm border-l-2 border-red-400 pl-3 py-1 animate-slide-up mb-5" role="alert">
                 {error}
-              </div>
+              </p>
             )}
 
             {aviso && (
-              <div className="text-amber-300 text-sm bg-amber-500/10 rounded-xl px-4 py-2.5 border border-amber-500/15 animate-slide-up mb-4" role="status">
+              <p className="text-amber-300 text-sm border-l-2 border-amber-400 pl-3 py-1 animate-slide-up mb-5" role="status">
                 {aviso}
-              </div>
+              </p>
             )}
 
             {/* key reseta os inputs nao-controlados ao trocar de modo */}
@@ -503,15 +471,13 @@ export function AuthPage() {
               onSubmit={handleAutenticar}
             />
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 pt-5 border-t border-linha text-sm text-gray-400">
+              {isLogin ? 'Ainda não tem conta?' : 'Já tem conta?'}{' '}
               <button
                 onClick={alternarModo}
-                className="text-sm text-gray-500 hover:text-amber-400 transition-colors"
+                className="text-amber-400 hover:text-amber-300 font-medium underline-offset-4 hover:underline"
               >
-                {isLogin ? 'Ainda não tem conta? ' : 'Já tem conta? '}
-                <span className="text-amber-400 hover:text-amber-300 font-medium">
-                  {isLogin ? 'Criar agora' : 'Entrar'}
-                </span>
+                {isLogin ? 'Criar agora' : 'Entrar'}
               </button>
             </div>
           </div>

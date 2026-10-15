@@ -49,7 +49,7 @@ function SpotlightOverlay({ rect, padding = 12 }: { rect: Rect; padding?: number
       <div className="fixed z-[199] bg-black/70" style={{ top: r.top, left: 0, width: r.left, height: r.height, pointerEvents: 'auto' }} />
       {/* Right bar - between top and bottom, target right to screen edge */}
       <div className="fixed z-[199] bg-black/70" style={{ top: r.top, left: r.left + r.width, right: 0, height: r.height, pointerEvents: 'auto' }} />
-      {/* Glowing border around the cutout */}
+      {/* Contorno do recorte: traço de luz, sem halo. */}
       <div
         className="fixed z-[200] rounded-xl pointer-events-none"
         style={{
@@ -57,8 +57,7 @@ function SpotlightOverlay({ rect, padding = 12 }: { rect: Rect; padding?: number
           left: r.left - 2,
           width: r.width + 4,
           height: r.height + 4,
-          border: '2px solid rgba(245, 158, 11, 0.7)',
-          boxShadow: '0 0 24px rgba(245, 158, 11, 0.4), inset 0 0 12px rgba(245, 158, 11, 0.05)',
+          border: '2px solid #f3b53f',
         }}
       />
     </>
@@ -233,8 +232,8 @@ export function OnboardingTour() {
             : { top: '50%', transform: 'translate(-50%, -50%)' }
         }
       >
-        <div className="glass-card rounded-3xl p-7 text-center shadow-2xl border border-white/10" style={{ pointerEvents: 'auto', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto' }}>
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-5 shadow-glow">
+        <div className="painel rounded-3xl p-7 text-center shadow-2xl border border-white/10" style={{ pointerEvents: 'auto', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto' }}>
+          <div className="w-16 h-16 rounded-2xl bg-amber-400 flex items-center justify-center mx-auto mb-5">
             <AppIcon name={step.icon} size={28} className="text-gray-900" />
           </div>
 
@@ -285,7 +284,7 @@ export function OnboardingTour() {
           }}
         >
           <svg width="38" height="38" viewBox="0 0 38 38" fill="none" aria-hidden="true">
-            <path d="M19 0v26m0 0l-9-9m9 9l9-9" stroke="#fbbf24" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M19 0v26m0 0l-9-9m9 9l9-9" stroke="#f3b53f" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
       )}

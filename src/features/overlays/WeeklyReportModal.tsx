@@ -158,7 +158,7 @@ function Conteudo() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3">
         {destaques.map((d) => (
-          <div key={d.rotulo} className="glass-light rounded-xl p-3">
+          <div key={d.rotulo} className="painel-suave rounded-xl p-3">
             <p className="text-[10px] text-gray-500 uppercase tracking-wide">{d.rotulo}</p>
             <p className="text-2xl font-bold text-white tabular-nums mt-1">{d.valor}</p>
             <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">{d.nota}</p>
@@ -166,8 +166,8 @@ function Conteudo() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.07] to-transparent p-4">
-        <p className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-emerald-400/80 mb-2">
+      <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.07] p-4">
+        <p className="flex items-center gap-2 text-xs text-emerald-400/80 mb-2">
           <Sparkles size={13} /> Sua semana
         </p>
         {gerando ? (
@@ -180,19 +180,19 @@ function Conteudo() {
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="glass-light rounded-xl py-3">
-          <ShieldCheck size={16} className="text-cyan-400 mx-auto" />
+        <div className="painel-suave rounded-xl py-3">
+          <ShieldCheck size={16} className="text-tinta-400 mx-auto" />
           <p className="text-sm font-bold text-white tabular-nums mt-1">{metricas.minutosOffline}</p>
           <p className="text-[10px] text-gray-500">min offline</p>
         </div>
-        <div className="glass-light rounded-xl py-3">
-          <Moon size={16} className="text-violet-400 mx-auto" />
+        <div className="painel-suave rounded-xl py-3">
+          <Moon size={16} className="text-tinta-400 mx-auto" />
           <p className="text-sm font-bold text-white tabular-nums mt-1">
             {metricas.sessoesMadrugada}
           </p>
           <p className="text-[10px] text-gray-500">noites de madrugada</p>
         </div>
-        <div className="glass-light rounded-xl py-3">
+        <div className="painel-suave rounded-xl py-3">
           <Flame size={16} className="text-amber-400 mx-auto" />
           <p className="text-sm font-bold text-white tabular-nums mt-1">{metricas.streak}</p>
           <p className="text-[10px] text-gray-500">dias seguidos</p>

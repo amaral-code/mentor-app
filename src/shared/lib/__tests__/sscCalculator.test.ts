@@ -71,15 +71,15 @@ describe('getSSCLevel', () => {
 
 describe('getSSCColor', () => {
   it('returns green for normal', () => {
-    expect(getSSCColor(20)).toBe('#10b981');
+    expect(getSSCColor(20)).toBe('#7cc78a');
   });
 
   it('returns amber for attention', () => {
-    expect(getSSCColor(55)).toBe('#f59e0b');
+    expect(getSSCColor(55)).toBe('#e9a11c');
   });
 
   it('returns red for critical', () => {
-    expect(getSSCColor(85)).toBe('#ef4444');
+    expect(getSSCColor(85)).toBe('#f08a70');
   });
 });
 

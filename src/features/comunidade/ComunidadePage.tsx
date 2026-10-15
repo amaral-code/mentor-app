@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, Sparkles, User, Users } from 'lucide-react';
+import { Check, Sparkles, User } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { getProfile, getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
 import type { CommunityMessage, Escola, Turma } from '../../shared/types';
@@ -314,11 +314,8 @@ export function ComunidadePage() {
     <div className="flex flex-col h-[calc(100dvh-10rem)] md:h-[calc(100dvh-8rem)] animate-fade-up">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 flex items-center justify-center">
-            <Users size={20} className="text-emerald-400" />
-          </div>
           <div>
-            <h1 className="text-lg md:text-xl font-bold text-white">Ligas de estudo</h1>
+            <h1 className="text-[1.75rem] text-white">Ligas de estudo</h1>
             <p className="text-xs text-gray-500">
               {turmaAtual ? `${turmaAtual.nome} • ${escolaAtual?.nome}` : 'Selecione sua turma no Perfil'}
             </p>
@@ -330,7 +327,7 @@ export function ComunidadePage() {
         <div className="flex items-center gap-1 text-xs text-gray-500">
           <span
             className={`w-2 h-2 rounded-full ${
-              falhaAoCarregar ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse-subtle'
+              falhaAoCarregar ? 'bg-amber-500' : 'bg-emerald-500'
             }`}
           />
           {falhaAoCarregar ? 'mural indisponível' : `${mensagens.length} mensagens`}
@@ -338,11 +335,11 @@ export function ComunidadePage() {
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-3 scroll-smooth">
-        <div className="glass rounded-2xl border border-cyan-500/10 p-3 md:p-4">
+        <div className="painel rounded-2xl border border-tinta-500/10 p-3 md:p-4">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-                <Sparkles size={16} className="text-cyan-400" />
+              <div className="w-8 h-8 rounded-xl bg-tinta-500/10 flex items-center justify-center shrink-0">
+                <Sparkles size={16} className="text-tinta-400" />
               </div>
               <div className="min-w-0">
                 <h2 className="text-sm md:text-base font-semibold text-white">Seu espaço de liga</h2>
@@ -355,17 +352,17 @@ export function ComunidadePage() {
           <div className="flex flex-col lg:flex-row gap-3">
             <div className="flex flex-col gap-2 lg:w-[300px] lg:shrink-0">
               <div className="flex items-center justify-between px-1">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-400">Ligas disponíveis</p>
+                <p className="text-xs text-tinta-400">Ligas disponíveis</p>
                 <button
                   onClick={() => setMostrarFormLiga(v => !v)}
-                  className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 hover:brightness-110 min-h-[36px]"
+                  className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-tinta-500/10 text-tinta-300 border border-tinta-500/20 hover:brightness-110 min-h-[36px]"
                 >
                   {mostrarFormLiga ? 'Fechar' : '+ Nova liga'}
                 </button>
               </div>
 
               {mostrarFormLiga && (
-                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3 space-y-2">
+                <div className="rounded-2xl border border-tinta-500/20 bg-tinta-500/5 p-3 space-y-2">
                   <input
                     type="text"
                     value={novoTituloLiga}
@@ -409,15 +406,19 @@ export function ComunidadePage() {
                   const isAccepted = liga.joinedBy.includes(profile?.uid || '');
                   const isSelected = selectedLeague?.id === liga.id;
 
-                  const discColors: Record<string, { from: string; via: string; border: string }> = {
-                    Português: { from: 'from-emerald-600', via: 'via-teal-700', border: 'border-emerald-500/20' },
-                    Matemática: { from: 'from-blue-600', via: 'via-indigo-700', border: 'border-blue-500/20' },
-                    Física: { from: 'from-purple-600', via: 'via-violet-700', border: 'border-purple-500/20' },
-                    Química: { from: 'from-red-600', via: 'via-rose-700', border: 'border-red-500/20' },
-                    Biologia: { from: 'from-green-600', via: 'via-emerald-700', border: 'border-green-500/20' },
-                    História: { from: 'from-amber-600', via: 'via-yellow-700', border: 'border-amber-500/20' },
-                    Geografia: { from: 'from-teal-600', via: 'via-cyan-700', border: 'border-teal-500/20' },
-                    default: { from: 'from-cyan-600', via: 'via-teal-700', border: 'border-cyan-500/20' },
+                  /* A cor da matéria fica só na borda da liga selecionada. O
+                     brilho de fundo que havia aqui montava o nome da classe
+                     em tempo de execução (`${from}/10`), e o Tailwind nunca
+                     gerava essas classes: o efeito nunca apareceu. */
+                  const discColors: Record<string, { border: string }> = {
+                    Português: { border: 'border-emerald-500/40' },
+                    Matemática: { border: 'border-tinta-500/40' },
+                    Física: { border: 'border-tinta-500/40' },
+                    Química: { border: 'border-red-500/40' },
+                    Biologia: { border: 'border-emerald-500/40' },
+                    História: { border: 'border-amber-500/40' },
+                    Geografia: { border: 'border-tinta-500/40' },
+                    default: { border: 'border-tinta-500/40' },
                   };
                   const dc = discColors[liga.discipline] || discColors.default;
 
@@ -426,10 +427,9 @@ export function ComunidadePage() {
                       key={liga.id}
                       onClick={() => { setSelectedLeagueId(liga.id); }}
                       className={`group relative w-full rounded-2xl border text-left transition-all duration-200 overflow-hidden min-h-[88px] ${
-                        isSelected ? `${dc.border} shadow-lg` : 'border-white/[0.06] hover:border-white/15'
+                        isSelected ? `${dc.border} bg-folha-2` : 'border-white/[0.06] hover:border-white/15'
                       }`}
                     >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${dc.from}/10 ${dc.via}/5 to-transparent opacity-${isSelected ? '100' : '0'} group-hover:opacity-100 transition-opacity`} />
                       <div className="relative p-3.5">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
@@ -444,7 +444,7 @@ export function ComunidadePage() {
                             </p>
                           </div>
                           <span className={`shrink-0 text-[10px] font-semibold px-2 py-1 rounded-full ${
-                            isAccepted ? 'bg-amber-500/10 text-amber-400' : 'bg-cyan-500/10 text-cyan-400'
+                            isAccepted ? 'bg-amber-500/10 text-amber-400' : 'bg-tinta-500/10 text-tinta-400'
                           }`}>
                             +{liga.xpReward} XP
                           </span>
@@ -452,7 +452,7 @@ export function ComunidadePage() {
                         <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-white/[0.04]">
                           <div className="flex -space-x-1.5">
                             {liga.joinedByNames.slice(0, 4).map((name, i) => (
-                              <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-[8px] font-bold text-white ring-1 ring-black/30">
+                              <div key={i} className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-[8px] font-bold text-white ring-1 ring-black/30">
                                 {name.charAt(0).toUpperCase()}
                               </div>
                             ))}
@@ -481,7 +481,7 @@ export function ComunidadePage() {
                 <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-3 md:p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-400">Liga selecionada</p>
+                      <p className="text-xs text-emerald-400">Liga selecionada</p>
                       <h3 className="text-base font-semibold text-white truncate">{selectedLeague.title}</h3>
                       <p className="text-xs text-gray-300 mt-1">{selectedLeague.prompt}</p>
                     </div>
@@ -508,8 +508,8 @@ export function ComunidadePage() {
                         selectedLeague.joinedBy.includes(profile?.uid || '')
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                           : pendingJoinLeagueId === selectedLeague.id
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse-subtle'
-                            : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:brightness-110'
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-tinta-500/10 text-tinta-400 border border-tinta-500/20 hover:brightness-110'
                       }`}
                     >
                       {selectedLeague.joinedBy.includes(profile?.uid || '')
@@ -523,11 +523,11 @@ export function ComunidadePage() {
                   <div className="mt-3 rounded-xl border border-white/8 bg-black/10 p-3">
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-400">Progresso da liga</p>
+                        <p className="text-xs text-emerald-400">Progresso da liga</p>
                         <p className="text-xs text-gray-300">{selectedProgress}% concluído</p>
                       </div>
                       <div className="h-2 w-24 rounded-full bg-white/10 overflow-hidden shrink-0">
-                        <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: `${selectedProgress}%` }} />
+                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${selectedProgress}%` }} />
                       </div>
                     </div>
                     {nextGoal && (

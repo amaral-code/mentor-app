@@ -48,9 +48,9 @@ export function getSSCLevel(ssc: number): SSCLevel {
 }
 
 export function getSSCColor(ssc: number): string {
-  if (ssc < 40) return '#10b981';
-  if (ssc < 70) return '#f59e0b';
-  return '#ef4444';
+  if (ssc < 40) return '#7cc78a';
+  if (ssc < 70) return '#e9a11c';
+  return '#f08a70';
 }
 
 export function getSSCLabel(ssc: number): string {

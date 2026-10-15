@@ -93,7 +93,7 @@ export function DoomscrollGuard() {
       {intervencao && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
           <m.button
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-950/70"
             aria-label="Continuar navegando"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -106,7 +106,7 @@ export function DoomscrollGuard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="doomscroll-titulo"
-            className="relative z-10 w-full max-w-sm glass rounded-3xl p-6 text-center border border-white/[0.06]"
+            className="relative z-10 w-full max-w-sm painel rounded-3xl p-6 text-center border border-white/[0.06]"
             initial={reduzir ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
             animate={reduzir ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
             exit={reduzir ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}

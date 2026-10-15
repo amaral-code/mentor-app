@@ -402,7 +402,7 @@ export class SupabaseRepository {
       id: String(r.id),
       name: r.nome,
       icon: r.icone ?? '',
-      color: r.cor ?? '#f59e0b',
+      color: r.cor ?? '#e9a11c',
       instruction: r.instrucao,
       createdAt: new Date(r.criado_em).getTime(),
     }));

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { PenLine, Zap } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { Modal } from '../../shared/ui/Modal';
-import { GlassCard } from '../../shared/ui/GlassCard';
+import { Painel } from '../../shared/ui/Painel';
 import { AppIcon } from '../../shared/ui/AppIcon';
 import { QuizQuestion } from '../../shared/types';
 import { askGemini, aiAvailable, gerarMapaMental, buildMindmapMermaid, sanitizarRotuloMermaid } from '../../shared/lib/aiService';
@@ -30,7 +30,7 @@ function carregarMermaid() {
         securityLevel: 'strict',
         htmlLabels: false,
         theme: 'dark',
-        themeVariables: { primaryColor: '#f59e0b', primaryTextColor: '#fff', primaryBorderColor: '#f59e0b33', lineColor: '#f59e0b55', fontSize: '14px' },
+        themeVariables: { primaryColor: '#e9a11c', primaryTextColor: '#fff', primaryBorderColor: '#e9a11c33', lineColor: '#e9a11c55', fontSize: '14px' },
       });
       return mermaid;
     });
@@ -315,14 +315,14 @@ export function NotebookStudioModal() {
         {tools.map(t => (
           <button key={t.id} onClick={() => { setActiveTool(t.id); runTool(t.id); }}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
-              activeTool === t.id ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'glass-hover text-gray-400 border border-white/5'
+              activeTool === t.id ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'text-gray-400 border border-white/5'
             }`}>
             <AppIcon name={t.icon} size={15} className="inline-block align-[-0.15em] mr-1.5" />{t.label}
           </button>
         ))}
       </div>
 
-      <GlassCard className="mt-5">
+      <Painel className="mt-5">
         {notasList.length === 0 && !result && !loading && (
           <div className="text-center py-12">
             <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl mx-auto mb-3"><PenLine size={16} className="inline-block align-[-0.15em] text-amber-400" /></div>
@@ -359,16 +359,16 @@ export function NotebookStudioModal() {
 
                 <div
                   onClick={() => setFlashcardFlipped(!flashcardFlipped)}
-                  className="glass rounded-2xl p-6 text-center cursor-pointer min-h-[160px] flex flex-col items-center justify-center transition-all hover:border-amber-500/20 border border-white/5"
+                  className="painel rounded-2xl p-6 text-center cursor-pointer min-h-[160px] flex flex-col items-center justify-center transition-all hover:border-amber-500/20 border border-white/5"
                 >
                   {flashcardFlipped ? (
                     <div className="space-y-3">
-                      <span className="text-xs text-emerald-400 font-medium uppercase tracking-wider">Resposta</span>
+                      <span className="text-xs text-emerald-400 font-medium">Resposta</span>
                       <p className="text-base text-white font-medium">{flashcards[flashcardIndex].alternativas[flashcards[flashcardIndex].correta]}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <span className="text-xs text-amber-400 font-medium uppercase tracking-wider">Pergunta</span>
+                      <span className="text-xs text-amber-400 font-medium">Pergunta</span>
                       <p className="text-base text-white font-medium">{flashcards[flashcardIndex].enunciado}</p>
                       <p className="text-xs text-gray-500 mt-2">Clique para ver a resposta</p>
                     </div>
@@ -408,7 +408,7 @@ export function NotebookStudioModal() {
             {aiAvailable(apiKey) && <p className="text-xs text-amber-400 mt-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /> IA disponível: resultados mais precisos</p>}
           </div>
         )}
-      </GlassCard>
+      </Painel>
     </Modal>
   );
 }

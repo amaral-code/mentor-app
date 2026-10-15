@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, BadgeCheck, CalendarHeart, Phone } from 'lucide-react';
+import { ArrowRight, CalendarHeart, Phone } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { tempoAte } from '../../shared/lib/bookingEngine';
-import { StarfieldCanvas } from './components/StarfieldCanvas';
 import { HeroSessao } from './components/HeroSessao';
 import { Calendario, type DiaCalendario, type FeedbackDia } from './components/Calendario';
 import { Diario } from './components/Diario';
@@ -77,6 +76,7 @@ export function AgendaPage() {
         crp: crpPorId.get(a.psicologoId) ?? 'CRP não informado',
         duracaoMinutos: a.duracaoMinutos,
         meetingUrl: a.meetingUrl ?? null,
+        meetingProvider: a.meetingProvider ?? null,
         status: a.status,
         passada: a.status === 'concluido' || a.status === 'no_show' || fim.getTime() < agora,
         ehHoje: dia.getTime() === hoje.getTime(),
@@ -272,36 +272,25 @@ export function AgendaPage() {
 
   return (
     <div className="relative animate-fade-up" data-purpose="student-agenda-main">
-      <StarfieldCanvas />
-      <div className="fixed top-10 left-1/2 -translate-x-1/2 md:left-64 md:translate-x-0 w-72 md:w-96 h-72 md:h-96 max-w-[100vw] bg-amber-500/5 rounded-full blur-3xl pointer-events-none animate-pulse-slow z-0" aria-hidden="true" />
-      <div className="fixed bottom-10 right-0 md:right-10 w-72 md:w-[30rem] h-72 md:h-[30rem] max-w-[100vw] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none animate-pulse-slow z-0" style={{ animationDelay: '-3s' }} aria-hidden="true" />
 
       <div className="relative z-10">
-        <header className="border-b border-white/10 bg-midnight-900/70 backdrop-blur-md px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm shadow-emerald-500/10">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399] animate-ping" />
-              Ambiente Seguro &amp; Criptografado
-            </span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-midnight-800 text-slate-300 border border-white/10">
-              <BadgeCheck size={14} className="text-amber-400" />
-              Profissionais Registrados no CRP
-            </span>
-          </div>
-          <a className="text-xs text-slate-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors group" href="tel:188">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80 animate-pulse" />
-            Precisa desabafar agora?{' '}
-            <span className="font-semibold text-slate-300 group-hover:underline inline-flex items-center gap-1">
-              <Phone size={12} /> Ligue 188 (CVV gratuito)
-            </span>
-          </a>
-        </header>
+        {/* Os selos "Ambiente Seguro & Criptografado" e "Profissionais
+            Registrados no CRP" saíram: eram frase de vitrine, e a segunda
+            ficava ao lado de "CRP não informado" na conta de demonstração.
+            Fica o que muda o que a pessoa faz agora: o CVV. */}
+        <a
+          className="flex items-center gap-2 text-sm text-gray-300 hover:text-white border-l-2 border-amber-400 pl-3 py-1 w-fit"
+          href="tel:188"
+        >
+          <Phone size={14} className="text-amber-400" aria-hidden="true" />
+          Precisa falar com alguém agora? Ligue 188, o CVV. É gratuito e funciona 24 horas.
+        </a>
 
         <div className="pt-8 pb-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-md border border-amber-500/20 shadow-sm">
+                <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-md border border-amber-500/20 shadow-sm">
                   Espaço de Acolhimento
                 </span>
                 <span className="text-xs text-slate-400">|</span>
@@ -315,7 +304,7 @@ export function AgendaPage() {
               </p>
             </div>
             <div className="flex items-center gap-3 bg-midnight-850 px-4 py-2.5 rounded-2xl border border-white/10 shadow-sm transition-all hover:border-emerald-500/30 shrink-0">
-              <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.9)] animate-ping" />
+              <div className="w-3 h-3 rounded-full bg-emerald-400" />
               <div>
                 <p className="text-xs text-slate-400">Próximo compromisso</p>
                 <p className="text-sm font-bold text-white flex items-center gap-2 tabular-nums">{statusProximo}</p>
@@ -335,7 +324,7 @@ export function AgendaPage() {
             />
           ) : (
             <section
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-midnight-800 via-midnight-850 to-midnight-800 border border-dashed border-midnight-600 p-6 sm:p-8 text-center"
+              className="relative overflow-hidden rounded-3xl bg-midnight-800 border border-dashed border-midnight-600 p-6 sm:p-8 text-center"
               data-purpose="imminent-session-hero"
             >
               <CalendarHeart size={40} className="mx-auto mb-3 text-emerald-400" />
@@ -345,7 +334,7 @@ export function AgendaPage() {
               </p>
               <button
                 onClick={irParaApoio}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-midnight-950 font-extrabold text-sm transition-all hover:-translate-y-0.5 active:scale-95 animate-glow-cta"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-midnight-950 font-extrabold text-sm transition-all hover:-translate-y-0.5 active:scale-95"
               >
                 Buscar psicólogo
                 <ArrowRight size={16} />
@@ -379,11 +368,8 @@ export function AgendaPage() {
           </div>
         </div>
 
-        <footer className="mt-16 text-center text-xs text-slate-500 max-w-4xl mx-auto space-y-1.5" data-purpose="page-footer">
-          <p>Midnight Mentor © 2025 • Acolhimento e Orientação Emocional para Estudantes Pré-Vestibular.</p>
-          <p className="text-[11px] text-slate-600">
-            Todas as sessões são conduzidas por profissionais devidamente registrados e habilitados no Conselho Regional de Psicologia (CRP). Em caso de urgência emocional, ligue 188 (CVV).
-          </p>
+        <footer className="mt-12 pt-4 border-t border-linha text-xs text-gray-500" data-purpose="page-footer">
+          <p>O que você conversa na sessão fica entre você e o profissional. Em urgência emocional, ligue 188 (CVV).</p>
         </footer>
       </div>
     </div>

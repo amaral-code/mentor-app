@@ -49,9 +49,9 @@ export function TrocarSenha() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center px-4" style={{ background: '#0b1120' }}>
-      <div className="w-full max-w-sm glass rounded-3xl p-6 md:p-8 text-center animate-fade-up">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-4">
+    <div className="min-h-dvh flex items-center justify-center px-4" style={{ background: '#141310' }}>
+      <div className="w-full max-w-sm painel rounded-3xl p-6 md:p-8 text-center animate-fade-up">
+        <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center mx-auto mb-4">
           <Moon size={22} className="text-gray-900" />
         </div>
         <h1 className="text-lg font-bold text-white">Quase lá, crie sua senha</h1>
@@ -60,7 +60,7 @@ export function TrocarSenha() {
         </p>
         <div className="space-y-3 text-left">
           <label className="block">
-            <span className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Nova senha</span>
+            <span className="block text-xs text-gray-500 mb-1.5 font-medium">Nova senha</span>
             <input
               type="password"
               value={nova}
@@ -71,7 +71,7 @@ export function TrocarSenha() {
             />
           </label>
           <label className="block">
-            <span className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Repita a senha</span>
+            <span className="block text-xs text-gray-500 mb-1.5 font-medium">Repita a senha</span>
             <input
               type="password"
               value={confirma}

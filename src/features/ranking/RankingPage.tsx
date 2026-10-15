@@ -38,7 +38,7 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
     <div
       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
         isCurrentUser
-          ? 'bg-amber-500/8 border border-amber-500/15 shadow-[0_0_12px_rgba(245,158,11,0.04)]'
+          ? 'bg-amber-500/8 border border-amber-500/15'
           : 'hover:bg-white/[0.02] border border-transparent'
       }`}
     >
@@ -53,7 +53,7 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
 
       {/* Avatar */}
       {isCurrentUser ? (
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-sm font-bold text-gray-900 shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-sm font-bold text-gray-900 shrink-0">
           {entry.avatarInicial}
         </div>
       ) : (
@@ -199,20 +199,20 @@ export function RankingPage() {
   }, [renderizadas, entradas.length]);
 
   return (
-    <div className="space-y-5 animate-fade-up">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/10 flex items-center justify-center">
-          <Trophy size={20} className="text-amber-400" />
-        </div>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Ranking</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Compare seu desempenho com outros alunos</p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-[1.75rem] text-white">Ranking</h1>
+        <p className="text-sm text-gray-400 mt-1">XP acumulado no app. Os outros alunos aparecem por apelido.</p>
+      </header>
+
+      {data?.simulado && (
+        <p role="status" className="text-sm text-amber-300 border-l-2 border-amber-400 pl-3">
+          Lista de exemplo: o app está sem banco de dados, então estes nomes e números são fictícios.
+        </p>
+      )}
 
       {/* Filter tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Recorte do ranking">
         {FILTERS.map(f => {
           const isActive = filter === f.id;
           const Icon = f.icon;
@@ -220,10 +220,11 @@ export function RankingPage() {
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-sm font-medium transition-all ${
+              aria-pressed={isActive}
+              className={`flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-md text-sm font-medium transition-colors border ${
                 isActive
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200 border border-white/5 hover:bg-white/[0.03]'
+                  ? 'bg-folha-2 text-white border-gray-600'
+                  : 'text-gray-400 hover:text-white border-linha-forte'
               }`}
             >
               <Icon size={16} />
@@ -235,33 +236,23 @@ export function RankingPage() {
 
       {/* Stats summary */}
       {data && !loading && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums">{data.totalParticipantes}</p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Participantes</p>
-          </div>
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums">
-              {currentUserEntry?.posicao ? `${currentUserEntry.posicao}°` : 'sem posição'}
-            </p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Sua posição</p>
-          </div>
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums">
-              {gamification.xp.toLocaleString()}
-            </p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Seu XP</p>
-          </div>
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums"> Nv. {calcLevel(gamification.xp).level}
-            </p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Seu nível</p>
-          </div>
-        </div>
+        <dl className="grid grid-cols-2 md:grid-cols-4 border-y border-linha divide-x divide-linha">
+          {[
+            ['Sua posição', currentUserEntry?.posicao ? `${currentUserEntry.posicao}º` : 'sem posição'],
+            ['Participantes', String(data.totalParticipantes)],
+            ['Seu XP', gamification.xp.toLocaleString('pt-BR')],
+            ['Seu nível', String(calcLevel(gamification.xp).level)],
+          ].map(([rotulo, valor]) => (
+            <div key={rotulo} className="px-4 py-3">
+              <dt className="text-xs text-gray-500">{rotulo}</dt>
+              <dd className="numero text-xl text-white mt-0.5">{valor}</dd>
+            </div>
+          ))}
+        </dl>
       )}
 
       {/* Ranking list */}
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="painel rounded-2xl overflow-hidden">
         {erroRanking && !loading ? (
           <div className="p-6 text-center">
             <p className="text-sm text-amber-300">{erroRanking}</p>
@@ -281,6 +272,11 @@ export function RankingPage() {
         ) : (
           <div className="p-3 space-y-1">
             {/* Header info */}
+            {data && !data.simulado && entradas.length === 1 && (
+              <p className="px-3 pt-2 pb-3 text-sm text-gray-400">
+                Por enquanto só você está aqui. O ranking enche quando os colegas da turma começarem a ganhar XP.
+              </p>
+            )}
             {data && entradas.length === 0 && (
               <div className="text-center py-12 flex flex-col items-center">
                 {/* Estado vazio com o mascote em vez de caixa cinza */}
@@ -290,11 +286,11 @@ export function RankingPage() {
                   width={112}
                   height={112}
                   loading="lazy"
-                  className="w-28 h-28 object-contain mb-3 opacity-90 motion-safe:animate-float-suave"
+                  className="w-28 h-28 object-contain mb-3 opacity-90"
                 />
-                <p className="text-gray-300 font-medium">Ranking ainda vazio</p>
+                <p className="text-gray-300 font-medium">Ninguém no ranking ainda</p>
                 <p className="text-sm text-gray-500 mt-1 max-w-xs">
-                  Chame a galera da sua turma. O sagui guarda o primeiro lugar.
+                  Ele aparece quando você e os colegas da turma ganharem XP no app.
                 </p>
               </div>
             )}
@@ -337,9 +333,11 @@ export function RankingPage() {
       </div>
 
       {/* Info footer */}
-      <div className="text-center text-xs text-gray-600 leading-relaxed">
-        <p><Trophy size={16} className="inline-block align-[-0.15em] text-amber-400" /> Ranking atualizado em tempo real. Complete atividades e quizzes para ganhar XP e subir posições!</p>
-      </div>
+      {/* Dizia "atualizado em tempo real": a lista é lida ao abrir a tela;
+          só o seu próprio XP acompanha na hora. */}
+      <p className="text-xs text-gray-500">
+        A posição dos colegas é lida quando você abre esta tela. O seu XP sobe na hora, a cada quiz, tarefa ou ciclo de foco.
+      </p>
     </div>
   );
 }

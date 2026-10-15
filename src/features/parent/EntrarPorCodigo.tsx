@@ -81,7 +81,7 @@ export function EntrarPorCodigo({ aoVincular, variante = 'compacto' }: Props) {
           destaque ? 'text-lg' : 'text-sm font-semibold text-gray-300'
         }`}
       >
-        <KeyRound size={destaque ? 18 : 15} className="text-violet-400 shrink-0 mt-[3px]" />
+        <KeyRound size={destaque ? 18 : 15} className="text-tinta-400 shrink-0 mt-[3px]" />
         {destaque ? 'Entre com o código do estudante' : 'Vincular outro estudante'}
       </h2>
       {destaque && (
@@ -109,7 +109,7 @@ export function EntrarPorCodigo({ aoVincular, variante = 'compacto' }: Props) {
           }}
           onKeyDown={(e) => e.key === 'Enter' && void vincular()}
           placeholder="A1B2C3D4"
-          className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white tracking-[0.2em] uppercase placeholder:tracking-normal placeholder:text-gray-600 outline-none focus:border-violet-500/40 min-h-[44px]"
+          className="flex-1 px-3 py-2.5 rounded-xl painel-suave border border-white/[0.05] text-sm text-white placeholder:tracking-normal placeholder:text-gray-600 outline-none focus:border-tinta-500/40 min-h-[44px]"
         />
         <button
           onClick={vincular}

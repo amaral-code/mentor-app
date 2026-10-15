@@ -95,10 +95,10 @@ export function OcrUploader({ apiKey, onTranscrito, onErro }: Props) {
         disabled={lendo}
         title="Digitalizar caderno (OCR)"
         aria-label={lendo ? 'Digitalizando caderno…' : 'Digitalizar caderno com a câmera'}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-cyan-300 transition-all hover:bg-cyan-500/20 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-tinta-400/30 bg-tinta-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-tinta-300 transition-all hover:bg-tinta-500/20 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
       >
         {lendo ? (
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cyan-300/30 border-t-cyan-300" />
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-tinta-300/30 border-t-tinta-300" />
         ) : (
           <ScanLine size={14} />
         )}

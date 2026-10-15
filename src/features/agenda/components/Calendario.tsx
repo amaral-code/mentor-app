@@ -99,7 +99,7 @@ export function Calendario({
             </span>
           </span>
           {feedback.confirmado && (
-            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider shrink-0 ml-2">Confirmado</span>
+            <span className="text-xs text-amber-400 font-bold shrink-0 ml-2">Confirmado</span>
           )}
         </div>
 
@@ -127,7 +127,7 @@ export function Calendario({
                   data-session="today"
                   id={`day-cell-${info.dia}`}
                   title="Sessão Confirmada Hoje!"
-                  className={`day-cell py-2 rounded-xl bg-amber-500 text-midnight-950 font-black shadow-lg shadow-amber-500/25 relative ring-2 ring-amber-400 ring-offset-2 ring-offset-midnight-900 cursor-pointer ${ativo ? 'day-selected-ring' : ''}`}
+                  className={`day-cell py-2 rounded-xl bg-amber-500 text-midnight-950 font-bold shadow-lg relative ring-2 ring-amber-400 ring-offset-2 ring-offset-midnight-900 cursor-pointer ${ativo ? 'day-selected-ring' : ''}`}
                 >
                   <span>{info.dia}</span>
                   <span className="block text-[9px] uppercase font-extrabold tracking-tighter">Hoje</span>
@@ -164,7 +164,7 @@ export function Calendario({
 
         <div className="mt-4 pt-3 border-t border-midnight-700/60 flex flex-wrap items-center justify-between text-xs text-slate-400">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-md bg-amber-500 shadow-sm shadow-amber-500/40" />
+            <span className="w-3 h-3 rounded-md bg-amber-500 shadow-sm" />
             <span>Sessão Hoje</span>
           </div>
           <div className="flex items-center gap-2">

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { BookMarked, Lightbulb, PenLine, Trophy } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { RedacaoFoto } from './RedacaoFoto';
-import { GlassCard } from '../../shared/ui/GlassCard';
+import { Painel } from '../../shared/ui/Painel';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';
@@ -35,13 +35,13 @@ function competenciaDesc(key: string): string {
 }
 
 function getNotaColor(nota: number): string {
-  if (nota >= 700) return '#10b981';
-  if (nota >= 400) return '#f59e0b';
-  return '#ef4444';
+  if (nota >= 700) return '#7cc78a';
+  if (nota >= 400) return '#e9a11c';
+  return '#f08a70';
 }
 
 function getNotaLabel(nota: number): string {
-  if (nota >= 900) return 'Excelente, nota dos sonhos!';
+  if (nota >= 900) return 'Excelente, perto do máximo de 1000';
   if (nota >= 700) return 'Excelente';
   if (nota >= 600) return 'Bom, próximo do ideal';
   if (nota >= 400) return 'Razoável, continue praticando';
@@ -91,6 +91,10 @@ export function EssayPage() {
   const [tema, setTema] = useState('');
   const [isCorrecting, setIsCorrecting] = useState(false);
   const lastCorrection = useAppStore((s) => s.lastCorrection);
+  /* De onde veio a última nota. Sem IA a nota é uma estimativa por regras
+     (tamanho, conectivos, citações): a tela precisa dizer isso, e não
+     apresentar os dois do mesmo jeito. */
+  const [corrigidaPorIA, setCorrigidaPorIA] = useState<boolean | null>(null);
   const setLastCorrection = useAppStore((s) => s.setLastCorrection);
   const addXP = useAppStore((s) => s.addXP);
   const addLog = useAppStore((s) => s.addLog);
@@ -131,11 +135,14 @@ export function EssayPage() {
 
   async function runCorrection(body: string, themeText?: string, isChallenge = false): Promise<EssayCorrection> {
     let correction: EssayCorrection;
+    // Sem a espera artificial de 800 ms que havia no ramo sem IA: a conta
+    // é local e instantânea, e fingir processamento só atrasava o aluno.
     if (aiAvailable(apiKey)) {
       correction = await correctEssayAI(body, apiKey, themeText || undefined);
+      setCorrigidaPorIA(true);
     } else {
-      await new Promise(r => setTimeout(r, 800));
       correction = correctEssay(body, themeText || undefined);
+      setCorrigidaPorIA(false);
     }
     setLastCorrection(correction);
     const xpGain = correction.notaFinal >= 600 ? 100 : 50;
@@ -268,64 +275,74 @@ export function EssayPage() {
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const challengeWordCount = challengeText.trim() ? challengeText.trim().split(/\s+/).length : 0;
   const extensionPct = Math.min(100, Math.round((challengeWordCount / 300) * 100));
-  const timerColor = timeLeft <= 600 ? '#ef4444' : timeLeft <= 3600 ? '#f59e0b' : '#10b981';
+  const timerColor = timeLeft <= 600 ? '#f08a70' : timeLeft <= 3600 ? '#e9a11c' : '#7cc78a';
   const minutesUsed = startedAt ? Math.floor((Date.now() - startedAt) / 60000) : 0;
 
   return (
-    <div className="space-y-5 animate-fade-up">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Redação 1000</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Treine sua redação ENEM com correção automática pelas 5 competências.</p>
+          <h1 className="text-[1.75rem] text-white">Redação</h1>
+          <p className="text-sm text-gray-400 mt-1 max-w-xl">
+            Escreva aqui ou fotografe a folha do caderno. A nota sai pelas cinco competências do ENEM, de 0 a 200 cada.
+          </p>
         </div>
         {challengeResults.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="badge badge-purple"><Trophy size={16} className="inline-block align-[-0.15em] text-amber-400" /> {challengeResults.length} desafios</span>
-            <span className="badge badge-emerald">Nota média: {Math.round(challengeResults.reduce((a, r) => a + r.notaFinal, 0) / challengeResults.length)}</span>
-          </div>
+          <p className="text-sm text-gray-400">
+            {challengeResults.length} {challengeResults.length === 1 ? 'redação cronometrada' : 'redações cronometradas'} · média{' '}
+            <span className="font-mono text-white">{Math.round(challengeResults.reduce((a, r) => a + r.notaFinal, 0) / challengeResults.length)}</span>
+          </p>
         )}
-      </div>
+      </header>
 
-      <GlassCard>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-300">Sua Redação</h2>
-          <div className="flex items-center gap-2">
-            {aiAvailable(apiKey) && <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Correção IA</span>}
-            {wordCount > 0 && (
-              <span className={`badge ${wordCount >= 150 ? 'badge-emerald' : 'badge-red'}`}>
-                {wordCount} palavras
-              </span>
-            )}
-          </div>
-        </div>
+      {/* A folha: o tema é o título, o texto corre sobre pauta. O editor
+          era um cartão com dois campos de formulário; quem escreve
+          redação pensa em folha, e a pauta ajuda a ver o tamanho do texto. */}
+      <section aria-label="Sua redação" className="painel rounded-2xl overflow-hidden">
+        <label htmlFor="redacao-tema" className="sr-only">Tema da redação</label>
         <input
+          id="redacao-tema"
           type="text"
           value={tema}
           onChange={e => setTema(e.target.value)}
-          placeholder="Tema da redação (ex: 'Desafios da inclusão digital no Brasil')"
-          className="w-full bg-white/[0.03] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/30 mb-4 transition-all"
+          placeholder="Tema da redação, por exemplo: Desafios da inclusão digital no Brasil"
+          className="!w-full !bg-transparent !border-0 !border-b !border-linha !rounded-none !px-5 md:!px-7 !py-4 font-display !text-lg text-white"
         />
+        <label htmlFor="redacao-texto" className="sr-only">Texto da redação</label>
         <textarea
+          id="redacao-texto"
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="Digite sua redação aqui..."
-          rows={8}
-          className="w-full bg-transparent resize-none text-sm text-white leading-relaxed placeholder-gray-600 focus:outline-none md:rows-12"
+          placeholder="Comece pela introdução..."
+          rows={12}
+          className="challenge-sheet !w-full !bg-transparent !border-0 !rounded-none resize-y !px-5 md:!px-7 !py-1 !text-base text-gray-100 !leading-8 min-h-[24rem] focus:!bg-transparent"
         />
-        <div className="flex items-center justify-between mt-4 gap-3">
-          <button
-            onClick={startChallenge}
-            className="btn-secondary shrink-0"
-            title="Entre no Modo Desafio: tema aleatório, coletânea de apoio e 3 horas para escrever como no ENEM"
-          > Modo Desafio
-          </button>
-          <button onClick={handleCorrect} disabled={text.trim().length < 50 || isCorrecting} className="btn-primary">
-            {isCorrecting ? (
-              <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> Corrigindo...</>
-            ) : 'Corrigir Redação'}
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 md:px-7 py-3 border-t border-linha">
+          <p className="text-sm text-gray-500" aria-live="polite">
+            <span className="font-mono text-gray-300">{wordCount}</span> {wordCount === 1 ? 'palavra' : 'palavras'}
+            {!aiAvailable(apiKey) && <span className="block sm:inline sm:ml-3">Sem IA, a correção é feita por regras do próprio app.</span>}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={startChallenge}
+              className="btn-secondary"
+              title="Tema sorteado, coletânea de apoio e 3 horas no relógio, como no dia da prova"
+            >
+              Treinar com tempo de prova
+            </button>
+            <button
+              onClick={handleCorrect}
+              disabled={text.trim().length < 50 || isCorrecting}
+              title={text.trim().length < 50 ? 'Escreva pelo menos algumas linhas para corrigir' : undefined}
+              className="btn-primary"
+            >
+              {isCorrecting ? (
+                <><span className="w-4 h-4 anel-carregando rounded-full animate-spin" aria-hidden="true" /> Corrigindo...</>
+              ) : 'Corrigir'}
+            </button>
+          </div>
         </div>
-      </GlassCard>
+      </section>
 
       {/* Redacao escrita a mao: entra logo abaixo do editor porque e a
           MESMA tarefa por outro caminho - quem escreveu no caderno nao
@@ -340,8 +357,15 @@ export function EssayPage() {
       />
 
       {lastCorrection && (
-        <GlassCard>
-          <h2 className="text-sm font-semibold text-gray-300 mb-5">Resultado da Correção</h2>
+        <Painel>
+          <h2 className="text-xl text-white">Nota</h2>
+          <p className="text-sm text-gray-500 mt-0.5 mb-5">
+            {corrigidaPorIA === false
+              ? 'Estimativa por regras do próprio app (tamanho do texto, conectivos e citações). Com a IA configurada, a correção lê o texto de verdade.'
+              : corrigidaPorIA === true
+                ? 'Correção feita pela IA, competência por competência.'
+                : 'Última correção salva neste aparelho.'}
+          </p>
 
           <div className="flex flex-col items-center mb-8">
             <ScoreRing nota={lastCorrection.notaFinal} />
@@ -381,7 +405,7 @@ export function EssayPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {lastCorrection.pontosFortes.length > 0 && (
               <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                <h3 className="text-xs font-semibold text-emerald-400 mb-3 uppercase tracking-wider">Pontos Fortes</h3>
+                <h3 className="text-xs font-semibold text-emerald-400 mb-3">Pontos Fortes</h3>
                 <ul className="space-y-1.5">
                   {lastCorrection.pontosFortes.map((p, i) => (
                     <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
@@ -394,7 +418,7 @@ export function EssayPage() {
             )}
             {lastCorrection.pontosMelhorar.length > 0 && (
               <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                <h3 className="text-xs font-semibold text-amber-400 mb-3 uppercase tracking-wider">A Melhorar</h3>
+                <h3 className="text-xs font-semibold text-amber-400 mb-3">A Melhorar</h3>
                 <ul className="space-y-1.5">
                   {lastCorrection.pontosMelhorar.map((p, i) => (
                     <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
@@ -406,12 +430,12 @@ export function EssayPage() {
               </div>
             )}
           </div>
-        </GlassCard>
+        </Painel>
       )}
 
       {/* ==== Histórico de desafios ==== */}
       {challengeResults.length === 0 && (
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <EmptyState
             pose="estudando"
             compacto
@@ -422,7 +446,7 @@ export function EssayPage() {
       )}
 
       {challengeResults.length > 0 && (
-        <GlassCard>
+        <Painel>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-300"><Trophy size={16} className="inline-block align-[-0.15em] text-amber-400" /> Histórico de Desafios</h2>
             <span className="badge badge-gray">{challengeResults.length} rodadas</span>
@@ -470,7 +494,7 @@ export function EssayPage() {
               );
             })}
           </div>
-        </GlassCard>
+        </Painel>
       )}
 
       {/* ==== MODO DESAFIO - experiência de prova ENEM ==== */}
@@ -501,7 +525,7 @@ export function EssayPage() {
             <div className="relative z-10 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-6 mb-5 overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-5 items-center">
                 <div>
-                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-2 inline-block"> Proposta de Redação
+                  <span className="text-xs font-semibold text-emerald-400 mb-2 inline-block"> Proposta de Redação
                   </span>
                   <h2 className="text-xl md:text-2xl font-extrabold text-white leading-snug challenge-q">
                     {theme.tema}
@@ -531,7 +555,7 @@ export function EssayPage() {
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-2xl font-extrabold tabular-nums font-mono text-white">{formatTime(timeLeft)}</span>
-                        <span className="text-[9px] uppercase tracking-widest text-white/50">tempo restante</span>
+                        <span className="text-xs text-white/50">tempo restante</span>
                       </div>
                     </div>
                     {startedAt && !challengeSubmitted && (
@@ -544,15 +568,15 @@ export function EssayPage() {
               {/* Stats */}
               <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div className="challenge-stat px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Extensão ideal</div>
+                  <div className="text-xs text-white/50 mb-0.5">Extensão ideal</div>
                   <div className="text-base font-bold text-white">300+ palavras</div>
                 </div>
                 <div className="challenge-stat px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Nota máxima</div>
+                  <div className="text-xs text-white/50 mb-0.5">Nota máxima</div>
                   <div className="text-base font-bold text-white">1000 pontos</div>
                 </div>
                 <div className="challenge-stat px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Competências</div>
+                  <div className="text-xs text-white/50 mb-0.5">Competências</div>
                   <div className="text-base font-bold text-white">5 de 5</div>
                 </div>
               </div>
@@ -560,13 +584,13 @@ export function EssayPage() {
 
             {/* Coletânea */}
             <div className="mb-5">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-2"> Textos de Apoio (coletânea): repertório sociocultural
+              <h3 className="text-xs font-semibold text-gray-400 mb-2.5 flex items-center gap-2"> Textos de Apoio (coletânea): repertório sociocultural
                 <span className="badge badge-gray text-[9px] uppercase">use como base para seus argumentos</span>
               </h3>
               <div className="space-y-2.5">
                 {theme.coletanea.map((t, i) => (
                   <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/5 p-4 pl-5 relative overflow-hidden">
-                    <span className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400/60 to-amber-400/40" />
+                    <span className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400/60" />
                     <p className="text-xs font-semibold text-gray-300 mb-1.5 flex items-center gap-2">
                       <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-500/15 text-amber-300 text-[10px] font-bold"> T{i + 1}
                       </span>
@@ -586,7 +610,7 @@ export function EssayPage() {
             <div className="flex-1 min-h-0 flex flex-col">
               <div className="flex items-center justify-between gap-3 mb-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-white uppercase tracking-wider"> Sua Redação</span>
+                  <span className="text-xs font-semibold text-white"> Sua Redação</span>
                   <span className="badge badge-gray">folha oficial</span>
                 </div>
                 <span className={`badge ${challengeWordCount >= 150 ? 'badge-emerald' : 'badge-red'}`}>
@@ -612,8 +636,8 @@ export function EssayPage() {
                     style={{
                       width: `${extensionPct}%`,
                       background: challengeWordCount >= 150
-                        ? 'linear-gradient(90deg,#10b981,#34d399)'
-                        : 'linear-gradient(90deg,#f59e0b,#fbbf24)',
+                        ? 'linear-gradient(90deg,#7cc78a,#97d3a2)'
+                        : 'linear-gradient(90deg,#e9a11c,#f3b53f)',
                     }}
                   />
                 </div>
@@ -629,7 +653,7 @@ export function EssayPage() {
             {challengeSubmitted ? (
               challengeIsCorrecting ? (
                 <div className="flex items-center justify-center gap-2 py-5 text-sm text-gray-400">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Corrigindo redação como no ENEM...
+                  <span className="w-4 h-4 anel-carregando rounded-full animate-spin" /> Corrigindo redação como no ENEM...
                 </div>
               ) : challengeCorrection ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">

@@ -147,7 +147,7 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
       {/* Content: Chat + Challenge */}
       <div className="flex-1 flex flex-col lg:flex-row gap-3 overflow-hidden min-h-0">
         {/* Chat Panel - WhatsApp style */}
-        <div className="flex-1 flex flex-col glass rounded-2xl overflow-hidden min-h-0">
+        <div className="flex-1 flex flex-col painel rounded-2xl overflow-hidden min-h-0">
           <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-white/[0.04]">
             <h2 className="text-sm font-semibold text-white">Chat da Liga</h2>
             <span className="text-xs text-gray-500">{messages.length} mensagens</span>
@@ -209,7 +209,7 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
             <button
               onClick={sendMessage}
               disabled={!message.trim() || sending}
-              className="h-11 w-11 flex items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-30 hover:brightness-110 transition-all shrink-0 shadow-lg shadow-emerald-500/20"
+              className="h-11 w-11 flex items-center justify-center rounded-full bg-emerald-500 text-white disabled:opacity-30 hover:brightness-110 transition-all shrink-0 shadow-lg"
             >
               <SendHorizontal size={18} />
             </button>
@@ -218,7 +218,7 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
 
         {/* Challenge Panel (side) */}
         <div className="lg:w-72 flex flex-col gap-3">
-          <div className="glass rounded-2xl p-4">
+          <div className="painel rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles size={16} className="text-amber-400" />
               <h2 className="text-sm font-semibold text-white">Desafio da Liga</h2>
@@ -230,19 +230,19 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
                 <span className="text-amber-400 font-bold tabular-nums">{timer?.label || ''}</span>
               </div>
               <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                <div className="h-full rounded-full bg-amber-500"
                   style={{ width: `${(1 - (Date.now() % 86400000) / 86400000) * 100}%` }} />
               </div>
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-4">
+          <div className="painel rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-semibold text-white">Metas</h2>
               <span className="text-xs text-gray-500">{progress}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/5 overflow-hidden mb-3">
-              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: `${progress}%` }} />
+              <div className="h-full rounded-full bg-emerald-500" style={{ width: `${progress}%` }} />
             </div>
             <div className="space-y-1.5">
               {goals.map(goal => {
@@ -262,15 +262,15 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
             </div>
           </div>
 
-          <div className="glass rounded-2xl p-3">
+          <div className="painel rounded-2xl p-3">
             <div className="flex -space-x-1.5">
               {joinedByNames.slice(0, 6).map((name, i) => (
-                <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-[9px] font-bold text-white ring-2 ring-[#0b1120]">
+                <div key={i} className="w-7 h-7 rounded-full bg-gray-600 flex items-center justify-center text-[9px] font-bold text-white ring-2 ring-[#141310]">
                   {(name || '?').charAt(0).toUpperCase()}
                 </div>
               ))}
               {joinedByNames.length > 6 && (
-                <div className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-[9px] text-gray-400 ring-2 ring-[#0b1120]">
+                <div className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-[9px] text-gray-400 ring-2 ring-[#141310]">
                   +{joinedByNames.length - 6}
                 </div>
               )}

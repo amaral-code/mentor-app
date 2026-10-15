@@ -108,11 +108,7 @@ export function OnboardingFlow() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#0b1120' }}>
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-amber-500/5 blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/5 blur-[100px]" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#141310' }}>
 
       <div className="w-full max-w-md animate-fade-up relative z-10">
         {/* Progresso */}
@@ -128,7 +124,7 @@ export function OnboardingFlow() {
           ))}
         </div>
 
-        <div className="glass rounded-3xl p-7 relative overflow-hidden">
+        <div className="painel rounded-3xl p-7 relative overflow-hidden">
           {passo === 1 && (
             <div className="text-center">
               <img
@@ -136,7 +132,7 @@ export function OnboardingFlow() {
                 alt="Sagui dando boas-vindas"
                 width={128}
                 height={128}
-                className="w-32 h-32 object-contain mx-auto drop-shadow-[0_8px_24px_rgba(245,158,11,0.18)] motion-safe:animate-float-suave"
+                className="w-32 h-32 object-contain mx-auto"
               />
               <h1 className="text-xl font-extrabold text-white mt-4">
                 Boas-vindas, {primeiroNome}!
@@ -152,7 +148,7 @@ export function OnboardingFlow() {
 
           {passo === 2 && (
             <div>
-              <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mb-4">
+              <span className="w-11 h-11 rounded-2xl bg-amber-400 flex items-center justify-center mb-4">
                 <Target size={20} className="text-gray-900" />
               </span>
               <h1 className="text-xl font-extrabold text-white">O que você quer conquistar?</h1>
@@ -168,7 +164,7 @@ export function OnboardingFlow() {
                       aria-pressed={ativa}
                       className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-semibold border transition-all min-h-[44px] active:scale-95 ${
                         ativa
-                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 shadow-[0_0_14px_rgba(245,158,11,0.2)]'
+                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
                           : 'bg-white/[0.03] text-gray-400 border-white/10 hover:border-white/20 hover:text-gray-200'
                       }`}
                     >
@@ -183,7 +179,7 @@ export function OnboardingFlow() {
 
           {passo === 3 && (
             <div>
-              <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center mb-4">
+              <span className="w-11 h-11 rounded-2xl bg-tinta-400 flex items-center justify-center mb-4">
                 <Clock size={20} className="text-white" />
               </span>
               <h1 className="text-xl font-extrabold text-white">Quanto tempo você tem por dia?</h1>
@@ -233,7 +229,7 @@ export function OnboardingFlow() {
 
           {passo === 4 && (
             <div>
-              <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center mb-4">
+              <span className="w-11 h-11 rounded-2xl bg-tinta-400 flex items-center justify-center mb-4">
                 <Cake size={20} className="text-white" />
               </span>
               <h1 className="text-xl font-extrabold text-white">Quando você nasceu?</h1>
@@ -245,7 +241,7 @@ export function OnboardingFlow() {
                 psicólogo pelo app precisa da autorização de um responsável. É a lei
                 (LGPD). Nada disso aparece para colegas ou professores.
               </p>
-              <label htmlFor="ob-nascimento" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+              <label htmlFor="ob-nascimento" className="block text-xs text-gray-500 mb-1.5 font-medium">
                 Data de nascimento
               </label>
               <input
@@ -255,7 +251,7 @@ export function OnboardingFlow() {
                 onChange={(e) => setNascimento(e.target.value)}
                 aria-invalid={!!erroNascimento}
                 aria-describedby={erroNascimento ? 'ob-nascimento-erro' : undefined}
-                className={`w-full px-3 py-3 rounded-xl glass-light border text-sm text-white outline-none transition-colors min-h-[52px] ${
+                className={`w-full px-3 py-3 rounded-xl painel-suave border text-sm text-white outline-none transition-colors min-h-[52px] ${
                   erroNascimento ? 'border-red-500/50' : 'border-white/10 focus:border-amber-400/40'
                 }`}
               />
@@ -280,7 +276,7 @@ export function OnboardingFlow() {
 
           {passo === 5 && (
             <div className="text-center">
-              <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(16,185,129,0.25)]">
+              <span className="w-14 h-14 rounded-2xl bg-emerald-400 flex items-center justify-center mx-auto mb-4">
                 <Rocket size={24} className="text-white" />
               </span>
               <h1 className="text-xl font-extrabold text-white">Tudo pronto!</h1>
@@ -329,8 +325,8 @@ export function OnboardingFlow() {
                 disabled={salvando}
                 className="btn-primary px-6 h-12 inline-flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {salvando && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                {salvando ? 'Preparando tudo…' : 'Começar minha jornada'}
+                {salvando && <span className="w-4 h-4 anel-carregando rounded-full animate-spin" />}
+                {salvando ? 'Preparando tudo…' : 'Começar a estudar'}
               </button>
             )}
           </div>

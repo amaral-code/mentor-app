@@ -59,7 +59,23 @@ export default defineConfig(({ mode }) => {
         injectRegister: false,
         manifest: false,
         workbox: {
-          globPatterns: ['**/*.{js,css,html,woff,woff2,ttf,png,svg}'],
+          globPatterns: ['**/*.{js,css,html,woff2,png,svg}'],
+          /*
+           * Fora do precache:
+           *  - `mascot/` e `mascot*.png` da raiz: material de trabalho das
+           *    ferramentas em tools/ (normalize_mascots.py etc.), 22 MB que
+           *    nenhuma tela usa. O app usa as poses de /assets/. Antes, todo
+           *    aluno baixava isso ao instalar o app, no 4G.
+           *  - Fontes de alfabetos que o app não usa (cirílico, grego,
+           *    vietnamita) e o formato .woff antigo: o navegador nunca pede
+           *    esses arquivos (unicode-range e woff2), mas o service worker
+           *    baixava todos.
+           */
+          globIgnores: [
+            'mascot/**',
+            'mascot*.png',
+            '**/*-{cyrillic,cyrillic-ext,greek,greek-ext,vietnamese}-*.woff2',
+          ],
           // Mascotes do shell passam de 2 MiB (limite padrao do workbox):
           // sem este teto eles ficariam fora do precache e o offline
           // quebraria imagens da UI. Continua so App Shell, sem rede.

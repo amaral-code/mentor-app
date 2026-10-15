@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, FileImage, Loader2, RefreshCw, ScanLine, TriangleAlert } from 'lucide-react';
+import { Camera, FileImage, Loader2, RefreshCw, TriangleAlert } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { prepararFotoRedacao, formatarBytes } from '../../shared/lib/imagePrep';
 import {
@@ -36,7 +36,7 @@ interface RedacaoFotoProps {
 }
 
 const CORES_NOTA = (nota: number) =>
-  nota >= 160 ? '#10b981' : nota >= 120 ? '#f59e0b' : nota >= 80 ? '#f97316' : '#ef4444';
+  nota >= 160 ? '#7cc78a' : nota >= 120 ? '#e9a11c' : nota >= 80 ? '#f29a5e' : '#f08a70';
 
 export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
   // Seletores atomicos: o processamento da foto atualiza etapa/previa varias
@@ -138,35 +138,32 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
   }
 
   return (
-    <div className="glass rounded-2xl p-5 space-y-4">
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/15 to-cyan-600/10 flex items-center justify-center shrink-0">
-          <ScanLine size={18} className="text-sky-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-gray-300">Escreveu no caderno?</h2>
-          <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
-            Fotografe a folha: a IA transcreve a sua letra e corrige pelas 5 competências do ENEM.
-          </p>
-        </div>
+    <div className="border-t border-linha pt-6 space-y-4">
+      <div>
+        <h2 className="text-lg text-white">Escreveu à mão?</h2>
+        <p className="text-sm text-gray-400 mt-0.5">
+          Fotografe a folha: a IA transcreve a sua letra e corrige pelas cinco competências.
+        </p>
       </div>
 
       {!resultado && (
         <>
-          <div className="grid grid-cols-2 gap-2">
+          {/* Secundários: a ação principal da tela é "Corrigir", lá em
+              cima. Dois botões âmbar disputavam o olho. */}
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => inputCamera.current?.click()}
               disabled={enviando}
-              className="btn-primary !py-3 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              className="btn-secondary"
             >
               <Camera size={16} /> Tirar foto
             </button>
             <button
               onClick={() => inputArquivo.current?.click()}
               disabled={enviando}
-              className="btn-secondary !py-3 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              className="btn-secondary"
             >
-              <FileImage size={16} /> Carregar do caderno
+              <FileImage size={16} /> Escolher uma foto
             </button>
           </div>
 
@@ -220,7 +217,7 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
         <div className="grid gap-4 lg:grid-cols-2">
           {/* ---------------- Lado A: imagem + transcricao ---------------- */}
           <div className="space-y-3 min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-gray-500">Sua folha</p>
+            <p className="text-xs text-gray-500">Sua folha</p>
 
             {(previa || resultado.image_url) && (
               <a
@@ -249,7 +246,7 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[11px] uppercase tracking-wider text-gray-500">Transcrição (OCR)</p>
+                <p className="text-xs text-gray-500">Transcrição (OCR)</p>
                 <button
                   onClick={() => onUsarTranscricao(resultado.transcription)}
                   className="text-[11px] text-amber-400 hover:text-amber-300"
@@ -271,13 +268,13 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
           {/* ---------------- Lado B: nota e competencias ---------------- */}
           <div className="space-y-3 min-w-0">
             <div className="flex items-baseline justify-between">
-              <p className="text-[11px] uppercase tracking-wider text-gray-500">Correção ENEM</p>
+              <p className="text-xs text-gray-500">Correção ENEM</p>
               <span className="text-[11px] text-gray-500 truncate max-w-[60%]" title={resultado.detected_theme}>
                 {resultado.detected_theme}
               </span>
             </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 p-4 text-center">
+            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-center">
               <p className="text-4xl font-extrabold text-white tabular-nums">{resultado.total_score}</p>
               <p className="text-[11px] text-gray-500">de 1000</p>
             </div>
@@ -320,11 +317,11 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
             )}
 
             {resultado.actionable_improvements.length > 0 && (
-              <div className="rounded-xl bg-sky-500/[0.06] border border-sky-500/15 p-3">
-                <p className="text-[11px] font-semibold text-sky-300 mb-1.5">Na próxima redação</p>
+              <div className="rounded-xl bg-tinta-500/[0.06] border border-tinta-500/15 p-3">
+                <p className="text-[11px] font-semibold text-tinta-300 mb-1.5">Na próxima redação</p>
                 <ul className="space-y-1">
                   {resultado.actionable_improvements.map((s) => (
-                    <li key={s} className="text-[11px] text-sky-100/80 leading-snug">• {s}</li>
+                    <li key={s} className="text-[11px] text-tinta-100/80 leading-snug">• {s}</li>
                   ))}
                 </ul>
               </div>

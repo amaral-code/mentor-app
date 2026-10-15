@@ -24,7 +24,7 @@ export function ClassInsightCard({ insight, horas }: Props) {
   return (
     <article
       aria-label={`Alerta sobre ${topico}`}
-      className={`rounded-2xl border p-5 bg-midnight-900/80 backdrop-blur transition-colors ${
+      className={`rounded-2xl border p-5 bg-midnight-900/80 transition-colors ${
         critico ? 'border-red-500/30' : 'border-white/10 hover:border-amber-500/30'
       }`}
     >
@@ -38,11 +38,11 @@ export function ClassInsightCard({ insight, horas }: Props) {
           <Flame size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="text-xs font-semibold text-slate-500">
             {critico ? 'Retomar em aula' : 'Atenção'} · {insight.materia || 'Geral'}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-slate-200">
-            <span className="font-black text-white text-lg tabular-nums">
+            <span className="font-bold text-white text-lg tabular-nums">
               {total > 0 ? `${n} de ${total}` : n}
             </span>{' '}
             {n === 1 ? 'aluno errou' : 'alunos erraram'} questões de{' '}

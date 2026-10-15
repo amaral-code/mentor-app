@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Headphones, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { conteudoRepository } from '../../shared/storage/ConteudoRepository';
 import { useAppStore } from '../../stores/appStore';
 import { aiAvailable, gerarRoteiroAudio, sintetizarAudio, hasProxy } from '../../shared/lib/aiService';
@@ -145,19 +145,16 @@ export function AudioPillsPage() {
   return (
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-600/10 flex items-center justify-center">
-          <Headphones size={20} className="text-violet-400" />
-        </div>
         <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-white">Pilulas de Audio</h1>
+          <h1 className="text-[1.75rem] text-white">Pílulas de áudio</h1>
           <p className="text-sm text-gray-500 mt-0.5">Tres minutos por tema. Fone no ouvido, tela apagada.</p>
         </div>
       </div>
 
       {ativo && (
-        <div className="glass rounded-2xl p-5 space-y-4 border border-violet-500/15">
+        <div className="painel rounded-2xl p-5 space-y-4 border border-tinta-500/15">
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-violet-400/80">{ativo.materia}</p>
+            <p className="text-xs text-tinta-400/80">{ativo.materia}</p>
             <h2 className="text-lg font-bold text-white mt-0.5">{ativo.titulo}</h2>
             <p className="text-xs text-gray-500 mt-1">{ativo.resumo}</p>
           </div>
@@ -211,20 +208,20 @@ export function AudioPillsPage() {
         </div>
       )}
 
-      {carregando && <p className="text-sm text-gray-500 text-center py-8">Carregando catálogo...</p>}
+      {carregando && <p className="text-sm text-gray-500 py-8" role="status">Carregando os áudios...</p>}
 
       {!carregando && modulos.length === 0 && (
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <EmptyState
             pose="estudando"
-            titulo="Nenhuma pílula disponivel"
-            descricao="Rode a migração 011 no Supabase para carregar o catálogo inicial de áudios."
+            titulo="Nenhuma pílula disponível ainda"
+            descricao="O catálogo de áudios ainda não foi carregado nesta escola. Enquanto isso, o Quiz e as Revisões funcionam normalmente."
           />
         </div>
       )}
 
       {porMateria.map(([materia, lista]) => (
-        <div key={materia} className="glass rounded-2xl p-5">
+        <div key={materia} className="painel rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-3">{materia}</h2>
           <div className="space-y-2">
             {lista.map((m) => {
@@ -233,13 +230,13 @@ export function AudioPillsPage() {
                 <button
                   key={m.id}
                   onClick={() => abrir(m)}
-                  className="w-full flex items-center gap-3 py-3 px-3 rounded-xl glass-light border border-white/[0.03] hover:border-violet-500/20 text-left press"
+                  className="w-full flex items-center gap-3 py-3 px-3 rounded-xl painel-suave border border-white/[0.03] hover:border-tinta-500/20 text-left press"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-tinta-500/10 flex items-center justify-center shrink-0">
                     {p?.concluido ? (
                       <CheckCircle2 size={16} className="text-emerald-400" />
                     ) : (
-                      <Sparkles size={16} className="text-violet-400" />
+                      <Sparkles size={16} className="text-tinta-400" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

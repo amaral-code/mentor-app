@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AbasPainel, CabecalhoPapel } from '../../shared/ui/CabecalhoPapel';
 import { useAppStore } from '../../stores/appStore';
-import { BellRing, GraduationCap, HeartHandshake, LogOut, Moon, UserPlus } from 'lucide-react';
+import { BellRing, GraduationCap, HeartHandshake, UserPlus } from 'lucide-react';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { ParentsDashboard } from './ParentsDashboard';
 import { PainelCuidado } from './PainelCuidado';
@@ -76,36 +77,13 @@ export function ParentPage() {
   }, [agendamentos, aluno]);
 
   return (
-    <div className="min-h-screen" style={{ background: '#0b1120' }}>
+    <div className="min-h-screen" style={{ background: '#141310' }}>
       {/* Header */}
-      <header className="glass border-b border-white/[0.03]">
-        <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/10">
-              <Moon size={20} className="text-gray-900" />
-            </div>
-            <div>
-              <h1 className="text-sm font-extrabold text-white">
-                <span className="text-gradient">Midnight Mentor</span>
-              </h1>
-              <p className="text-[10px] text-gray-500 tracking-wide uppercase">Painel dos Pais</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 hidden md:block">{session?.nome}</span>
-            <span className="px-2 py-1 rounded-full bg-violet-500/10 text-violet-400 text-[10px] font-medium border border-violet-500/20">
-              Responsável
-            </span>
-            <button onClick={logout} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Sair">
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </header>
+      <CabecalhoPapel area="Família" nome={session?.nome} onSair={logout} />
 
       {!aluno ? (
         <section className="max-w-5xl mx-auto px-4 md:px-8 py-6">
-          <div className="glass rounded-2xl p-6">
+          <div className="painel rounded-2xl p-6">
             <EntrarPorCodigo variante="destaque" aoVincular={() => void carregarVinculos()} />
           </div>
         </section>
@@ -122,8 +100,8 @@ export function ParentPage() {
                     onClick={() => setAlunoId(a.id)}
                     className={`shrink-0 px-3 py-2 rounded-xl text-sm border min-h-[44px] ${
                       aluno.id === a.id
-                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-200'
-                        : 'border-white/[0.04] glass-light text-gray-400'
+                        ? 'border-tinta-500/40 bg-tinta-500/10 text-tinta-200'
+                        : 'border-white/[0.04] painel-suave text-gray-400'
                     }`}
                   >
                     {a.nome}
@@ -134,36 +112,16 @@ export function ParentPage() {
           )}
 
           <section className="max-w-5xl mx-auto px-4 md:px-8 pt-6">
-            <div
-              role="tablist"
-              aria-label="Painel do responsável"
-              className="grid grid-cols-3 sm:flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 sm:w-fit"
-            >
-              {([
-                ['estudos', 'Estudos', GraduationCap],
-                ['cuidado', 'Bem-estar e apoio', HeartHandshake],
-                ['vincular', 'Outro estudante', UserPlus],
-              ] as const).map(([id, rotulo, Icone]) => (
-                <button
-                  key={id}
-                  role="tab"
-                  aria-selected={abaAtual === id}
-                  onClick={() => setAba(id)}
-                  className={`relative flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 rounded-xl px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-center leading-tight transition-all min-h-[52px] sm:min-h-[40px] ${
-                    abaAtual === id
-                      ? 'bg-violet-500/15 text-violet-100 border border-violet-500/30'
-                      : 'text-gray-400 hover:text-white border border-transparent'
-                  }`}
-                >
-                  <Icone size={15} /> {rotulo}
-                  {id === 'cuidado' && alertasAbertos > 0 && (
-                    <span className="absolute top-1 right-1 sm:static min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" aria-label={`${alertasAbertos} alerta(s) aberto(s)`}>
-                      {alertasAbertos}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+            <AbasPainel
+              rotulo="Painel do responsável"
+              atual={abaAtual}
+              onTrocar={setAba}
+              abas={[
+                { id: 'estudos', rotulo: 'Estudos', Icone: GraduationCap },
+                { id: 'cuidado', rotulo: 'Bem-estar e apoio', Icone: HeartHandshake, selo: alertasAbertos },
+                { id: 'vincular', rotulo: 'Outro estudante', Icone: UserPlus },
+              ] as const}
+            />
 
             {/* Alerta aberto aparece em QUALQUER aba: quem esta olhando
                 graficos nao pode deixar de ver que ha algo para agir. */}
@@ -183,7 +141,7 @@ export function ParentPage() {
 
           {abaAtual === null ? (
             <section className="max-w-5xl mx-auto px-4 md:px-8 py-6" aria-hidden="true">
-              <div className="glass rounded-2xl h-48 animate-pulse" />
+              <div className="painel rounded-2xl h-48 animate-pulse" />
             </section>
           ) : abaAtual === 'estudos' ? (
             <ParentsDashboard aluno={aluno} />
@@ -197,7 +155,7 @@ export function ParentPage() {
             </>
           ) : (
             <section className="max-w-5xl mx-auto px-4 md:px-8 py-6 pb-10">
-              <div className="glass rounded-2xl p-5">
+              <div className="painel rounded-2xl p-5">
                 {/* O proprio EntrarPorCodigo ja traz o titulo "Vincular
                     outro estudante": um h2 aqui virava titulo em dobro. */}
                 <EntrarPorCodigo aoVincular={() => void carregarVinculos()} />

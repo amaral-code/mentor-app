@@ -47,10 +47,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div
           className="min-h-screen flex items-center justify-center p-4"
-          style={{ background: '#0b1120' }}
+          style={{ background: '#141310' }}
           role="alert"
         >
-          <div className="w-full max-w-sm glass rounded-2xl p-7 text-center animate-fade-up">
+          <div className="w-full max-w-sm painel rounded-2xl p-7 text-center animate-fade-up">
             <img
               src="/assets/sagui_meditando_2.png"
               alt=""

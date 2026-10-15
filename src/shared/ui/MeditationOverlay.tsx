@@ -39,7 +39,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
   const [running, setRunning] = useState(false);
   const completedRef = useRef(false);
 
-  const { phase, progress, inCycle } = usePhase(durationSec, running && open);
+  const { phase, progress } = usePhase(durationSec, running && open);
   const remaining = Math.max(0, Math.ceil(durationSec * (1 - progress)));
   const scale = phase === 0 ? 1 : phase === 2 ? 0.55 : phase === 1 ? 1.12 : 0.6;
 
@@ -71,12 +71,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden" style={{ background: 'rgba(11, 17, 32, 0.72)', backdropFilter: 'blur(10px)' }}>
-      {/* Brilho ambiente esmeralda */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(900px 560px at 25% 85%, rgba(16,185,129,0.14), transparent 60%)' }}
-      />
+    <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden" style={{ background: 'rgba(16, 15, 13, 0.92)' }}>
 
       {/* Coluna esquerda: personagem lateral respirando */}
       <div className="relative flex flex-col items-center gap-6 px-6">
@@ -87,7 +82,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
           speech={false}
           message=""
         />
-        <p className="text-xs text-emerald-300/80 tracking-widest uppercase font-semibold">Meditação guiada</p>
+        <p className="text-xs text-emerald-300/80 font-semibold">Meditação guiada</p>
       </div>
 
       {/* Coluna direita: guia + círculo de respiração + timer */}
@@ -98,9 +93,9 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
             className="absolute left-1/2 top-0 w-full aspect-square rounded-full border-2 border-emerald-400/30"
             style={ringStyle}
           />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border border-emerald-400/20 flex flex-col items-center justify-center">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-emerald-500/15 border border-emerald-400/20 flex flex-col items-center justify-center">
             <span className="text-3xl font-extrabold tabular-nums text-white">{remaining}s</span>
-            <span className="text-[10px] text-emerald-300/70 mt-1 tracking-wider uppercase">{Math.round(progress * 100)}%</span>
+            <span className="text-xs text-emerald-300/70 mt-1">{Math.round(progress * 100)}%</span>
           </div>
         </div>
 
@@ -109,7 +104,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
           {PHASES.map((p, i) => (
             <span
               key={p}
-              className={`mm-breath-phase text-xs md:text-sm font-bold tracking-widest uppercase px-3 py-1.5 rounded-full ${
+              className={`mm-breath-phase text-xs md:text-sm font-bold px-3 py-1.5 rounded-full ${
                 i === phase ? 'text-emerald-300 bg-emerald-500/15 border border-emerald-400/30' : 'text-gray-600 border border-white/5'
               }`}
             >
@@ -121,7 +116,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
         {/* Barra de progresso da sessão */}
         <div className="w-64 h-1.5 rounded-full bg-white/5 overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-[width] duration-300 ease-linear"
+            className="h-full rounded-full bg-emerald-500 transition-[width] duration-300 ease-linear"
             style={{ width: `${progress * 100}%` }}
           />
         </div>
@@ -141,13 +136,6 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
         </div>
       </div>
 
-      {/* Fumaça decorativa de fundo */}
-      {inCycle && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(600px 300px at 50% 115%, rgba(16,185,129,0.10), transparent 60%)' }}
-        />
-      )}
     </div>
   );
 }

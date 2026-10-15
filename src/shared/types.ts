@@ -312,6 +312,8 @@ export interface RankingData {
   entries: RankingEntry[];
   totalParticipantes: number;
   updatedAt: number;
+  /** Lista de exemplo (sem banco). A tela precisa dizer isso. */
+  simulado?: boolean;
 }
 
 // ===== Community Chat =====

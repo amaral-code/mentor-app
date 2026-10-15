@@ -1,5 +1,6 @@
 import { ArrowRight, Check, Clock, Lock, Video } from 'lucide-react';
 import { formatarDataHora, iniciais, type SessaoView } from '../tipos';
+import { nomeDaPlataforma } from '../../../shared/lib/salaVirtual';
 
 interface SessoesListaProps {
   proximas: SessaoView[];
@@ -60,8 +61,8 @@ export function SessoesLista({ proximas, passadas, destaqueId, onBuscarPsicologo
               id={`session-card-${s.id}`}
               className={`p-4 rounded-2xl relative overflow-hidden transition-all duration-300 ${
                 eHoje
-                  ? 'bg-midnight-850 border border-amber-500/40 hover:border-amber-500/70 hover:shadow-lg hover:shadow-amber-500/10'
-                  : 'bg-midnight-850/80 border border-midnight-750 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/5'
+                  ? 'bg-midnight-850 border border-amber-500/40 hover:border-amber-500/70 hover:shadow-lg'
+                  : 'bg-midnight-850/80 border border-midnight-750 hover:border-emerald-500/50 hover:shadow-lg'
               } ${destaque ? `ring-2 ${eHoje ? 'ring-amber-400' : 'ring-emerald-400'} scale-[1.02]` : ''}`}
             >
               <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${eHoje ? 'bg-amber-500' : 'bg-slate-600'}`} />
@@ -93,7 +94,7 @@ export function SessoesLista({ proximas, passadas, destaqueId, onBuscarPsicologo
               <div className="mt-3 pt-3 border-t border-midnight-700/60 flex items-center justify-between pl-1 gap-2">
                 <span className="text-xs text-slate-400 flex items-center gap-1">
                   <Video size={14} className="text-slate-500" />
-                  {eHoje ? (s.meetingUrl?.includes('jitsi') ? 'Jitsi Meet' : 'Google Meet') : 'Sala liberada no dia'}
+                  {eHoje ? nomeDaPlataforma(s.meetingProvider, s.meetingUrl) : 'Sala liberada no dia'}
                 </span>
                 {eHoje ? (
                   <a
@@ -119,7 +120,7 @@ export function SessoesLista({ proximas, passadas, destaqueId, onBuscarPsicologo
       <div className="p-4 rounded-2xl bg-midnight-950 border border-midnight-750/80 text-xs text-slate-400 space-y-2 transition-all hover:border-midnight-700">
         <div className="flex items-center gap-2 text-slate-300 font-semibold">
           <Lock size={16} className="text-emerald-400" />
-          <span>Seu espaço é 100% protegido</span>
+          <span>O que você fala fica na sessão</span>
         </div>
         <p className="leading-relaxed">
           Tudo o que você disser durante a videochamada é estritamente confidencial, resguardado pelo sigilo profissional do Código de Ética dos Psicólogos (CFP/CRP).

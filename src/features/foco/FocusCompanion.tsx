@@ -4,6 +4,7 @@ import { useStoreStore } from '../../stores/storeStore';
 import { getStoreItem } from '../../shared/lib/storeCatalog';
 import { AppIcon } from '../../shared/ui/AppIcon';
 import { safeGet, safeSet } from '../../shared/lib/safeStorage';
+import { ChevronDown, Eye, EyeOff, Minus, Pause, Play, Plus, Timer } from 'lucide-react';
 
 const FOCUS_MIN = 25;
 const CYCLE_XP = 5;
@@ -25,6 +26,7 @@ export function FocusCompanion() {
   const addXP = useAppStore((s) => s.addXP);
   const addLog = useAppStore((s) => s.addLog);
   const setToast = useAppStore((s) => s.setToast);
+  const activeTab = useAppStore((s) => s.activeTab);
   const inventory = useStoreStore(s => s.inventory);
   const [open, setOpen] = useState(false);
   const [mini, setMini] = useState(false);
@@ -190,97 +192,97 @@ export function FocusCompanion() {
   // intermediário porque `seconds` é zerado ao fim do foco.
   const progresso = phase === 'idle' ? 0 : phase === 'rest' ? 100 : ((FOCUS_MIN * 60 - seconds) / (FOCUS_MIN * 60)) * 100;
 
-  // Fica logo acima da bottom nav, nao no meio da tela: em 375px o card
-  // cobria o controle de Cansaco do Dashboard. A safe-area entra na conta
-  // para nao encostar na barra de gestos do iPhone. Se o aluno arrastou,
-  // vale a posição dele (left/top); senão, a âncora padrão (right/bottom).
+  // Canto de baixo, à direita. A safe-area entra na conta para não
+  // encostar na barra de gestos do iPhone. Se o aluno arrastou, vale a
+  // posição dele (left/top); senão, a âncora padrão (right/bottom).
   const ancoraRef = useRef<HTMLDivElement>(null);
+  /* No Mentor o canto de baixo é da caixa de texto: o botão parado ficava
+     em cima do "enviar" no celular. Lá o Pomodoro já está no cabeçalho;
+     só um ciclo em andamento continua visível, acima da caixa. */
+  const noChat = activeTab === 'chat';
+  if (noChat && phase === 'idle' && !open) return null;
   return (
     <div
       ref={ancoraRef}
       className={`fixed z-[80] w-[min(300px,calc(100vw-1.5rem))] pointer-events-none transition-opacity ${transparente ? 'opacity-40 hover:opacity-100 focus-within:opacity-100' : ''}`}
       style={pos
         ? { left: pos.x, top: pos.y }
-        : { right: '0.75rem', bottom: 'calc(5.25rem + env(safe-area-inset-bottom, 0px))' }}
+        : { right: '0.75rem', bottom: noChat ? 'calc(10rem + env(safe-area-inset-bottom, 0px))' : 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="pointer-events-auto">
       {!open ? (
-        /* FAB colapsado: arrasta para mover; botão ao lado deixa fantasma */
-        <div className="ml-auto flex items-center justify-end gap-1.5">
-          <button
-            onClick={alternarTransparente}
-            onClickCapture={cliqueSeNaoArrastou}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-xl glass border border-white/10 text-gray-400 hover:text-white transition-all"
-            aria-label={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
-            title={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
-          >
-            {transparente ? '👁' : '👁‍🗨'}
-          </button>
+        /* Recolhido: um botão redondo de 48px. O cartão "Companhia de
+           Foco 25:00" que ficava aqui ocupava 300px e cobria o canto de
+           toda tela; parado, ele não tinha nada a dizer. Com um ciclo
+           rodando, vira uma pílula com o tempo, que aí é informação. */
+        <div className="ml-auto flex justify-end">
           <button
             onClick={() => setOpen(true)}
             onClickCapture={cliqueSeNaoArrastou}
             onPointerDown={(e) => aoIniciarArraste(e, ancoraRef.current)}
-            className="flex items-center gap-2.5 glass rounded-2xl border border-emerald-500/15 hover:border-emerald-500/30 px-3 py-2.5 transition-all group cursor-grab active:cursor-grabbing touch-none select-none"
-            aria-label="Abrir Companhia de Foco (arraste para mover)"
+            className={`camada flex items-center gap-2 rounded-full h-12 cursor-grab active:cursor-grabbing touch-none select-none hover:border-gray-600 transition-colors ${
+              phase === 'idle' ? 'w-12 justify-center' : 'pl-1.5 pr-4'
+            }`}
+            aria-label={phase === 'focus' ? `Ciclo de foco em andamento, faltam ${formatTime(seconds)}. Abrir` : 'Abrir o temporizador de foco (arraste para mover)'}
+            title="Temporizador de foco"
           >
-          <span className="relative shrink-0">
-            <img
-              src={phase === 'focus' ? resolvedSprite : SAGUI_REST}
-              alt="Sagui companheiro"
-              draggable={false}
-              onError={() => handleImgError(phase as 'focus' | 'rest')}
-              className="w-10 h-10 object-contain mascot-assist-idle"
-            />
-            {phase === 'focus' && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0b1120]" />
+            {phase === 'idle' ? (
+              <Timer size={20} className="text-gray-300" aria-hidden="true" />
+            ) : (
+              <>
+                <img
+                  src={phase === 'focus' ? resolvedSprite : SAGUI_REST}
+                  alt=""
+                  draggable={false}
+                  onError={() => handleImgError(phase as 'focus' | 'rest')}
+                  className="w-9 h-9 object-contain"
+                />
+                <span className={`font-mono text-sm font-medium tabular-nums ${phase === 'focus' ? 'text-white' : 'text-amber-400'}`}>
+                  {phase === 'focus' ? formatTime(seconds) : 'Pausa'}
+                </span>
+              </>
             )}
-          </span>
-          <span className="text-left">
-            <span className="block text-xs font-semibold text-white">
-              {phase === 'focus' ? 'Estudando com você' : phase === 'rest' ? 'Hora de descansar' : 'Companhia de Foco'}
-            </span>
-            <span className="block text-[10px] text-emerald-400 tabular-nums font-medium">{formatTime(seconds)}</span>
-          </span>
           </button>
         </div>
       ) : (
         /* Painel expandido */
-        <div className="glass rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-scale-in">
+        <div className="camada rounded-2xl overflow-hidden animate-scale-in">
           {/* Header: arrasta para mover */}
           <div
-            className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-white/[0.03] cursor-grab active:cursor-grabbing touch-none select-none"
+            className="flex items-center justify-between pl-4 pr-2 py-2 border-b border-linha cursor-grab active:cursor-grabbing touch-none select-none"
             onPointerDown={(e) => aoIniciarArraste(e, ancoraRef.current)}
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm">⏱</span>
-              <p className="text-sm font-bold text-white">Companhia de Foco</p>
+              <Timer size={15} className="text-gray-400" aria-hidden="true" />
+              <p className="text-sm font-semibold text-white">Temporizador de foco</p>
             </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={alternarTransparente}
                 onClickCapture={cliqueSeNaoArrastou}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-white hover:bg-folha-2 transition-colors"
                 aria-label={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
                 title={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
               >
-                {transparente ? '👁' : '👁‍🗨'}
+                {transparente ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
               <button
                 onClick={() => setMini(true)}
                 onClickCapture={cliqueSeNaoArrastou}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all text-lg font-bold"
+                className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-white hover:bg-folha-2 transition-colors"
                 aria-label="Diminuir painel"
                 title="Diminuir"
               >
-                −
+                <Minus size={16} />
               </button>
               <button
                 onClick={recolher}
                 onClickCapture={cliqueSeNaoArrastou}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-white hover:bg-folha-2 transition-colors"
                 aria-label="Recolher"
+                title="Recolher"
               >
-                ▾
+                <ChevronDown size={16} />
               </button>
             </div>
           </div>
@@ -288,14 +290,14 @@ export function FocusCompanion() {
           {mini ? (
             /* Barrinha diminuída: só o tempo + play/pausa + aumentar */
             <div className="flex items-center gap-2 px-3 py-2.5">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${phase === 'focus' ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`} />
-              <span className="text-sm font-extrabold tabular-nums text-white">{formatTime(seconds)}</span>
+              <span className={`w-2 h-2 rounded-full shrink-0 ${phase === 'focus' ? 'bg-emerald-400' : 'bg-gray-500'}`} aria-hidden="true" />
+              <span className="font-mono text-sm font-medium tabular-nums text-white">{formatTime(seconds)}</span>
               {phase === 'focus' ? (
-                <button onClick={() => stopFocus(true)} onClickCapture={cliqueSeNaoArrastou} className="text-xs text-gray-400 hover:text-white px-1" aria-label="Pausar">⏸</button>
+                <button onClick={() => stopFocus(true)} onClickCapture={cliqueSeNaoArrastou} className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-white" aria-label="Terminar o ciclo"><Pause size={15} /></button>
               ) : (
-                <button onClick={startFocus} onClickCapture={cliqueSeNaoArrastou} className="text-xs text-gray-400 hover:text-white px-1" aria-label="Iniciar">▶</button>
+                <button onClick={startFocus} onClickCapture={cliqueSeNaoArrastou} className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-white" aria-label="Iniciar ciclo de foco"><Play size={15} /></button>
               )}
-              <button onClick={() => setMini(false)} onClickCapture={cliqueSeNaoArrastou} className="ml-auto text-gray-400 hover:text-white px-1.5 text-sm font-bold" aria-label="Aumentar painel" title="Aumentar">+</button>
+              <button onClick={() => setMini(false)} onClickCapture={cliqueSeNaoArrastou} className="ml-auto w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-white" aria-label="Aumentar painel" title="Aumentar"><Plus size={15} /></button>
             </div>
           ) : (
           <div className="p-4">
@@ -306,42 +308,37 @@ export function FocusCompanion() {
                 alt={phase === 'focus' ? 'Sagui estudando junto com você' : 'Sagui meditando para descansar'}
                 draggable={false}
                 onError={() => handleImgError(phase as 'focus' | 'rest')}
-                className={`w-28 h-28 object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] transition-all duration-500 ${
+                className={`w-28 h-28 object-contain transition-all duration-500 ${
                   phase === 'focus' ? 'mascot-anim-typing' : 'mascot-anim-idle'
                 }`}
               />
               {equippedItem && (
                 <span
                   key={equippedItem.id}
-                  className="absolute -top-1 right-[18%] text-2xl select-none drop-shadow-lg animate-bounce"
+                  className="absolute -top-1 right-[18%] select-none"
                   title={`Acessório equipado: ${equippedItem.name}`}
                   aria-label={`Acessório equipado: ${equippedItem.name}`}
                 >
                   <AppIcon name={equippedItem.icon} size={22} className="text-amber-300" />
                 </span>
               )}
-              <span className={`absolute bottom-2 left-[18%] text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                phase === 'focus' ? 'bg-emerald-500/90 text-emerald-950' : 'bg-violet-500/20 text-violet-300 border border-violet-500/25'
-              }`}>
-                {phase === 'focus' ? ' FOCADO' : phase === 'rest' ? ' DESCANSO' : ' PRONTO'}
-              </span>
             </div>
 
             {/* Timer */}
             <div className="relative w-32 h-32 mx-auto mb-3">
               <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#2c2a24" strokeWidth="6" />
                 <circle
                   cx="60" cy="60" r="52" fill="none"
-                  stroke={phase === 'focus' ? '#10b981' : phase === 'rest' ? '#f59e0b' : '#475569'}
+                  stroke={phase === 'focus' ? '#7cc78a' : phase === 'rest' ? '#e9a11c' : '#6a6458'}
                   strokeWidth="6" strokeLinecap="round"
                   strokeDasharray={`${(progresso / 100) * 326.7} 326.7`}
                   className="transition-all duration-1000 ease-linear"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold tabular-nums text-white tracking-tight">{formatTime(seconds)}</span>
-                <span className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider">
+                <span className="font-mono text-3xl font-medium tabular-nums text-white">{formatTime(seconds)}</span>
+                <span className="text-xs text-gray-500 mt-0.5">
                   {phase === 'idle' && 'Pronto'}
                   {phase === 'focus' && 'Foco'}
                   {phase === 'rest' && 'Descanso'}
@@ -351,22 +348,20 @@ export function FocusCompanion() {
 
             {/* Status e alerta amigável */}
             {phase === 'focus' ? (
-              <p className="text-center text-xs text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/15 rounded-xl px-3 py-2.5 mb-3"> O Sagui está estudando junto com você. Continue firme!
-              </p>
+              <p className="text-center text-sm text-gray-300 mb-3">O sagui estuda junto até o tempo acabar.</p>
             ) : showRestAlert ? (
-              <p className="text-center text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/15 rounded-xl px-3 py-2.5 mb-3 animate-fade-up"> Ciclo concluído! Hora de descansar a mente e recuperar as energias. Aproveite 5 minutinhos longe da tela.
-              </p>
+              <p className="text-center text-sm text-amber-300 mb-3" role="status">Ciclo concluído. Agora, 5 minutos longe da tela.</p>
             ) : null}
 
             {/* Controles */}
             <div className="flex items-center justify-center gap-2.5">
               {phase === 'focus' ? (
-                <button onClick={() => stopFocus(true)} className="btn-secondary !px-4 !py-2.5 text-sm flex-1">
-                  ⏸ Terminar Ciclo
+                <button onClick={() => stopFocus(true)} className="btn-secondary flex-1">
+                  <Pause size={15} aria-hidden="true" /> Terminar ciclo
                 </button>
               ) : (
-                <button onClick={startFocus} className="btn-primary flex-1 !py-2.5 text-sm">
-                  ▶ Iniciar Foco ({FOCUS_MIN} min)
+                <button onClick={startFocus} className="btn-primary flex-1">
+                  <Play size={15} aria-hidden="true" /> Começar {FOCUS_MIN} minutos
                 </button>
               )}
             </div>
@@ -374,13 +369,14 @@ export function FocusCompanion() {
             {phase === 'rest' && (
               <button
                 onClick={() => { setShowRestAlert(false); startFocus(); }}
-                className="w-full mt-2 text-xs text-gray-500 hover:text-amber-300 transition-colors"
-              > Sentiram falta do companheiro? Voltar a estudar 
+                className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Pular a pausa e começar outro ciclo
               </button>
             )}
 
-            <p className="text-center text-[10px] text-gray-600 mt-3">
-              +{CYCLE_XP} XP por ciclo completo · Tutor IA recomenda pausas breves para fixar o conteúdo.
+            <p className="text-center text-xs text-gray-500 mt-3">
+              +{CYCLE_XP} XP por ciclo completo.
             </p>
           </div>
           )}

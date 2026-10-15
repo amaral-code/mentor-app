@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Brain, Check, CheckCircle2, ClipboardList, Eye, EyeOff, Lightbulb, Lock, Moon, XCircle, Zap } from 'lucide-react';
+import { Check, CheckCircle2, ClipboardList, Eye, EyeOff, Lightbulb, XCircle, Zap } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { calcLevel } from '../../shared/lib/utils';
-import { AppIcon } from '../../shared/ui/AppIcon';
 import { AcessibilidadePanel } from '../../shared/ui/AcessibilidadePanel';
 import { SecaoResponsaveis } from './SecaoResponsaveis';
 import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';
@@ -60,13 +59,17 @@ export function ProfilePage() {
   const [codigoInst, setCodigoInst] = useState('');
   const [vinculando, setVinculando] = useState(false);
 
+  /* Na MESMA ordem em que as seções aparecem na página: antes a lista
+     começava por "Conta", que era a quarta seção, e o índice parecia
+     embaralhado. */
   const SECOES = [
-    { id: 'secao-conta', rotulo: 'Conta' },
-    { id: 'secao-escola', rotulo: 'Escola e códigos' },
     { id: 'secao-responsaveis', rotulo: 'Responsáveis' },
     { id: 'secao-psicologo', rotulo: 'Psicólogo' },
+    { id: 'secao-escola', rotulo: 'Escola e códigos' },
     { id: 'secao-acessibilidade', rotulo: 'Acessibilidade' },
+    { id: 'secao-conta', rotulo: 'Conta' },
     { id: 'secao-ia', rotulo: 'IA' },
+    { id: 'secao-dados', rotulo: 'Seus dados' },
   ];
 
   function irParaSecao(id: string) {
@@ -127,68 +130,44 @@ export function ProfilePage() {
 
 
   return (
-    <div className="space-y-5 animate-fade-up max-w-lg mx-auto">
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-2xl font-bold text-gray-900 shadow-glow">
-          {session?.nome?.charAt(0)?.toUpperCase() || '?'}
-        </div>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">{session?.nome || 'Usuário'}</h1>
-          <p className="text-sm text-gray-500">{session?.email || ''}</p>
-        </div>
-      </div>
+    <div className="max-w-5xl mx-auto">
+      <header className="pb-6 border-b border-linha">
+        <h1 className="text-[1.75rem] text-white">{session?.nome || 'Estudante'}</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{session?.email || ''}</p>
+        {/* Nível, XP e sequência em uma linha: os três cartões e a barra
+            de progresso que ficavam aqui repetiam a Central e a barra
+            lateral, e empurravam as configurações para baixo. */}
+        <p className="text-sm text-gray-400 mt-3">
+          Nível <span className="text-white font-medium">{nivel}</span>
+          <span className="text-gray-600"> · </span>
+          <span className="font-mono text-white">{xpResto}</span> de {xpMeta} XP para o próximo
+          <span className="text-gray-600"> · </span>
+          {gamification.streak} {gamification.streak === 1 ? 'dia seguido' : 'dias seguidos'}
+        </p>
+      </header>
 
-      {/* Atalhos de seção: o perfil cresceu, o aluno pula direto ao assunto */}
-      <nav aria-label="Seções do perfil" className="flex flex-wrap gap-2">
-        {SECOES.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => irParaSecao(s.id)}
-            className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300 hover:border-amber-400/40 hover:text-amber-200 transition-all"
-          >
-            {s.rotulo}
-          </button>
-        ))}
-      </nav>
+      <div className="lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10 pt-6">
+        {/* Índice das seções: fixo ao lado no computador, uma linha de
+            atalhos no celular. */}
+        <nav aria-label="Seções do perfil" className="mb-6 lg:mb-0">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 lg:flex-col lg:gap-0 lg:sticky lg:top-8">
+            {SECOES.map((sec) => (
+              <li key={sec.id}>
+                <button
+                  onClick={() => irParaSecao(sec.id)}
+                  className="text-sm text-gray-400 hover:text-white py-1.5 lg:w-full lg:text-left lg:px-3 lg:-mx-3 lg:rounded-md lg:hover:bg-folha-2 transition-colors"
+                >
+                  {sec.rotulo}
+                </button>
+              </li>
+            ))}
+            <li className="hidden lg:block mt-3 pt-3 border-t border-linha">
+              <button onClick={logout} className="text-sm text-gray-400 hover:text-red-300 py-1.5">Sair da conta</button>
+            </li>
+          </ul>
+        </nav>
 
-      {/* Stats (nível via calcLevel: fonte única, igual à sidebar) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {[
-          { label: 'Nível', value: nivel, icon: 'estrela' },
-          { label: 'XP Total', value: gamification.xp.toLocaleString(), icon: 'raio' },
-          { label: 'Sequência', value: `${gamification.streak}d`, icon: 'fogo' },
-        ].map(stat => (
-          <div key={stat.label} className="glass-card rounded-2xl p-4 text-center">
-            <div className="flex justify-center mb-1.5">
-              <AppIcon
-                name={stat.icon}
-                size={18}
-                className={stat.label === 'Sequência' && gamification.streak >= 3 ? 'text-amber-400' : 'text-gray-500'}
-              />
-            </div>
-            <p className={`text-lg font-bold tabular-nums ${stat.label === 'Sequência' && gamification.streak >= 3 ? 'text-amber-400' : 'text-white'}`}>
-              {stat.value}
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* XP Bar (mesma conta da sidebar: resto e meta do nível atual) */}
-      <div className="glass-card rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs text-gray-500 uppercase tracking-wider font-medium">Progresso</h2>
-          <span className="text-xs text-gray-500 tabular-nums">Nível {nivel}</span>
-        </div>
-        <div className="flex items-baseline gap-1 mb-3">
-          <span className="text-2xl font-bold text-white tabular-nums">{xpResto}</span>
-          <span className="text-sm text-gray-500">/ {xpMeta} XP</span>
-        </div>
-        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-          <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 xp-bar" style={{ width: `${(xpResto / xpMeta) * 100}%` }} />
-        </div>
-      </div>
-
+        <div className="space-y-6 min-w-0">
       <SecaoResponsaveis />
 
       {/* Quem vê os meus dados, num lugar só: responsáveis e psicólogo. As
@@ -203,27 +182,27 @@ export function ProfilePage() {
       )}
 
       {/* Escola e codigos: vinculo por codigo confidencial (email da secretaria) */}
-      <div id="secao-escola" className="glass-card rounded-2xl p-5 scroll-mt-24">
+      <div id="secao-escola" className="painel rounded-2xl p-5 scroll-mt-24">
         <h2 className="text-sm font-semibold text-gray-300 mb-1">Escola e códigos</h2>
         <p className="text-xs text-gray-500 mb-4">Primeiro a instituição, depois a turma. Os códigos são secretos: não repasse a ninguém de fora.</p>
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Escola vinculada</label>
-              <p className="text-sm text-white glass-light rounded-xl px-3 py-2.5">
+              <label className="block text-xs text-gray-500 mb-1.5 font-medium">Escola vinculada</label>
+              <p className="text-sm text-white painel-suave rounded-xl px-3 py-2.5">
                 {escolas.find(e => e.id === escolaId)?.nome ?? 'Nenhuma ainda'}
               </p>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Turma</label>
-              <p className="text-sm text-white glass-light rounded-xl px-3 py-2.5">
+              <label className="block text-xs text-gray-500 mb-1.5 font-medium">Turma</label>
+              <p className="text-sm text-white painel-suave rounded-xl px-3 py-2.5">
                 {turmas.find(t => t.id === turmaId)?.nome ?? 'Nenhuma ainda'}
               </p>
             </div>
           </div>
 
           <div>
-            <label htmlFor="codigo-instituicao" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider"> 1. Código da instituição
+            <label htmlFor="codigo-instituicao" className="block text-xs text-gray-500 mb-1.5 font-medium"> 1. Código da instituição
             </label>
             <div className="flex gap-2">
               <input
@@ -233,7 +212,7 @@ export function ProfilePage() {
                 placeholder="Ex: SOL2026A (veio no email)"
                 maxLength={12}
                 autoComplete="off"
-                className="flex-1 text-sm tracking-widest uppercase"
+                className="flex-1 text-sm"
               />
               <button
                 onClick={handleVincularInstituicao}
@@ -246,7 +225,7 @@ export function ProfilePage() {
           </div>
 
           <div>
-            <label htmlFor="codigo-turma" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider"> 2. Código da turma
+            <label htmlFor="codigo-turma" className="block text-xs text-gray-500 mb-1.5 font-medium"> 2. Código da turma
             </label>
             <div className="flex gap-2">
               <input
@@ -256,7 +235,7 @@ export function ProfilePage() {
                 placeholder="Ex: ABC123 (professor passa)"
                 maxLength={12}
                 autoComplete="off"
-                className="flex-1 text-sm tracking-widest uppercase"
+                className="flex-1 text-sm"
               />
               <button
                 onClick={handleEntrarNaTurma}
@@ -277,23 +256,23 @@ export function ProfilePage() {
       <AcessibilidadePanel />
 
       {/* Personal info */}
-      <div id="secao-conta" className="glass-card rounded-2xl p-5 scroll-mt-24">
+      <div id="secao-conta" className="painel rounded-2xl p-5 scroll-mt-24">
         <h2 className="text-sm font-semibold text-gray-300 mb-4"><ClipboardList size={16} className="inline-block align-[-0.15em] text-gray-400" /> Conta</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">E-mail</label>
+            <label className="block text-xs text-gray-500 mb-1.5 font-medium">E-mail</label>
             <input type="email" value={session?.email || ''} disabled className="w-full text-sm opacity-50" />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Nome</label>
+            <label className="block text-xs text-gray-500 mb-1.5 font-medium">Nome</label>
             <input type="text" value={nome} onChange={e => setNome(e.target.value)} className="w-full text-sm" />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Sobrenome</label>
+            <label className="block text-xs text-gray-500 mb-1.5 font-medium">Sobrenome</label>
             <input type="text" value={sobrenome} onChange={e => setSobrenome(e.target.value)} className="w-full text-sm" />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Meta de Estudo</label>
+            <label className="block text-xs text-gray-500 mb-1.5 font-medium">Meta de Estudo</label>
             <input type="text" value={meta} onChange={e => setMeta(e.target.value)} className="w-full text-sm" placeholder="Ex: Medicina na USP" />
           </div>
           <button onClick={handleSaveProfile} disabled={salvandoPerfil} className="btn-primary w-full">{salvandoPerfil ? 'Salvando…' : 'Salvar alterações'}</button>
@@ -301,7 +280,7 @@ export function ProfilePage() {
       </div>
 
       {/* AI Settings */}
-      <div id="secao-ia" className="glass-card rounded-2xl p-5 scroll-mt-24">
+      <div id="secao-ia" className="painel rounded-2xl p-5 scroll-mt-24">
         <div className="flex items-center gap-3 mb-4">
           {/* Era gradiente roxo/azul com robozinho: o combo que a regra 5
               proibe. A identidade aqui e o sagui e o ambar da noite. */}
@@ -314,15 +293,17 @@ export function ProfilePage() {
             className="w-10 h-10 rounded-xl object-contain bg-amber-500/10 p-1"
           />
           <div>
-            <h2 className="text-sm font-semibold text-gray-300">Mentor avançado</h2>
-            <p className="text-xs text-gray-500">Conecte sua chave para o sagui responder com mais profundidade.</p>
+            <h2 className="text-lg text-white">IA</h2>
+            <p className="text-sm text-gray-500">
+              {hasProxy() ? 'O Mentor, o quiz e a correção de redação usam a IA do servidor do app.' : 'Sem IA no servidor, dá para usar a sua própria chave.'}
+            </p>
           </div>
         </div>
         {hasProxy() ? (
           <>
             <div className="flex items-start gap-2.5 text-xs text-emerald-300 bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/15">
               <span className="shrink-0"><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
-              <span><strong>IA via servidor (proxy grátis).</strong> A inteligência do Midnight Mentor já está configurada, nenhuma chave necessária e pronto para usar. A chave fica protegida no servidor.</span>
+              <span><strong>Já está ligada.</strong> Não precisa de chave: ela fica guardada no servidor, nunca neste aparelho.</span>
             </div>
 
             <button
@@ -398,7 +379,7 @@ export function ProfilePage() {
 
             {apiKey && (
               <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/5 rounded-xl px-3 py-2 border border-emerald-500/10">
-                <span><Check size={16} className="inline-block align-[-0.15em] text-emerald-400" /></span> IA conectada. O chat usará IA generativa para respostas inteligentes.
+                <span><Check size={16} className="inline-block align-[-0.15em] text-emerald-400" /></span> Chave salva. O Mentor, o quiz e a correção passam a usar a IA com ela.
               </div>
             )}
 
@@ -453,28 +434,29 @@ export function ProfilePage() {
         )}
       </div>
 
-      {/* Tools */}
-      <div className="glass-card rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4"> Ferramentas</h2>
-        <button onClick={() => setShowWeeklyReport(true)} className="btn-secondary w-full text-center"> Ver Relatório Semanal
-        </button>
-      </div>
+      <section className="painel rounded-2xl p-5">
+        <h2 className="text-lg text-white">Relatório da semana</h2>
+        <p className="text-sm text-gray-500 mt-0.5 mb-4">Horas, acertos e humor dos últimos 7 dias, num resumo só.</p>
+        <button onClick={() => setShowWeeklyReport(true)} className="btn-secondary">Abrir o relatório</button>
+      </section>
 
-      {/* About */}
-      <div className="glass-card rounded-2xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg"><Moon size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
-          <h2 className="text-sm font-semibold text-gray-300">Midnight Mentor</h2>
-        </div>
-        <div className="text-sm text-gray-400 leading-relaxed space-y-2">
-          <p><Brain size={16} className="inline-block align-[-0.15em] text-violet-400" /> Assistente de estudos inteligente para o ENEM.</p>
-          <p><Lock size={16} className="inline-block align-[-0.15em] text-gray-500" /> <strong className="text-gray-300">Privacidade total:</strong> dados salvos apenas no navegador.</p>
-          <p><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /> Modo offline: motor local baseado em regras. Com chave API, usa IA generativa.</p>
+      {/* "Privacidade total: dados salvos apenas no navegador" estava
+          aqui, e era falso: conversa, caderno e estudo ficam na conta, no
+          banco. O texto agora diz onde ficam e quem vê o quê, que é o que
+          as regras de acesso (RLS) de fato garantem. */}
+      <section id="secao-dados" className="painel rounded-2xl p-5 scroll-mt-24">
+        <h2 className="text-lg text-white">Seus dados</h2>
+        <ul className="mt-3 space-y-2 text-sm text-gray-300 leading-relaxed">
+          <li>Ficam na sua conta, no banco do app, e não só neste aparelho: você entra de outro celular e encontra tudo.</li>
+          <li>Conversas com o Mentor, caderno e humor são só seus. Nem responsável, nem escola, nem psicólogo leem.</li>
+          <li>Responsáveis veem números: horas de estudo, acerto por matéria e dias ativos.</li>
+          <li>O psicólogo só vê o que você (ou, abaixo de 16 anos, o seu responsável) autorizar, e por tempo limitado.</li>
+        </ul>
+      </section>
+
+      <button onClick={logout} className="btn-danger w-full lg:hidden">Sair da conta</button>
         </div>
       </div>
-
-      <button onClick={logout} className="btn-danger w-full text-center"> Sair da Conta
-      </button>
     </div>
   );
 }

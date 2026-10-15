@@ -24,6 +24,11 @@ import { resolve } from 'node:path';
  * O perverso e que `npm run dev` nao minifica: o efeito aparecia
  * normalmente durante todo o desenvolvimento e sumia so em producao.
  *
+ * Desde a direção de arte de 2026-10 o app não usa mais vidro fosco (ver
+ * direcaoDeArte.test.ts). Estas duas guardas ficam porque a armadilha
+ * continua valendo para qualquer `backdrop-filter` que alguém traga de
+ * volta por um bom motivo, como uma folha sobre vídeo.
+ *
  * Estes testes olham o FONTE, para poderem rodar sem depender de um build
  * previo. A regra e simples: onde houver a versao prefixada e a padrao no
  * mesmo bloco, a padrao vem por ultimo.
@@ -80,13 +85,5 @@ describe('backdrop-filter sobrevive a minificacao', () => {
       `Blocos apenas com -webkit-backdrop-filter: ${soPrefixada.join(', ')}. ` +
         'O Chrome nao aplica a versao prefixada sozinha.',
     ).toEqual([]);
-  });
-
-  it('mantem o desfoque nas superficies de vidro do tema', () => {
-    // Se alguem remover o filtro de .glass, o glassmorphism do brief morre
-    // sem nenhum teste reclamar. Esta e a asserção que reclama.
-    const glass = CSS.match(/\.glass\s*\{([^}]*)\}/);
-    expect(glass, 'a classe .glass sumiu do CSS').not.toBeNull();
-    expect(glass![1]).toMatch(/(^|[\s;])backdrop-filter:\s*blur\(/);
   });
 });

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { ClipboardList, Download, Info, LogOut, Moon, PenLine, Plus, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
+import { AbasPainel, CabecalhoPapel } from '../../shared/ui/CabecalhoPapel';
+import { ClipboardList, Download, Info, PenLine, Plus, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
@@ -239,7 +240,7 @@ export function EducatorPage() {
 
   /** Anel de destaque da etapa atual do guia. */
   const clsDestaque = (id: string) =>
-    destaque === id ? 'ring-2 ring-cyan-400/70 shadow-[0_0_25px_rgba(34,211,238,0.25)]' : '';
+    destaque === id ? 'ring-2 ring-tinta-400/70' : '';
 
   /** Modelo .csv pronto para baixar, com cabeçalho e exemplo. */
   function baixarModeloCSV() {
@@ -434,32 +435,9 @@ export function EducatorPage() {
   const linhasComErro = modo === 'tabela' && tentouEnviarTabela ? linhas.filter((l) => validarLinha(l).length > 0).length : 0;
 
   return (
-    <div className="min-h-screen" style={{ background: '#0b1120' }}>
+    <div className="min-h-screen" style={{ background: '#141310' }}>
       {/* Header */}
-      <header className="glass border-b border-white/[0.03]">
-        <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/10">
-              <Moon size={20} className="text-gray-900" />
-            </div>
-            <div>
-              <h1 className="text-sm font-extrabold text-white">
-                <span className="text-gradient">Midnight Mentor</span>
-              </h1>
-              <p className="text-[10px] text-gray-500 tracking-wide uppercase">Painel da Secretaria</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 hidden md:block">{session?.nome}</span>
-            <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-medium border border-emerald-500/20">
-              Secretaria
-            </span>
-            <button onClick={logout} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Sair">
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </header>
+      <CabecalhoPapel area="Secretaria da escola" nome={session?.nome} onSair={logout} />
 
       <main className="max-w-3xl mx-auto px-4 md:px-8 py-8 space-y-6 animate-fade-up">
         {/* EPICO 3: abas Onboarding | Insights | Termometro (dashboard em lote). */}
@@ -468,26 +446,17 @@ export function EducatorPage() {
             para o lado. Rola na horizontal em vez de vazar. */}
         {/* Grade 2x2 no celular: em fila, a rolagem cortava a primeira aba
             no meio da palavra ("códigos"), e parecia tela quebrada. */}
-        <div role="tablist" aria-label="Painel da secretaria" className="grid grid-cols-2 sm:flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 sm:w-fit">
-          {([
-            ['matriculas', 'Matrículas'],
-            ['codigos', 'Turmas e códigos'],
-            ['docentes', 'Docentes'],
-            ['escola', 'Visão da escola'],
-          ] as const).map(([id, rotulo]) => (
-            <button
-              key={id}
-              role="tab"
-              aria-selected={aba === id}
-              onClick={() => setAba(id)}
-              className={`rounded-xl px-3 sm:px-4 py-2 text-sm font-semibold transition-all min-h-[44px] ${
-                aba === id ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:text-white border border-transparent'
-              }`}
-            >
-              {rotulo}
-            </button>
-          ))}
-        </div>
+        <AbasPainel
+          rotulo="Painel da secretaria"
+          atual={aba}
+          onTrocar={setAba}
+          abas={[
+            { id: 'matriculas', rotulo: 'Matrículas' },
+            { id: 'codigos', rotulo: 'Turmas e códigos' },
+            { id: 'docentes', rotulo: 'Docentes' },
+            { id: 'escola', rotulo: 'Visão da escola' },
+          ] as const}
+        />
 
         {aba === 'docentes' ? (
           <ProfessoresDaTurma />
@@ -499,7 +468,7 @@ export function EducatorPage() {
         <>
         {/* Welcome */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-cyan-600/10 flex items-center justify-center text-lg">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-lg">
             <Users size={20} className="text-emerald-400" />
           </div>
           <div>
@@ -513,17 +482,17 @@ export function EducatorPage() {
 
         {/* Tutorial passo a passo: uma etapa por vez, iluminando onde agir.
             Fixo no topo (sticky) para acompanhar a rolagem até a área. */}
-        <div className="glass rounded-2xl border border-cyan-500/10 overflow-hidden sticky top-2 z-10 bg-[#0d1426]/95 backdrop-blur">
+        <div className="painel rounded-2xl border border-tinta-500/10 overflow-hidden sticky top-2 z-10 bg-[#171613]/95">
           <button
             onClick={() => (tutorialAberto ? fecharTutorial() : reabrirTutorial())}
             aria-expanded={tutorialAberto}
             className="w-full flex items-center gap-2 px-5 py-3.5 text-left hover:bg-white/[0.02] transition-colors"
           >
-            <Info size={16} className="text-cyan-400 shrink-0" />
+            <Info size={16} className="text-tinta-400 shrink-0" />
             <span className="text-sm font-semibold text-white flex-1">
               Como usar? Guia passo a passo
               {tutorialAberto && (
-                <span className="ml-2 text-[11px] font-normal text-cyan-300">
+                <span className="ml-2 text-[11px] font-normal text-tinta-300">
                   Passo {passoTutorial + 1} de {PASSOS_TUTORIAL.length}
                 </span>
               )}
@@ -536,7 +505,7 @@ export function EducatorPage() {
               <div className="flex items-center gap-2" role="tablist" aria-label="Etapas do tutorial">
                 <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-300"
+                    className="h-full rounded-full bg-tinta-400 transition-all duration-300"
                     style={{ width: `${((passoTutorial + 1) / PASSOS_TUTORIAL.length) * 100}%` }}
                   />
                 </div>
@@ -548,18 +517,18 @@ export function EducatorPage() {
                     aria-label={`Ir para o passo ${i + 1}`}
                     onClick={() => setPassoTutorial(i)}
                     className={`w-2.5 h-2.5 rounded-full transition-all ${
-                      i === passoTutorial ? 'bg-cyan-300 scale-110' : i < passoTutorial ? 'bg-emerald-400/70 hover:brightness-110' : 'bg-white/15 hover:bg-white/25'
+                      i === passoTutorial ? 'bg-tinta-300 scale-110' : i < passoTutorial ? 'bg-emerald-400/70 hover:brightness-110' : 'bg-white/15 hover:bg-white/25'
                     }`}
                   />
                 ))}
               </div>
 
               {/* Etapa atual */}
-              <div aria-live="polite" className="rounded-xl bg-cyan-500/[0.06] border border-cyan-500/15 p-3.5">
+              <div aria-live="polite" className="rounded-xl bg-tinta-500/[0.06] border border-tinta-500/15 p-3.5">
                 <p className="text-sm font-semibold text-white">{PASSOS_TUTORIAL[passoTutorial].titulo}</p>
                 <p className="text-sm text-gray-400 mt-1 leading-relaxed">{PASSOS_TUTORIAL[passoTutorial].texto}</p>
                 {passoTutorial === 2 && (
-                  <button onClick={baixarModeloCSV} className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-xs font-semibold hover:brightness-110 transition-all">
+                  <button onClick={baixarModeloCSV} className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-tinta-500/10 text-tinta-300 border border-tinta-500/20 text-xs font-semibold hover:brightness-110 transition-all">
                     <Download size={13} /> Baixar modelo CSV
                   </button>
                 )}
@@ -582,7 +551,7 @@ export function EducatorPage() {
                 </button>
                 <button
                   onClick={proximoPasso}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-white text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-cyan-500/20"
+                  className="px-4 py-2 rounded-xl bg-tinta-500 text-white text-xs font-bold hover:brightness-110 transition-all shadow-lg"
                 >
                   {passoTutorial === 0 ? 'Começar →' : passoTutorial === PASSOS_TUTORIAL.length - 1 ? 'Concluir ✓' : 'Próximo →'}
                 </button>
@@ -616,7 +585,7 @@ export function EducatorPage() {
         </div>
 
         {/* Instructions */}
-        <div className="glass rounded-2xl p-5 text-sm text-gray-400 space-y-1">
+        <div className="painel rounded-2xl p-5 text-sm text-gray-400 space-y-1">
           <p className="text-amber-400 font-medium mb-2"><ClipboardList size={16} className="inline-block align-[-0.15em] text-gray-400" /> {modo === 'csv' ? 'Formato do CSV' : 'Campos da tabela'}</p>
           <p>{modo === 'csv' ? 'O arquivo deve conter as colunas (nesta ordem). Coluna extra opcional: Tipo (Aluno ou Docente).' : 'Cada linha precisa dos dados abaixo. Marque Docente quando for professor (usa o próprio email).'}</p>
           <code className="block bg-black/30 rounded-lg px-3 py-2 text-xs text-gray-300 mt-2"> Nome do Aluno,Sala,Email do Responsável,Telefone do Responsável[,Tipo]
@@ -634,7 +603,7 @@ export function EducatorPage() {
               onDragLeave={() => setDragOver(false)}
               onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
               onClick={() => fileInputRef.current?.click()}
-              className={`glass rounded-2xl p-8 text-center cursor-pointer transition-all border-2 border-dashed scroll-mt-24 ${clsDestaque('edu-upload')} ${
+              className={`painel rounded-2xl p-8 text-center cursor-pointer transition-all border-2 border-dashed scroll-mt-24 ${clsDestaque('edu-upload')} ${
                 dragOver ? 'border-emerald-400/40 bg-emerald-500/5' : 'border-white/5 hover:border-white/10'
               }`}
             >
@@ -658,7 +627,7 @@ export function EducatorPage() {
               <p className="text-xs text-gray-500 mt-1">Formatos aceitos: .csv (máx. 2MB)</p>
               <button
                 onClick={(e) => { e.stopPropagation(); baixarModeloCSV(); }}
-                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 text-cyan-300 border border-white/10 text-xs font-semibold hover:bg-white/10 transition-all"
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 text-tinta-300 border border-white/10 text-xs font-semibold hover:bg-white/10 transition-all"
               >
                 <Download size={13} /> Baixar modelo CSV
               </button>
@@ -667,7 +636,7 @@ export function EducatorPage() {
         ) : (
           <>
             {/* Manual table */}
-            <div id="edu-tabela" className={`glass rounded-2xl p-5 space-y-3 scroll-mt-24 transition-shadow ${clsDestaque('edu-tabela')}`}>
+            <div id="edu-tabela" className={`painel rounded-2xl p-5 space-y-3 scroll-mt-24 transition-shadow ${clsDestaque('edu-tabela')}`}>
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-white">Alunos na lista</h3>
@@ -780,7 +749,7 @@ export function EducatorPage() {
 
         {/* Preview (CSV) */}
         {modo === 'csv' && parsedData.length > 0 && !sent && (
-          <div className="glass rounded-2xl p-5 space-y-4">
+          <div className="painel rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-white">Pré-visualização</h3>
@@ -803,7 +772,7 @@ export function EducatorPage() {
             </div>
             <button onClick={sendToWebhook} disabled={sending} className="btn-primary w-full flex items-center justify-center gap-2">
               {sending ? (
-                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {hasProxy() ? 'Criando contas…' : 'Enviando...'}</>
+                <><span className="w-4 h-4 anel-carregando rounded-full animate-spin" /> {hasProxy() ? 'Criando contas…' : 'Enviando...'}</>
               ) : (
                 <><Sparkles size={16} /> {hasProxy() ? 'Criar contas e enviar convites' : 'Enviar para processamento'}</>
               )}
@@ -823,7 +792,7 @@ export function EducatorPage() {
             className={`btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40 scroll-mt-24 transition-shadow ${clsDestaque('edu-enviar')}`}
           >
             {sending ? (
-              <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {hasProxy() ? 'Criando contas…' : 'Enviando...'}</>
+              <><span className="w-4 h-4 anel-carregando rounded-full animate-spin" /> {hasProxy() ? 'Criando contas…' : 'Enviando...'}</>
             ) : (
               <><Sparkles size={16} /> {hasProxy() ? `Criar contas e convidar` : 'Enviar'} {linhasValidas > 0 ? `${linhasValidas} aluno${linhasValidas !== 1 ? 's' : ''} ` : ''}{hasProxy() ? '' : 'para processamento'}</>
             )}
@@ -832,7 +801,7 @@ export function EducatorPage() {
 
         {/* Success */}
         {sent && (
-          <div className="glass rounded-2xl p-8 text-center animate-scale-in border border-emerald-500/20">
+          <div className="painel rounded-2xl p-8 text-center animate-scale-in border border-emerald-500/20">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
                 <polyline points="20 6 9 17 4 12" />
@@ -853,7 +822,7 @@ export function EducatorPage() {
                     </p>
                     {r.ok ? (
                       <div className="mt-1 space-y-0.5 text-gray-400">
-                        <p>Login: <code className="text-cyan-300 break-all">{r.login}</code>{r.turma ? ` • Turma ${r.turma} (${r.codigoTurma})` : ''}</p>
+                        <p>Login: <code className="text-tinta-300 break-all">{r.login}</code>{r.turma ? ` • Turma ${r.turma} (${r.codigoTurma})` : ''}</p>
                         <p>{r.emailEnviado ? 'Convite enviado por email com senha temporária e códigos.' : 'Email não configurado: repasse manual em sigilo.'}</p>
                         {r.senhaTemporaria && (
                           <p className="text-amber-300">Senha temporária: <code className="break-all">{r.senhaTemporaria}</code>

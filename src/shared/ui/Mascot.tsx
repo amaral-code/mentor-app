@@ -8,7 +8,7 @@ import {
   MASCOT_DEFAULT_MSG,
 } from '../../stores/mascotStore';
 
-const CONFETTI_COLORS = ['#fbbf24', '#f59e0b', '#34d399', '#818cf8', '#f472b6', '#60a5fa', '#fb923c'];
+const CONFETTI_COLORS = ['#f3b53f', '#e9a11c', '#97d3a2', '#86a2f2', '#e0919e', '#a4baf6', '#f4ad80'];
 
 interface MascotProps {
   /** Modo controlado: ignore o store e use estes valores (ou use chamadas de função via store). */

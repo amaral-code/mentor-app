@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Crosshair, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { supabaseRepository, DesempenhoTopico } from '../../shared/storage/SupabaseRepository';
 import { calcularEstatisticas } from '../../shared/lib/quizStats';
@@ -44,12 +44,23 @@ export function EstatisticasPage() {
     useAppStore.getState().setActiveTab('quiz');
   }
 
+  const cabecalho = (resumoTexto?: string) => (
+    <header>
+      <h1 className="text-[1.75rem] text-white">Estatísticas</h1>
+      <p className="text-sm text-gray-400 mt-1">
+        {resumoTexto ?? 'Acerto por matéria e por tópico, somando todos os quizzes que você terminou.'}
+      </p>
+    </header>
+  );
+
   if (linhas === null) {
     return (
-      <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-        <div className="glass rounded-2xl p-8 text-center">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-400">Carregando seu desempenho...</p>
+      <div className="space-y-6" aria-busy="true">
+        {cabecalho()}
+        <div className="space-y-3" role="status" aria-label="Carregando o seu desempenho">
+          <div className="skeleton h-10 w-48" />
+          <div className="skeleton h-24" />
+          <div className="skeleton h-40" />
         </div>
       </div>
     );
@@ -57,124 +68,97 @@ export function EstatisticasPage() {
 
   if (resumo.totalQuestoes === 0) {
     return (
-      <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/15 to-cyan-600/10 flex items-center justify-center">
-            <BarChart3 size={16} className="text-cyan-400" />
-          </div>
+      <div className="space-y-6">
+        {cabecalho()}
+        <div className="flex items-center gap-5 py-6 border-y border-linha">
+          <img src="/assets/sagui_estudando_2.png" alt="" width={72} height={72} loading="lazy" className="w-[72px] h-[72px] object-contain shrink-0" />
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white">Estatísticas</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Seu aproveitamento por matéria e tópico</p>
+            <p className="text-[0.9375rem] text-gray-200">Ainda não há nada para medir.</p>
+            <p className="text-sm text-gray-500 mt-0.5 max-w-md">
+              Termine um quiz: cada resposta entra no placar do tópico, e aqui aparece onde você vai bem e onde vale insistir.
+            </p>
+            <button onClick={() => useAppStore.getState().setActiveTab('quiz')} className="btn-primary mt-3">
+              Fazer um quiz
+            </button>
           </div>
-        </div>
-        <div className="glass rounded-2xl p-8 text-center">
-          <p className="text-gray-300 font-medium">Sem dados ainda.</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Finalize um quiz e cada resposta passa a contar no seu placar por tópico.
-          </p>
-          <button
-            onClick={() => useAppStore.getState().setActiveTab('quiz')}
-            className="btn-primary mt-5"
-          >
-            Fazer um quiz
-          </button>
         </div>
       </div>
     );
   }
 
-  const cor = resumo.aproveitamentoGeral >= 70 ? '#10b981' : resumo.aproveitamentoGeral >= 40 ? '#f59e0b' : '#ef4444';
+  const corDe = (pct: number) => (pct >= 70 ? '#7cc78a' : pct >= 40 ? '#e9a11c' : '#f08a70');
+  const cor = corDe(resumo.aproveitamentoGeral);
 
   return (
-    <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/15 to-cyan-600/10 flex items-center justify-center">
-          <BarChart3 size={16} className="text-cyan-400" />
-        </div>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Estatísticas</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {resumo.totalQuestoes} questões respondidas • {resumo.totalAcertos} acertos
-          </p>
-        </div>
-      </div>
-
-      <div className="glass rounded-2xl p-6 text-center">
-        <p className="text-xs text-gray-500 uppercase tracking-widest font-medium">Aproveitamento geral</p>
-        <p className="text-4xl font-extrabold tabular-nums mt-1" style={{ color: cor }}>
-          {resumo.aproveitamentoGeral}%
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        {cabecalho(`${resumo.totalQuestoes} questões respondidas, ${resumo.totalAcertos} certas.`)}
+        <p className="text-right">
+          <span className="numero text-[2.5rem] leading-none" style={{ color: cor }}>{resumo.aproveitamentoGeral}%</span>
+          <span className="block text-xs text-gray-500 mt-1">de acerto no geral</span>
         </p>
-        <div className="h-2 rounded-full bg-white/5 mt-3 overflow-hidden">
-          <div className="h-full rounded-full transition-all" style={{ width: `${resumo.aproveitamentoGeral}%`, backgroundColor: cor }} />
-        </div>
       </div>
 
-      {resumo.pontosFracos.length > 0 && (
-        <div className="glass rounded-2xl p-5 border border-red-500/10">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-            <Crosshair size={16} className="text-red-400" /> Precisam de atenção
-          </h2>
-          <div className="space-y-2.5">
-            {resumo.pontosFracos.slice(0, 5).map((t) => (
-              <div key={`${t.materia}:${t.topico}`} className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">
-                    {t.topico} <span className="text-gray-500">• {t.materia}</span>
-                  </p>
-                  <div className="h-1.5 rounded-full bg-white/5 mt-1.5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-red-400/80"
-                      style={{ width: `${t.aproveitamento}%` }}
-                    />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-start">
+        {/* Onde agir primeiro: os tópicos com menos acerto, cada um com o
+            atalho para treinar. É a parte da tela que vira ação. */}
+        <section aria-labelledby="est-atencao">
+          <h2 id="est-atencao" className="text-xl text-white pb-3 border-b border-linha">Onde insistir</h2>
+          {resumo.pontosFracos.length === 0 ? (
+            <p className="text-sm text-gray-400 py-4">
+              Nenhum tópico abaixo do esperado, com o mínimo de questões para afirmar isso.
+            </p>
+          ) : (
+            <ul className="pauta">
+              {resumo.pontosFracos.slice(0, 5).map((t) => (
+                <li key={`${t.materia}:${t.topico}`} className="flex items-center gap-3 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[0.9375rem] text-white truncate">{t.topico}</p>
+                    <p className="text-xs text-gray-500">{t.materia}</p>
                   </div>
-                </div>
-                <span className="text-xs font-bold text-red-300 tabular-nums shrink-0">{t.aproveitamento}%</span>
-                <button
-                  onClick={() => praticar(t.materia, t.topico)}
-                  className="btn-secondary !px-3 !py-2 text-xs shrink-0 flex items-center gap-1"
-                >
-                  <Play size={12} /> Praticar
-                </button>
-              </div>
+                  <span className="font-mono text-sm text-red-300 tabular-nums shrink-0">{t.aproveitamento}%</span>
+                  <button
+                    onClick={() => praticar(t.materia, t.topico)}
+                    className="btn-secondary !min-h-[36px] !py-1.5 !px-3 shrink-0"
+                    aria-label={`Treinar ${t.topico}, de ${t.materia}`}
+                  >
+                    <Play size={13} aria-hidden="true" /> Treinar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Comparação entre matérias: tabela, com os tópicos abrindo
+            embaixo de cada uma. */}
+        <section aria-labelledby="est-materias">
+          <h2 id="est-materias" className="text-xl text-white pb-3 border-b border-linha">Por matéria</h2>
+          <div className="pauta">
+            {resumo.porMateria.map((m) => (
+              <details key={m.materia} className="group">
+                <summary className="grid grid-cols-[minmax(0,8rem)_1fr_auto_auto] items-center gap-3 py-3 cursor-pointer list-none">
+                  <span className="text-[0.9375rem] text-white truncate">{m.materia}</span>
+                  <span className="h-1.5 rounded-full bg-folha-3 overflow-hidden">
+                    <span className="block h-full rounded-full" style={{ width: `${m.aproveitamento}%`, backgroundColor: corDe(m.aproveitamento) }} />
+                  </span>
+                  <span className="font-mono text-sm text-white tabular-nums w-11 text-right">{m.aproveitamento}%</span>
+                  <span className="text-xs text-gray-500 tabular-nums w-14 text-right">{m.total} {m.total === 1 ? 'questão' : 'questões'}</span>
+                </summary>
+                <ul className="pb-3 pl-3 border-l border-linha ml-1 space-y-1.5">
+                  {m.topicos.map((t) => (
+                    <li key={t.topico} className="flex items-center gap-3 text-sm">
+                      <span className="flex-1 text-gray-400 truncate">{t.topico}</span>
+                      <span className="font-mono tabular-nums" style={{ color: corDe(t.aproveitamento) }}>{t.aproveitamento}%</span>
+                      <span className="text-xs text-gray-500 tabular-nums w-12 text-right">{t.acertos} de {t.total}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             ))}
           </div>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {resumo.porMateria.map((m) => (
-          <details key={m.materia} className="glass rounded-2xl px-5 py-4 group">
-            <summary className="flex items-center gap-3 cursor-pointer list-none">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">{m.materia}</p>
-                <div className="h-1.5 rounded-full bg-white/5 mt-1.5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${m.aproveitamento}%`,
-                      backgroundColor: m.aproveitamento >= 70 ? '#10b981' : m.aproveitamento >= 40 ? '#f59e0b' : '#ef4444',
-                    }}
-                  />
-                </div>
-              </div>
-              <span className="text-sm font-bold text-white tabular-nums shrink-0">{m.aproveitamento}%</span>
-              <span className="text-xs text-gray-500 shrink-0 tabular-nums">{m.total}q</span>
-            </summary>
-            <div className="mt-3 space-y-2 border-t border-white/5 pt-3">
-              {m.topicos.map((t) => (
-                <div key={t.topico} className="flex items-center gap-3">
-                  <p className="flex-1 text-xs text-gray-400 truncate">{t.topico}</p>
-                  <span className={`text-xs font-bold tabular-nums shrink-0 ${t.aproveitamento >= 70 ? 'text-emerald-400' : t.aproveitamento >= 40 ? 'text-amber-400' : 'text-red-400'}`}>
-                    {t.aproveitamento}%
-                  </span>
-                  <span className="text-[11px] text-gray-600 tabular-nums shrink-0">
-                    {t.acertos}/{t.total}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </details>
-        ))}
+          <p className="text-xs text-gray-500 mt-2">Toque numa matéria para ver os tópicos.</p>
+        </section>
       </div>
     </div>
   );

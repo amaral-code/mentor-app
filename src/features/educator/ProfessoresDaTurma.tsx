@@ -84,12 +84,12 @@ export function ProfessoresDaTurma() {
   const turmaAtual = turmas.find((t) => t.id === turmaId);
 
   if (carregando) {
-    return <div className="glass rounded-2xl p-6 h-40 animate-pulse" aria-hidden="true" />;
+    return <div className="painel rounded-2xl p-6 h-40 animate-pulse" aria-hidden="true" />;
   }
 
   if (turmas.length === 0) {
     return (
-      <div className="glass rounded-2xl p-6">
+      <div className="painel rounded-2xl p-6">
         <h2 className="text-lg font-bold text-white">Nenhuma turma cadastrada ainda</h2>
         <p className="text-sm text-gray-400 mt-2 leading-relaxed">
           Cadastre as turmas na aba Onboarding. Depois volte aqui para dizer quem leciona
@@ -102,8 +102,8 @@ export function ProfessoresDaTurma() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-purple-600/10 flex items-center justify-center">
-          <GraduationCap size={20} className="text-violet-400" />
+        <div className="w-10 h-10 rounded-xl bg-tinta-500/15 flex items-center justify-center">
+          <GraduationCap size={20} className="text-tinta-400" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-white">Quem leciona cada turma</h2>
@@ -113,19 +113,19 @@ export function ProfessoresDaTurma() {
         </div>
       </div>
 
-      <div className="glass rounded-2xl p-5 space-y-4">
+      <div className="painel rounded-2xl p-5 space-y-4">
         <div>
-          <label htmlFor="turma-escopo" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+          <label htmlFor="turma-escopo" className="block text-xs text-gray-500 mb-1.5 font-medium">
             Turma
           </label>
           <select
             id="turma-escopo"
             value={turmaId}
             onChange={(e) => setTurmaId(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white outline-none focus:border-violet-500/40 min-h-[44px]"
+            className="w-full px-3 py-2.5 rounded-xl painel-suave border border-white/[0.05] text-sm text-white outline-none focus:border-tinta-500/40 min-h-[44px]"
           >
             {turmas.map((t) => (
-              <option key={t.id} value={t.id} className="bg-[#0d1426]">
+              <option key={t.id} value={t.id} className="bg-[#171613]">
                 {t.nome}
               </option>
             ))}
@@ -133,11 +133,11 @@ export function ProfessoresDaTurma() {
         </div>
 
         <div>
-          <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">
+          <h3 className="text-xs text-gray-500 font-medium mb-2">
             Docentes de {turmaAtual?.nome ?? 'turma'}
           </h3>
           {vinculados.length === 0 ? (
-            <p className="text-sm text-gray-500 glass-light rounded-xl px-3 py-4 flex items-center gap-2">
+            <p className="text-sm text-gray-500 painel-suave rounded-xl px-3 py-4 flex items-center gap-2">
               <Users size={15} className="text-gray-600 shrink-0" />
               Ninguém vinculado. Enquanto estiver assim, nenhum professor vê os dados desta turma.
             </p>
@@ -146,7 +146,7 @@ export function ProfessoresDaTurma() {
               {vinculados.map((d) => (
                 <li
                   key={d.id}
-                  className="glass-light rounded-xl px-3 py-3 flex items-center justify-between gap-3 border border-white/[0.04]"
+                  className="painel-suave rounded-xl px-3 py-3 flex items-center justify-between gap-3 border border-white/[0.04]"
                 >
                   <div className="min-w-0">
                     <p className="text-sm text-white font-medium truncate">{d.nome}</p>
@@ -167,7 +167,7 @@ export function ProfessoresDaTurma() {
         </div>
 
         <div>
-          <label htmlFor="docente-novo" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+          <label htmlFor="docente-novo" className="block text-xs text-gray-500 mb-1.5 font-medium">
             Vincular docente
           </label>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -176,13 +176,13 @@ export function ProfessoresDaTurma() {
               value={escolhido}
               onChange={(e) => setEscolhido(e.target.value)}
               disabled={disponiveis.length === 0}
-              className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white outline-none focus:border-violet-500/40 min-h-[44px] disabled:opacity-50"
+              className="flex-1 px-3 py-2.5 rounded-xl painel-suave border border-white/[0.05] text-sm text-white outline-none focus:border-tinta-500/40 min-h-[44px] disabled:opacity-50"
             >
-              <option value="" className="bg-[#0d1426]">
+              <option value="" className="bg-[#171613]">
                 {disponiveis.length === 0 ? 'Todos os docentes já estão nesta turma' : 'Escolha um docente'}
               </option>
               {disponiveis.map((d) => (
-                <option key={d.id} value={d.id} className="bg-[#0d1426]">
+                <option key={d.id} value={d.id} className="bg-[#171613]">
                   {d.nome} ({d.papel === 'educator' ? 'secretaria' : 'professor'})
                 </option>
               ))}

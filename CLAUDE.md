@@ -9,7 +9,7 @@ Publicada na **Vercel**. Todo o texto do produto e dos comentários é em
 ```bash
 npm run dev      # dev server na porta 5180 (já inclui o back-end /api)
 npm run build    # tsc -b && vite build
-npm test         # vitest run  (773 testes)
+npm test         # vitest run  (758 testes)
 npm run lint     # oxlint
 ```
 
@@ -131,6 +131,62 @@ Não há placeholder com traço. Campo vazio escreve o que está faltando:
 `'sem código'`, `'sem dados'`, `'sem turma'`, `'CRP não informado'`.
 Separador entre dois valores na mesma linha é `·`, nunca `-`.
 Marcador de lista dentro de prompt é `•`.
+
+## Direção de arte: "caderno sob a luminária" (há teste travando)
+
+O app é de quem estuda para o ENEM à noite. O escuro tem motivo, mas é o da
+MESA à noite (grafite quente), não o azul-marinho com vidro e neon de
+qualquer template. A única luz é a da luminária (âmbar); o resto vem do
+material de estudo: papel, caneta azul, caneta vermelha e o verde do
+gabarito. Tokens em `tailwind.config.js` (comentados) e `:root` do
+`index.css`.
+
+| Papel | Token | Uso |
+| --- | --- | --- |
+| Mesa | `mesa` `#141310` | fundo de tudo |
+| Folha | `folha` `#1c1a16`, `folha-2`, `folha-3` | superfícies, subníveis |
+| Linha | `linha`, `linha-forte` | bordas finas, divisórias |
+| Papel | `papel`, `gray-*` (grafite quente) | texto |
+| Luz | `amber-*` | **só** ação principal e "onde você está" |
+| Tinta | `tinta-*` | secundária: informação, apoio, links |
+| Gabarito | `emerald-*` | acerto, sucesso |
+| Correção | `red-*` | erro, risco, ação destrutiva |
+
+`gray` e `slate` são a MESMA escala (grafite); `white` é o branco do papel.
+Os nomes `amber`, `emerald`, `red` e `orange` foram mantidos com valores
+novos para não reescrever 2 mil classes.
+
+Regras:
+
+- **Superfície plana.** `.painel` (folha + borda fina) no lugar do antigo
+  `glass`. Sem `backdrop-blur`, sem gradiente, sem brilho (`shadow-[0_0_...]`).
+- **Sombra só no que flutua:** `.camada` / `shadow-camada` (modal, menu,
+  aviso, botão flutuante).
+- **Raios curtos:** a escala `lg/xl/2xl/3xl` do Tailwind foi encurtada
+  (6/8/10/14 px).
+- **Tipografia:** Literata (títulos `h1`/`h2` e números grandes, classe
+  `.numero`), IBM Plex Sans (interface), IBM Plex Mono (cronômetro,
+  gabarito, códigos). Servidas pelo próprio app (`@fontsource`, em
+  `main.tsx`), **nunca** pelo Google Fonts.
+- **Rótulo de seção** é `.rotulo` (texto pequeno, caixa normal). Caixa alta
+  espaçada em cartão era o sotaque de template; não volte.
+- **Menos caixas:** lista é `.pauta` (linhas finas entre itens), comparação
+  é tabela, números relacionados ficam numa faixa com `divide-x`.
+- **Bolha do cartão-resposta** (`.bolha`, `.bolha--marcada`) é o elemento
+  gráfico próprio: tarefa do plano, alternativa do quiz, gabarito.
+- **Movimento comunica ou não existe:** entrada de camada, troca de estado,
+  erro, carregamento, recompensa, respiração guiada. Loop decorativo
+  (orbes, partículas, mascote "respirando", ping de "online") saiu.
+- **Selo só com dado por trás:** nada de "Online", "PRO", "Ativo" ou tique
+  de verificado sem algo que os sustente.
+
+`src/shared/lib/__tests__/direcaoDeArte.test.ts` falha o build se voltar
+vidro, gradiente em componente, brilho, roxo/ciano, loop decorativo, fonte
+do Google, ou se o cinza de texto secundário cair abaixo de 4,5:1.
+
+Componentes compartilhados: `Painel` (era `GlassCard`), `CabecalhoPapel` e
+`AbasPainel` (os quatro painéis fora do app do aluno), `EmptyState`
+(mascote ao lado do texto), `Toast` (erro fica 7 s, fecha, e é `alert`).
 
 ## Convenções
 
@@ -268,6 +324,53 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-10-15 — Direção de arte própria e o que ela revelou
+- **Visual refeito do zero**: ver a seção "Direção de arte". Fundo plano
+  de grafite, sem vidro, gradiente, brilho, orbes, estrelas nem canvas de
+  partículas (que rodava `requestAnimationFrame` em toda tela, inclusive
+  nos painéis de pais e escola). Fontes servidas pelo app.
+- **Telas redesenhadas pela tarefa**: login (diz o que cada perfil faz),
+  Central (plano do dia como cartão-resposta; sono e cansaço junto do
+  resultado), Mentor (conversa primeiro, histórico recolhido no celular),
+  Quiz (matérias pelas 4 áreas do ENEM, gabarito corrigido em bolhas),
+  Redação (folha pautada), Estatísticas (onde insistir x por matéria),
+  Perfil (índice de seções), painéis com cabeçalho e abas comuns.
+- **Menu do aluno agrupado** por tarefa (`shared/lib/navegacaoGrupos.ts`):
+  Estudar, Concentrar, Acompanhar, Você.
+- **Dado falso removido ou rotulado**:
+  - faixa "A turma já resolveu 45 desafios hoje" no Mentor era texto fixo;
+    saiu (ver pendência do Efeito Cardume);
+  - Ranking completava a lista com alunos e XP **inventados** quando o
+    banco tinha um aluno ou nenhum. Agora é só gente real; sem banco, a
+    lista de exemplo aparece marcada como fictícia (`RankingData.simulado`);
+  - selos "Online", "PRO", "Ativo", "Profissional Online", "Ambiente
+    Seguro & Criptografado" e o tique verde ao lado de "CRP não informado";
+  - "Privacidade total: dados salvos apenas no navegador" era falso; virou
+    a seção "Seus dados", com o que a RLS de fato garante;
+  - "Ranking atualizado em tempo real" (não é), "Prontidão (SSC)" (o número
+    é sobrecarga: sobe quando a pessoa está pior), "Simulado oficial".
+- **Bugs corrigidos no caminho**:
+  - gráfico de humor da Central tinha barras de alturas que não mediam
+    nada (vinham da posição da cor numa lista); virou faixa por conversa;
+  - "Total 7 dias" somava todos os registros carregados
+    (`shared/lib/central.ts`, com teste);
+  - toda sessão no Jitsi aparecia como "Google Meet" (`meet.jit.si` não
+    contém "jitsi"); `shared/lib/salaVirtual.ts`, com teste;
+  - histórico do Mentor: no celular abria por padrão e, com `relative` e
+    `absolute` juntos, roubava a largura da conversa (caixa de texto com
+    uma letra por linha); conversas antigas caíam em "Últimos 7 dias";
+    linha da lista não abria pelo teclado;
+  - projeção dos pais chamava a média dos 4 meses de "em 4 meses";
+  - redação sem IA esperava 800 ms de propósito e não dizia que a nota é
+    estimativa por regras;
+  - Ligas montava classe em tempo de execução (`${from}/10`): o Tailwind
+    nunca gerava, o efeito nunca existiu.
+- **Desempenho**: o service worker pré-carregava 35,8 MB (mascotes de
+  trabalho em `public/mascot/` e fontes de alfabetos que o app não usa).
+  Agora 7,6 MB (`globIgnores` no `vite.config.ts`).
+- Removidos por não serem usados ou serem só enfeite: `ParticleCanvas`,
+  `StarfieldCanvas`, `TeamProgressBanner`, `AssistantWidget`.
 
 ### 2026-09-24 (4) — Índice de cansaço religado
 - **`FADIGA_ZERADA = false`** (decisão do dono). Desligado, nada chegava a
@@ -449,6 +552,19 @@ principal, regra de permissão. Mais recente no topo.
   revividas; safe-area no notch; zoom por pinça liberado.
 
 ## Pendências conhecidas
+
+- **Efeito Cardume (edital)**: a faixa coletiva do Mentor era texto fixo
+  com números inventados e foi removida. Se o edital exige o recurso, ele
+  precisa de fonte real: uma função `SECURITY DEFINER` que conte questões
+  da turma no dia, sem expor ninguém.
+- **Imagens**: `public/mascot/` e `public/mascot*.png` (22 MB) são material
+  de trabalho das ferramentas em `tools/`. Saíram do precache, mas ainda
+  vão no deploy. As poses usadas (`public/assets/`) são PNG; converter
+  para WebP reduziria o primeiro acesso.
+- **Telas que só receberam o sistema**, sem redesenho próprio: Loja,
+  Ligas, Escudo, Foco, Sala de Foco, Áudio, Revisões, Caderno, Agenda,
+  Rede de Apoio e o cadastro de matrícula da secretaria. Estão coerentes
+  com o resto, mas ainda usam a estrutura antiga de cartões.
 
 - `tools/validar_visual.mjs` tem uma chave **`service_role` do Supabase
   commitada** (linhas ~20-24), válida até 2036, e ela está no histórico do git.

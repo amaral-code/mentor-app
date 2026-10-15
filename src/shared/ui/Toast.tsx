@@ -1,14 +1,20 @@
 import { useEffect } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
-import { CheckCircle2, Info, XCircle } from 'lucide-react';
+import { CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { springPainel } from '../lib/motionPresets';
 
+/* Superfície da camada com a cor só na margem e no ícone: o fundo
+   âmbar do aviso "info" competia com o botão principal da tela, que é
+   o único âmbar que deveria chamar o olho. */
 const ESTILO = {
-  success: 'bg-emerald-600/90 border-emerald-500/30 text-emerald-50',
-  error: 'bg-red-600/90 border-red-500/30 text-red-50',
-  info: 'bg-amber-600/90 border-amber-500/30 text-amber-50',
+  success: 'border-l-emerald-400 [&_svg]:text-emerald-400',
+  error: 'border-l-red-400 [&_svg]:text-red-400',
+  info: 'border-l-tinta-400 [&_svg]:text-tinta-400',
 } as const;
+
+/* Erro fica mais tempo: precisa ser lido, e às vezes copiado. */
+const DURACAO = { success: 3000, info: 3500, error: 7000 } as const;
 
 const ICONE = {
   success: CheckCircle2,
@@ -31,9 +37,9 @@ export function Toast() {
 
   useEffect(() => {
     if (!toastMessage) return;
-    const timer = setTimeout(clearToast, 3000);
+    const timer = setTimeout(clearToast, DURACAO[toastType] ?? 3000);
     return () => clearTimeout(timer);
-  }, [toastMessage, clearToast]);
+  }, [toastMessage, toastType, clearToast]);
 
   const Icone = ICONE[toastType];
 
@@ -42,17 +48,21 @@ export function Toast() {
       {toastMessage && (
         <m.div
           key={toastMessage}
-          role="status"
-          aria-live="polite"
+          /* Erro interrompe o leitor de tela (alert); o resto espera a vez. */
+          role={toastType === 'error' ? 'alert' : 'status'}
+          aria-live={toastType === 'error' ? 'assertive' : 'polite'}
           layout
           initial={reduzir ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.94 }}
           animate={reduzir ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={reduzir ? { duration: 0.15 } : springPainel}
-          className={`fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-5 py-3 rounded-2xl border shadow-lg backdrop-blur-xl font-medium text-sm ${ESTILO[toastType]}`}
+          className={`camada fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[min(28rem,calc(100vw-2rem))] flex items-start gap-3 pl-4 pr-2 py-3 rounded-lg border-l-[3px] text-sm text-gray-100 ${ESTILO[toastType]}`}
         >
-          <Icone size={17} className="shrink-0" />
-          {toastMessage}
+          <Icone size={17} className="shrink-0 mt-0.5" aria-hidden="true" />
+          <span className="flex-1">{toastMessage}</span>
+          <button onClick={clearToast} className="shrink-0 -my-1 w-8 h-8 flex items-center justify-center rounded text-gray-400 hover:text-white" aria-label="Fechar aviso">
+            <X size={15} />
+          </button>
         </m.div>
       )}
     </AnimatePresence>

@@ -1,13 +1,13 @@
 import type { Escola, Turma, RankingEntry, RankingFilter, RankingData, UserProfile } from '../types';
 import { getSupabase, isSupabaseConfigured } from './supabase';
 
-// === Escolas demo simuladas ===
+// === Escolas de exemplo: só para o ranking simulado, sem banco ===
 export const ESCOLAS: Escola[] = [
-  { id: 'escola_1', nome: 'Colégio Ampli', cidade: 'São Paulo', cor: '#f59e0b' },
-  { id: 'escola_2', nome: 'Instituto Saber', cidade: 'Rio de Janeiro', cor: '#3b82f6' },
-  { id: 'escola_3', nome: 'Colégio Futuro', cidade: 'Belo Horizonte', cor: '#10b981' },
-  { id: 'escola_4', nome: 'Centro Educacional Nova Geração', cidade: 'Curitiba', cor: '#8b5cf6' },
-  { id: 'escola_5', nome: 'Colégio Primavera', cidade: 'Salvador', cor: '#ec4899' },
+  { id: 'escola_1', nome: 'Colégio Ampli', cidade: 'São Paulo', cor: '#e9a11c' },
+  { id: 'escola_2', nome: 'Instituto Saber', cidade: 'Rio de Janeiro', cor: '#86a2f2' },
+  { id: 'escola_3', nome: 'Colégio Futuro', cidade: 'Belo Horizonte', cor: '#7cc78a' },
+  { id: 'escola_4', nome: 'Centro Educacional Nova Geração', cidade: 'Curitiba', cor: '#b5a3d6' },
+  { id: 'escola_5', nome: 'Colégio Primavera', cidade: 'Salvador', cor: '#e0919e' },
 ];
 
 export const TURMAS: Turma[] = [
@@ -293,15 +293,21 @@ export async function getRankingData(
   const profile = getProfile(uid);
 
   let entries: RankingEntry[];
+  let simulado = false;
 
+  /*
+   * Com banco, o ranking é SÓ de gente real, mesmo que seja só você.
+   *
+   * Antes, com um aluno ou nenhum no banco, a lista era completada com
+   * apelidos e XP inventados, sem aviso: o aluno via "rivais" que não
+   * existem e uma posição que não quer dizer nada. Sem banco (ambiente de
+   * desenvolvimento), a lista de exemplo continua, marcada como tal.
+   */
   if (isSupabaseConfigured()) {
     entries = await gerarRankingSupabase(filter, profile);
-    // If empty (no other users registered), fallback to mock
-    if (entries.length <= 1) {
-      entries = gerarRankingMock(filter, profile, userXp, userStreak);
-    }
   } else {
     entries = gerarRankingMock(filter, profile, userXp, userStreak);
+    simulado = true;
   }
 
   const labels: Record<RankingFilter, string> = {
@@ -316,6 +322,7 @@ export async function getRankingData(
     entries,
     totalParticipantes: entries.length,
     updatedAt: Date.now(),
+    simulado,
   };
 }
 

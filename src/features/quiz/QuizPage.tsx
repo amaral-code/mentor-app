@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem, avancar, springTap } from '../../shared/lib/motionPresets';
 import { BarraProgresso } from '../../shared/ui/AnimatedNumber';
-import { BarChart3, BookOpen, Target, TriangleAlert } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TriangleAlert } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { Dificuldade, QuizQuestion, QuizResult } from '../../shared/types';
 import { generateQuizStructured, aiAvailable, NivelQuiz, explicarErroComTutor } from '../../shared/lib/aiService';
@@ -24,12 +24,15 @@ import { useBemEstarStore } from '../../stores/bemEstarStore';
 
 type Stage = 'select' | 'topics' | 'playing' | 'result';
 
-const MAT_ICONS: Record<string, string> = {
-  Matemática: '', Português: '', Biologia: '', Física: '', Química: '',
-  História: '', Geografia: '', Filosofia: '', Inglês: '🇬🇧', Redação: '',
-};
-
-const MATERIAS = ['Matemática', 'Português', 'Biologia', 'Física', 'Química', 'História', 'Geografia', 'Filosofia', 'Inglês', 'Redação'];
+/* Matérias agrupadas pelas quatro áreas da prova, na ordem dos dois dias
+   do ENEM. Antes eram dez cartões iguais numa grade (um deles com uma
+   bandeira em emoji); a área é o que o aluno já usa para pensar a prova. */
+const AREAS_ENEM: { area: string; materias: string[] }[] = [
+  { area: 'Linguagens', materias: ['Português', 'Inglês', 'Redação'] },
+  { area: 'Ciências Humanas', materias: ['História', 'Geografia', 'Filosofia'] },
+  { area: 'Ciências da Natureza', materias: ['Biologia', 'Física', 'Química'] },
+  { area: 'Matemática', materias: ['Matemática'] },
+];
 
 const TOPIC_MAP: Record<string, string[]> = {
   'Matemática': ['Trigonometria', 'Funções', 'Geometria Plana', 'Geometria Espacial', 'Probabilidade', 'Estatística', 'Análise Combinatória', 'Matrizes', 'Logaritmos', 'Progressões'],
@@ -753,109 +756,114 @@ export function QuizPage() {
 
   if (stage === 'select') {
     return (
-      <div className="space-y-5 animate-fade-up">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/10 flex items-center justify-center text-lg"><Target size={16} className="inline-block align-[-0.15em] text-emerald-400" /></div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white">Quiz Adaptativo IA</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Escolha uma matéria para praticar</p>
-          </div>
-        </div>
-
-        {rascunhoDisponivel && (
-          <div className="glass rounded-2xl p-5 border border-cyan-500/20 bg-cyan-500/5 animate-slide-up">
-            <p className="text-sm font-semibold text-white">Simulado em andamento</p>
-            <p className="text-xs text-gray-400 mt-1">
-              {rascunhoDisponivel.questions.length - rascunhoDisponivel.currentIndex} questões restantes • termina em{' '}
-              {formatarTempoSimulado(Math.max(0, Math.round((rascunhoDisponivel.fimEm - Date.now()) / 1000)))}
-            </p>
-            <div className="flex gap-2 mt-3">
-              <button onClick={continuarSimulado} className="btn-primary flex-1 text-sm">Continuar simulado</button>
-              <button onClick={descartarRascunho} className="btn-ghost text-sm text-red-400 hover:text-red-300">Descartar</button>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {MATERIAS.map(m => (
-            <button
-              key={m}
-              onClick={() => { setMateria(m); setSelectedTopics([]); setStage('topics'); }}
-              className="glass rounded-2xl p-5 text-center hover:border-amber-500/20 hover:shadow-[0_8px_32px_rgba(245,158,11,0.08)] transition-all group border border-white/5"
-            >
-              <span className="text-3xl block mb-3 group-hover:scale-110 transition-transform">{MAT_ICONS[m] || ''}</span>
-              <p className="text-sm font-semibold text-white">{m}</p>
-              <p className="text-xs text-gray-500 mt-1">até 30 questões</p>
-            </button>
-          ))}
-        </div>
-
-        <div className="glass rounded-2xl p-5 border border-violet-500/15">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 flex items-center justify-center">
-              <BookOpen size={16} className="text-violet-300" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white">Simulado oficial</h2>
-              <p className="text-xs text-gray-500">Bloco misto cronometrado (3 min/questão) com salvamento automático</p>
-            </div>
-          </div>
-          <div className="flex gap-2 mt-3">
-            {([45, 90] as const).map(n => (
-              <button
-                key={n}
-                onClick={() => setSimuladoQtd(n)}
-                className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all border min-h-[44px] ${
-                  simuladoQtd === n
-                    ? 'bg-violet-500/15 border-violet-500/30 text-violet-200'
-                    : 'bg-white/[0.03] border-white/5 text-gray-400 hover:border-white/10 hover:text-gray-200'
-                }`}
-              >
-                {n} questões • {n * MINUTOS_POR_QUESTAO_SIMULADO} min
-              </button>
-            ))}
-          </div>
-          <button onClick={startSimulado} disabled={generating} className="btn-primary w-full mt-3">
-            {generating ? (
-              <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> {progressoGeracao || 'Montando simulado...'}</>
-            ) : `Iniciar simulado (${simuladoQtd} questões)`}
-          </button>
-        </div>
+      <div className="space-y-10">
+        <header>
+          <h1 className="text-[1.75rem] text-white">Quiz</h1>
+          <p className="text-sm text-gray-400 mt-1 max-w-xl">
+            Questões no estilo do ENEM, geradas por matéria e tópico, até 30 por vez. O resultado decide quando cada tópico volta nas suas revisões.
+          </p>
+        </header>
 
         {!aiAvailable(apiKey) && (
-          <div className="glass rounded-2xl p-4 border border-amber-500/10 bg-amber-500/5">
-            <p className="text-sm text-amber-400 flex items-center gap-2">
-              <span><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
-              <span>Configure a IA no <button onClick={() => useAppStore.getState().setActiveTab('profile')} className="underline font-medium">Perfil</button> para gerar quizzes personalizados.</span>
+          <p className="text-sm text-amber-300 border-l-2 border-amber-400 pl-3 flex items-start gap-2" role="status">
+            <TriangleAlert size={16} className="shrink-0 mt-0.5" aria-hidden="true" />
+            <span>As questões são geradas pela IA, e ela não está configurada neste aparelho. Configure no <button onClick={() => useAppStore.getState().setActiveTab('profile')} className="underline font-medium">Perfil</button> para começar.</span>
+          </p>
+        )}
+
+        {rascunhoDisponivel && (
+          <div className="border-l-2 border-tinta-400 pl-4 animate-slide-up" role="status">
+            <p className="text-[0.9375rem] font-semibold text-white">Você tem um simulado em andamento</p>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {rascunhoDisponivel.questions.length - rascunhoDisponivel.currentIndex} questões restantes · termina em{' '}
+              {formatarTempoSimulado(Math.max(0, Math.round((rascunhoDisponivel.fimEm - Date.now()) / 1000)))}
             </p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button onClick={continuarSimulado} className="btn-primary">Continuar simulado</button>
+              <button onClick={descartarRascunho} className="btn-danger">Descartar</button>
+            </div>
           </div>
         )}
 
+        <section aria-labelledby="quiz-materias">
+          <h2 id="quiz-materias" className="text-xl text-white pb-3 border-b border-linha">Treinar uma matéria</h2>
+          <div className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
+            {AREAS_ENEM.map(({ area, materias }) => (
+              <div key={area} className="pt-4">
+                <p className="rotulo mb-1">{area}</p>
+                <ul className="pauta">
+                  {materias.map((m) => (
+                    <li key={m}>
+                      <button
+                        onClick={() => { setMateria(m); setSelectedTopics([]); setStage('topics'); }}
+                        className="group w-full flex items-center justify-between gap-3 py-3 text-left text-[0.9375rem] text-gray-100 hover:text-white"
+                      >
+                        <span>{m}</span>
+                        <ChevronRight size={16} className="text-gray-600 group-hover:text-amber-400 transition-colors" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="quiz-simulado" className="painel rounded-2xl p-5 md:p-6 grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <h2 id="quiz-simulado" className="text-xl text-white">Simulado no formato da prova</h2>
+            <p className="text-sm text-gray-400 mt-1 max-w-lg">
+              Questões de todas as áreas misturadas, com {MINUTOS_POR_QUESTAO_SIMULADO} minutos por questão no relógio. Cada resposta é salva na hora: dá para fechar o app e continuar depois.
+            </p>
+            <div className="mt-4 inline-flex rounded-md border border-linha-forte p-0.5" role="radiogroup" aria-label="Tamanho do simulado">
+              {([45, 90] as const).map(n => (
+                <button
+                  key={n}
+                  role="radio"
+                  aria-checked={simuladoQtd === n}
+                  onClick={() => setSimuladoQtd(n)}
+                  className={`px-4 py-2 rounded text-sm transition-colors min-h-[40px] ${
+                    simuladoQtd === n ? 'bg-folha-3 text-white font-semibold' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {n} questões <span className="text-gray-500 font-normal">· {Math.round((n * MINUTOS_POR_QUESTAO_SIMULADO) / 60 * 10) / 10} h</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={startSimulado}
+            disabled={generating || !aiAvailable(apiKey)}
+            title={!aiAvailable(apiKey) ? 'Precisa da IA configurada no Perfil' : undefined}
+            className="btn-primary w-full md:w-auto"
+          >
+            {generating ? (
+              <><span className="w-4 h-4 anel-carregando rounded-full animate-spin" aria-hidden="true" /> {progressoGeracao || 'Montando simulado...'}</>
+            ) : `Começar com ${simuladoQtd} questões`}
+          </button>
+        </section>
+
+
         {quizResults.length > 0 && (
-          <div className="glass rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-gray-300 mb-3"><BarChart3 size={16} className="inline-block align-[-0.15em] text-cyan-400" /> Histórico recente</h2>
-            <div className="space-y-1">
+          <section aria-labelledby="quiz-recentes">
+            <h2 id="quiz-recentes" className="text-xl text-white pb-3 border-b border-linha">Últimos quizzes</h2>
+            <ul className="pauta">
               {quizResults.slice(-5).reverse().map((r, i) => {
                 const pct = Math.round((r.acertos / r.total) * 100);
                 return (
-                  <div key={i} className="flex items-center justify-between text-sm py-2.5 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
-                    <div className="flex items-center gap-2">
-                      <span>{MAT_ICONS[r.materia] || ''}</span>
-                      <span className="text-gray-400">{r.materia}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs font-medium ${pct >= 60 ? 'text-emerald-400' : pct >= 30 ? 'text-amber-400' : 'text-red-400'}`}>
-                        {r.acertos}/{r.total}
+                  <li key={i} className="flex items-center justify-between gap-3 text-sm py-3">
+                    <span className="text-gray-200">{r.materia}</span>
+                    <span className="flex items-center gap-4 font-mono tabular-nums">
+                      <span className={pct >= 60 ? 'text-emerald-400' : pct >= 30 ? 'text-amber-400' : 'text-red-400'}>
+                        {r.acertos} de {r.total}
                       </span>
-                      <span className="text-amber-400 font-medium tabular-nums text-xs bg-amber-500/10 px-2 py-0.5 rounded-full">
-                        +{r.xpGanho} XP
-                      </span>
-                    </div>
-                  </div>
+                      <span className="text-gray-500 w-16 text-right">+{r.xpGanho} XP</span>
+                    </span>
+                  </li>
                 );
               })}
-            </div>
-          </div>
+            </ul>
+          </section>
         )}
       </div>
     );
@@ -865,20 +873,13 @@ export function QuizPage() {
     const topics = TOPIC_MAP[materia] || [];
     return (
       <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: '#f59e0b15' }}>
-              {MAT_ICONS[materia] || ''}
-            </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">{materia}</h1>
-            <p className="text-sm text-gray-500">Conteúdos cobrados no ENEM, FUVEST, UNICAMP e UNESP</p>
-          </div>
-          </div>
-          <button onClick={() => setStage('select')} className="btn-ghost text-xs"> Voltar</button>
+        <div>
+          <button onClick={() => setStage('select')} className="btn-ghost -ml-2 text-sm"><ChevronLeft size={16} aria-hidden="true" /> Matérias</button>
+          <h1 className="text-[1.75rem] text-white mt-1">{materia}</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Conteúdos cobrados no ENEM e nos principais vestibulares.</p>
         </div>
 
-        <div className="glass rounded-2xl p-6 space-y-4">
+        <div className="painel rounded-2xl p-6 space-y-4">
           <p className="text-sm text-gray-400">Escolha um ou mais tópicos para a IA gerar questões personalizadas.</p>
 
           <div className="flex flex-wrap gap-2">
@@ -955,7 +956,7 @@ export function QuizPage() {
           <div className="flex gap-2 pt-2">
             <button onClick={() => startQuiz()} disabled={selectedTopics.length === 0 || generating} className="btn-primary flex-1">
               {generating ? (
-                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> {progressoGeracao || 'Gerando questões...'}</>
+                <><span className="w-4 h-4 anel-carregando rounded-full animate-spin mr-2" /> {progressoGeracao || 'Gerando questões...'}</>
               ) : `Gerar Quiz (${quantidade} ${quantidade === 1 ? 'questão' : 'questões'})`}
             </button>
           </div>
@@ -966,42 +967,64 @@ export function QuizPage() {
 
   if (stage === 'result' && result) {
     const pct = Math.round((result.acertos / result.total) * 100);
-    const grade = pct >= 80 ? 'Excelente!' : pct >= 60 ? 'Mandou bem!' : pct >= 30 ? 'Bom, mas pode melhorar!' : 'Continue praticando!';
+    const grade = pct >= 80 ? 'Excelente.' : pct >= 60 ? 'Mandou bem.' : pct >= 30 ? 'Dá para melhorar.' : 'Começo de caminho.';
+    const corNota = pct >= 60 ? 'text-emerald-400' : pct >= 30 ? 'text-amber-400' : 'text-red-400';
     return (
       <>
-      <div className={`space-y-5 animate-scale-in mx-auto ${showGabarito ? 'max-w-2xl' : 'max-w-md'}`}>
-        <div className="glass rounded-2xl p-8 text-center">
-          <div className="relative w-36 h-36 mx-auto mb-5">
-            <svg className="w-36 h-36 -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
-              <circle cx="60" cy="60" r="52" fill="none" stroke={pct >= 60 ? '#10b981' : pct >= 30 ? '#f59e0b' : '#ef4444'} strokeWidth="6" strokeLinecap="round"
-                strokeDasharray={`${pct * 3.267} 326.7`} className="transition-all duration-1000 ease-out" />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-extrabold text-white tabular-nums">{result.acertos}/{result.total}</span>
-              <span className="text-[10px] text-gray-500">acertos</span>
-            </div>
+      <div className="space-y-8 max-w-3xl mx-auto">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm text-gray-500">{modoQuiz === 'simulado' ? 'Simulado' : `Quiz de ${materia}`}: resultado</p>
+            <h1 className="text-[2rem] text-white mt-0.5">
+              <span className={corNota}>{result.acertos}</span> de {result.total} certas
+            </h1>
+            <p className="text-sm text-gray-400 mt-1">
+              {grade}{' '}
+              {modoQuiz !== 'simulado' && (pct < 60
+                ? 'Este tópico volta mais cedo nas suas revisões.'
+                : 'Este tópico volta nas revisões daqui a alguns dias.')}
+            </p>
           </div>
+          <p className="font-mono text-amber-400 text-lg">+{result.xpGanho} XP</p>
+        </header>
 
-          <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full ${
-            pct >= 60 ? 'bg-emerald-500/10 text-emerald-400' : pct >= 30 ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'
-          }`}>
-            {grade}
-          </span>
-
-          <div className="mt-4 flex items-center justify-center gap-2 text-lg">
-            <span className="text-amber-400 font-bold tabular-nums">+{result.xpGanho} XP</span>
-            <span className="text-gray-500">ganhos</span>
-          </div>
-
-          <div className="flex gap-3 mt-8 justify-center">
-            <button onClick={() => { setStage('topics'); setSelectedTopics([]); }} className="btn-primary">Tentar novamente</button>
-            <button onClick={() => setStage('select')} className="btn-secondary">Outra matéria</button>
-          </div>
-          <button onClick={() => setShowGabarito(v => !v)} className="btn-ghost w-full mt-3 text-sm">
-            {showGabarito ? 'Ocultar gabarito detalhado' : 'Ver gabarito detalhado'}
+        {/* Cartão-resposta corrigido: uma linha por questão, a bolha
+            marcada e a certa lado a lado. É a forma como o aluno confere
+            a prova de verdade, e cabe inteiro na tela. */}
+        <section aria-labelledby="gabarito-titulo">
+          <h2 id="gabarito-titulo" className="text-xl text-white pb-3 border-b border-linha">Gabarito</h2>
+          <ol className="pauta">
+            {questions.map((q, i) => {
+              const escolha = respostas[i];
+              const acertou = escolha === q.correta;
+              return (
+                <li key={q.id} className="flex items-center gap-4 py-2.5">
+                  <span className="font-mono text-sm text-gray-500 w-7 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="flex gap-1.5" aria-label={`Questão ${i + 1}: ${escolha === undefined ? 'sem resposta' : `marcou ${String.fromCharCode(65 + escolha)}`}, certa ${String.fromCharCode(65 + q.correta)}`}>
+                    {q.alternativas.map((_, idx) => (
+                      <span
+                        key={idx}
+                        aria-hidden="true"
+                        className={`bolha !w-6 !h-6 !text-[0.625rem] ${
+                          idx === escolha
+                            ? acertou ? '!bg-emerald-400 !border-emerald-400 !text-[#0d1d12]' : '!bg-red-400 !border-red-400 !text-[#280f09]'
+                            : idx === q.correta ? '!border-emerald-400 !text-emerald-300' : '!border-gray-700 !text-gray-600'
+                        }`}
+                      >
+                        {String.fromCharCode(65 + idx)}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="flex-1 min-w-0 text-sm text-gray-400 truncate">{q.topico || materia}</span>
+                  <span className={`text-sm shrink-0 ${acertou ? 'text-emerald-400' : 'text-red-400'}`}>{acertou ? 'certa' : 'errada'}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <button onClick={() => setShowGabarito(v => !v)} className="btn-ghost -ml-2 mt-2" aria-expanded={showGabarito}>
+            {showGabarito ? 'Esconder as questões corrigidas' : 'Ver as questões corrigidas, com explicação'}
           </button>
-        </div>
+        </section>
 
         {showGabarito && (
           <div className="space-y-3 text-left">
@@ -1009,29 +1032,22 @@ export function QuizPage() {
               const escolha = respostas[i];
               const acertou = escolha === q.correta;
               return (
-                <div key={q.id} className="glass rounded-2xl p-5">
+                <div key={q.id} className="painel rounded-2xl p-5 md:p-6">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                      acertou ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                    }`}>
-                      Q{i + 1} • {acertou ? 'Acertou' : 'Errou'}
+                    <span className={`text-sm font-semibold ${acertou ? 'text-emerald-400' : 'text-red-400'}`}>
+                      Questão {i + 1}: {acertou ? 'certa' : 'errada'}
                     </span>
-                    {q.topico && (
-                      <span className="text-xs text-amber-400 bg-amber-500/10 rounded-full px-2.5 py-1">{q.topico}</span>
-                    )}
-                    {q.fonte && (
-                      <span className="text-xs text-cyan-300 bg-cyan-500/10 rounded-full px-2.5 py-1">{q.fonte}</span>
-                    )}
+                    <span className="text-xs text-gray-500 font-mono">{[q.topico, q.fonte].filter(Boolean).join(' · ')}</span>
                   </div>
                   <p className="text-sm text-white font-medium leading-relaxed mb-3">{q.enunciado}</p>
                   <div className="space-y-1.5 mb-3">
                     {q.alternativas.map((alt, idx) => (
-                      <div key={idx} className={`text-sm px-3 py-2 rounded-lg border ${
+                      <div key={idx} className={`text-sm px-3 py-2 rounded-md ${
                         idx === q.correta
-                          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'
+                          ? 'bg-emerald-500/10 text-emerald-200'
                           : idx === escolha
-                            ? 'bg-red-500/10 border-red-500/40 text-red-200'
-                            : 'border-white/5 text-gray-400'
+                            ? 'bg-red-500/10 text-red-200'
+                            : 'text-gray-400'
                       }`}>
                         <span className="font-mono mr-2">{String.fromCharCode(65 + idx)}</span>{alt}
                         {idx === q.correta && <span className="ml-2 text-xs">correta</span>}
@@ -1044,17 +1060,17 @@ export function QuizPage() {
                   {respostas[i] !== undefined && respostas[i] !== q.correta && (
                     <div className="mt-2">
                       {tutorTexto[q.id] ? (
-                        <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
-                          <p className="text-xs text-emerald-300 font-semibold mb-1">Explicação do tutor</p>
+                        <div className="border-l-2 border-tinta-400 pl-3">
+                          <p className="text-sm text-gray-300 font-semibold mb-1">Explicação do tutor</p>
                           <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">{tutorTexto[q.id]}</p>
                         </div>
                       ) : (
                         <button
                           onClick={() => pedirExplicacaoTutor(i)}
                           disabled={tutorLoading !== null}
-                          className="btn-secondary w-full text-xs"
+                          className="btn-secondary"
                         >
-                          {tutorLoading === q.id ? 'Chamando o tutor...' : 'Pedir explicação do tutor'}
+                          {tutorLoading === q.id ? 'Chamando o tutor...' : 'Explicar com mais calma'}
                         </button>
                       )}
                     </div>
@@ -1064,6 +1080,11 @@ export function QuizPage() {
             })}
           </div>
         )}
+
+        <div className="flex flex-wrap gap-3 pt-2 border-t border-linha">
+          <button onClick={() => { setStage('topics'); setSelectedTopics([]); }} className="btn-primary mt-4">Treinar de novo</button>
+          <button onClick={() => setStage('select')} className="btn-secondary mt-4">Outra matéria</button>
+        </div>
       </div>
 
       {/* Marco da lição: XP salta no centro + sagui cai com joinha */}
@@ -1081,45 +1102,47 @@ export function QuizPage() {
   const question = questions[currentIndex];
 
   return (
-    <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: '#f59e0b15' }}>
-            {MAT_ICONS[materia] || ''}
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-white flex items-center gap-2">
-              {materia}
-              {modoQuiz === 'simulado' && (
-                <span className="text-[10px] font-bold text-violet-200 bg-violet-500/15 border border-violet-500/25 rounded-full px-2 py-0.5">
-                  SIMULADO
-                </span>
-              )}
-            </h1>
-            <p className="text-xs text-gray-500">
-              Questão {currentIndex + 1} de {questions.length}
-              {modoQuiz === 'simulado' && simuladoFimEm !== null && (
-                <CronometroSimulado fimEm={simuladoFimEm} texto={tempoRestante} />
-              )}
-            </p>
-          </div>
+    <div className="space-y-5 max-w-3xl mx-auto">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm text-gray-500">{modoQuiz === 'simulado' ? 'Simulado' : 'Quiz'}</p>
+          <h1 className="text-2xl text-white">{materia}</h1>
         </div>
-        <div className="hidden sm:flex gap-1.5">
-          {questions.map((_, i) => (
-            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === currentIndex ? 'bg-amber-400 w-6'
-                : i < currentIndex ? 'bg-emerald-500/50 w-2' : 'bg-white/10 w-2'
-            }`} />
-          ))}
-        </div>
+        <p className="font-mono text-sm text-gray-300 tabular-nums">
+          Questão {currentIndex + 1} de {questions.length}
+          {modoQuiz === 'simulado' && simuladoFimEm !== null && (
+            <CronometroSimulado fimEm={simuladoFimEm} texto={tempoRestante} />
+          )}
+        </p>
       </div>
 
-      {/* Barra da sessao: enche a cada questao. Saber quanto falta e o que
-          sustenta o aluno ate o fim do bloco. */}
-      <BarraProgresso
-        altura="h-2"
-        valor={((currentIndex + (selectedAlt !== null ? 1 : 0)) / questions.length) * 100}
-      />
+      {/* Cartão-resposta: uma bolha por questão, preenchida quando
+          respondida e com anel na atual. Para blocos longos (simulado de
+          45 ou 90) as bolhas não caberiam: fica só a barra. */}
+      {questions.length <= 30 && (
+        <ol className="flex flex-wrap gap-1.5" aria-label="Andamento do quiz">
+          {questions.map((_, i) => (
+            <li
+              key={i}
+              aria-current={i === currentIndex ? 'step' : undefined}
+              className={`w-3.5 h-3.5 rounded-full border transition-colors duration-200 ${
+                i < currentIndex || (i === currentIndex && selectedAlt !== null)
+                  ? 'bg-gray-300 border-gray-300'
+                  : i === currentIndex ? 'border-amber-400 border-2' : 'border-gray-600'
+              }`}
+            />
+          ))}
+        </ol>
+      )}
+
+      {/* Barra da sessao: so nos blocos longos, onde as bolhas acima nao
+          cabem. Nos curtos as duas diziam a mesma coisa. */}
+      {questions.length > 30 && (
+        <BarraProgresso
+          altura="h-1.5"
+          valor={((currentIndex + (selectedAlt !== null ? 1 : 0)) / questions.length) * 100}
+        />
+      )}
 
       {comemorando && (
         <img loading="lazy"
@@ -1127,7 +1150,7 @@ export function QuizPage() {
           alt=""
           width={96}
           height={96}
-          className="fixed bottom-28 right-4 md:bottom-8 md:right-8 w-24 h-24 object-contain z-40 pointer-events-none motion-safe:animate-scale-in drop-shadow-[0_8px_24px_rgba(245,158,11,0.3)]"
+          className="fixed bottom-28 right-4 md:bottom-8 md:right-8 w-24 h-24 object-contain z-40 pointer-events-none motion-safe:animate-scale-in"
         />
       )}
 
@@ -1136,52 +1159,46 @@ export function QuizPage() {
       <AnimatePresence mode="popLayout" initial={false}>
       <m.div
         key={currentIndex}
-        className="glass rounded-2xl p-6"
+        className="painel rounded-2xl p-5 md:p-7"
         variants={reduzir ? undefined : avancar}
         initial={reduzir ? false : 'inicial'}
         animate={reduzir ? undefined : 'animar'}
         exit={reduzir ? undefined : 'sair'}
       >
-        <div className="flex flex-wrap gap-2 mb-3">
-          {question.topico && (
-            <span className="text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/15 rounded-full px-3 py-1">
-              Tema: {question.topico}
-            </span>
-          )}
-          {question.fonte && (
-            <span className="text-xs font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/15 rounded-full px-3 py-1">
-              {question.fonte}
-            </span>
-          )}
-        </div>
-        <p className="text-base text-white font-medium mb-6 leading-relaxed">{question.enunciado}</p>
+        <p className="text-xs text-gray-500 mb-3 font-mono">
+          {[question.topico, question.fonte].filter(Boolean).join(' · ')}
+        </p>
+        <p className="text-[1.0625rem] text-white mb-6 leading-relaxed max-w-[68ch]">{question.enunciado}</p>
 
         {question.dica && selectedAlt === null && (
           <div className="mb-4">
             {!showDica ? (
               <button
                 onClick={() => setShowDica(true)}
-                className="text-xs font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3 py-2 hover:bg-cyan-500/15 transition-all"
+                className="btn-ghost text-tinta-300 -ml-2"
               >
-                Ver dica
+                Ver uma dica
               </button>
             ) : (
-              <div className="p-3.5 rounded-xl bg-cyan-500/5 border border-cyan-500/15 animate-slide-up">
-                <p className="text-xs text-cyan-300 font-semibold tracking-wide mb-1">Dica</p>
+              <div className="border-l-2 border-tinta-400 pl-3 animate-slide-up">
+                <p className="text-xs text-tinta-300 font-semibold mb-0.5">Dica</p>
                 <p className="text-sm text-gray-300 leading-relaxed">{question.dica}</p>
               </div>
             )}
           </div>
         )}
 
-        <div className="space-y-2.5">
+        {/* Alternativas como no caderno de prova: a letra na bolha, e
+            marcar é preencher. Depois da resposta, a certa fica verde e a
+            marcada errada, vermelha; as outras recuam. */}
+        <div className="pauta border-y border-linha">
           {question.alternativas.map((alt, idx) => {
-            let style = 'bg-transparent border-white/5 text-gray-200';
-            if (selectedAlt !== null) {
-              if (idx === question.correta) style = 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200';
-              else if (idx === selectedAlt && idx !== question.correta) style = 'bg-red-500/10 border-red-500/40 text-red-200';
-              else style = 'opacity-30 border-white/5 text-gray-400';
-            }
+            const respondida = selectedAlt !== null;
+            const certa = respondida && idx === question.correta;
+            const erradaMarcada = respondida && idx === selectedAlt && idx !== question.correta;
+            const style = !respondida
+              ? 'text-gray-100 hover:bg-folha-2'
+              : certa ? 'text-emerald-200' : erradaMarcada ? 'text-red-200' : 'text-gray-500';
             return (
               <m.button
                 key={idx}
@@ -1191,44 +1208,48 @@ export function QuizPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={reduzir ? { duration: 0 } : { delay: atrasoDoItem(idx), duration: 0.22 }}
                 whileTap={reduzir || selectedAlt !== null ? undefined : { scale: 0.98 }}
-                className={`w-full text-left p-4 md:p-4 rounded-xl border ${style} transition-all duration-200 text-sm md:text-base hover:bg-white/[0.02] min-h-[52px] press ${
+                aria-label={`Alternativa ${String.fromCharCode(65 + idx)}: ${alt}${certa ? ' (correta)' : erradaMarcada ? ' (sua resposta, errada)' : ''}`}
+                className={`w-full text-left flex items-start gap-3.5 px-2 py-3.5 transition-colors duration-150 text-[0.9375rem] md:text-base min-h-[52px] ${style} ${
                   errou && idx === selectedAlt ? 'motion-safe:animate-shake' : ''
-                } ${selectedAlt !== null && idx === question.correta ? 'motion-safe:animate-scale-in' : ''}`}
+                }`}
               >
-                <span className={`inline-flex items-center justify-center w-7 h-7 md:w-6 md:h-6 rounded-lg text-sm font-mono mr-3 ${
-                  selectedAlt !== null && idx === question.correta
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : selectedAlt !== null && idx === selectedAlt && idx !== question.correta
-                      ? 'bg-red-500/20 text-red-400'
-                      : 'bg-white/5 text-gray-500'
-                }`}>
+                <span
+                  aria-hidden="true"
+                  className={`bolha mt-0.5 ${
+                    certa ? '!bg-emerald-400 !border-emerald-400 !text-[#0d1d12]'
+                      : erradaMarcada ? '!bg-red-400 !border-red-400 !text-[#280f09]'
+                        : ''
+                  }`}
+                >
                   {String.fromCharCode(65 + idx)}
                 </span>
-                {alt}
+                <span className="flex-1">{alt}</span>
               </m.button>
             );
           })}
         </div>
 
         {showExplanation && (
-          <div className="mt-5 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 animate-slide-up">
-            <p className="text-xs text-amber-400 font-semibold tracking-wide mb-1"><BookOpen size={16} className="inline-block align-[-0.15em] text-amber-400" /> Explicação</p>
+          <div className="mt-6 border-l-2 border-amber-400 pl-4 animate-slide-up" role="status">
+            <p className="text-sm text-amber-300 font-semibold mb-1">
+              {selectedAlt === question.correta ? 'Certa.' : `A certa é a ${String.fromCharCode(65 + question.correta)}.`} Por quê:
+            </p>
             <p className="text-sm text-gray-300 leading-relaxed">{question.explicacao}</p>
 
             {selectedAlt !== null && selectedAlt !== question.correta && (
-              <div className="mt-3 border-t border-amber-500/10 pt-3">
+              <div className="mt-3 pt-3 border-t border-linha">
                 {tutorTexto[question.id] ? (
                   <div className="animate-slide-up">
-                    <p className="text-xs text-emerald-300 font-semibold tracking-wide mb-1">Explicação do tutor</p>
+                    <p className="text-sm text-gray-300 font-semibold mb-1">Explicação do tutor</p>
                     <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">{tutorTexto[question.id]}</p>
                   </div>
                 ) : (
                   <button
                     onClick={() => pedirExplicacaoTutor(currentIndex)}
                     disabled={tutorLoading !== null}
-                    className="btn-secondary w-full text-sm"
+                    className="btn-secondary"
                   >
-                    {tutorLoading === question.id ? 'Chamando o tutor...' : 'Pedir explicação do tutor'}
+                    {tutorLoading === question.id ? 'Chamando o tutor...' : 'Explicar com mais calma'}
                   </button>
                 )}
               </div>

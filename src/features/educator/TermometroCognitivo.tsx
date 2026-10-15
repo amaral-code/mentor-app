@@ -67,7 +67,7 @@ export function TermometroCognitivo({ escopo = 'escola' }: { escopo?: 'escola' |
     <section aria-label={escopo === 'escola' ? 'Termômetro cognitivo da escola' : 'Termômetro cognitivo das suas turmas'} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-tinta-500/10 text-tinta-300">
             <Thermometer size={20} />
           </span>
           <div>
@@ -89,7 +89,7 @@ export function TermometroCognitivo({ escopo = 'escola' }: { escopo?: 'escola' |
                 onClick={() => setDias(j.dias)}
                 aria-pressed={dias === j.dias}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                  dias === j.dias ? 'bg-violet-500/20 text-violet-200' : 'text-slate-400 hover:text-white'
+                  dias === j.dias ? 'bg-tinta-500/20 text-tinta-200' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {j.rotulo}
@@ -112,11 +112,11 @@ export function TermometroCognitivo({ escopo = 'escola' }: { escopo?: 'escola' |
           palavra; o caso comum do professor. */}
       {!carregando && !erro && visiveis.length > 1 && (
         <div className="rounded-2xl border border-white/10 bg-midnight-900/60 px-5 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="text-xs font-semibold text-slate-500">
             {escopo === 'escola' ? 'Escola' : 'Suas turmas'} · {ROTULO_CALOR[rede.nivel]}
           </p>
           <p className="mt-1 text-sm text-slate-300">
-            <span className="text-2xl font-black text-white tabular-nums">{rede.percentualExaustao}%</span>{' '}
+            <span className="text-2xl font-bold text-white tabular-nums">{rede.percentualExaustao}%</span>{' '}
             dos {rede.alunosMedidos} alunos medidos em {rede.turmasMedidas}{' '}
             {rede.turmasMedidas === 1 ? 'turma' : 'turmas'} estão em fadiga ou esgotamento{' '}
             {janela === 'hoje' ? 'hoje' : `nos últimos ${dias} dias`}.

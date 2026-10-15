@@ -3,7 +3,7 @@ import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { PartyPopper } from 'lucide-react';
 import { AnimatedNumber } from './AnimatedNumber';
 import { brilhoPulsante, celebracao, springTap } from '../lib/motionPresets';
-const CONFETTI_COLORS = ['#fbbf24', '#f59e0b', '#a78bfa', '#34d399', '#f472b6', '#60a5fa', '#38bdf8'];
+const CONFETTI_COLORS = ['#f3b53f', '#e9a11c', '#a4baf6', '#97d3a2', '#e0919e', '#a4baf6', '#a4baf6'];
 
 interface Confetti { left: number; mx: number; my: number; rot: number; color: string; delay: number; }
 

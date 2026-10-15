@@ -3,7 +3,7 @@ import { useAppStore, persistir } from '../../stores/appStore';
 import { Nota } from '../../shared/types';
 import { playClick } from '../../shared/lib/sfx';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { NotebookPen, Pencil, Sparkles, Trash2, X } from 'lucide-react';
+import { Pencil, Sparkles, Trash2, X } from 'lucide-react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';
 
@@ -60,19 +60,16 @@ export function NotebookPage() {
   }
 
   const tagColors: Record<string, string> = {
-    chat: 'border-l-blue-500/40', erro: 'border-l-red-500/40', resumo: 'border-l-emerald-500/40',
-    revisao: 'border-l-purple-500/40', redacao: 'border-l-amber-500/40',
+    chat: 'border-l-tinta-500/40', erro: 'border-l-red-500/40', resumo: 'border-l-emerald-500/40',
+    revisao: 'border-l-tinta-500/40', redacao: 'border-l-amber-500/40',
   };
 
   return (
     <div className="space-y-5 animate-fade-up">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/10 flex items-center justify-center">
-            <NotebookPen size={19} className="text-amber-400" />
-          </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white">Caderno de Estudos</h1>
+            <h1 className="text-[1.75rem] text-white">Caderno de Estudos</h1>
             <p className="text-sm text-gray-500 mt-0.5">{notas.length} anotações</p>
           </div>
         </div>
@@ -83,7 +80,7 @@ export function NotebookPage() {
       </div>
 
       {/* Add note */}
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-300 mb-3">Nova Anotação</h2>
         <textarea
           value={newText}
@@ -127,7 +124,7 @@ export function NotebookPage() {
             width={128}
             height={128}
             loading="lazy"
-            className="w-32 h-32 object-contain mb-3 opacity-90 motion-safe:animate-float-suave"
+            className="w-32 h-32 object-contain mb-3 opacity-90"
           />
           <p className="text-gray-300 font-medium">O caderno está em branco</p>
           <p className="text-sm text-gray-500 mt-1 max-w-xs">
@@ -145,7 +142,7 @@ export function NotebookPage() {
                 initial={reduzir ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={reduzir ? { duration: 0 } : { delay: atrasoDoItem(i), duration: 0.25 }}
-                className={`glass rounded-2xl p-5 flex flex-col border-l-4 ${borderColor}`}
+                className={`painel rounded-2xl p-5 flex flex-col border-l-4 ${borderColor}`}
               >
                 {editingId === nota.id ? (
                   <div className="space-y-3">

@@ -29,7 +29,7 @@ import type { IndiceBurnout, RelatorioSemanal, SessaoOffline, SeveridadeAlerta }
  */
 
 const CORES_SEVERIDADE: Record<SeveridadeAlerta, { borda: string; texto: string; fundo: string }> = {
-  info: { borda: 'border-sky-500/20', texto: 'text-sky-300', fundo: 'bg-sky-500/[0.07]' },
+  info: { borda: 'border-tinta-500/20', texto: 'text-tinta-300', fundo: 'bg-tinta-500/[0.07]' },
   atencao: { borda: 'border-amber-500/20', texto: 'text-amber-300', fundo: 'bg-amber-500/[0.07]' },
   alto: { borda: 'border-orange-500/25', texto: 'text-orange-300', fundo: 'bg-orange-500/[0.08]' },
   critico: { borda: 'border-red-500/30', texto: 'text-red-300', fundo: 'bg-red-500/[0.09]' },
@@ -74,7 +74,7 @@ export function PainelCuidado({ aluno }: Props) {
   return (
     <section className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-5">
       {/* Curva de estresse */}
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
             <HeartPulse size={18} className="text-rose-400" />
@@ -122,17 +122,17 @@ export function PainelCuidado({ aluno }: Props) {
         )}
 
         <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-          <div className="glass-light rounded-xl py-2.5">
-            <ShieldCheck size={14} className="text-cyan-400 mx-auto" />
+          <div className="painel-suave rounded-xl py-2.5">
+            <ShieldCheck size={14} className="text-tinta-400 mx-auto" />
             <p className="text-sm font-bold text-white tabular-nums mt-1">{minutosOfflineSemana}</p>
             <p className="text-[10px] text-gray-500">min offline (7d)</p>
           </div>
-          <div className="glass-light rounded-xl py-2.5">
-            <Activity size={14} className="text-violet-400 mx-auto" />
+          <div className="painel-suave rounded-xl py-2.5">
+            <Activity size={14} className="text-tinta-400 mx-auto" />
             <p className="text-sm font-bold text-white tabular-nums mt-1">{FADIGA_ZERADA ? 'desligado' : burnout.length}</p>
             <p className="text-[10px] text-gray-500">dias medidos</p>
           </div>
-          <div className="glass-light rounded-xl py-2.5">
+          <div className="painel-suave rounded-xl py-2.5">
             <BellRing size={14} className="text-amber-400 mx-auto" />
             <p className="text-sm font-bold text-white tabular-nums mt-1">{abertos.length}</p>
             <p className="text-[10px] text-gray-500">alertas abertos</p>
@@ -187,7 +187,7 @@ export function PainelCuidado({ aluno }: Props) {
 
       {/* Relatorio de descompressao (versao do responsavel) */}
       {relatorios.length > 0 && (
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-2">Resumo da semana</h2>
           <p className="text-sm text-gray-300 leading-relaxed">{relatorios[0].textoGerado}</p>
           <p className="text-[11px] text-gray-600 mt-3">
@@ -199,7 +199,7 @@ export function PainelCuidado({ aluno }: Props) {
 
       <ListaConsultas />
 
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-300">Rede de psicólogos</h2>
         <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
           Profissionais com CRP ativo, atendimento online. Você escolhe o valor e o horário; o link da

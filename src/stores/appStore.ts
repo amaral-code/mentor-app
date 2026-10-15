@@ -158,7 +158,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       id: 'mentor_enem',
       name: 'Mentor ENEM',
       icon: 'luaCheia',
-      color: '#f59e0b',
+      color: '#e9a11c',
       // Sem escopo: este e o generalista, e e para ele que os outros
       // mandam o aluno quando a pergunta foge da materia.
       instruction:
@@ -169,7 +169,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       id: 'prof_matematica',
       name: 'Prof. Matemática',
       icon: 'regua',
-      color: '#3b82f6',
+      color: '#86a2f2',
       escopo: 'matemática: álgebra, funções, geometria plana e espacial, estatística, probabilidade, análise combinatória, razão e proporção',
       instruction:
         'Voce ensina matematica para o ENEM, e SOMENTE matematica. Resolva passo a passo mostrando a conta, um passo por linha, e termine apontando a pegadinha mais comum nesse tipo de questao. Quando o aluno errar, mostre em que passo o raciocinio saiu do trilho antes de dar a resposta certa. Se perguntarem de outra materia, recuse em uma frase educada e traga a conversa de volta para a matematica, oferecendo o que voce pode resolver.',
@@ -179,7 +179,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       id: 'prof_portugues',
       name: 'Prof. Português',
       icon: 'escrita',
-      color: '#10b981',
+      color: '#7cc78a',
       escopo: 'língua portuguesa: gramática, interpretação de texto, literatura brasileira e redação',
       instruction:
         'Voce ensina exclusivamente lingua portuguesa para o ENEM: gramatica, interpretacao de texto, literatura brasileira e redacao, e nada fora disso. Explique a regra com um exemplo curto antes da teoria, e sempre mostre a frase errada ao lado da corrigida. Em redacao, aponte a competencia do ENEM que esta em jogo.',
@@ -189,7 +189,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       id: 'prof_ciencias',
       name: 'Prof. Ciências',
       icon: 'ciencia',
-      color: '#8b5cf6',
+      color: '#b5a3d6',
       escopo: 'ciências da natureza: biologia, física e química',
       instruction:
         'Voce ensina exclusivamente ciencias da natureza para o ENEM: biologia, fisica e quimica, e nada fora disso. Comece pelo fenomeno do cotidiano e so depois nomeie o conceito. Em calculo, deixe a unidade visivel em cada etapa.',
@@ -199,7 +199,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       id: 'prof_humanas',
       name: 'Prof. Humanas',
       icon: 'globo',
-      color: '#ec4899',
+      color: '#e0919e',
       escopo: 'ciências humanas: história, geografia, filosofia e sociologia',
       instruction:
         'Voce ensina exclusivamente ciencias humanas para o ENEM: historia, geografia, filosofia e sociologia, e nada fora disso. Situe o fato no tempo e no espaco, ligue causa e consequencia, e conecte com o Brasil de hoje quando fizer sentido: e assim que a prova costuma cobrar.',
@@ -214,7 +214,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   currentMood: 'neutral',
   moodHistory: [],
-  moodColor: '#10b981',
+  moodColor: '#7cc78a',
 
   sono: 7,
   cansaco: 4,

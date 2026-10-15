@@ -1,5 +1,6 @@
 import { BadgeCheck, Lock, Video } from 'lucide-react';
 import { formatarDataHora, iniciais, type SessaoView } from '../tipos';
+import { nomeDaPlataforma } from '../../../shared/lib/salaVirtual';
 
 interface HeroSessaoProps {
   sessao: SessaoView;
@@ -18,35 +19,36 @@ interface HeroSessaoProps {
 export function HeroSessao({ sessao, countdown, salaAberta, entrando, onEntrar }: HeroSessaoProps) {
   return (
     <section
-      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-midnight-800 via-midnight-850 to-midnight-800 border-2 border-amber-500/40 p-6 sm:p-8 shadow-2xl shadow-black/60 transition-all duration-300 hover:border-amber-500/60"
+      className="relative overflow-hidden rounded-2xl painel border-l-[3px] !border-l-amber-400 p-6 sm:p-8"
       data-purpose="imminent-session-hero"
     >
-      <div className="absolute -top-24 -right-24 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl pointer-events-none animate-pulse-slow" />
-      <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none animate-pulse-slow" style={{ animationDelay: '-2s' }} />
       <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex items-center gap-5 sm:gap-6">
           <div className="relative group">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden ring-4 ring-amber-500/30 shadow-xl bg-gradient-to-br from-emerald-600/40 to-midnight-700 flex-shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:ring-amber-500/60 flex items-center justify-center">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-folha-3 flex-shrink-0 flex items-center justify-center">
               <span className="text-2xl sm:text-3xl font-extrabold text-emerald-200" aria-hidden="true">
                 {iniciais(sessao.psicologoNome)}
               </span>
             </div>
-            <span
-              className="absolute -bottom-1 -right-1 bg-emerald-500 text-midnight-950 p-1 rounded-full border-2 border-midnight-900 shadow-[0_0_8px_#10B981]"
-              title="Profissional Online"
-            >
-              <BadgeCheck size={14} />
-            </span>
+            {/* O selo verde "Profissional Online" saiu: o app não sabe se o
+                profissional está conectado, e o tique dizia que sabia. */}
           </div>
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-amber-500 text-midnight-950 shadow-sm shadow-amber-500/20">
-                Próxima Sessão Confirmada
+              <span className="text-sm font-medium text-amber-400">
+                Próxima sessão, confirmada
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                <BadgeCheck size={12} />
-                {sessao.crp}
-              </span>
+              {/* O selo de conferido só aparece com CRP de verdade: o
+                  tique verde ao lado de "CRP não informado" dizia que
+                  algo foi conferido quando não foi. */}
+              {sessao.crp.startsWith('CRP não') ? (
+                <span className="text-xs text-gray-500">{sessao.crp}</span>
+              ) : (
+                <span className="text-xs text-emerald-400 flex items-center gap-1">
+                  <BadgeCheck size={13} aria-hidden="true" />
+                  {sessao.crp}
+                </span>
+              )}
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
               {sessao.psicologoNome}
@@ -62,7 +64,6 @@ export function HeroSessao({ sessao, countdown, salaAberta, entrando, onEntrar }
               <span className="text-slate-500">•</span>
               <span className="flex items-center gap-1.5 text-emerald-400 font-semibold px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 tabular-nums">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
                 <span id="countdown-timer">{countdown}</span>
@@ -76,20 +77,20 @@ export function HeroSessao({ sessao, countdown, salaAberta, entrando, onEntrar }
             onClick={onEntrar}
             disabled={entrando}
             id="btn-enter-room"
-            className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-midnight-950 font-extrabold text-sm sm:text-base transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 animate-glow-cta cursor-pointer select-none disabled:opacity-70"
+            className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-md bg-amber-500 hover:bg-amber-400 text-[#1b1406] font-semibold text-sm sm:text-base transition-colors cursor-pointer select-none disabled:opacity-70"
           >
             <Video size={20} className="transition-transform duration-300 group-hover:scale-110" />
             <span id="btn-enter-text">{entrando ? 'Conectando...' : salaAberta ? 'Entrar na Sala Virtual' : 'Ver Detalhes da Sala'}</span>
           </button>
           <div className="flex items-center justify-center gap-2 text-center text-[11px] text-slate-400">
             <Lock size={14} className="text-emerald-400" />
-            Link privado e seguro via {sessao.meetingUrl?.includes('jitsi') ? 'Jitsi' : 'Google Meet'}
+            Link privado, pelo {nomeDaPlataforma(sessao.meetingProvider, sessao.meetingUrl)}
           </div>
         </div>
       </div>
 
       <div className="mt-6 pt-5 border-t border-midnight-700/70 flex items-center gap-3.5 bg-midnight-900/40 -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 px-6 sm:px-8 py-3.5 rounded-b-3xl">
-        <div className="w-8 h-8 rounded-full overflow-hidden bg-amber-500/20 flex-shrink-0 border border-amber-500/40 animate-float">
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-amber-500/20 flex-shrink-0 border border-amber-500/40">
           <img
             alt="Sagui Amigo"
             loading="lazy"

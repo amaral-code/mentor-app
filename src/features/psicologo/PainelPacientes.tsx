@@ -99,13 +99,13 @@ export function PainelPacientes() {
     }
   }
 
-  if (carregando) return <div className="glass rounded-2xl h-48 animate-pulse" aria-hidden="true" />;
+  if (carregando) return <div className="painel rounded-2xl h-48 animate-pulse" aria-hidden="true" />;
 
   if (pacientes.length === 0) {
     return (
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
-          <Users size={16} className="text-cyan-400" /> Pacientes
+          <Users size={16} className="text-tinta-400" /> Pacientes
         </h2>
         <p className="text-sm text-gray-500 mt-3">
           Ninguém ainda. Um estudante aparece aqui depois de marcar uma consulta ou de
@@ -125,9 +125,9 @@ export function PainelPacientes() {
   const idNotas = new Map(notas.map((n) => [n.id, n]));
 
   return (
-    <div className="glass rounded-2xl p-5 space-y-4">
+    <div className="painel rounded-2xl p-5 space-y-4">
       <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
-        <Users size={16} className="text-cyan-400" /> Pacientes
+        <Users size={16} className="text-tinta-400" /> Pacientes
       </h2>
 
       <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Pacientes">
@@ -143,19 +143,19 @@ export function PainelPacientes() {
             }}
             className={`shrink-0 px-3 py-2 rounded-xl text-sm border min-h-[44px] ${
               selecionado?.alunoId === p.alunoId
-                ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-100'
-                : 'border-white/[0.05] glass-light text-gray-400'
+                ? 'border-tinta-500/40 bg-tinta-500/10 text-tinta-100'
+                : 'border-white/[0.05] painel-suave text-gray-400'
             }`}
           >
             {p.nome}
-            {p.menorDe16 && <span className="ml-1.5 text-[10px] text-violet-300">menor de 16</span>}
+            {p.menorDe16 && <span className="ml-1.5 text-[10px] text-tinta-300">menor de 16</span>}
           </button>
         ))}
       </div>
 
       {selecionado && (
         <>
-          <div className="glass-light rounded-xl px-3.5 py-3 border border-white/[0.04] text-xs text-gray-400 leading-relaxed">
+          <div className="painel-suave rounded-xl px-3.5 py-3 border border-white/[0.04] text-xs text-gray-400 leading-relaxed">
             {selecionado.escopo ? (
               <>
                 Liberado: <strong className="text-gray-200">{rotuloEscopo(selecionado.escopo)}</strong>,
@@ -176,7 +176,7 @@ export function PainelPacientes() {
                 aria-selected={aba === a}
                 onClick={() => setAba(a)}
                 className={`px-3.5 py-2 rounded-lg text-sm font-semibold min-h-[40px] ${
-                  aba === a ? 'bg-cyan-500/15 text-cyan-200 border border-cyan-500/30' : 'text-gray-400 border border-transparent'
+                  aba === a ? 'bg-tinta-500/15 text-tinta-200 border border-tinta-500/30' : 'text-gray-400 border border-transparent'
                 }`}
               >
                 {a === 'resumo' ? 'Resumo' : 'Prontuário'}
@@ -186,8 +186,8 @@ export function PainelPacientes() {
 
           {aba === 'resumo' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="glass-light rounded-xl p-4 border border-white/[0.04]">
-                <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium flex items-center gap-1.5 mb-3">
+              <div className="painel-suave rounded-xl p-4 border border-white/[0.04]">
+                <h3 className="text-xs text-gray-500 font-medium flex items-center gap-1.5 mb-3">
                   <HeartPulse size={13} className="text-rose-400" /> Índice de cansaço (30 dias)
                 </h3>
                 {!escopo.includes('bem_estar') ? (
@@ -204,7 +204,7 @@ export function PainelPacientes() {
                         className="flex-1 rounded-t-sm min-h-[3px]"
                         style={{
                           height: `${Math.max(5, d.score)}%`,
-                          background: COR_CLASSE[d.classe as keyof typeof COR_CLASSE] ?? '#64748b',
+                          background: COR_CLASSE[d.classe as keyof typeof COR_CLASSE] ?? '#8a8376',
                           opacity: 0.85,
                         }}
                         title={`${new Date(`${d.data}T12:00:00`).toLocaleDateString('pt-BR')}: ${d.score}/100`}
@@ -214,8 +214,8 @@ export function PainelPacientes() {
                 )}
               </div>
 
-              <div className="glass-light rounded-xl p-4 border border-white/[0.04]">
-                <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">Ritmo de estudo (3 meses)</h3>
+              <div className="painel-suave rounded-xl p-4 border border-white/[0.04]">
+                <h3 className="text-xs text-gray-500 font-medium mb-3">Ritmo de estudo (3 meses)</h3>
                 {!escopo.includes('estudo') ? (
                   <p className="text-sm text-gray-500 flex items-center gap-2">
                     <Lock size={13} /> {naoLiberado}
@@ -242,16 +242,16 @@ export function PainelPacientes() {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="rounded-xl bg-cyan-500/[0.05] border border-cyan-500/15 px-3.5 py-3 flex gap-2.5">
-                <FileLock2 size={15} className="text-cyan-300 shrink-0 mt-0.5" />
-                <p className="text-xs text-cyan-100/80 leading-relaxed">
+              <div className="rounded-xl bg-tinta-500/[0.05] border border-tinta-500/15 px-3.5 py-3 flex gap-2.5">
+                <FileLock2 size={15} className="text-tinta-300 shrink-0 mt-0.5" />
+                <p className="text-xs text-tinta-100/80 leading-relaxed">
                   Só você lê. Nem o paciente, nem a família, nem a escola, nem outro profissional.
                   Anotação não é editada nem apagada: para corrigir, registre uma retificação.
                 </p>
               </div>
 
               <div>
-                <label htmlFor="nota-prontuario" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+                <label htmlFor="nota-prontuario" className="block text-xs text-gray-500 mb-1.5 font-medium">
                   {retificando ? 'Retificação' : 'Nova anotação'}
                 </label>
                 {retificando && (
@@ -268,7 +268,7 @@ export function PainelPacientes() {
                   onChange={(e) => setTexto(e.target.value.slice(0, 20000))}
                   rows={4}
                   placeholder="Evolução da sessão"
-                  className="w-full px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/40"
+                  className="w-full px-3 py-2.5 rounded-xl painel-suave border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-tinta-500/40"
                 />
                 <button
                   type="button"
@@ -292,7 +292,7 @@ export function PainelPacientes() {
                         className={`rounded-xl px-3.5 py-3 border ${
                           n.tipo === 'retificacao'
                             ? 'border-amber-500/20 bg-amber-500/[0.04]'
-                            : 'border-white/[0.05] glass-light'
+                            : 'border-white/[0.05] painel-suave'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2 mb-1.5">

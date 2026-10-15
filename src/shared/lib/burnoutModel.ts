@@ -429,8 +429,8 @@ export const ROTULO_CLASSE: Record<ClasseBurnout, string> = {
 };
 
 export const COR_CLASSE: Record<ClasseBurnout, string> = {
-  saudavel: '#10b981',
-  alerta: '#f59e0b',
-  fadiga: '#f97316',
-  esgotamento: '#ef4444',
+  saudavel: '#7cc78a',
+  alerta: '#e9a11c',
+  fadiga: '#f29a5e',
+  esgotamento: '#f08a70',
 };

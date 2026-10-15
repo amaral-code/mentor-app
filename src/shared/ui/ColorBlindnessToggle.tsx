@@ -54,7 +54,7 @@ export function ColorBlindnessToggle() {
     <div className="fixed top-4 right-4 z-50">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`glass-light rounded-xl px-3 py-2 text-xs border transition-all flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] ${
+        className={`painel-suave rounded-xl px-3 py-2 text-xs border transition-colors flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] ${
           current !== 'normal'
             ? 'border-amber-500/30 text-amber-400 hover:border-amber-500/50'
             : 'border-white/5 text-gray-500 hover:text-gray-300 hover:border-white/10'
@@ -71,21 +71,21 @@ export function ColorBlindnessToggle() {
         </svg>
         <span className="hidden sm:inline">Daltonismo</span>
         {current !== 'normal' && (
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
         )}
       </button>
 
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 glass rounded-2xl p-1.5 min-w-[260px] border border-white/5 shadow-xl animate-fade-up overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 painel rounded-2xl p-1.5 min-w-[260px] border border-white/5 shadow-xl animate-fade-up overflow-hidden">
             {GROUP_ORDER.map(group => {
               const items = group === '' ? OPTIONS.filter(o => o.group === '') : OPTIONS.filter(o => o.group === group);
               if (items.length === 0) return null;
               return (
                 <div key={group || 'normal'}>
                   {group && (
-                    <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-gray-600 font-semibold">
+                    <div className="px-3 pt-2 pb-1 text-xs text-gray-600 font-semibold">
                       {group}
                     </div>
                   )}

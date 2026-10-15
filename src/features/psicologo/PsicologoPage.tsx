@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, LogOut, Moon, Plus, Stethoscope, Trash2 } from 'lucide-react';
+import { CabecalhoPapel } from '../../shared/ui/CabecalhoPapel';
+import { CalendarClock, Plus, Stethoscope, Trash2 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
 import { getSupabase } from '../../shared/lib/supabase';
@@ -91,35 +92,8 @@ export function PsicologoPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#0b1120' }}>
-      <header className="glass border-b border-white/[0.03]">
-        <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/10">
-              <Moon size={20} className="text-gray-900" />
-            </div>
-            <div>
-              <h1 className="text-sm font-extrabold text-white">
-                <span className="text-gradient">Midnight Mentor</span>
-              </h1>
-              <p className="text-[10px] text-gray-500 tracking-wide uppercase">Painel do Profissional</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 hidden md:block">{session?.nome}</span>
-            <span className="px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-medium border border-cyan-500/20">
-              Psicólogo(a)
-            </span>
-            <button
-              onClick={logout}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-              title="Sair"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ background: '#141310' }}>
+      <CabecalhoPapel area="Psicologia" nome={session?.nome} onSair={logout} />
 
       <section className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-5">
         <ListaConsultas />
@@ -128,10 +102,10 @@ export function PsicologoPage() {
 
         {session && <ConversasProfissional meuId={session.uid} idsPacientes={idsPacientes} />}
 
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
-              <CalendarClock size={18} className="text-cyan-400" />
+            <div className="w-10 h-10 rounded-xl bg-tinta-500/10 flex items-center justify-center">
+              <CalendarClock size={18} className="text-tinta-400" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-gray-300">Disponibilidade semanal</h2>
@@ -150,7 +124,7 @@ export function PsicologoPage() {
               {janelas.map((j) => (
                 <div
                   key={`${j.diaSemana}-${j.horaInicio}`}
-                  className="flex items-center justify-between text-sm py-2 px-3 rounded-xl glass-light"
+                  className="flex items-center justify-between text-sm py-2 px-3 rounded-xl painel-suave"
                 >
                   <span className="text-gray-300">
                     {DIAS[j.diaSemana]} · {j.horaInicio} às {j.horaFim}
@@ -211,8 +185,8 @@ export function PsicologoPage() {
 
         <AvaliacoesRecebidas />
 
-        <div className="glass-light rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed flex gap-2">
-          <Stethoscope size={15} className="text-cyan-400 shrink-0 mt-0.5" />
+        <div className="painel-suave rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed flex gap-2">
+          <Stethoscope size={15} className="text-tinta-400 shrink-0 mt-0.5" />
           <span>
             Com consulta marcada, você vê nome e horário. Índice de cansaço e ritmo de estudo só
             aparecem se o paciente (ou o responsável, se ele tiver menos de 16 anos) autorizar, e

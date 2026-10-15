@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, HeartHandshake, ShieldQuestion, UserCheck } from 'lucide-react';
+import { Bell, ShieldQuestion, UserCheck } from 'lucide-react';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { useAppStore } from '../../stores/appStore';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
@@ -56,17 +56,14 @@ export function CuidadoPage() {
   return (
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500/15 to-pink-600/10 flex items-center justify-center">
-          <HeartHandshake size={20} className="text-rose-400" />
-        </div>
         <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-white">Rede de Apoio</h1>
+          <h1 className="text-[1.75rem] text-white">Rede de Apoio</h1>
           <p className="text-sm text-gray-500 mt-0.5">Quem acompanha você, e com quem você pode conversar</p>
         </div>
       </div>
 
       {pendentes.length > 0 && (
-        <div className="glass rounded-2xl p-5 border border-amber-500/20">
+        <div className="painel rounded-2xl p-5 border border-amber-500/20">
           <h2 className="text-sm font-semibold text-amber-300 flex items-center gap-2">
             <ShieldQuestion size={16} /> Pedido de acompanhamento
           </h2>
@@ -80,7 +77,7 @@ export function CuidadoPage() {
 
           <div className="space-y-2 mt-4">
             {pendentes.map((v) => (
-              <div key={v.id} className="flex items-center justify-between gap-3 rounded-xl glass-light p-3">
+              <div key={v.id} className="flex items-center justify-between gap-3 rounded-xl painel-suave p-3">
                 <div className="min-w-0">
                   <p className="text-sm text-white truncate">{v.responsavelNome ?? 'Responsavel'}</p>
                   <p className="text-[11px] text-gray-500">{v.parentesco}</p>
@@ -100,13 +97,13 @@ export function CuidadoPage() {
       )}
 
       {ativos.length > 0 && (
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
             <UserCheck size={16} className="text-emerald-400" /> Acompanham você
           </h2>
           <div className="space-y-2">
             {ativos.map((v) => (
-              <div key={v.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl glass-light">
+              <div key={v.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl painel-suave">
                 <span className="text-gray-300">{v.responsavelNome ?? 'Responsavel'}</span>
                 <button
                   onClick={() => responderVinculo(v.id, false)}
@@ -124,7 +121,7 @@ export function CuidadoPage() {
       )}
 
       {naoLidas.length > 0 && (
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
             <Bell size={16} className="text-amber-400" /> Avisos
           </h2>
@@ -133,7 +130,7 @@ export function CuidadoPage() {
               <button
                 key={n.id}
                 onClick={() => marcarNotificacaoLida(n.id)}
-                className="w-full text-left rounded-xl glass-light p-3 hover:bg-white/[0.03]"
+                className="w-full text-left rounded-xl painel-suave p-3 hover:bg-white/[0.03]"
               >
                 <p className="text-sm text-white">{n.titulo}</p>
                 <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{n.corpo}</p>
@@ -154,7 +151,7 @@ export function CuidadoPage() {
         </>
       )}
 
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-300">Falar com um psicólogo</h2>
         <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
           Atendimento online, por videochamada, com profissional registrado no CRP. Você pode marcar por
@@ -173,7 +170,7 @@ export function CuidadoPage() {
         )}
       </div>
 
-      <p className="text-center text-xs text-gray-600 leading-relaxed px-4 py-3 glass-light rounded-xl">
+      <p className="text-center text-xs text-gray-600 leading-relaxed px-4 py-3 painel-suave rounded-xl">
         Em caso de crise, ligue 188 (CVV, 24h, gratuito) ou procure o CAPS mais próximo. Este app não
         substitui atendimento de emergencia.
       </p>

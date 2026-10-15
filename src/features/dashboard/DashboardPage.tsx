@@ -2,16 +2,17 @@ import { useEffect, useMemo, useState, memo, useRef, useCallback } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { listContainer, listItem } from '../../shared/lib/motionPresets';
 import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
-import { BarChart3, BookOpen, Camera, Flame, Frown, Moon, Sparkles, Target, Timer, X } from 'lucide-react';
+import { Camera, Check, Flame, X } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { FADIGA_ZERADA } from '../../shared/lib/burnoutModel';
-import { getSSCColor, getSSCLabel } from '../../shared/lib/sscCalculator';
+import { getSSCColor } from '../../shared/lib/sscCalculator';
+import { atividadeDaSemana, faixaSobrecarga, plural, saudacao } from '../../shared/lib/central';
 import { MicroTask, QuizResult } from '../../shared/types';
 import { calcLevel, getToday, MOOD_LABEL, MOOD_COLOR } from '../../shared/lib/utils';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { safeSet } from '../../shared/lib/safeStorage';
-import { AppIcon, MoodIcon } from '../../shared/ui/AppIcon';
+import { MoodIcon } from '../../shared/ui/AppIcon';
 import { BurnoutCard } from './BurnoutCard';
 
 /* ====================================================================
@@ -70,13 +71,13 @@ const ComprovacaoModal = memo(function ComprovacaoModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Comprovar tarefa">
-      <button aria-label="Fechar" tabIndex={-1} onClick={fechar} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative w-full max-w-sm glass rounded-2xl p-6 animate-fade-up max-h-[calc(100dvh-3rem)] overflow-y-auto">
+      <button aria-label="Fechar" tabIndex={-1} onClick={fechar} className="absolute inset-0 bg-black/70" />
+      <div className="relative w-full max-w-sm camada rounded-2xl p-6 animate-scale-in max-h-[calc(100dvh-3rem)] overflow-y-auto">
         <button onClick={fechar} aria-label="Fechar comprovação" className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-white">
           <X size={16} />
         </button>
-        <p className="text-[11px] text-amber-400 uppercase tracking-widest font-semibold">Comprovação</p>
-        <h2 className="text-base font-bold text-white mt-1 pr-8">{tarefa.titulo}</h2>
+        <p className="text-xs text-gray-500">Concluir tarefa</p>
+        <h2 className="text-lg text-white mt-0.5 pr-8">{tarefa.titulo}</h2>
         <p className="text-xs text-gray-500 mt-1 leading-relaxed">
           Clicar não basta: mostre que fez. Envie uma <strong className="text-gray-300">foto</strong> ou
           escreva <strong className="text-gray-300">o que aprendeu</strong> (mín. {MIN_PARAGRAFO} letras).
@@ -123,7 +124,6 @@ const ComprovacaoModal = memo(function ComprovacaoModal({
 export function DashboardPage() {
   const reduzir = useReducedMotion();
   const currentMood = useAppStore((s) => s.currentMood);
-  const moodColor = useAppStore((s) => s.moodColor);
   const sscScore = useAppStore((s) => s.sscScore);
   const sono = useAppStore((s) => s.sono);
   const cansaco = useAppStore((s) => s.cansaco);
@@ -179,244 +179,189 @@ export function DashboardPage() {
      servidor pode vir da fórmula plana antiga de quem não rodou a 008. */
   const { level: nivel, remainder: xpProgress } = calcLevel(gamification.xp);
   const xpForNext = 100 * nivel;
-  const sscLevel = getSSCLabel(sscScore);
   const sscColor = getSSCColor(sscScore);
 
+  const faixa = faixaSobrecarga(sscScore);
+  const feitas = dailyPlan?.tasks.filter((t) => t.completed).length || 0;
+  const totalTarefas = dailyPlan?.tasks.length || 0;
+  const primeiroNome = session?.nome?.split(' ')[0] || 'estudante';
+  const hojeExtenso = useMemo(
+    () => new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }),
+    [],
+  );
+
   return (
-    <div className="space-y-5 animate-fade-up">
+    <div className="space-y-8">
       <AvisoMensagens />
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <Sparkles size={22} className="text-gray-900" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white">Central de Comando</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Bem-vindo, {session?.nome?.split(' ')[0] || 'Estudante'}</p>
-          </div>
+
+      {/* Cabeçalho: quem, quando e a sequência. Sem ícone decorativo:
+          a página é "o seu dia", e o dia é o título. */}
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+        <div>
+          <p className="text-sm text-gray-500 first-letter:uppercase">{hojeExtenso}</p>
+          <h1 className="text-[1.75rem] md:text-[2rem] text-white mt-0.5">
+            {saudacao(new Date().getHours())}, {primeiroNome}.
+          </h1>
         </div>
-        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm transition-all ${
-          gamification.streak >= 3 ? 'bg-amber-500/10 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.05)]' : 'bg-white/5 text-gray-400'
-        }`}>
-          {/* Mesma linguagem do top bar mobile: a partir de 3 dias a chama
-              acende e ganha movimento. Antes eram duas animacoes diferentes
-              para o mesmo dado. */}
-          <Flame
-            size={16}
-            className={gamification.streak >= 3 ? 'text-amber-400 motion-safe:animate-flame' : 'text-gray-400'}
-            fill={gamification.streak >= 3 ? 'currentColor' : 'none'}
-          />
-          <AnimatedNumber value={gamification.streak} className="font-bold" />
-          <span className="text-xs opacity-60">dias</span>
-        </div>
-      </div>
+        <p
+          className={`flex items-center gap-1.5 text-sm ${gamification.streak >= 3 ? 'text-amber-400' : 'text-gray-400'}`}
+          title="Dias seguidos com alguma atividade"
+        >
+          <Flame size={16} fill={gamification.streak >= 3 ? 'currentColor' : 'none'} aria-hidden="true" />
+          <span className="font-semibold tabular-nums"><AnimatedNumber value={gamification.streak} /></span>
+          {gamification.streak === 1 ? 'dia seguido' : 'dias seguidos'}
+        </p>
+      </header>
 
-      <m.div
-        className="grid grid-cols-1 md:grid-cols-3 gap-4"
-        variants={reduzir ? undefined : listContainer}
-        initial={reduzir ? false : 'inicial'}
-        animate={reduzir ? undefined : 'animar'}
-      >
-        <m.div variants={reduzir ? undefined : listItem} className="glass rounded-2xl p-5 group hover:border-white/[0.08] transition-all lift">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2.5 h-2.5 rounded-full animate-pulse-subtle" style={{ backgroundColor: moodColor, boxShadow: `0 0 12px ${moodColor}40` }} />
-            <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Humor</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <MoodIcon mood={currentMood} size={30} />
-            <div>
-              <p className="text-xl font-bold text-white">{MOOD_LABEL[currentMood] || 'Tranquilo'}</p>
-              <p className="text-xs text-gray-500">Baseado nas conversas</p>
-            </div>
-          </div>
-
-        </m.div>
-
-        <m.div variants={reduzir ? undefined : listItem} className="glass rounded-2xl p-5 group hover:border-white/[0.08] transition-all lift">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Prontidão (SSC)</span>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full transition-all" style={{ backgroundColor: sscColor + '18', color: sscColor }}>
-              {sscLevel}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10 items-start">
+        {/* ============ Plano do dia: a ação principal da tela ============ */}
+        <section aria-labelledby="plano-titulo">
+          <div className="flex items-baseline justify-between gap-3 pb-3 border-b border-linha">
+            <h2 id="plano-titulo" className="text-xl text-white">Plano de hoje</h2>
+            <span className="text-sm text-gray-500 tabular-nums">
+              {feitas} de {totalTarefas} {totalTarefas === 1 ? 'feita' : 'feitas'}
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <svg className="w-14 h-14 -rotate-90" viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3" />
-                <circle cx="20" cy="20" r="16" fill="none" stroke={sscColor} strokeWidth="3" strokeLinecap="round"
-                  strokeDasharray={`${(sscScore / 100) * 100.5} 100.5`} className="transition-all duration-1000 ease-out" />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold" style={{ color: sscColor }}>
-                  <AnimatedNumber value={sscScore} sufixo="%" />
-                </span>
+
+          {dailyPlan && dailyPlan.tasks.length > 0 ? (
+            <m.ol
+              className="pauta"
+              variants={reduzir ? undefined : listContainer}
+              initial={reduzir ? false : 'inicial'}
+              animate={reduzir ? undefined : 'animar'}
+            >
+              {dailyPlan.tasks.map((task, i) => (
+                <m.li variants={reduzir ? undefined : listItem} key={task.id} className="relative">
+                  {/* Recompensa na hora: o XP sobe do próprio item concluído */}
+                  {xpVoando === task.id && (
+                    <span className="pointer-events-none absolute right-2 top-3 text-sm font-semibold text-amber-400 motion-safe:animate-fade-up-out">
+                      +20 XP
+                    </span>
+                  )}
+                  {/* A bolha é a do cartão-resposta: marcar a tarefa é
+                      preenchê-la. Ela abre a comprovação; concluída, trava
+                      (era o marcar/desmarcar que dava XP infinito). */}
+                  <button
+                    type="button"
+                    onClick={() => pedirComprovacao(task)}
+                    disabled={task.completed}
+                    aria-label={task.completed ? `Concluída: ${task.titulo}` : `Comprovar e concluir: ${task.titulo}`}
+                    className={`group w-full flex items-start gap-4 py-4 text-left rounded-md transition-colors ${
+                      task.completed ? 'cursor-default' : 'hover:bg-folha/60 -mx-2 px-2 w-[calc(100%+1rem)]'
+                    }`}
+                  >
+                    <span className={`bolha mt-0.5 ${task.completed ? 'bolha--marcada' : 'group-hover:border-amber-400'}`} aria-hidden="true">
+                      {task.completed ? <Check size={13} strokeWidth={3} /> : i + 1}
+                    </span>
+                    <span className={`flex-1 min-w-0 ${task.completed ? 'opacity-50' : ''}`}>
+                      <span className={`block text-[0.9375rem] font-medium ${task.completed ? 'text-gray-400 risco risco--feito' : 'text-white'}`}>
+                        {task.titulo}
+                      </span>
+                      <span className="block text-sm text-gray-500 mt-0.5">{task.descricao}</span>
+                    </span>
+                    {!task.completed && (
+                      <span className="text-xs font-mono text-gray-500 shrink-0 mt-1">+20 XP</span>
+                    )}
+                  </button>
+                </m.li>
+              ))}
+            </m.ol>
+          ) : (
+            <div className="py-10 flex items-center gap-5">
+              <img src="/assets/sagui_meditando_2.png" alt="" width={72} height={72} loading="lazy" className="w-[72px] h-[72px] object-contain shrink-0" />
+              <div>
+                <p className="text-[0.9375rem] text-gray-300">Ainda não há plano para hoje.</p>
+                <p className="text-sm text-gray-500 mt-0.5">Ajuste o sono e o cansaço ao lado: o plano é montado a partir disso.</p>
+                <button onClick={() => regeneratePlan()} className="btn-secondary mt-3">Montar o plano agora</button>
               </div>
             </div>
-            <div className="flex-1">
-              {/* Cor do SSC e dinamica (verde a vermelho), entao vai por
-                  style. O movimento continua sendo scaleX na GPU. */}
-              <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                <m.div
-                  className="h-full w-full rounded-full origin-left"
-                  style={{ backgroundColor: sscColor }}
-                  initial={false}
-                  animate={{ scaleX: Math.max(0, Math.min(100, sscScore)) / 100 }}
-                  transition={reduzir ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 20 }}
-                />
-              </div>
-              {/* Os dois rotulos colavam quando a coluna encolhe (tablet).
-                  gap + truncate garante folga em qualquer largura. */}
-              <div className="flex justify-between gap-2 text-[10px] text-gray-600 mt-1">
-                <span className="truncate">Descansado</span>
-                <span className="truncate">Sobrecarga</span>
-              </div>
-            </div>
+          )}
+          {totalTarefas > 0 && feitas < totalTarefas && (
+            <p className="text-xs text-gray-500 mt-3">
+              Para concluir, mostre que fez: uma foto ou o que você aprendeu em poucas linhas.
+            </p>
+          )}
+        </section>
+
+        {/* ============ Como você está: o que você informa e o resultado ============ */}
+        <section aria-labelledby="estado-titulo" className="painel rounded-2xl p-5">
+          <h2 id="estado-titulo" className="text-lg text-white">Como você está</h2>
+          <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1.5">
+            <MoodIcon mood={currentMood} size={14} />
+            Humor {(MOOD_LABEL[currentMood] || 'neutro').toLowerCase()}, pelas conversas com o Mentor
+          </p>
+
+          <div className="mt-5 space-y-1">
+            <label className="flex items-center justify-between text-sm" htmlFor="central-sono">
+              <span className="text-gray-300">Horas de sono</span>
+              <span className="font-mono text-white tabular-nums">{sono}h</span>
+            </label>
+            <input id="central-sono" type="range" min="0" max="12" step="0.5" value={sono} onChange={(e) => { setSono(+e.target.value); recalcSSC(); }} className="w-full" />
+            <label className="flex items-center justify-between text-sm pt-1" htmlFor="central-cansaco">
+              <span className="text-gray-300">Cansaço agora</span>
+              <span className="font-mono text-white tabular-nums">{cansaco} de 10</span>
+            </label>
+            <input id="central-cansaco" type="range" min="0" max="10" step="1" value={cansaco} onChange={(e) => { setCansaco(+e.target.value); recalcSSC(); }} className="w-full" />
           </div>
-        </m.div>
 
-        <m.div variants={reduzir ? undefined : listItem} className="glass rounded-2xl p-5 group hover:border-white/[0.08] transition-all lift">
-          <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium block mb-3">Estado Físico</span>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg"><Moon size={16} className="inline-block align-[-0.15em] text-violet-400" /></span>
-                <span className="text-sm text-gray-400">Sono</span>
-              </div>
-              <span className="text-sm font-medium text-white tabular-nums">{sono}h</span>
-            </div>
-            <input type="range" min="0" max="12" step="0.5" value={sono} onChange={e => { setSono(+e.target.value); recalcSSC(); }} className="w-full h-2 md:h-1.5" />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg"><Frown size={16} className="inline-block align-[-0.15em] text-orange-400" /></span>
-                <span className="text-sm text-gray-400">Cansaço</span>
-              </div>
-              <span className="text-sm font-medium text-white tabular-nums">{cansaco}/10</span>
-            </div>
-            <input type="range" min="0" max="10" step="1" value={cansaco} onChange={e => { setCansaco(+e.target.value); recalcSSC(); }} className="w-full h-2 md:h-1.5" />
-          </div>
-        </m.div>
-      </m.div>
-
-      {/* Indice de fadiga: fica entre o estado fisico declarado (sono,
-          cansaco) e o plano do dia, porque e ele que justifica um plano
-          mais leve quando o modelo aponta risco. */}
-      {/* Com o índice desligado (FADIGA_ZERADA, decisão do dono: "o número
-          incomodava mais do que ajudava"), o cartão mostrava "0/100 · Ritmo
-          saudável, calculado com as suas últimas respostas": um número, e
-          uma afirmação sobre algo que o app não está medindo. */}
-      {!FADIGA_ZERADA && <BurnoutCard />}
-
-      <div className="glass rounded-2xl p-4 md:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-            <Timer size={16} className="text-amber-400" /> Plano do Dia
-            {currentMood && (
-              <span className="hidden sm:inline text-xs text-gray-500 font-normal ml-1">
-                <MoodIcon mood={currentMood} size={13} className="inline-block align-[-0.15em] mr-1" />
-                {MOOD_LABEL[currentMood] || 'Neutro'}
+          {/* Resultado logo abaixo de quem o produz: mexer no sono move
+              a barra na hora, e fica claro de onde o número vem. */}
+          <div className="mt-4 pt-4 border-t border-linha">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm text-gray-300">Sobrecarga</span>
+              <span className="text-sm" style={{ color: sscColor }}>
+                <span className="numero text-xl mr-1.5"><AnimatedNumber value={sscScore} sufixo="%" /></span>
+                {faixa.rotulo}
               </span>
-            )}
-          </h2>
-          <span className="text-xs text-gray-500 tabular-nums bg-white/[0.03] px-2.5 py-1 rounded-full">
-            {dailyPlan?.tasks.filter(t => t.completed).length || 0}/{dailyPlan?.tasks.length || 0} concluídas
-          </span>
-        </div>
-        {dailyPlan && dailyPlan.tasks.length > 0 ? (
-          <m.div
-            className="space-y-2"
-            variants={reduzir ? undefined : listContainer}
-            initial={reduzir ? false : 'inicial'}
-            animate={reduzir ? undefined : 'animar'}
-          >
-            {dailyPlan.tasks.map(task => (
-              <m.label
-                variants={reduzir ? undefined : listItem}
-                key={task.id}
-                className={`relative flex items-start gap-3 p-3.5 rounded-xl transition-all duration-200 border ${
-                  task.completed
-                    ? 'bg-white/[0.02] border-white/5 cursor-default'
-                    : 'cursor-pointer press hover:bg-white/[0.02] border-transparent hover:border-white/5'
-                }`}>
-                {/* Recompensa na hora: o XP sobe do proprio item concluido */}
-                {xpVoando === task.id && (
-                  <span className="pointer-events-none absolute right-4 top-3 text-sm font-bold text-amber-400 motion-safe:animate-fade-up-out">
-                    +20 XP
-                  </span>
-                )}
-                {/* Tarefa concluida nao volta atras: era exatamente o
-                    ciclo marcar/desmarcar que dava XP infinito. */}
-                {/* Checkbox é o gatilho do modal de comprovação, não a
-                    conclusão em si: concluída, trava (anti-XP-infinito). */}
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  disabled={task.completed}
-                  onChange={() => pedirComprovacao(task)}
-                  aria-label={`Comprovar e concluir: ${task.titulo}`}
-                  className="mt-0.5"
-                />
-                <div className={`flex-1 ${task.completed ? 'opacity-40' : ''}`}>
-                  <span className={`text-sm font-medium ${task.completed ? 'text-gray-500 risco risco--feito' : 'text-white'}`}>
-                    <AppIcon name={task.icon} size={15} className="inline-block mr-1.5 -mt-0.5 text-amber-400/80" />{task.titulo}
-                  </span>
-                  <p className={`text-xs mt-0.5 ${task.completed ? 'text-gray-600' : 'text-gray-500'}`}>{task.descricao}</p>
-                </div>
-                {!task.completed && (
-                  <span className="text-[10px] font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">+20 XP</span>
-                )}
-              </m.label>
-            ))}
-          </m.div>
-        ) : (
-          <div className="text-center py-8 flex flex-col items-center">
-            <img
-              src="/assets/sagui_meditando_2.png"
-              alt=""
-              width={96}
-              height={96}
-              loading="lazy"
-              className="w-24 h-24 object-contain mb-2 opacity-90 motion-safe:animate-float-suave"
-            />
-            <p className="text-sm text-gray-400">Diz como você está hoje.</p>
-            <p className="text-xs text-gray-500 mt-0.5">O sagui monta o plano a partir daí.</p>
+            </div>
+            <div
+              className="mt-2 h-1.5 rounded-full bg-folha-3 overflow-hidden"
+              role="meter"
+              aria-label="Sobrecarga"
+              aria-valuenow={sscScore}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuetext={`${sscScore}%, ${faixa.rotulo}`}
+            >
+              <m.div
+                className="h-full w-full rounded-full origin-left"
+                style={{ backgroundColor: sscColor }}
+                initial={false}
+                animate={{ scaleX: Math.max(0, Math.min(100, sscScore)) / 100 }}
+                transition={reduzir ? { duration: 0 } : { type: 'spring', stiffness: 140, damping: 22 }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Calculada com o sono, o cansaço e o humor de hoje.</p>
           </div>
-        )}
+        </section>
       </div>
+
+      {/* Índice de fadiga: o que o app MEDE (respostas e horários), ao
+          lado do que você declarou acima. Some se não houver dado. */}
+      {!FADIGA_ZERADA && <BurnoutCard />}
 
       {quizResults.length > 0 && <QuizPerformance quizResults={quizResults} />}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium flex items-center gap-1.5">
-              <BarChart3 size={14} /> Progresso
-            </span>
-            <span className="text-xs text-gray-500 tabular-nums">Nível {nivel}</span>
+      {/* ============ A semana: faixa aberta, sem caixa por número ============ */}
+      <section aria-label="Resumo da semana" className="grid gap-6 lg:grid-cols-[1fr_1.4fr_1.4fr] lg:gap-0 lg:divide-x lg:divide-linha border-t border-linha pt-6">
+        <div className="lg:pr-6">
+          <p className="rotulo">Nível {nivel}</p>
+          <p className="mt-1 flex items-baseline gap-1.5">
+            <span className="numero text-[1.75rem] text-white">{xpProgress}</span>
+            <span className="text-sm text-gray-500 tabular-nums">de {xpForNext} XP</span>
+          </p>
+          <div className="h-1 rounded-full bg-folha-3 overflow-hidden mt-2">
+            <div className="h-full rounded-full bg-amber-500 xp-bar" style={{ width: `${(xpProgress / xpForNext) * 100}%` }} />
           </div>
-          <div className="flex items-baseline gap-1 mb-2">
-            <span className="text-2xl font-bold text-white tabular-nums">{xpProgress}</span>
-            <span className="text-sm text-gray-500 tabular-nums">/ {xpForNext} XP</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 xp-bar" style={{ width: `${(xpProgress / xpForNext) * 100}%` }} />
-          </div>
-          <p className="text-xs text-gray-500 mt-2 tabular-nums">{gamification.xp} XP acumulados</p>
+          <p className="text-xs text-gray-500 mt-2 tabular-nums">{gamification.xp} XP no total</p>
         </div>
-
-        <div className="glass rounded-2xl p-5">
-          <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium block mb-3 flex items-center gap-1.5">
-            <Moon size={14} /> Biofeedback (24h)
-          </span>
-          <MoodMiniGraph />
-        </div>
-
-        <div className="glass rounded-2xl p-5">
-          <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium block mb-3 flex items-center gap-1.5">
-            <BookOpen size={14} /> Atividades
-          </span>
+        <div className="lg:px-6">
           <ActivitySummary logs={logs} />
         </div>
-      </div>
+        <div className="lg:pl-6">
+          <MoodMiniGraph />
+        </div>
+      </section>
 
       {/* Modal de comprovação: fora da lista, montado só com tarefa-alvo */}
       {tarefaAlvo && (
@@ -446,135 +391,123 @@ function QuizPerformance({ quizResults }: { quizResults: QuizResult[] }) {
   }, [quizResults]);
 
   const media = Math.round(perMateria.reduce((acc, m) => acc + m.pct, 0) / perMateria.length);
+  const cor = (pct: number) => (pct >= 70 ? '#7cc78a' : pct >= 40 ? '#e9a11c' : '#f08a70');
 
+  /* Tabela, e não cartões: é comparação entre matérias, e o olho compara
+     melhor em colunas alinhadas. */
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-          <Target size={16} className="text-amber-400" /> Desempenho nos Quizzes
-        </h2>
-        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-          media >= 70 ? 'bg-emerald-500/10 text-emerald-400' : media >= 40 ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'
-        }`}>
-          {media}% média
-        </span>
+    <section aria-labelledby="quiz-titulo">
+      <div className="flex items-baseline justify-between gap-3 pb-3 border-b border-linha">
+        <h2 id="quiz-titulo" className="text-xl text-white">Acerto nos quizzes</h2>
+        <span className="text-sm text-gray-500">média <span className="font-mono text-white">{media}%</span></span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {perMateria.map(m => (
-          <div key={m.materia} className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.02] transition-all">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="text-gray-300 truncate">{m.materia}</span>
-                <span className="text-xs text-gray-500 tabular-nums ml-2 shrink-0">{m.acertos}/{m.total}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${m.pct}%`, backgroundColor: m.pct >= 70 ? '#10b981' : m.pct >= 40 ? '#f59e0b' : '#ef4444' }} />
-              </div>
-            </div>
-            <span className={`text-xs font-bold tabular-nums w-10 text-right ${
-              m.pct >= 70 ? 'text-emerald-400' : m.pct >= 40 ? 'text-amber-400' : 'text-red-400'
-            }`}>{m.pct}%</span>
-          </div>
-        ))}
-      </div>
-    </div>
+      <table className="w-full text-sm">
+        <caption className="sr-only">Acerto por matéria nos quizzes feitos</caption>
+        <thead>
+          <tr className="text-left text-xs text-gray-500">
+            <th scope="col" className="font-medium py-2">Matéria</th>
+            <th scope="col" className="font-medium py-2 w-1/2 hidden sm:table-cell"><span className="sr-only">Barra</span></th>
+            <th scope="col" className="font-medium py-2 text-right">Acertos</th>
+            <th scope="col" className="font-medium py-2 text-right w-14">%</th>
+          </tr>
+        </thead>
+        <tbody className="pauta">
+          {perMateria.map((m) => (
+            <tr key={m.materia}>
+              <td className="py-2.5 pr-3 text-gray-200">{m.materia}</td>
+              <td className="py-2.5 pr-4 hidden sm:table-cell">
+                <div className="h-1.5 rounded-full bg-folha-3 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${m.pct}%`, backgroundColor: cor(m.pct) }} />
+                </div>
+              </td>
+              <td className="py-2.5 text-right font-mono text-gray-400 tabular-nums">{m.acertos}/{m.total}</td>
+              <td className="py-2.5 text-right font-mono font-medium tabular-nums" style={{ color: cor(m.pct) }}>{m.pct}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }
 
 function ActivitySummary({ logs }: { logs: { type: string; timestamp: number }[] }) {
-  const hoje = useMemo(() => new Date().toDateString(), []);
-  const semana = useMemo(() => {
-    const dias: { label: string; active: boolean; count: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toDateString();
-      const dayLogs = logs.filter(l => new Date(l.timestamp).toDateString() === dateStr);
-      dias.push({
-        label: d.toLocaleDateString('pt-BR', { weekday: 'short' }).slice(0, 3),
-        active: dayLogs.length > 0,
-        count: dayLogs.length,
-      });
-    }
-    return dias;
-  }, [logs]);
-
-  const totalHoje = useMemo(() => logs.filter(l => new Date(l.timestamp).toDateString() === hoje).length,
-  [logs, hoje]);
-  const totalSemana = logs.length;
-
-  const hojeRef = useMemo(() => new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }), []);
+  const { dias, totalSemana, totalHoje } = useMemo(() => atividadeDaSemana(logs), [logs]);
+  const maximo = Math.max(1, ...dias.map((d) => d.total));
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-gray-400 mb-1 capitalize">
-        <span>{hojeRef}</span>
-        <span className="text-white font-medium tabular-nums">{totalHoje} atividade{totalHoje !== 1 ? 's' : ''}</span>
+    <div>
+      <div className="flex items-baseline justify-between">
+        <p className="rotulo">Atividade, últimos 7 dias</p>
+        <p className="text-xs text-gray-500">hoje: <span className="text-white font-mono">{totalHoje}</span></p>
       </div>
-      <div className="flex items-center gap-1.5 justify-center">
-        {semana.map((dia, i) => (
-          <div key={i} className="flex flex-col items-center gap-1">
-            <div className={`w-full aspect-square rounded-lg transition-all ${
-              dia.active ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.15)]' : 'bg-white/[0.03]'
-            }`} style={{ width: '24px' }} title={`${dia.count} atividades`} />
-            <span className={`text-[9px] font-medium ${dia.active ? 'text-gray-400' : 'text-gray-600'}`}>{dia.label}</span>
+      <p className="mt-1 numero text-[1.75rem] text-white">{totalSemana}</p>
+      {/* Barras com altura = quantidade do dia (antes eram quadrados
+          acesos ou apagados: 1 e 12 atividades pareciam iguais). */}
+      <div className="mt-2 flex items-end gap-1.5 h-10" role="img" aria-label={`Atividades por dia: ${dias.map((d) => `${d.rotulo} ${d.total}`).join(', ')}`}>
+        {dias.map((d, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div
+              className={`w-full rounded-sm ${d.total > 0 ? (d.hoje ? 'bg-amber-500' : 'bg-gray-400') : 'bg-folha-3'}`}
+              style={{ height: d.total > 0 ? `${Math.max(12, (d.total / maximo) * 100)}%` : '3px' }}
+              title={plural(d.total, 'atividade')}
+            />
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-white/[0.03]">
-        <span className="text-gray-500">Total 7 dias</span>
-        <span className="text-white font-medium tabular-nums">{totalSemana} atividades</span>
+      <div className="mt-1 flex gap-1.5">
+        {dias.map((d, i) => (
+          <span key={i} className={`flex-1 text-center text-[0.6875rem] ${d.hoje ? 'text-amber-400 font-medium' : 'text-gray-500'}`}>{d.rotulo}</span>
+        ))}
       </div>
     </div>
   );
 }
 
+/* Grupos de humor da legenda: os mesmos que dão a cor da faixa. */
+const GRUPOS_HUMOR: { rotulo: string; cor: string; moods: string[] }[] = [
+  { rotulo: 'estresse', cor: MOOD_COLOR.stress, moods: ['stress'] },
+  { rotulo: 'ansiedade', cor: MOOD_COLOR.anxiety, moods: ['anxiety'] },
+  { rotulo: 'desânimo ou cansaço', cor: MOOD_COLOR.sadness, moods: ['sadness', 'tired', 'demotivated'] },
+  { rotulo: 'bem', cor: MOOD_COLOR.focused, moods: ['focused', 'motivated', 'happy', 'energetic'] },
+  { rotulo: 'neutro', cor: MOOD_COLOR.neutral, moods: ['neutral'] },
+];
+
 function MoodMiniGraph() {
-  const moodHistory = useAppStore(s => s.moodHistory);
-  const recent = moodHistory.slice(-24);
-
-  const moodLabels: Record<string, string> = {
-    stress: 'Estresse', anxiety: 'Ansiedade', sadness: 'Tristeza', tired: 'Cansaço',
-    demotivated: 'Desmotivação', focused: 'Foco', motivated: 'Motivação',
-    happy: 'Alegria', energetic: 'Energia', neutral: 'Neutro',
-  };
-
-  const timeline = useMemo(() => {
-    if (recent.length === 0) return [];
-    const entries = [...recent];
-    const minTime = entries[0]?.timestamp || Date.now();
-    const maxTime = entries[entries.length - 1]?.timestamp || Date.now();
-    const range = Math.max(maxTime - minTime, 1);
-    return entries.map(e => ({ ...e, x: ((e.timestamp - minTime) / range) * 100 }));
-  }, [recent]);
+  const moodHistory = useAppStore((s) => s.moodHistory);
+  const recent = useMemo(() => moodHistory.slice(-24), [moodHistory]);
+  const presentes = useMemo(() => GRUPOS_HUMOR.filter((g) => recent.some((r) => g.moods.includes(r.mood))), [recent]);
 
   if (recent.length === 0) {
-    return <p className="text-sm text-gray-500 text-center py-4">Converse com o Mentor para gerar registros emocionais.</p>;
+    return (
+      <div>
+        <p className="rotulo">Humor nas conversas</p>
+        <p className="text-sm text-gray-500 mt-2">Aparece aqui depois que você conversar com o Mentor.</p>
+      </div>
+    );
   }
 
+  /* Uma faixa: cada conversa é um trecho, na ordem em que aconteceu, com
+     a cor do humor percebido. A versão anterior desenhava barras de
+     ALTURAS diferentes, mas a altura vinha da posição da cor numa lista,
+     não de nada medido: parecia um gráfico e não dizia nada. */
   return (
-    <div className="space-y-3">
-      <div className="flex items-end gap-[2px] h-14 relative">
-        {timeline.map((entry, i) => (
-          <div key={i}
-            className="flex-1 rounded-t-sm transition-all duration-300 hover:opacity-80 hover:scale-y-110 origin-bottom cursor-pointer relative group"
-            style={{
-              backgroundColor: MOOD_COLOR[entry.mood] || '#475569',
-              height: `${25 + (Object.values(MOOD_COLOR).indexOf(MOOD_COLOR[entry.mood] || '#475569') / Object.keys(MOOD_COLOR).length) * 40}%`,
-              minHeight: '8px',
-            }}
-            title={`${moodLabels[entry.mood] || entry.mood} · ${new Date(entry.timestamp).toLocaleTimeString()}`}>
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+    <div>
+      <p className="rotulo">Humor nas conversas</p>
+      <p className="text-xs text-gray-500 mt-1">{plural(recent.length, 'registro')}, do mais antigo ao mais recente</p>
+      <div className="mt-3 flex h-3 rounded-sm overflow-hidden gap-px" role="img" aria-label={`Humor por conversa: ${recent.map((r) => MOOD_LABEL[r.mood] || r.mood).join(', ')}`}>
+        {recent.map((r, i) => (
+          <div key={i} className="flex-1" style={{ backgroundColor: MOOD_COLOR[r.mood] || MOOD_COLOR.neutral }}
+            title={`${MOOD_LABEL[r.mood] || r.mood} · ${new Date(r.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`} />
         ))}
       </div>
-      <div className="flex items-center gap-3 text-[10px] text-gray-500 flex-wrap">
-        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" /> Estresse</span>
-        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" /> Ansiedade</span>
-        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#a855f7]" /> Tristeza</span>
-        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Positivo</span>
-      </div>
+      <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+        {presentes.map((g) => (
+          <li key={g.rotulo} className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: g.cor }} aria-hidden="true" />
+            {g.rotulo}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

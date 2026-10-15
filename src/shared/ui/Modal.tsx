@@ -1,7 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
-import { GlassCard } from './GlassCard';
 import { travarRolagem } from '../lib/scrollLock';
 import { popIn } from '../lib/motionPresets';
 
@@ -52,7 +51,7 @@ export function Modal({ open, onClose, children, title, fullScreen }: ModalProps
            recorte. */
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
           <m.div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -83,15 +82,14 @@ export function Modal({ open, onClose, children, title, fullScreen }: ModalProps
               fullScreen ? 'max-w-4xl h-full md:h-[90dvh]' : 'max-w-lg max-h-full md:max-h-[85dvh]'
             }`}
           >
-            <GlassCard
-              className={`flex flex-col min-h-0 overflow-hidden ${fullScreen ? 'flex-1' : ''}`}
-              padding="none"
-            >
+            {/* Camada (com sombra), e não painel: o modal é a única coisa
+                que de fato flutua sobre a página. */}
+            <div className={`camada rounded-2xl flex flex-col min-h-0 overflow-hidden ${fullScreen ? 'flex-1' : ''}`}>
               {/* `shrink-0` + corpo rolável: antes o cartão inteiro rolava,
                   então em conteúdo longo o título e o X saíam de vista. */}
               {title && (
-                <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-white/5">
-                  <h2 className="text-base md:text-lg font-bold text-white min-w-0 break-words">{title}</h2>
+                <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-linha">
+                  <h2 className="text-lg md:text-xl text-white min-w-0 break-words">{title}</h2>
                   {onClose && (
                     <m.button
                       onClick={onClose}
@@ -105,7 +103,7 @@ export function Modal({ open, onClose, children, title, fullScreen }: ModalProps
                 </div>
               )}
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5">{children}</div>
-            </GlassCard>
+            </div>
           </m.div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Brain, CalendarDays, CircleAlert, Plus } from 'lucide-react';
+import { Brain, CircleAlert, Plus } from 'lucide-react';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
 import { useAppStore } from '../../stores/appStore';
 import {
@@ -61,11 +61,8 @@ export function CalendarioPage() {
   return (
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/15 to-indigo-600/10 flex items-center justify-center">
-          <CalendarDays size={20} className="text-sky-400" />
-        </div>
         <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-white">Calendario Adaptativo</h1>
+          <h1 className="text-[1.75rem] text-white">Calendario Adaptativo</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             As revisões entram sozinhas, no dia em que a memória começa a falhar
           </p>
@@ -73,7 +70,7 @@ export function CalendarioPage() {
       </div>
 
       {/* Fila de hoje */}
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-300">Para revisar hoje</h2>
           <span className="text-xs text-gray-500 tabular-nums">
@@ -101,10 +98,10 @@ export function CalendarioPage() {
               return (
                 <div
                   key={r.topicoId}
-                  className="flex items-center gap-3 py-3 px-3 rounded-xl glass-light border border-white/[0.03]"
+                  className="flex items-center gap-3 py-3 px-3 rounded-xl painel-suave border border-white/[0.03]"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center shrink-0">
-                    <Brain size={16} className="text-sky-400" />
+                  <div className="w-9 h-9 rounded-xl bg-tinta-500/10 flex items-center justify-center shrink-0">
+                    <Brain size={16} className="text-tinta-400" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -140,7 +137,7 @@ export function CalendarioPage() {
       </div>
 
       {/* Linha do tempo */}
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-300">Proximos dias</h2>
           <div className="flex gap-1">
@@ -149,7 +146,7 @@ export function CalendarioPage() {
                 key={d}
                 onClick={() => setDias(d)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-medium ${
-                  dias === d ? 'bg-sky-500/15 text-sky-300' : 'text-gray-500 hover:text-gray-300'
+                  dias === d ? 'bg-tinta-500/15 text-tinta-300' : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
                 {d}d
@@ -170,7 +167,7 @@ export function CalendarioPage() {
                       ? 'bg-white/[0.03]'
                       : dia.atrasadas > 0
                         ? 'bg-amber-500/70'
-                        : 'bg-sky-500/60'
+                        : 'bg-tinta-500/60'
                   }`}
                   style={{ height: `${Math.max(4, altura)}%` }}
                 />
@@ -183,7 +180,7 @@ export function CalendarioPage() {
 
       {/* Todos os topicos */}
       {revisoes.length > 0 && (
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-3">Todos os topicos ({revisoes.length})</h2>
           <div className="space-y-1.5">
             {revisoes.map((r) => (
@@ -206,7 +203,7 @@ export function CalendarioPage() {
         </div>
       )}
 
-      <div className="glass-light rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed">
+      <div className="painel-suave rounded-xl px-4 py-3 text-xs text-gray-500 leading-relaxed">
         <p className="flex items-center gap-1.5 text-gray-400 font-medium mb-1">
           <Plus size={13} /> Como as datas sao escolhidas
         </p>

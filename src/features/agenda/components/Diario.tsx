@@ -31,7 +31,7 @@ export function Diario() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-midnight-850 to-midnight-800 border border-midnight-750 rounded-2xl p-5 relative overflow-hidden transition-all duration-300 hover:border-midnight-600">
+    <div className="bg-midnight-850 border border-midnight-750 rounded-2xl p-5 relative overflow-hidden transition-all duration-300 hover:border-midnight-600">
       <h4 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
         <NotebookPen size={16} className="text-emerald-400 animate-pulse" />
         Meu Diário Pré-Sessão (Opcional)

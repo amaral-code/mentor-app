@@ -119,9 +119,9 @@ export function SecaoResponsaveis() {
   const menor = ehMenorDe16(session?.dataNascimento);
 
   return (
-    <div id="secao-responsaveis" className="glass-card rounded-2xl p-5 scroll-mt-24">
+    <div id="secao-responsaveis" className="painel rounded-2xl p-5 scroll-mt-24">
       <h2 className="text-sm font-semibold text-gray-300 mb-1 flex items-center gap-2">
-        <ShieldCheck size={15} className="text-violet-400" /> Responsáveis
+        <ShieldCheck size={15} className="text-tinta-400" /> Responsáveis
       </h2>
       <p className="text-xs text-gray-500 mb-4 leading-relaxed">
         Quem tem seu código vê seu ritmo de estudo e seus sinais de cansaço. Nunca suas
@@ -129,8 +129,8 @@ export function SecaoResponsaveis() {
       </p>
 
       {/* ---------- Código ---------- */}
-      <div className="glass-light rounded-xl p-4 border border-white/[0.05]">
-        <label className="block text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">
+      <div className="painel-suave rounded-xl p-4 border border-white/[0.05]">
+        <label className="block text-xs text-gray-500 mb-2 font-medium">
           Seu código
         </label>
         {carregando ? (
@@ -197,13 +197,13 @@ export function SecaoResponsaveis() {
       </div>
 
       {/* ---------- Quem acompanha ---------- */}
-      <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mt-5 mb-2">
+      <h3 className="text-xs text-gray-500 font-medium mt-5 mb-2">
         Quem acompanha você
       </h3>
       {carregando ? (
         <div className="h-14 rounded-xl bg-white/5 animate-pulse" />
       ) : lista.length === 0 ? (
-        <p className="text-sm text-gray-500 glass-light rounded-xl px-3 py-4 flex items-center gap-2">
+        <p className="text-sm text-gray-500 painel-suave rounded-xl px-3 py-4 flex items-center gap-2">
           <UserPlus size={15} className="text-gray-600 shrink-0" />
           Ninguém ainda. Enquanto a lista estiver vazia, só você vê seus dados.
         </p>
@@ -212,7 +212,7 @@ export function SecaoResponsaveis() {
           {lista.map((v) => (
             <li
               key={v.id}
-              className="glass-light rounded-xl px-3 py-3 flex items-center justify-between gap-3 border border-white/[0.04]"
+              className="painel-suave rounded-xl px-3 py-3 flex items-center justify-between gap-3 border border-white/[0.04]"
             >
               <div className="min-w-0">
                 <p className="text-sm text-white font-medium truncate">{v.nome}</p>
@@ -233,7 +233,7 @@ export function SecaoResponsaveis() {
       )}
 
       {/* ---------- Data de nascimento ---------- */}
-      <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mt-5 mb-2">
+      <h3 className="text-xs text-gray-500 font-medium mt-5 mb-2">
         Data de nascimento
       </h3>
       <p className="text-xs text-gray-500 mb-2 leading-relaxed">
@@ -247,7 +247,7 @@ export function SecaoResponsaveis() {
           aria-label="Data de nascimento"
           value={nascimento}
           onChange={(e) => setNascimento(e.target.value)}
-          className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white outline-none focus:border-amber-400/40 min-h-[44px]"
+          className="flex-1 px-3 py-2.5 rounded-xl painel-suave border border-white/[0.05] text-sm text-white outline-none focus:border-amber-400/40 min-h-[44px]"
         />
         <button
           type="button"

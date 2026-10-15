@@ -28,7 +28,6 @@ const ParentPage = lazy(() =>
 const PsicologoPage = lazy(() =>
   import('./features/psicologo/PsicologoPage').then((m) => ({ default: m.PsicologoPage })),
 );
-import { ParticleCanvas } from './features/atmo/ParticleCanvas';
 import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
@@ -333,7 +332,6 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <ErrorBoundary nome="login">
-        <ParticleCanvas />
         <AuthPage />
       </ErrorBoundary>
     );
@@ -370,7 +368,6 @@ export default function App() {
     return (
       <ErrorBoundary nome="educador">
       <LazyMotion features={featuresAnimacao} strict>
-        <ParticleCanvas />
         <Suspense
           fallback={
             <div className="p-6">
@@ -393,7 +390,6 @@ export default function App() {
     return (
       <ErrorBoundary nome="responsaveis">
       <LazyMotion features={featuresAnimacao} strict>
-        <ParticleCanvas />
         <Suspense
           fallback={
             <div className="p-6">
@@ -418,7 +414,6 @@ export default function App() {
     return (
       <ErrorBoundary nome="psicologo">
       <LazyMotion features={featuresAnimacao} strict>
-        <ParticleCanvas />
         <Suspense
           fallback={
             <div className="p-6">
@@ -438,7 +433,6 @@ export default function App() {
   return (
     <ErrorBoundary nome="aluno">
     <LazyMotion features={featuresAnimacao} strict>
-      <ParticleCanvas />
       <AppShell />
       <Toast />
       <OnboardingTour />

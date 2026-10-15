@@ -15,25 +15,25 @@ import {
    Tailwind e assunto de tela: a lib decide o NIVEL, a tela decide a cor. */
 const CORES: Record<NivelCalor, { barra: string; texto: string; borda: string; chip: string }> = {
   calmo: {
-    barra: 'from-emerald-500 to-emerald-400',
+    barra: 'bg-emerald-500',
     texto: 'text-emerald-300',
     borda: 'border-emerald-500/25',
     chip: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
   },
   atencao: {
-    barra: 'from-amber-500 to-yellow-400',
+    barra: 'bg-amber-500',
     texto: 'text-amber-300',
     borda: 'border-amber-500/25',
     chip: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
   },
   alerta: {
-    barra: 'from-orange-500 to-red-400',
+    barra: 'bg-orange-500',
     texto: 'text-orange-300',
     borda: 'border-orange-500/30',
     chip: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
   },
   critico: {
-    barra: 'from-red-600 to-rose-500',
+    barra: 'bg-red-500',
     texto: 'text-red-300',
     borda: 'border-red-500/40',
     chip: 'bg-red-500/15 text-red-300 border-red-500/40',
@@ -67,7 +67,7 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo
   return (
     <article
       aria-label={`Termômetro da ${turma.turmaNome}`}
-      className={`rounded-2xl border bg-midnight-900/80 p-5 backdrop-blur transition-colors ${cor.borda}`}
+      className={`rounded-2xl border bg-midnight-900/80 p-5 transition-colors ${cor.borda}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
@@ -76,14 +76,14 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo
             {turma.comIndice} de {turma.totalAlunos} alunos com índice na janela
           </p>
         </div>
-        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${cor.chip}`}>
+        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold ${cor.chip}`}>
           {ROTULO_CALOR[nivel]}
         </span>
       </div>
 
       {/* Barra de calor: a leitura de 1 segundo do professor. */}
       <div className="mt-4 flex items-center gap-3">
-        <span className={`text-3xl font-black tabular-nums ${cor.texto}`}>{pct}%</span>
+        <span className={`text-3xl font-bold tabular-nums ${cor.texto}`}>{pct}%</span>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
           <div
             role="meter"
@@ -91,7 +91,7 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label="Percentual da turma em exaustão cognitiva"
-            className={`h-full rounded-full bg-gradient-to-r transition-[width] duration-500 ${cor.barra}`}
+            className={`h-full rounded-full transition-[width] duration-500 ${cor.barra}`}
             style={{ width: `${Math.max(2, pct)}%` }}
           />
         </div>
@@ -135,8 +135,8 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo
       )}
 
       {/* Intervencao pedagogica sugerida (a razao de o painel existir). */}
-      <div className="mt-4 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] p-3">
-        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-300">
+      <div className="mt-4 rounded-xl border border-tinta-500/20 bg-tinta-500/[0.06] p-3">
+        <p className="flex items-center gap-1.5 text-xs font-bold text-tinta-300">
           <Lightbulb size={12} /> {escopo === 'escola' ? 'Para conversar com o professor da turma' : 'Sugestão para a aula'}
         </p>
         <p className="mt-1 text-sm font-semibold text-white">{intervencao.titulo}</p>

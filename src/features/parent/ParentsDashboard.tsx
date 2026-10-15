@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
-import { BarChart3, Brain, PartyPopper, TriangleAlert } from 'lucide-react';
+import { Brain, TriangleAlert } from 'lucide-react';
 import { AppIcon } from '../../shared/ui/AppIcon';
 
 import { calculateDropoutRisk } from '../../shared/lib/dropoutRisk';
@@ -46,15 +46,15 @@ const rotuloMesCurto = (mes: string) => rotuloMes(`${mes}-01`);
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend, Filler);
 
-const AMBER_LIGHT = '#fbbf24';
-const EMERALD = '#10b981';
+const AMBER_LIGHT = '#f3b53f';
+const EMERALD = '#7cc78a';
 const GRID = 'rgba(255,255,255,0.05)';
-const TICK = '#64748b';
+const TICK = '#8a8376';
 
 const barOptions: ChartOptions<'bar'> = {
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1', displayColors: false } },
+  plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(28,26,22,0.97)', titleColor: '#f3efe6', bodyColor: '#ddd7cb', displayColors: false } },
   scales: {
     x: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 11 } } },
     y: { beginAtZero: true, grid: { color: GRID }, ticks: { color: TICK, font: { size: 11 }, stepSize: 4 }, title: { display: true, text: 'Horas', color: TICK, font: { size: 10 } } },
@@ -68,9 +68,9 @@ const lineOptions: ChartOptions<'line'> = {
   plugins: {
     legend: {
       position: 'bottom',
-      labels: { color: '#94a3b8', usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 } },
+      labels: { color: '#aaa395', usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 } },
     },
-    tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1' },
+    tooltip: { backgroundColor: 'rgba(28,26,22,0.97)', titleColor: '#f3efe6', bodyColor: '#ddd7cb' },
   },
   scales: {
     x: { grid: { color: GRID }, ticks: { color: TICK, font: { size: 11 } } },
@@ -84,21 +84,19 @@ interface MetricCardProps {
   label: string;
   value: string;
   sub: string;
-  gradient: string;
-  children: ReactNode;
+  gradient?: string;
+  children?: ReactNode;
 }
 
-function MetricCard({ label, value, sub, gradient, children }: MetricCardProps) {
+/* Um número com rótulo e explicação, sem caixa própria: os três ficam
+   numa faixa única, separados por fio. O ícone em quadradinho colorido
+   que cada um tinha repetia o rótulo. */
+function MetricCard({ label, value, sub }: MetricCardProps) {
   return (
-    <div className="glass rounded-2xl p-5 border border-white/5 group hover:border-white/[0.08] transition-all">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0`}>
-          {children}
-        </div>
-        <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
-      </div>
-      <p className="text-3xl font-extrabold text-white tabular-nums tracking-tight">{value}</p>
-      <p className="text-xs text-gray-500 mt-1.5 leading-snug">{sub}</p>
+    <div className="p-5">
+      <p className="rotulo">{label}</p>
+      <p className="numero text-[2rem] text-white mt-1">{value}</p>
+      <p className="text-sm text-gray-500 mt-1 leading-snug">{sub}</p>
     </div>
   );
 }
@@ -106,10 +104,10 @@ function MetricCard({ label, value, sub, gradient, children }: MetricCardProps) 
 function ProjectionAlert({ projection }: { projection: DropoutProjection }) {
   if (projection.trend === 'rising') {
     return (
-      <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-transparent p-5 animate-fade-up" role="status">
-        <p className="flex items-center gap-2 text-emerald-400 font-bold text-sm"><PartyPopper size={16} className="inline-block align-[-0.15em] text-amber-400" /> Tendência de alta confirmada</p>
-        <p className="text-sm text-emerald-200/80 mt-2 leading-relaxed"> Excelência! A projeção matemática aponta <b>evolução contínua</b> nas próximos 4 meses.
-          O estudante está em uma trajetória de alta: mantenha o incentivo e o acompanhamento diário.
+      <div className="border-l-2 border-emerald-400 pl-4" role="status">
+        <p className="text-emerald-300 font-semibold text-[0.9375rem]">O acerto no app vem subindo</p>
+        <p className="text-sm text-gray-300 mt-1 leading-relaxed">
+          Se o ritmo continuar, a tendência é seguir assim nos próximos meses. Vale dizer ao estudante que você percebeu.
         </p>
       </div>
     );
@@ -120,33 +118,37 @@ function ProjectionAlert({ projection }: { projection: DropoutProjection }) {
       ? Math.max(0, Math.round(((projection.currentAverage - projection.projectedAverage) / projection.currentAverage) * 100))
       : 0;
     return (
-      <div className="rounded-2xl border border-red-500/25 bg-gradient-to-br from-red-500/10 to-transparent p-5 animate-fade-up" role="alert">
-        <p className="flex items-center gap-2 text-red-400 font-bold text-sm"><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /> Tendência de queda detectada: intervenção recomendada</p>
-        <p className="text-sm text-red-200/80 mt-2 leading-relaxed"> O acerto nos exercícios do app vem caindo. Se nada mudar, em 4 meses ele pode ficar <b>{dropPct}% menor</b> do que é hoje.
+      <div className="border-l-2 border-red-400 pl-4" role="alert">
+        <p className="text-red-300 font-semibold text-[0.9375rem]">O acerto no app vem caindo</p>
+        <p className="text-sm text-gray-300 mt-1 leading-relaxed">Se nada mudar, a média dos próximos 4 meses pode ficar <b>{dropPct}% abaixo</b> da média de hoje.
           O que costuma ajudar: conversar com o estudante sem cobrança, perguntar como está a rotina e, se
           fizer sentido, falar com a escola.
         </p>
         {/* "Inclinação" e "Ajuste R²" saíram: jargão de estatística para
             quem só quer saber se o filho vai bem. E R² de 100% com três
             pontos não quer dizer nada, mas soa como certeza absoluta. */}
-        <div className="grid grid-cols-2 gap-2 mt-4 text-center">
-          <div className="rounded-xl bg-black/30 py-2 px-1">
-            <p className="text-[10px] text-gray-500">Acerto médio no app</p>
-            <p className="text-sm font-bold text-red-300 tabular-nums">{Math.round(projection.currentAverage)}%</p>
+        {/* O segundo número é a MÉDIA dos 4 meses projetados, e a tela
+            dizia "em 4 meses": ao lado da linha mês a mês, que termina
+            bem mais baixo, parecia que um dos dois estava errado. */}
+        <dl className="grid grid-cols-2 gap-4 mt-3 text-sm">
+          <div>
+            <dt className="text-gray-500">Média de acerto hoje</dt>
+            <dd className="font-mono text-white tabular-nums">{Math.round(projection.currentAverage)}%</dd>
           </div>
-          <div className="rounded-xl bg-black/30 py-2 px-1">
-            <p className="text-[10px] text-gray-500">Se nada mudar, em 4 meses</p>
-            <p className="text-sm font-bold text-red-300 tabular-nums">{Math.round(projection.projectedAverage)}%</p>
+          <div>
+            <dt className="text-gray-500">Média dos próximos 4 meses, se nada mudar</dt>
+            <dd className="font-mono text-red-300 tabular-nums">{Math.round(projection.projectedAverage)}%</dd>
           </div>
-        </div>
+        </dl>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-transparent p-5 animate-fade-up" role="status">
-      <p className="flex items-center gap-2 text-amber-400 font-bold text-sm"><BarChart3 size={16} className="inline-block align-[-0.15em] text-cyan-400" /> Tendência estável</p>
-      <p className="text-sm text-amber-200/80 mt-2 leading-relaxed"> A projeção não aponta variação significativa. Mantenha o acompanhamento próximo para identificar mudanças cedo.
+    <div className="border-l-2 border-gray-500 pl-4" role="status">
+      <p className="text-white font-semibold text-[0.9375rem]">O acerto no app está estável</p>
+      <p className="text-sm text-gray-300 mt-1 leading-relaxed">
+        Não há subida nem queda que chame atenção. Acompanhar de perto ajuda a perceber uma mudança cedo.
       </p>
     </div>
   );
@@ -155,32 +157,32 @@ function ProjectionAlert({ projection }: { projection: DropoutProjection }) {
 const RISK_META = {
   green: {
     label: 'Seguro',
-    dot: 'bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.6)]',
+    dot: 'bg-emerald-400',
     text: 'text-emerald-400',
     border: 'border-emerald-500/25',
     chipBg: 'bg-emerald-500/10',
     sub: 'O acerto no app está estável ou subindo.',
-    gradient: 'from-emerald-500/15 to-emerald-600/5',
+    gradient: 'bg-emerald-500/[0.06]',
     icon: 'text-emerald-400',
   },
   yellow: {
     label: 'Atenção',
-    dot: 'bg-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.6)]',
+    dot: 'bg-amber-400',
     text: 'text-amber-400',
     border: 'border-amber-500/25',
     chipBg: 'bg-amber-500/10',
     sub: 'O acerto no app começou a cair. Vale acompanhar a rotina.',
-    gradient: 'from-amber-500/15 to-orange-600/5',
+    gradient: 'bg-amber-500/[0.06]',
     icon: 'text-amber-400',
   },
   red: {
     label: 'Crítico',
-    dot: 'bg-red-400 shadow-[0_0_10px_rgba(239,68,68,0.6)]',
+    dot: 'bg-red-400',
     text: 'text-red-400',
     border: 'border-red-500/25',
     chipBg: 'bg-red-500/10',
     sub: 'O acerto no app caiu bastante nos últimos meses. Vale conversar esta semana.',
-    gradient: 'from-red-500/15 to-rose-600/5',
+    gradient: 'bg-red-500/[0.06]',
     icon: 'text-red-400',
   },
 } as const;
@@ -191,21 +193,21 @@ const AI_RISK = {
     chip: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
     text: 'text-emerald-400',
     border: 'border-emerald-500/25',
-    bg: 'bg-gradient-to-br from-emerald-500/10 to-transparent',
+    bg: 'bg-emerald-500/10',
   },
   Médio: {
     icon: 'brilho',
     chip: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
     text: 'text-amber-400',
     border: 'border-amber-500/25',
-    bg: 'bg-gradient-to-br from-amber-500/10 to-transparent',
+    bg: 'bg-amber-500/10',
   },
   Alto: {
     icon: 'brilho',
     chip: 'bg-red-500/10 text-red-400 border-red-500/25',
     text: 'text-red-400',
     border: 'border-red-500/25',
-    bg: 'bg-gradient-to-br from-red-500/10 to-transparent',
+    bg: 'bg-red-500/10',
   },
 } as const;
 
@@ -298,7 +300,7 @@ export function ParentsDashboard({ aluno }: Props) {
       {
         label: 'Horas estudadas',
         data: semanas.map(w => w.horas),
-        backgroundColor: 'rgba(245,158,11,0.7)',
+        backgroundColor: 'rgba(233,161,28,0.85)',
         hoverBackgroundColor: AMBER_LIGHT,
         borderRadius: 8,
         maxBarThickness: 40,
@@ -319,7 +321,7 @@ export function ParentsDashboard({ aluno }: Props) {
         data: mensal.map(r => (r.questoes > 0 ? r.taxaAcerto : null)),
         spanGaps: false,
         borderColor: EMERALD,
-        backgroundColor: 'rgba(16,185,129,0.06)',
+        backgroundColor: 'rgba(124,199,138,0.06)',
         pointBackgroundColor: EMERALD,
         borderWidth: 2.5,
         tension: 0.35,
@@ -335,16 +337,11 @@ export function ParentsDashboard({ aluno }: Props) {
       {/* ── Cabeçalho: aluno + seletor de período ── */}
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1">Painel do Responsável</p>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3 flex-wrap">
+          <h1 className="text-[1.75rem] md:text-[2rem] text-white">
             {ficha?.nome ?? aluno.nome}
-            {ficha?.escola && (
-              <span className="px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-300 text-[10px] font-semibold border border-violet-500/20">
-                {ficha.escola}
-              </span>
-            )}
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-1">
+            {ficha?.escola && <>{ficha.escola}<span className="text-gray-600"> · </span></>}
             {/* Sem escola vinculada nao inventa turma: o estudante pode
                 estar usando o app por conta propria. */}
             {ficha?.turma ? (
@@ -363,7 +360,7 @@ export function ParentsDashboard({ aluno }: Props) {
               onClick={() => setPeriod(opt.value)}
               className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all border ${
                 period === opt.value
-                  ? 'bg-gradient-to-br from-amber-500/20 to-orange-600/20 text-amber-300 border-amber-500/25 shadow-[0_0_16px_rgba(245,158,11,0.08)]'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/25'
                   : 'text-gray-500 border-transparent hover:text-gray-300'
               }`}
             >
@@ -376,7 +373,7 @@ export function ParentsDashboard({ aluno }: Props) {
       {carregando && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" aria-hidden="true">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="glass rounded-2xl p-5 border border-white/5">
+            <div key={i} className="painel rounded-2xl p-5 border border-white/5">
               <div className="h-4 w-24 rounded bg-white/5 animate-pulse" />
               <div className="h-8 w-20 rounded bg-white/5 animate-pulse mt-4" />
             </div>
@@ -387,7 +384,7 @@ export function ParentsDashboard({ aluno }: Props) {
       {/* Nunca estudou pelo app: a tela DIZ isso, em vez de desenhar
           graficos zerados que parecem queda de desempenho. */}
       {vazio && (
-        <div className="glass rounded-2xl p-6 border border-white/5 text-center">
+        <div className="painel rounded-2xl p-6 border border-white/5 text-center">
           <h2 className="text-lg font-bold text-white">Ainda não há atividade para mostrar</h2>
           <p className="text-sm text-gray-400 mt-2 leading-relaxed max-w-lg mx-auto">
             {ficha?.nome ?? aluno.nome} ainda não respondeu exercícios pelo app neste período.
@@ -398,47 +395,29 @@ export function ParentsDashboard({ aluno }: Props) {
       )}
 
       {/* ── Métricas rápidas ── */}
-      <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${vazio || carregando ? 'hidden' : ''}`}>
+      <div className={`painel rounded-2xl grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-linha ${vazio || carregando ? 'hidden' : ''}`}>
         <MetricCard
-          label="Tempo de Foco Total"
+          label="Tempo de estudo"
           value={totalFocus >= 1 ? `${Math.round(totalFocus)}h` : `${totais.minutos}min`}
           sub={`Em ${totais.diasAtivos} dia(s) de estudo nos últimos ${period} meses.`}
-          gradient="from-amber-500/15 to-orange-600/10"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-        </MetricCard>
+        />
 
         <MetricCard
-          label="Acerto nos Exercícios"
+          label="Acerto nos exercícios"
           value={totais.questoes > 0 ? `${totais.taxaAcerto}%` : 'sem dados'}
           sub={
             totais.questoes > 0
               ? `${totais.acertos} acertos em ${totais.questoes} questões respondidas no app.`
               : 'Nenhuma questão respondida neste período.'
           }
-          gradient="from-emerald-500/15 to-cyan-600/10"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="6" />
-            <circle cx="12" cy="12" r="2" />
-          </svg>
-        </MetricCard>
+        />
 
         {/* Status de Risco Atual -- so com historico que o sustente */}
         {!podeProjetar ? (
-          <div className="glass rounded-2xl p-5 border border-white/5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center">
-                <BarChart3 size={18} className="text-gray-500" />
-              </div>
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status de Risco</span>
-            </div>
-            <p className="text-xl font-extrabold text-gray-300">Ainda não dá para dizer</p>
-            <p className="text-xs text-gray-500 mt-1.5 leading-snug">
+          <div className="p-5">
+            <p className="rotulo">Risco de abandono</p>
+            <p className="text-lg font-semibold text-gray-300 mt-2">Ainda não dá para dizer</p>
+            <p className="text-sm text-gray-500 mt-1 leading-snug">
               {(() => {
                 const f = faltaParaTendencia(mensal);
                 const partes = [];
@@ -451,20 +430,14 @@ export function ParentsDashboard({ aluno }: Props) {
             </p>
           </div>
         ) : (
-        <div className={`glass rounded-2xl p-5 border ${risk.border} transition-all relative overflow-hidden`}>
-          <div className={`absolute inset-0 bg-gradient-to-br ${risk.gradient} pointer-events-none`} />
-          <div className="relative">
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 rounded-xl ${risk.chipBg} flex items-center justify-center`}>
-                <span className={`w-2.5 h-2.5 rounded-full ${risk.dot} animate-pulse`} />
-              </div>
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status de Risco Atual</span>
-            </div>
-            <p className={`text-3xl font-extrabold tracking-tight ${risk.text}`}>{risk.label}</p>
-            <p className="text-xs text-gray-500 mt-1.5 leading-snug">{risk.sub}</p>
-            <div className="flex items-center justify-between mt-3">
-              <span className="text-[10px] text-gray-600 tabular-nums">Score: {projection.riskScore}/100</span>
-              <span className={`w-full max-w-[45%] h-1.5 rounded-full bg-white/[0.06] overflow-hidden ml-3`}>
+        <div className="p-5">
+          <div>
+            <p className="rotulo">Risco de abandono</p>
+            <p className={`numero text-[2rem] mt-1 ${risk.text}`}>{risk.label}</p>
+            <p className="text-sm text-gray-500 mt-1 leading-snug">{risk.sub}</p>
+            <div className="flex items-center gap-3 mt-3">
+              <span className="text-xs text-gray-500 font-mono tabular-nums shrink-0">{projection.riskScore} de 100</span>
+              <span className="w-full h-1.5 rounded-full bg-folha-3 overflow-hidden">
                 <span
                   className={`block h-full rounded-full transition-all duration-700 ${
                     projection.riskLevel === 'red' ? 'bg-red-400' : projection.riskLevel === 'yellow' ? 'bg-amber-400' : 'bg-emerald-400'
@@ -480,18 +453,11 @@ export function ParentsDashboard({ aluno }: Props) {
 
       {/* ── Gráficos ── */}
       <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${vazio || carregando ? 'hidden' : ''}`}>
-        <div className="glass rounded-2xl p-5 border border-white/5">
+        <div className="painel rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Frequência Semanal no App</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Horas por semana, nas últimas 4 semanas</p>
-            </div>
-            <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
-                <line x1="18" y1="20" x2="18" y2="10" />
-                <line x1="12" y1="20" x2="12" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
+              <h3 className="text-base font-semibold text-white">Horas de estudo por semana</h3>
+              <p className="text-sm text-gray-500 mt-0.5">Últimas 4 semanas, contando só o tempo dentro do app</p>
             </div>
           </div>
           <div className="relative h-56">
@@ -499,20 +465,14 @@ export function ParentsDashboard({ aluno }: Props) {
           </div>
         </div>
 
-        <div className="glass rounded-2xl p-5 border border-white/5">
+        <div className="painel rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Evolução no app</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Proporção de acerto nos exercícios do app, mês a mês ({period} meses).
+              <h3 className="text-base font-semibold text-white">Acerto mês a mês</h3>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Nos exercícios do app, últimos {period} meses.
                 Não é boletim escolar: o app não recebe notas da escola.
               </p>
-            </div>
-            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                <polyline points="17 6 23 6 23 12" />
-              </svg>
             </div>
           </div>
           <div className="relative h-56">
@@ -526,54 +486,45 @@ export function ParentsDashboard({ aluno }: Props) {
           mal" nao entrega nenhuma resposta do estudante. E o dado que
           vira conversa ("quer ajuda em matematica?") em vez de cobranca. */}
       {materias.length > 0 && (
-        <div className="glass rounded-2xl p-5 border border-white/5">
-          <h3 className="text-sm font-bold text-white">Por matéria</h3>
-          <p className="text-xs text-gray-500 mt-0.5 mb-4">
+        <section>
+          <h3 className="text-xl text-white font-display font-semibold">Por matéria</h3>
+          <p className="text-sm text-gray-500 mt-1 mb-2 max-w-2xl">
             Últimos 3 meses, da matéria com mais dificuldade para a com menos.
             Matérias com poucas questões ficam de fora, porque pouca amostra assusta sem significar.
           </p>
-          <ul className="space-y-2">
+          <ul className="pauta border-t border-linha">
             {materias.map((m) => (
-              <li key={m.materia} className="glass-light rounded-xl px-3 py-2.5 border border-white/[0.04]">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-white font-medium truncate">{m.materia}</span>
-                  <span className="text-sm font-bold tabular-nums shrink-0" style={{
-                    color: m.taxaAcerto >= 70 ? '#10b981' : m.taxaAcerto >= 50 ? '#f59e0b' : '#f87171',
-                  }}>
-                    {m.taxaAcerto}%
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-white/5 overflow-hidden mt-2">
+              <li key={m.materia} className="py-3 grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-4">
+                <span className="text-[0.9375rem] text-white truncate">{m.materia}</span>
+                <div className="h-1.5 rounded-full bg-folha-3 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{
                       width: `${m.taxaAcerto}%`,
-                      background: m.taxaAcerto >= 70 ? '#10b981' : m.taxaAcerto >= 50 ? '#f59e0b' : '#f87171',
+                      background: m.taxaAcerto >= 70 ? '#7cc78a' : m.taxaAcerto >= 50 ? '#e9a11c' : '#f4a08a',
                     }}
                   />
                 </div>
-                <p className="text-[10px] text-gray-600 mt-1.5 tabular-nums">
-                  {m.acertos} de {m.questoes} questões
-                </p>
+                <span className="text-right">
+                  <span className="font-mono text-sm font-medium tabular-nums" style={{
+                    color: m.taxaAcerto >= 70 ? '#7cc78a' : m.taxaAcerto >= 50 ? '#e9a11c' : '#f4a08a',
+                  }}>
+                    {m.taxaAcerto}%
+                  </span>
+                  <span className="block text-xs text-gray-500 tabular-nums">{m.acertos} de {m.questoes}</span>
+                </span>
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
 
       {/* ── Projeção Cognitiva de 4 Meses ── */}
       {podeProjetar && (
-      <div className="glass rounded-2xl p-6 border border-white/5">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500/15 to-purple-600/10 flex items-center justify-center shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400">
-              <path d="M12 2a4 4 0 0 0-4 4c0 2 2 3 2 5v1h4v-1c0-2 2-3 2-5a4 4 0 0 0-4-4z" />
-              <path d="M8 17a3 3 0 0 0 3 3h2a3 3 0 0 0 3-3" />
-              <path d="M12 22v-2" />
-            </svg>
-          </div>
+      <div className="painel rounded-2xl p-5 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-5">
           <div className="flex-1">
-            <h3 className="text-lg font-extrabold text-white">Projeção de 4 meses</h3>
+            <h3 className="text-xl text-white font-display font-semibold">Para onde está indo</h3>
             <p className="text-xs text-gray-500 mt-0.5">
               {aiState.status === 'ready'
                 ? `Leitura da IA sobre ${records.length} meses de acerto no app e tempo de estudo.`
@@ -584,7 +535,7 @@ export function ParentsDashboard({ aluno }: Props) {
           </div>
 
           {aiState.status === 'loading' ? (
-            <span className="px-3 py-1.5 rounded-full text-[11px] font-bold border bg-violet-500/10 text-violet-300 border-violet-500/25 self-start sm:self-auto animate-pulse whitespace-nowrap">
+            <span className="px-3 py-1.5 rounded-full text-[11px] font-bold border bg-tinta-500/10 text-tinta-300 border-tinta-500/25 self-start sm:self-auto animate-pulse whitespace-nowrap">
               <Brain size={12} className="inline mr-1 -mt-0.5" /> Calculando projeção...
             </span>
           ) : aiState.status === 'ready' && aiState.result ? (
@@ -599,7 +550,7 @@ export function ParentsDashboard({ aluno }: Props) {
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
                   : 'bg-amber-500/10 text-amber-400 border-amber-500/25'
             }`}>
-              {projection.trend === 'falling' ? ' Tendência de queda' : projection.trend === 'rising' ? ' Tendência de alta' : ' Estável'}
+              {projection.trend === 'falling' ? 'Tendência de queda' : projection.trend === 'rising' ? 'Tendência de alta' : 'Estável'}
             </span>
           )}
         </div>
@@ -620,7 +571,7 @@ export function ParentsDashboard({ aluno }: Props) {
           /* Resultado da IA renderizado dinamicamente */
           <div className="animate-fade-up">
             <div className={`rounded-2xl border ${AI_RISK[aiState.result.risk].border} ${AI_RISK[aiState.result.risk].bg} p-6`}>
-              <p className="text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-2">
+              <p className="text-xs font-semibold text-gray-400 mb-2">
                 Previsão de risco de evasão · próximos 4 meses
               </p>
               <p className={`text-4xl font-extrabold ${AI_RISK[aiState.result.risk].text}`}>
@@ -636,7 +587,7 @@ export function ParentsDashboard({ aluno }: Props) {
               </p>
               <button
                 onClick={() => setAnalysisNonce(n => n + 1)}
-                className="shrink-0 text-[11px] font-semibold text-violet-300 hover:text-violet-200 bg-violet-500/10 border border-violet-500/20 rounded-lg px-3 py-1.5 transition-all"
+                className="shrink-0 text-[11px] font-semibold text-tinta-300 hover:text-tinta-200 bg-tinta-500/10 border border-tinta-500/20 rounded-lg px-3 py-1.5 transition-all"
                 title="Reexecutar a análise com a IA"
               > Reanalisar
               </button>
@@ -645,8 +596,8 @@ export function ParentsDashboard({ aluno }: Props) {
         ) : (
           /* Fallback: regressão linear local quando a IA não está disponível */
           <div className="space-y-4 animate-fade-up">
-            <div className="rounded-xl bg-amber-500/5 border border-amber-500/10 px-4 py-3 text-xs text-amber-300/90 flex items-start gap-2">
-              <span><TriangleAlert size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
+            <div className="text-sm text-gray-400 flex items-start gap-2">
+              <TriangleAlert size={15} className="shrink-0 mt-0.5 text-amber-400" aria-hidden="true" />
               <span className="flex-1">
                 {/* O texto antigo pedia para "ativar a chave no Perfil ou o
                     proxy serverless": recado de programador numa tela de
@@ -657,30 +608,31 @@ export function ParentsDashboard({ aluno }: Props) {
               </span>
               <button
                 onClick={() => setAnalysisNonce(n => n + 1)}
-                className="shrink-0 text-amber-300 hover:text-amber-200 font-semibold underline"
-              > Tentar de novo
+                className="shrink-0 text-amber-300 hover:text-amber-200 font-medium underline underline-offset-4"
+              >
+                Tentar de novo
               </button>
             </div>
 
-            <p className="text-[11px] text-gray-500">
-              Acerto projetado nos exercícios do app, mês a mês (regressão sobre o histórico acima).
+            <p className="text-sm text-gray-500">
+              Acerto projetado nos exercícios do app se o ritmo dos últimos meses continuar. É uma estimativa, não um destino.
             </p>
 
             {/* Projecao mes a mes (regressao local) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 rounded-md border border-linha divide-x divide-linha">
               {projection.projection.map((p, i) => {
                 const prev = i === 0 ? projection.currentAverage : projection.projection[i - 1].notaMedia;
                 const delta = p.notaMedia - prev;
                 return (
-                  <div key={p.month} className="rounded-2xl bg-white/[0.03] border border-white/5 p-4 text-center hover:border-white/10 transition-all">
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">{rotuloMesCurto(p.month)}</p>
-                    <p className={`text-2xl font-extrabold tabular-nums ${
+                  <div key={p.month} className="px-2 py-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">{rotuloMesCurto(p.month)}</p>
+                    <p className={`numero text-xl ${
                       delta < -0.5 ? 'text-red-400' : delta > 0.5 ? 'text-emerald-400' : 'text-gray-300'
                     }`}>
                       {Math.max(0, Math.round(p.notaMedia))}%
                     </p>
-                    <p className={`text-[10px] mt-1 font-medium ${
-                      delta < -0.5 ? 'text-red-500/70' : delta > 0.5 ? 'text-emerald-500/70' : 'text-gray-600'
+                    <p className={`text-xs mt-0.5 ${
+                      delta < -0.5 ? 'text-red-400/80' : delta > 0.5 ? 'text-emerald-400/80' : 'text-gray-500'
                     }`}>
                       {delta < -0.5 ? `caindo` : delta > 0.5 ? `subindo` : 'estável'}
                     </p>

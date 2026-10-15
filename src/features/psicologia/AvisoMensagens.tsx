@@ -41,17 +41,17 @@ export function AvisoMensagens() {
     <button
       type="button"
       onClick={() => setActiveTab('cuidado')}
-      className="w-full text-left rounded-2xl border border-cyan-500/25 bg-cyan-500/[0.07] px-4 py-3 flex items-center gap-3 min-h-[56px] hover:border-cyan-400/40 transition-all"
+      className="w-full text-left rounded-2xl border border-tinta-500/25 bg-tinta-500/[0.07] px-4 py-3 flex items-center gap-3 min-h-[56px] hover:border-tinta-400/40 transition-all"
     >
-      <span className="w-9 h-9 rounded-xl bg-cyan-500/15 flex items-center justify-center shrink-0">
-        <MessageCircle size={17} className="text-cyan-300" />
+      <span className="w-9 h-9 rounded-xl bg-tinta-500/15 flex items-center justify-center shrink-0">
+        <MessageCircle size={17} className="text-tinta-300" />
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block text-sm font-semibold text-cyan-100">
+        <span className="block text-sm font-semibold text-tinta-100">
           {naoLidas === 1 ? '1 mensagem nova' : `${naoLidas} mensagens novas`}
           {nome ? ` de ${nome}` : ' do seu psicólogo'}
         </span>
-        <span className="block text-xs text-cyan-200/70">Toque para ler e responder.</span>
+        <span className="block text-xs text-tinta-200/70">Toque para ler e responder.</span>
       </span>
     </button>
   );

@@ -70,7 +70,7 @@ interface BarraProgressoProps {
 export function BarraProgresso({
   valor,
   className = '',
-  corClassName = 'bg-gradient-to-r from-amber-500 to-orange-500',
+  corClassName = 'bg-amber-500',
   altura = 'h-1.5',
 }: BarraProgressoProps) {
   const reduzir = useReducedMotion();

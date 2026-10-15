@@ -73,7 +73,7 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
   }
 
   return (
-    <div className="glass rounded-2xl overflow-hidden flex flex-col">
+    <div className="painel rounded-2xl overflow-hidden flex flex-col">
       <div className="px-4 py-3 border-b border-white/[0.05] flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-white truncate">{titulo}</h3>
         <span className="text-[10px] text-gray-500 inline-flex items-center gap-1 shrink-0">
@@ -102,7 +102,7 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
                 <div
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
                     minha
-                      ? 'bg-cyan-500/15 text-cyan-50 border border-cyan-500/20 rounded-br-md'
+                      ? 'bg-tinta-500/15 text-tinta-50 border border-tinta-500/20 rounded-br-md'
                       : 'bg-white/[0.05] text-gray-200 border border-white/[0.06] rounded-bl-md'
                   }`}
                 >
@@ -141,7 +141,7 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
               }}
               rows={2}
               placeholder="Escreva uma mensagem"
-              className="flex-1 resize-none px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/40"
+              className="flex-1 resize-none px-3 py-2.5 rounded-xl painel-suave border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-tinta-500/40"
             />
             <button
               type="button"

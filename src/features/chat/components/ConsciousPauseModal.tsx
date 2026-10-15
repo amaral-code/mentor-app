@@ -47,11 +47,11 @@ export function ConsciousPauseModal({ open, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Pausa consciente de 1 minuto"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-950/70 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-950/70 p-4"
     >
       <style>{`@keyframes pausa-respiracao { 0%, 100% { transform: scale(1); opacity: 0.75; } 50% { transform: scale(1.45); opacity: 1; } }`}</style>
       <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-midnight-900/95 p-6 text-center shadow-glass-lg animate-scale-in">
-        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300">
+        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-tinta-500/10 text-tinta-300">
           <Wind size={20} />
         </span>
         <h2 className="mt-3 text-lg font-bold text-white">Pausa consciente</h2>
@@ -63,9 +63,9 @@ export function ConsciousPauseModal({ open, onClose }: Props) {
         {/* Círculo de respiração: expande (inspire) / contrai (expire). */}
         <div className="my-6 flex items-center justify-center" aria-hidden="true">
           <div className="relative flex h-36 w-36 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-cyan-500/15 blur-xl" />
+            <div className="absolute inset-0 rounded-full bg-tinta-500/15 blur-xl" />
             <div
-              className="absolute inset-4 rounded-full bg-gradient-to-br from-cyan-400/40 to-emerald-500/30"
+              className="absolute inset-4 rounded-full bg-tinta-400/40"
               style={{ animation: 'pausa-respiracao 8s ease-in-out infinite' }}
             />
             <span className="relative font-mono text-2xl font-bold text-white tabular-nums">{mm}</span>
@@ -81,7 +81,7 @@ export function ConsciousPauseModal({ open, onClose }: Props) {
           aria-label="Progresso da pausa"
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-[width] duration-1000"
+            className="h-full rounded-full bg-tinta-400 transition-[width] duration-1000"
             style={{ width: `${progresso * 100}%` }}
           />
         </div>
@@ -94,7 +94,7 @@ export function ConsciousPauseModal({ open, onClose }: Props) {
           <button
             onClick={onClose}
             autoFocus
-            className="flex-1 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-2.5 text-sm font-bold text-midnight-950 transition-all hover:brightness-110 active:scale-95"
+            className="flex-1 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-midnight-950 transition-all hover:brightness-110 active:scale-95"
           >
             Voltar ao estudo
           </button>

@@ -49,8 +49,8 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
 
   return (
     <div className="space-y-4">
-      <div className="glass rounded-2xl p-4 space-y-3">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl glass-light border border-white/[0.04]">
+      <div className="painel rounded-2xl p-4 space-y-3">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl painel-suave border border-white/[0.04]">
           <Search size={15} className="text-gray-500 shrink-0" />
           <input
             value={busca}
@@ -81,7 +81,7 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
       {carregando && <p className="text-sm text-gray-500 text-center py-6">Carregando profissionais...</p>}
 
       {!carregando && lista.length === 0 && (
-        <div className="glass rounded-2xl p-5">
+        <div className="painel rounded-2xl p-5">
           <EmptyState
             pose="meditando"
             compacto
@@ -93,16 +93,16 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
 
       <div className="space-y-3">
         {lista.map((p) => (
-          <div key={p.id} className="glass rounded-2xl p-4">
+          <div key={p.id} className="painel rounded-2xl p-4">
             <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-600/10 flex items-center justify-center text-violet-300 font-bold text-lg shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-tinta-500/20 flex items-center justify-center text-tinta-300 font-bold text-lg shrink-0">
                 {p.nome.charAt(0)}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-bold text-white truncate">{p.nome}</p>
-                  <BadgeCheck size={14} className="text-cyan-400 shrink-0" />
+                  <BadgeCheck size={14} className="text-tinta-400 shrink-0" />
                 </div>
                 <p className="text-[11px] text-gray-500">CRP {p.crp}</p>
 

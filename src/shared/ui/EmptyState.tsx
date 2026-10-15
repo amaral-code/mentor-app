@@ -37,10 +37,13 @@ export function EmptyState({
   acao,
   compacto = false,
 }: EmptyStateProps) {
-  const lado = compacto ? 96 : 128;
+  const lado = compacto ? 64 : 88;
 
+  /* Mascote ao lado do texto, alinhado à esquerda, e não empilhado no
+     centro: o bloco centralizado com figura grande no meio de um cartão
+     era o vazio de qualquer template, e empurrava o resto para baixo. */
   return (
-    <div className={`flex flex-col items-center text-center ${compacto ? 'py-6' : 'py-12'}`}>
+    <div className={`flex items-center gap-5 text-left ${compacto ? 'py-4' : 'py-6'}`}>
       <img
         src={POSE[pose]}
         alt=""
@@ -49,18 +52,20 @@ export function EmptyState({
         loading="lazy"
         draggable={false}
         style={{ width: lado, height: lado }}
-        className="object-contain mb-3 opacity-90 motion-safe:animate-float-suave"
+        className="object-contain shrink-0"
         onError={(e) => {
           if (!e.currentTarget.src.endsWith('sagui_meditando_2.png')) {
             e.currentTarget.src = '/assets/sagui_meditando_2.png';
           }
         }}
       />
-      <p className={`font-medium text-gray-300 ${compacto ? 'text-sm' : 'text-base'}`}>{titulo}</p>
-      {descricao && (
-        <p className="text-sm text-gray-500 mt-1 max-w-xs leading-relaxed">{descricao}</p>
-      )}
-      {acao && <div className="mt-4">{acao}</div>}
+      <div className="min-w-0">
+        <p className={`text-gray-200 ${compacto ? 'text-sm' : 'text-[0.9375rem]'}`}>{titulo}</p>
+        {descricao && (
+          <p className="text-sm text-gray-500 mt-0.5 max-w-md leading-relaxed">{descricao}</p>
+        )}
+        {acao && <div className="mt-3">{acao}</div>}
+      </div>
     </div>
   );
 }

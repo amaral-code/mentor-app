@@ -1,176 +1,255 @@
 /** @type {import('tailwindcss').Config} */
+
+/*
+ * DIREÇÃO DE ARTE: "caderno sob a luminária".
+ *
+ * O produto é de quem estuda para o ENEM à noite. O escuro tem motivo,
+ * mas o escuro anterior era o de qualquer template: azul-marinho, vidro
+ * fosco, brilho neon e orbes flutuando. Aqui o escuro é o da MESA à noite
+ * (grafite quente, não azul), a única luz é a da luminária (âmbar) e o
+ * resto vem do material de estudo: papel, caneta azul, caneta vermelha
+ * de correção e o verde do gabarito.
+ *
+ * Regras (registradas também no CLAUDE.md):
+ *  - Âmbar só para ação principal e "onde você está". Nunca decoração.
+ *  - Tinta (azul caneta) é a cor secundária: informação, apoio, links.
+ *  - Superfície é plana. Sem blur, sem gradiente, sem brilho.
+ *  - Sombra só em camada que flutua (modal, menu, aviso).
+ *  - Raios curtos: o material é papel, não almofada.
+ *
+ * Os nomes `gray`, `slate`, `emerald`, `red`, `orange` e `amber` foram
+ * mantidos com valores novos de propósito: são ~2 mil classes no código, e
+ * trocar o valor muda o app inteiro sem reescrever a semântica de cada uma.
+ * `gray` e `slate` passam a ser a MESMA escala: o app usava as duas sem
+ * critério, e duas escalas de cinza parecidas são ruído.
+ */
+
+// Grafite quente. 500 e 600 passam de 4,5:1 sobre a mesa e a folha
+// (medido): texto secundário legível sem precisar de "alto contraste".
+const grafite = {
+  50: '#f7f5f0',
+  100: '#ede9e1',
+  200: '#ddd7cb',
+  300: '#c4bdaf',
+  400: '#aaa395',
+  500: '#968f81',
+  600: '#8a8376',
+  700: '#4d4840',
+  800: '#34312b',
+  900: '#23211d',
+  950: '#171613',
+};
+
+// Luz da luminária. É a cor da marca (a lua do logo).
+const luz = {
+  50: '#fdf6e7',
+  100: '#fbe9c2',
+  200: '#f8d993',
+  300: '#f6c865',
+  400: '#f3b53f',
+  500: '#e9a11c',
+  600: '#c88512',
+  700: '#9c660e',
+  800: '#6e480c',
+  900: '#47300a',
+  950: '#2a1d07',
+};
+
+// Tinta de caneta azul. Secundária: informação, apoio, links, séries
+// de gráfico que não são "certo/errado".
+const tinta = {
+  50: '#eef2fe',
+  100: '#dbe3fd',
+  200: '#c3d1fb',
+  300: '#a4baf6',
+  400: '#86a2f2',
+  500: '#6584e6',
+  600: '#4b68cc',
+  700: '#3a52a3',
+  800: '#2a3b74',
+  900: '#1c284e',
+  950: '#121a33',
+};
+
+// Verde do gabarito: acerto e sucesso. Menos neon que o emerald padrão.
+const gabarito = {
+  50: '#eef8f0',
+  100: '#d6eedb',
+  200: '#b5dfbd',
+  300: '#97d3a2',
+  400: '#7cc78a',
+  500: '#58aa69',
+  600: '#428a52',
+  700: '#336b40',
+  800: '#244c2e',
+  900: '#17311e',
+  950: '#0d1d12',
+};
+
+// Caneta vermelha da correção: erro, risco, ação destrutiva.
+const correcao = {
+  50: '#fdf0ec',
+  100: '#fbdcd3',
+  200: '#f7bcac',
+  300: '#f4a08a',
+  400: '#f08a70',
+  500: '#e0623f',
+  600: '#c24a2b',
+  700: '#97381f',
+  800: '#692716',
+  900: '#43190f',
+  950: '#280f09',
+};
+
+// Laranja de "fadiga": entre o alerta (âmbar) e o risco (vermelho).
+const fadiga = {
+  50: '#fdf2ea',
+  100: '#fbe1cf',
+  200: '#f7c6a5',
+  300: '#f4ad80',
+  400: '#f29a5e',
+  500: '#e5793a',
+  600: '#c25f25',
+  700: '#97481c',
+  800: '#683213',
+  900: '#42200c',
+  950: '#271307',
+};
+
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-          midnight: {
-            950: '#060911',
-            900: '#0B0F19',
-            850: '#0E131F',
-            800: '#121826',
-            750: '#161B28',
-            700: '#1E2538',
-            600: '#2A3B63',
-            border: 'rgba(255, 255, 255, 0.08)',
-            borderActive: 'rgba(245, 158, 11, 0.4)',
-          },
-        amberBrand: {
-          300: '#FCD34D',
-          400: '#FBBF24',
-          500: '#F59E0B',
-          600: '#D97706',
-          700: '#B45309',
+        // Branco puro sobre grafite quente fica azulado. Este é o branco
+        // do papel, e vale para texto e para as transparências (bg-white/5).
+        white: '#f6f3eb',
+        gray: grafite,
+        slate: grafite,
+        amber: { ...luz, DEFAULT: luz[500] },
+        tinta,
+        emerald: gabarito,
+        green: gabarito,
+        red: correcao,
+        rose: correcao,
+        orange: fadiga,
+        // Superfícies nomeadas. `midnight` continua existindo porque ~100
+        // classes usam o nome; os valores agora são da mesa, não do céu.
+        midnight: {
+          950: '#100f0d',
+          900: '#141310',
+          850: '#181714',
+          800: '#1c1a16',
+          750: '#201e1a',
+          700: '#24221d',
+          600: '#33302a',
+          border: '#33302a',
+          borderActive: 'rgba(233, 161, 28, 0.45)',
         },
-        emeraldBrand: {
-          400: '#34D399',
-          500: '#10B981',
-          600: '#059669',
-        },
-        glass: {
-          DEFAULT: 'rgba(17,24,39,0.75)',
-          light: 'rgba(30,41,59,0.4)',
-          border: 'rgba(255,255,255,0.05)',
-          hover: 'rgba(255,255,255,0.08)',
-        },
-        amber: {
-          DEFAULT: '#f59e0b',
-          glow: '#F59E0B',
-          dark: '#D97706',
-          light: '#FDE047',
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-        },
+        mesa: '#141310',
+        folha: { DEFAULT: '#1c1a16', 2: '#24221d', 3: '#2c2a24' },
+        linha: { DEFAULT: '#33302a', forte: '#45413a' },
+        papel: { DEFAULT: '#f3efe6', 2: '#ddd7cb' },
         mood: {
-          stress: '#ef4444',
-          sad: '#a855f7',
-          focus: '#10b981',
-          anxiety: '#f59e0b',
+          stress: correcao[400],
+          sad: tinta[400],
+          focus: gabarito[400],
+          anxiety: luz[400],
         },
       },
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', 'sans-serif'],
-        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
-        inter: ['"Inter"', 'sans-serif'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+        // Literata nasceu para leitura longa (livro digital). Aqui ela só
+        // assina títulos e números grandes: dá ao app a voz de material de
+        // estudo, e não de painel de startup.
+        display: ['"Literata Variable"', 'Literata', 'Georgia', 'serif'],
+        sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        inter: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+      },
+      borderRadius: {
+        // Escala encurtada: o app inteiro usava 16px e 24px (rounded-2xl,
+        // 3xl) e tudo virava almofada. Mesmos nomes, raios de papel.
+        lg: '6px',
+        xl: '8px',
+        '2xl': '10px',
+        '3xl': '14px',
       },
       boxShadow: {
-        glass: '0 8px 32px 0 rgba(0, 0, 0, 0.55)',
-        'glass-sm': '0 4px 16px rgba(0,0,0,0.3)',
-        'glass-lg': '0 16px 48px rgba(0,0,0,0.5)',
-        glow: '0 0 24px rgba(245,158,11,0.15)',
-        'glow-sm': '0 0 12px rgba(245,158,11,0.1)',
-        'glow-lg': '0 0 40px rgba(245,158,11,0.2)',
-        'glow-amber': '0 0 25px -4px rgba(245, 158, 11, 0.45)',
-        'glow-amber-lg': '0 0 50px -2px rgba(245, 158, 11, 0.65)',
-        'glow-amber-sm': '0 0 14px -2px rgba(245, 158, 11, 0.35)',
-        inner: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-        'inner-lg': 'inset 0 1px 0 rgba(255,255,255,0.08)',
+        // Uma sombra só, para o que flutua (modal, menu, aviso). Os nomes
+        // antigos apontam para ela ou para nada, em vez de brilho.
+        camada: '0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.35)',
+        glass: '0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.35)',
+        'glass-sm': 'none',
+        'glass-lg': '0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.35)',
+        glow: 'none',
+        'glow-sm': 'none',
+        'glow-lg': 'none',
+        'glow-amber': 'none',
+        'glow-amber-lg': 'none',
+        'glow-amber-sm': 'none',
+        inner: 'none',
+        'inner-lg': 'none',
       },
-      backdropBlur: {
-        glass: '24px',
-        heavy: '48px',
+      transitionTimingFunction: {
+        // Saída rápida, chegada suave: resposta imediata sem tranco.
+        padrao: 'cubic-bezier(0.2, 0, 0, 1)',
       },
+      transitionDuration: {
+        resposta: '120ms',
+        estado: '200ms',
+      },
+      /*
+       * Movimento só comunica: entrada de camada, troca de estado, erro,
+       * carregamento e recompensa. Os loops decorativos (orbes, órbitas,
+       * partículas, brilho pulsando, mascote "respirando") foram
+       * removidos: custavam GPU o tempo todo e não diziam nada.
+       */
       animation: {
-        'fade-in': 'fadeIn 0.4s ease-out',
-        'fade-up': 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1)',
-        'fade-down': 'fadeDown 0.3s ease-out',
-        'slide-up': 'slideUp 0.35s cubic-bezier(0.16,1,0.3,1)',
-        'scale-in': 'scaleIn 0.3s cubic-bezier(0.16,1,0.3,1)',
-        'scale-out': 'scaleOut 0.2s ease-in',
-        'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
-        'pulse-red': 'pulseRed 1.5s ease-in-out infinite',
-        breathe: 'breathe 4s ease-in-out infinite',
-        flame: 'flame 0.6s ease-in-out infinite alternate',
-        shimmer: 'shimmer 2.5s linear infinite',
-        'spin-slow': 'spin 3s linear infinite',
-        'progress': 'progress 1s ease-out forwards',
-        stroke: 'stroke 1.5s cubic-bezier(0.16,1,0.3,1) forwards',
-        // Erro no quiz: sacode curto, sem deslocar o layout (so transform).
+        'fade-in': 'fadeIn 0.2s cubic-bezier(0.2,0,0,1)',
+        'fade-up': 'fadeUp 0.24s cubic-bezier(0.2,0,0,1)',
+        'fade-down': 'fadeDown 0.16s ease-out',
+        'slide-up': 'slideUp 0.24s cubic-bezier(0.2,0,0,1)',
+        'scale-in': 'scaleIn 0.2s cubic-bezier(0.2,0,0,1)',
+        'scale-out': 'scaleOut 0.16s ease-in',
+        // Erro no quiz: sacode curto, sem deslocar o layout (só transform).
         shake: 'shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97)',
-        // "+10 XP" subindo e sumindo ao concluir uma tarefa.
-        'fade-up-out': 'fadeUpOut 1s cubic-bezier(0.16,1,0.3,1) forwards',
-        // Bottom sheet do menu "Mais".
-        'sheet-up': 'sheetUp 0.3s cubic-bezier(0.16,1,0.3,1)',
-        // Brilho percorrendo o skeleton enquanto carrega.
-        'skeleton': 'skeleton 1.2s ease-in-out infinite',
-        // Idle do mascote nos estados vazios: so translateY, sem tocar
-        // em layout. 4px e o suficiente para dar vida sem distrair.
-        'float-suave': 'floatSuave 3s ease-in-out infinite',
-        /* Protótipo AGcode (tela do Mentor): orbes, hero, órbitas,
-           partículas, twinkles, shimmer líquido e respiro do mascote. */
-        'orb-1': 'orbFloat1 10s ease-in-out infinite',
-        'orb-2': 'orbFloat2 12s ease-in-out infinite',
-        'orb-3': 'orbFloat3 9s ease-in-out infinite',
-        'hero-bulb': 'pulseAuraHero 3.6s ease-in-out infinite',
-        'spin-orbit': 'ringSpinClockwise 16s linear infinite',
-        'spin-orbit-rev': 'ringSpinCounter 11s linear infinite',
-        'particle-1': 'particleOrbit 7s linear infinite',
-        'particle-2': 'particleOrbitReverse 9s linear infinite',
-        'twinkle-fast': 'starTwinkleFast 3.2s ease-in-out infinite',
-        'twinkle-slow': 'starTwinkleSlow 4.5s ease-in-out infinite',
-        'shimmer-sweep': 'xpLiquidShimmer 2.2s cubic-bezier(0.4, 0.2, 1) infinite',
-        'mascot-interactive': 'mascotBreatheAG 5s ease-in-out infinite',
-        'emerald-ping': 'pulseEmeraldDot 2s cubic-bezier(0.4, 0.6, 1) infinite',
-        /* Protótipo Minha Agenda: flutuação, pulsos lentos e CTA com glow. */
-        'float': 'agendaFloat 3.5s ease-in-out infinite',
-        'pulse-slow': 'agendaPulseSlow 6s ease-in-out infinite',
-        'glow-cta': 'agendaGlowButton 2.8s ease-in-out infinite',
+        // "+20 XP" subindo e sumindo ao concluir uma tarefa.
+        'fade-up-out': 'fadeUpOut 1s cubic-bezier(0.2,0,0,1) forwards',
+        'sheet-up': 'sheetUp 0.28s cubic-bezier(0.2,0,0,1)',
+        skeleton: 'skeleton 1.2s ease-in-out infinite',
+        // Exercício de respiração: o movimento É o conteúdo.
+        breathe: 'breathe 4s ease-in-out infinite',
+        progress: 'progress 1s ease-out forwards',
+        stroke: 'stroke 1.5s cubic-bezier(0.2,0,0,1) forwards',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
+        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
         fadeUp: {
-          '0%': { opacity: '0', transform: 'translateY(24px) scale(0.98)' },
-          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         fadeDown: {
           '0%': { opacity: '1' },
-          '100%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '0', transform: 'translateY(4px)' },
         },
         slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         scaleIn: {
-          '0%': { opacity: '0', transform: 'scale(0.92)' },
+          '0%': { opacity: '0', transform: 'scale(0.97)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         scaleOut: {
           '0%': { opacity: '1', transform: 'scale(1)' },
-          '100%': { opacity: '0', transform: 'scale(0.92)' },
-        },
-        pulseSubtle: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.6' },
-        },
-        pulseRed: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(239,68,68,0.3)' },
-          '50%': { boxShadow: '0 0 0 16px rgba(239,68,68,0)' },
+          '100%': { opacity: '0', transform: 'scale(0.97)' },
         },
         breathe: {
           '0%, 100%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.08)' },
         },
-        flame: {
-          '0%': { transform: 'scale(1) rotate(-2deg)', filter: 'brightness(1)' },
-          '100%': { transform: 'scale(1.12) rotate(2deg)', filter: 'brightness(1.2)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
-        },
-        progress: {
-          '0%': { width: '0%' },
-        },
+        progress: { '0%': { width: '0%' } },
+        stroke: { '0%': { strokeDashoffset: '100' } },
         shake: {
           '0%, 100%': { transform: 'translateX(0)' },
           '20%': { transform: 'translateX(-6px)' },
@@ -179,9 +258,9 @@ export default {
           '80%': { transform: 'translateX(2px)' },
         },
         fadeUpOut: {
-          '0%': { opacity: '0', transform: 'translateY(4px) scale(0.9)' },
-          '25%': { opacity: '1', transform: 'translateY(-6px) scale(1)' },
-          '100%': { opacity: '0', transform: 'translateY(-34px) scale(1)' },
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '25%': { opacity: '1', transform: 'translateY(-6px)' },
+          '100%': { opacity: '0', transform: 'translateY(-30px)' },
         },
         sheetUp: {
           '0%': { transform: 'translateY(100%)' },
@@ -191,92 +270,6 @@ export default {
           '0%, 100%': { opacity: '0.45' },
           '50%': { opacity: '0.8' },
         },
-        floatSuave: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-4px)' },
-        },
-        /* Keyframes do protótipo AGcode (nomes originais preservados). */
-        orbFloat1: {
-          '0%, 100%': { transform: 'translate(0px, 0px) scale(1)', opacity: '0.35' },
-          '33%': { transform: 'translate(45px, -35px) scale(1.18)', opacity: '0.55' },
-          '66%': { transform: 'translate(-25px, 20px) scale(0.95)', opacity: '0.4' },
-        },
-        orbFloat2: {
-          '0%, 100%': { transform: 'translate(0px, 0px) scale(1)', opacity: '0.28' },
-          '40%': { transform: 'translate(-40px, 35px) scale(1.15)', opacity: '0.5' },
-          '80%': { transform: 'translate(25px, -20px) scale(1.05)', opacity: '0.35' },
-        },
-        orbFloat3: {
-          '0%, 100%': { transform: 'translate(0px, 0px) scale(0.95)', opacity: '0.22' },
-          '50%': { transform: 'translate(35px, 30px) scale(1.18)', opacity: '0.42' },
-        },
-        pulseAuraHero: {
-          '0%, 100%': {
-            transform: 'scale(1)',
-            boxShadow: '0 0 35px 8px rgba(245,158,11,0.32), 0 0 70px 22px rgba(245,158,11,0.16), inset 0 1px 1px rgba(255,255,255,0.4)',
-          },
-          '50%': {
-            transform: 'scale(1.045)',
-            boxShadow: '0 0 58px 18px rgba(245,158,11,0.52), 0 0 105px 36px rgba(245,158,11,0.25), inset 0 1px 2px rgba(255,255,255,0.6)',
-          },
-        },
-        ringSpinClockwise: { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } },
-        ringSpinCounter: { '0%': { transform: 'rotate(360deg)' }, '100%': { transform: 'rotate(0deg)' } },
-        particleOrbit: {
-          '0%': { transform: 'rotate(0deg) translateX(74px) rotate(0deg)', opacity: '0.2' },
-          '50%': { opacity: '0.95', transform: 'rotate(180deg) translateX(74px) rotate(-180deg)' },
-          '100%': { transform: 'rotate(360deg) translateX(74px) rotate(-360deg)', opacity: '0.2' },
-        },
-        particleOrbitReverse: {
-          '0%': { transform: 'rotate(360deg) translateX(60px) rotate(-360deg)', opacity: '0.3' },
-          '50%': { opacity: '0.9', transform: 'rotate(180deg) translateX(60px) rotate(-180deg)' },
-          '100%': { transform: 'rotate(0deg) translateX(60px) rotate(0deg)', opacity: '0.3' },
-        },
-        starTwinkleFast: {
-          '0%, 100%': { opacity: '0.2', transform: 'scale(0.75)' },
-          '50%': { opacity: '1', transform: 'scale(1.35)', filter: 'drop-shadow(0 0 8px rgba(253,224,71,0.9))' },
-        },
-        starTwinkleSlow: {
-          '0%, 100%': { opacity: '0.15', transform: 'scale(0.85)' },
-          '50%': { opacity: '0.85', transform: 'scale(1.2)', filter: 'drop-shadow(0 0 6px rgba(103,232,249,0.8))' },
-        },
-        xpLiquidShimmer: {
-          '0%': { transform: 'translateX(-120%)' },
-          '100%': { transform: 'translateX(250%)' },
-        },
-        cyberBorderGlowEffect: {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-        },
-        flashGlow: {
-          '0%, 100%': { filter: 'drop-shadow(0 0 0 transparent)' },
-          '50%': { filter: 'drop-shadow(0 0 25px rgba(245,158,11,0.85))' },
-        },
-        mascotBreatheAG: {
-          '0%, 100%': { transform: 'translateY(0) scale(1)' },
-          '50%': { transform: 'translateY(-3px) scale(1.02)' },
-        },
-        pulseEmeraldDot: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(52,211,153,0.6)' },
-          '70%': { boxShadow: '0 0 0 6px rgba(52,211,153,0)' },
-        },
-        /* Keyframes do protótipo Minha Agenda (nomes originais). */
-        agendaFloat: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-5px)' },
-        },
-        agendaPulseSlow: {
-          '0%, 100%': { opacity: '0.3', transform: 'scale(1)' },
-          '50%': { opacity: '0.6', transform: 'scale(1.08)' },
-        },
-        agendaGlowButton: {
-          '0%, 100%': { boxShadow: '0 0 15px rgba(245,158,11,0.4), 0 4px 6px -1px rgba(0,0,0,0.2)' },
-          '50%': { boxShadow: '0 0 25px rgba(245,158,11,0.7), 0 10px 15px -3px rgba(245,158,11,0.3)' },
-        },
-      },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'amber-glow': 'radial-gradient(ellipse at center, rgba(245,158,11,0.08) 0%, transparent 70%)',
       },
     },
   },

@@ -113,22 +113,12 @@ describe('animacoes do CSS', () => {
     ).toBe(true);
   });
 
-  /* As nove que estavam mortas ficam nomeadas: elas sao usadas SO por CSS
-     puro, entao precisam estar no index.css - Tailwind nunca as emitiria. */
-  it('as nove animacoes que estavam quebradas estao no index.css', () => {
-    for (const nome of [
-      'shimmer',
-      'xpLiquidShimmer',
-      'pulseEmeraldDot',
-      'starTwinkleFast',
-      'starTwinkleSlow',
-      'mascotBreatheAG',
-      'fadeDown',
-      'flashGlow',
-      'cyberBorderGlowEffect',
-    ]) {
-      expect(keyframesNoCss.has(nome), `${nome} precisa de @keyframes no index.css`).toBe(true);
-    }
+  /* Das nove que estavam mortas, sobrou uma usada só por CSS puro: o
+     brilho do skeleton. As outras oito eram enfeite (estrelas, orbes,
+     borda neon, mascote "respirando") e saíram com a direção de arte de
+     2026-10; ver direcaoDeArte.test.ts, que impede a volta delas. */
+  it('a animacao de carregamento que estava quebrada esta no index.css', () => {
+    expect(keyframesNoCss.has('shimmer'), 'shimmer precisa de @keyframes no index.css').toBe(true);
   });
 
   it('o skeleton de carregamento anima, em vez de ser um bloco parado', () => {

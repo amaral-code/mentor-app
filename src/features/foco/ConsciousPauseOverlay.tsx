@@ -81,10 +81,7 @@ export function ConsciousPauseOverlay({
         open ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}
       style={{
-        background:
-          'radial-gradient(1000px 600px at 50% 20%, rgba(76, 29, 149, 0.28), transparent 65%), radial-gradient(800px 500px at 50% 100%, rgba(30, 58, 138, 0.30), transparent 60%), rgba(4, 7, 18, 0.78)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        background: 'rgba(16, 15, 13, 0.94)',
       }}
     >
       {/* Animação do exercício de respiração — CSS puro, ciclo de 8s
@@ -111,11 +108,11 @@ export function ConsciousPauseOverlay({
       `}</style>
 
       <div
-        className={`relative m-auto w-full max-w-md rounded-3xl border border-indigo-400/15 bg-gradient-to-b from-[#141B33]/95 to-[#1B1140]/95 p-6 text-center shadow-[0_24px_80px_-12px_rgba(76,29,149,0.55)] backdrop-blur-xl transition-all duration-300 sm:p-8 ${
+        className={`relative m-auto w-full max-w-md rounded-3xl border border-tinta-400/15 bg-[#1c1a16]/95 p-6 text-center shadow-[0_24px_80px_-12px_rgba(76,29,149,0.55)] transition-all duration-300 sm:p-8 ${
           open ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-300/80">
+        <p className="text-xs font-semibold text-tinta-300/80">
           Modo foco consciente
         </p>
         <h2 id="pausa-consciente-titulo" className="mt-2 text-xl font-bold text-slate-50 sm:text-2xl">
@@ -136,21 +133,21 @@ export function ConsciousPauseOverlay({
             `prefers-reduced-motion` desliga a animação (que carrega o
             translate no keyframe). Durante a animação, o keyframe vence. */}
         <div className="relative mx-auto mt-6 h-52 w-52 sm:h-60 sm:w-60" aria-hidden="true">
-          <div className="conscious-halo absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-400/30" />
+          <div className="conscious-halo absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 rounded-full border border-tinta-400/30" />
           <div
             className="conscious-breath absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-44 sm:w-44"
             style={{
-              background:
-                'radial-gradient(circle at 35% 30%, rgba(129, 140, 248, 0.55), rgba(76, 29, 149, 0.45) 55%, rgba(15, 23, 42, 0.6))',
-              boxShadow:
-                '0 0 60px 8px rgba(99, 102, 241, 0.25), inset 0 0 30px rgba(167, 139, 250, 0.25)',
+              // O círculo que cresce e encolhe É o exercício: a única
+              // animação contínua da tela tem função.
+              background: 'rgba(134, 162, 242, 0.16)',
+              border: '1.5px solid rgba(134, 162, 242, 0.55)',
             }}
           />
           <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center">
             <span className="text-3xl font-extrabold tabular-nums text-white">
               {formatFocusTime(remaining)}
             </span>
-            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-indigo-200/70">
+            <span className="mt-1 text-xs font-semibold text-tinta-200/70">
               {finished ? 'concluído' : 'respire junto'}
             </span>
           </div>
@@ -172,7 +169,7 @@ export function ConsciousPauseOverlay({
           aria-label="Progresso da micro-pausa"
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-300 transition-all duration-300"
+            className="h-full rounded-full bg-tinta-400 transition-all duration-300"
             style={{ width: `${progress * 100}%` }}
           />
         </div>
@@ -185,7 +182,7 @@ export function ConsciousPauseOverlay({
           title={finished ? 'Voltar aos estudos' : 'Disponível ao fim dos 2 minutos'}
           className={`mt-6 w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all duration-300 ${
             finished
-              ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-[0_0_30px_-6px_rgba(124,58,237,0.6)] hover:brightness-110 active:scale-[0.99]'
+              ? 'bg-tinta-500 text-white hover:brightness-110 active:scale-[0.99]'
               : 'cursor-not-allowed bg-white/5 text-slate-500'
           }`}
         >

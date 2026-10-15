@@ -180,7 +180,7 @@ export function AudioPlayer({
 
       <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-[width] duration-500"
+          className="h-full rounded-full bg-tinta-500 transition-[width] duration-500"
           style={{ width: `${progresso}%` }}
         />
       </div>
@@ -202,7 +202,7 @@ export function AudioPlayer({
         <button
           onClick={alternar}
           aria-label={tocando ? 'Pausar' : 'Tocar'}
-          className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white flex items-center justify-center shadow-lg shadow-violet-500/20 press"
+          className="w-14 h-14 rounded-full bg-tinta-500 text-white flex items-center justify-center shadow-lg press"
         >
           {tocando ? <Pause size={24} /> : <Play size={24} className="ml-0.5" />}
         </button>
@@ -225,7 +225,7 @@ export function AudioPlayer({
               if (audioRef.current) audioRef.current.playbackRate = v;
             }}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-medium ${
-              velocidade === v ? 'bg-violet-500/15 text-violet-300' : 'text-gray-500 hover:text-gray-300'
+              velocidade === v ? 'bg-tinta-500/15 text-tinta-300' : 'text-gray-500 hover:text-gray-300'
             }`}
           >
             {v}x

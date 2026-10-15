@@ -77,7 +77,7 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
     <Modal open={!!psicologo} onClose={onClose} title="Agendar atendimento">
       <div className="space-y-5">
         <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-600/10 flex items-center justify-center text-violet-300 font-bold text-lg shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-tinta-500/20 flex items-center justify-center text-tinta-300 font-bold text-lg shrink-0">
             {psicologo.nome.charAt(0)}
           </div>
           <div className="min-w-0">
@@ -108,7 +108,7 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
         ) : (
           <>
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-1.5">
+              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
                 <CalendarClock size={13} /> Dia
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1">
@@ -121,8 +121,8 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
                     }}
                     className={`shrink-0 px-3 py-2 rounded-xl text-xs font-medium border ${
                       diaSelecionado === d.data
-                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-200'
-                        : 'border-white/[0.04] glass-light text-gray-400'
+                        ? 'border-tinta-500/40 bg-tinta-500/10 text-tinta-200'
+                        : 'border-white/[0.04] painel-suave text-gray-400'
                     }`}
                   >
                     {d.rotulo}
@@ -133,7 +133,7 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
             </div>
 
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-gray-500 mb-2">Horário</p>
+              <p className="text-xs text-gray-500 mb-2">Horário</p>
               <div className="grid grid-cols-4 gap-2">
                 {doDia.map((s) => (
                   <button
@@ -141,8 +141,8 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
                     onClick={() => setSlotSelecionado(s)}
                     className={`py-2 rounded-xl text-xs font-semibold tabular-nums border ${
                       slotSelecionado?.inicio === s.inicio
-                        ? 'border-violet-500/50 bg-violet-500/15 text-violet-200'
-                        : 'border-white/[0.04] glass-light text-gray-300 hover:border-white/[0.1]'
+                        ? 'border-tinta-500/50 bg-tinta-500/15 text-tinta-200'
+                        : 'border-white/[0.04] painel-suave text-gray-300 hover:border-white/[0.1]'
                     }`}
                   >
                     {formatarHora(s.inicio)}
@@ -154,7 +154,7 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
         )}
 
         {politica && (
-          <div className="rounded-xl glass-light p-3 space-y-1.5">
+          <div className="rounded-xl painel-suave p-3 space-y-1.5">
             <p className="text-xs text-gray-300 flex items-center gap-1.5">
               <ShieldCheck size={13} className="text-emerald-400" /> {politica.texto}
             </p>

@@ -51,7 +51,7 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
 
   if (ativas.length === 0) {
     return compacto ? null : (
-      <div className="glass rounded-2xl p-5">
+      <div className="painel rounded-2xl p-5">
         <EmptyState
           pose="meditando"
           compacto
@@ -63,9 +63,9 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
   }
 
   return (
-    <div className="glass rounded-2xl p-5">
+    <div className="painel rounded-2xl p-5">
       <h2 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-        <CalendarClock size={16} className="text-violet-400" /> Consultas
+        <CalendarClock size={16} className="text-tinta-400" /> Consultas
       </h2>
 
       <div className="space-y-2.5">
@@ -75,7 +75,7 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
           const politica = politicaCancelamento(a.inicio);
 
           return (
-            <div key={a.id} className="rounded-xl glass-light border border-white/[0.03] p-3">
+            <div key={a.id} className="rounded-xl painel-suave border border-white/[0.03] p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   {/* Quem atende procura o PACIENTE; quem é atendido, o

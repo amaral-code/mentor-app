@@ -58,7 +58,7 @@ export function CaixaMensagens({ meuId, psicologos }: Props) {
             setAberta(null);
             void carregar();
           }}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-cyan-300 min-h-[40px]"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-tinta-300 min-h-[40px]"
         >
           <ArrowLeft size={15} /> Todas as conversas
         </button>
@@ -74,13 +74,13 @@ export function CaixaMensagens({ meuId, psicologos }: Props) {
   }
 
   return (
-    <div className="glass rounded-2xl p-5">
+    <div className="painel rounded-2xl p-5">
       <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2 mb-3">
-        <MessageCircle size={16} className="text-cyan-400" /> Mensagens com o psicólogo
+        <MessageCircle size={16} className="text-tinta-400" /> Mensagens com o psicólogo
       </h2>
 
       {itens.length === 0 ? (
-        <p className="text-sm text-gray-500 glass-light rounded-xl px-3.5 py-3">
+        <p className="text-sm text-gray-500 painel-suave rounded-xl px-3.5 py-3">
           As conversas aparecem aqui depois da primeira consulta marcada.
         </p>
       ) : (
@@ -90,7 +90,7 @@ export function CaixaMensagens({ meuId, psicologos }: Props) {
               <button
                 type="button"
                 onClick={() => setAberta({ psicologoId: i.psicologoId, nome: i.nome, ativa: i.ativa })}
-                className="w-full text-left glass-light rounded-xl px-3.5 py-3 border border-white/[0.04] hover:border-cyan-500/30 transition-all flex items-center justify-between gap-3 min-h-[56px]"
+                className="w-full text-left painel-suave rounded-xl px-3.5 py-3 border border-white/[0.04] hover:border-tinta-500/30 transition-all flex items-center justify-between gap-3 min-h-[56px]"
               >
                 <span className="min-w-0">
                   <span className="block text-sm text-white font-medium truncate">{i.nome}</span>
@@ -101,7 +101,7 @@ export function CaixaMensagens({ meuId, psicologos }: Props) {
                   </span>
                 </span>
                 {i.naoLidas > 0 && (
-                  <span className="shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full bg-cyan-400 text-gray-900 text-[11px] font-bold flex items-center justify-center tabular-nums">
+                  <span className="shrink-0 min-w-[22px] h-[22px] px-1.5 rounded-full bg-tinta-400 text-gray-900 text-[11px] font-bold flex items-center justify-center tabular-nums">
                     {i.naoLidas}
                   </span>
                 )}

@@ -118,10 +118,10 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
   const ehAluno = papel === 'aluno';
 
   return (
-    <div className="glass rounded-2xl p-5 space-y-4">
+    <div className="painel rounded-2xl p-5 space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-          <ShieldCheck size={18} className="text-cyan-400" />
+        <div className="w-10 h-10 rounded-xl bg-tinta-500/10 flex items-center justify-center shrink-0">
+          <ShieldCheck size={18} className="text-tinta-400" />
         </div>
         <div>
           <h2 className="text-sm font-semibold text-gray-200">
@@ -131,7 +131,7 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
         </div>
       </div>
 
-      <div className="glass-light rounded-xl px-3.5 py-3 border border-white/[0.04] flex gap-2.5">
+      <div className="painel-suave rounded-xl px-3.5 py-3 border border-white/[0.04] flex gap-2.5">
         <EyeOff size={15} className="text-gray-500 shrink-0 mt-0.5" />
         <p className="text-xs text-gray-400 leading-relaxed">
           <strong className="text-gray-300">Nunca é compartilhado:</strong> conversas com o Mentor,
@@ -143,33 +143,33 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
       {quem === null ? (
         <div className="h-24 rounded-xl bg-white/5 animate-pulse" aria-hidden="true" />
       ) : !podeConceder ? (
-        <div className="rounded-xl bg-violet-500/[0.06] border border-violet-500/15 px-3.5 py-3 flex gap-2.5" role="note">
-          <UserRoundCheck size={15} className="text-violet-300 shrink-0 mt-0.5" />
-          <p className="text-xs text-violet-200/90 leading-relaxed">
+        <div className="rounded-xl bg-tinta-500/[0.06] border border-tinta-500/15 px-3.5 py-3 flex gap-2.5" role="note">
+          <UserRoundCheck size={15} className="text-tinta-300 shrink-0 mt-0.5" />
+          <p className="text-xs text-tinta-200/90 leading-relaxed">
             {ehAluno
               ? 'Como você tem menos de 16 anos, quem autoriza é o seu responsável, pelo painel dele. É a lei (LGPD). Você vê tudo o que foi liberado aqui, e pode encerrar quando quiser.'
               : `${aluno.nome} tem 16 anos ou mais, então quem decide é o próprio estudante, pelo app dele. Você vê o que foi liberado e também pode encerrar.`}
           </p>
         </div>
       ) : profissionais.length === 0 ? (
-        <p className="text-sm text-gray-500 glass-light rounded-xl px-3.5 py-3">
+        <p className="text-sm text-gray-500 painel-suave rounded-xl px-3.5 py-3">
           Só dá para autorizar um profissional com quem já existe consulta marcada. Marque uma
           consulta primeiro, na lista de psicólogos.
         </p>
       ) : (
         <div className="space-y-3.5">
           <div>
-            <label htmlFor="consent-psico" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+            <label htmlFor="consent-psico" className="block text-xs text-gray-500 mb-1.5 font-medium">
               Profissional
             </label>
             <select
               id="consent-psico"
               value={psicologoId}
               onChange={(e) => setPsicologoId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white outline-none focus:border-cyan-500/40 min-h-[44px]"
+              className="w-full px-3 py-2.5 rounded-xl painel-suave border border-white/[0.05] text-sm text-white outline-none focus:border-tinta-500/40 min-h-[44px]"
             >
               {profissionais.map((p) => (
-                <option key={p.id} value={p.id} className="bg-[#0d1426]">
+                <option key={p.id} value={p.id} className="bg-[#171613]">
                   {p.nome}
                 </option>
               ))}
@@ -177,7 +177,7 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
           </div>
 
           <fieldset>
-            <legend className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+            <legend className="block text-xs text-gray-500 mb-1.5 font-medium">
               O que liberar
             </legend>
             <div className="space-y-2">
@@ -187,14 +187,14 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
                   <label
                     key={e.id}
                     className={`flex gap-3 items-start rounded-xl px-3.5 py-3 border cursor-pointer transition-all ${
-                      marcado ? 'border-cyan-500/40 bg-cyan-500/[0.07]' : 'border-white/[0.06] glass-light'
+                      marcado ? 'border-tinta-500/40 bg-tinta-500/[0.07]' : 'border-white/[0.06] painel-suave'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={marcado}
                       onChange={() => alternar(e.id)}
-                      className="mt-0.5 accent-cyan-400 w-4 h-4"
+                      className="mt-0.5 accent-tinta-400 w-4 h-4"
                     />
                     <span>
                       <span className="block text-sm text-white font-medium">{e.rotulo}</span>
@@ -207,7 +207,7 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
           </fieldset>
 
           <fieldset>
-            <legend className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Por quanto tempo</legend>
+            <legend className="block text-xs text-gray-500 mb-1.5 font-medium">Por quanto tempo</legend>
             <div className="grid grid-cols-3 gap-2" role="radiogroup">
               {DURACOES.map((d) => (
                 <button
@@ -218,8 +218,8 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
                   onClick={() => setDias(d.dias)}
                   className={`py-2.5 rounded-xl text-sm font-semibold border transition-all min-h-[44px] ${
                     dias === d.dias
-                      ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                      : 'text-gray-400 border-white/[0.06] glass-light'
+                      ? 'bg-tinta-500/15 text-tinta-200 border-tinta-500/40'
+                      : 'text-gray-400 border-white/[0.06] painel-suave'
                   }`}
                 >
                   {d.rotulo}
@@ -244,15 +244,15 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
       )}
 
       <div>
-        <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">Acessos ativos</h3>
+        <h3 className="text-xs text-gray-500 font-medium mb-2">Acessos ativos</h3>
         {lista.length === 0 ? (
-          <p className="text-sm text-gray-500 glass-light rounded-xl px-3.5 py-3">
+          <p className="text-sm text-gray-500 painel-suave rounded-xl px-3.5 py-3">
             Nenhum. Enquanto for assim, nenhum psicólogo vê esses dados.
           </p>
         ) : (
           <ul className="space-y-2">
             {lista.map((c) => (
-              <li key={c.id} className="glass-light rounded-xl px-3.5 py-3 border border-white/[0.04]">
+              <li key={c.id} className="painel-suave rounded-xl px-3.5 py-3 border border-white/[0.04]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm text-white font-medium truncate">{c.psicologoNome}</p>

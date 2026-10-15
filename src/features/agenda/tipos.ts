@@ -9,6 +9,8 @@ export interface SessaoView {
   crp: string;
   duracaoMinutos: number;
   meetingUrl: string | null;
+  /** Provedor gravado no agendamento ('jitsi', 'google_meet'...). */
+  meetingProvider: string | null;
   status: StatusAgendamento;
   passada: boolean;
   ehHoje: boolean;

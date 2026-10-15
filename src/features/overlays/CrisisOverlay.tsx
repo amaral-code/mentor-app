@@ -45,9 +45,9 @@ export function CrisisOverlay() {
   if (!showCrisisOverlay) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80">
       <div className="text-center max-w-sm px-8 animate-scale-in space-y-6">
-        <div className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-amber-500/5 to-orange-600/5 border border-amber-500/20 flex items-center justify-center animate-breathe shadow-[0_0_60px_rgba(245,158,11,0.05)]">
+        <div className="w-36 h-36 mx-auto rounded-full bg-amber-500/5 border border-amber-500/20 flex items-center justify-center animate-breathe">
           <span className="text-5xl">{phase === 'inicio' ? '' : phase === 'respirando' ? '' : ''}</span>
         </div>
 
@@ -58,7 +58,7 @@ export function CrisisOverlay() {
               <p className="text-sm text-gray-400 leading-relaxed">Seu índice de estresse está alto. Que tal uma pausa?</p>
             </div>
             <div className="flex flex-col gap-3">
-              <button onClick={() => { startBreathing(); playClick(); }} className="btn-primary w-full"><Wind size={16} className="inline-block align-[-0.15em] text-cyan-400" /> Respiração Guiada 4-7-8</button>
+              <button onClick={() => { startBreathing(); playClick(); }} className="btn-primary w-full"><Wind size={16} className="inline-block align-[-0.15em] text-tinta-400" /> Respiração Guiada 4-7-8</button>
               <button onClick={() => { setShowCrisisOverlay(false); playClick(); }} className="btn-secondary w-full">Estou melhor agora</button>
             </div>
           </div>
@@ -72,7 +72,7 @@ export function CrisisOverlay() {
                 {breathPhase === 'segura' && 'Segure '}
                 {breathPhase === 'expira' && 'Expire ‍'}
               </h2>
-              <p className="text-6xl font-extrabold text-amber-400 tabular-nums animate-pulse-subtle">{timeLeft}</p>
+              <p className="text-6xl font-extrabold text-amber-400 tabular-nums">{timeLeft}</p>
               <p className="text-xs text-gray-600">Siga o ritmo da respiração</p>
             </div>
             <div className="w-16 h-1 mx-auto rounded-full bg-white/5 overflow-hidden">

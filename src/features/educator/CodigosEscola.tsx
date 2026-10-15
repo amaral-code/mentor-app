@@ -104,7 +104,7 @@ export function CodigosEscola({ modo }: Props) {
   }
 
   return (
-    <div className="glass rounded-2xl p-5 border border-amber-500/10">
+    <div className="painel rounded-2xl p-5 border border-amber-500/10">
       <div className="flex items-center gap-2 mb-1">
         <KeyRound size={15} className="text-amber-400" />
         <h3 className="text-sm font-semibold text-white">
@@ -127,7 +127,7 @@ export function CodigosEscola({ modo }: Props) {
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 rounded-xl bg-black/25 border border-white/[0.06] px-3 py-2.5">
             <div className="flex-1 min-w-[140px]">
-              <p className="text-[10px] uppercase tracking-widest text-gray-500">Escola · {escola.nome}</p>
+              <p className="text-xs text-gray-500">Escola · {escola.nome}</p>
               <p className="text-base font-mono font-bold text-amber-300 tracking-[0.2em]">{escola.codigo}</p>
             </div>
             <button
@@ -160,7 +160,7 @@ export function CodigosEscola({ modo }: Props) {
               {turmas.map((t) => (
                 <li key={t.id} className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg hover:bg-white/[0.02]">
                   <span className="text-gray-200 flex-1 truncate">{t.nome}</span>
-                  <code className="font-mono font-bold text-cyan-300 tracking-[0.15em] text-sm">{t.codigo}</code>
+                  <code className="font-mono font-bold text-tinta-300 tracking-[0.15em] text-sm">{t.codigo}</code>
                   <button
                     onClick={() => void copiar(t.codigo, t.id)}
                     aria-label={`Copiar código da turma ${t.nome}`}

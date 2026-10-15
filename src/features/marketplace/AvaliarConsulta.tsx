@@ -62,7 +62,7 @@ export function AvaliarConsulta({ agendamentoId, aoAvaliar }: { agendamentoId: s
             onChange={(e) => setComentario(e.target.value.slice(0, 1000))}
             rows={2}
             placeholder="Comentário (opcional)"
-            className="w-full px-3 py-2 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-amber-500/40"
+            className="w-full px-3 py-2 rounded-xl painel-suave border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-amber-500/40"
           />
           <button
             type="button"

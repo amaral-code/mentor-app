@@ -136,16 +136,16 @@ export function detectEmotion(text: string): EmotionResult {
 
 export function getMoodColor(mood: MoodType): string {
   const colors: Record<MoodType, string> = {
-    stress: '#ef4444',
-    anxiety: '#f59e0b',
-    sadness: '#a855f7',
-    tired: '#a855f7',
-    demotivated: '#a855f7',
-    focused: '#10b981',
-    motivated: '#10b981',
-    happy: '#10b981',
-    energetic: '#10b981',
-    neutral: '#10b981',
+    stress: '#f08a70',
+    anxiety: '#e9a11c',
+    sadness: '#86a2f2',
+    tired: '#86a2f2',
+    demotivated: '#86a2f2',
+    focused: '#7cc78a',
+    motivated: '#7cc78a',
+    happy: '#7cc78a',
+    energetic: '#7cc78a',
+    neutral: '#7cc78a',
   };
   return colors[mood];
 }

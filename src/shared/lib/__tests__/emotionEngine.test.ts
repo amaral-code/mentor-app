@@ -59,21 +59,21 @@ describe('detectEmotion', () => {
 
 describe('getMoodColor', () => {
   it('returns red for stress', () => {
-    expect(getMoodColor('stress')).toBe('#ef4444');
+    expect(getMoodColor('stress')).toBe('#f08a70');
   });
 
   it('returns amber for anxiety', () => {
-    expect(getMoodColor('anxiety')).toBe('#f59e0b');
+    expect(getMoodColor('anxiety')).toBe('#e9a11c');
   });
 
   it('returns purple for sadness', () => {
-    expect(getMoodColor('sadness')).toBe('#a855f7');
+    expect(getMoodColor('sadness')).toBe('#86a2f2');
   });
 
   it('returns green for positive moods', () => {
-    expect(getMoodColor('focused')).toBe('#10b981');
-    expect(getMoodColor('happy')).toBe('#10b981');
-    expect(getMoodColor('neutral')).toBe('#10b981');
+    expect(getMoodColor('focused')).toBe('#7cc78a');
+    expect(getMoodColor('happy')).toBe('#7cc78a');
+    expect(getMoodColor('neutral')).toBe('#7cc78a');
   });
 });
 

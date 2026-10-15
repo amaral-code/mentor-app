@@ -20,7 +20,7 @@ export function AvaliacoesRecebidas() {
   const media = lista.length ? lista.reduce((a, b) => a + b.nota, 0) / lista.length : 0;
 
   return (
-    <div className="glass rounded-2xl p-5">
+    <div className="painel rounded-2xl p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
           <Star size={16} className="text-amber-400" /> Avaliações
@@ -38,7 +38,7 @@ export function AvaliacoesRecebidas() {
       ) : (
         <ul className="space-y-2">
           {lista.slice(0, 10).map((a, i) => (
-            <li key={i} className="glass-light rounded-xl px-3.5 py-3 border border-white/[0.04]">
+            <li key={i} className="painel-suave rounded-xl px-3.5 py-3 border border-white/[0.04]">
               <div className="flex items-center gap-0.5" aria-label={`${a.nota} de 5 estrelas`}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <Star
