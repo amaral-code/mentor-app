@@ -115,7 +115,7 @@ export function BurnoutCard() {
             <ShieldAlert size={14} /> Conteúdo denso pausado
           </p>
           <p className="text-xs text-orange-200/70 mt-1.5 leading-relaxed">{pausa.texto}</p>
-          <div className="flex gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-3">
             <button onClick={() => setActiveTab('audio')} className="btn-secondary !px-3 !py-2 text-xs">
               Ouvir uma pílula de 3 min
             </button>

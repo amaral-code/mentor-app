@@ -110,24 +110,25 @@ export interface PrevisaoBurnout {
 
 const ROTULO: Record<NomeFeature, string> = {
   taxaErro: 'taxa de erro alta',
-  excessoTempoFacil: 'tempo demais em questoes faceis',
-  quedaRendimento: 'queda de rendimento nas ultimas sessoes',
+  excessoTempoFacil: 'tempo demais em questões fáceis',
+  quedaRendimento: 'queda de rendimento nas últimas sessões',
   fracaoMadrugada: 'estudo de madrugada',
-  horasEstudoDia: 'volume diario elevado',
+  horasEstudoDia: 'volume diário elevado',
   diasSemPausa: 'dias seguidos sem pausa',
   deficitSono: 'poucas horas de sono',
 };
 
 /**
- * FADIGA DESLIGADA — índice sempre zerado.
+ * Chave do índice de cansaço. LIGADO (false) desde 2026-09-24.
  *
- * Pedido direto do dono: o número incomodava mais do que ajudava. Com a
- * flag ligada, o store devolve score 0 / "saudável" em todo lugar (card do
- * aluno, curva dos pais, bloqueio de conteúdo denso) e nada é gravado no
- * servidor. O modelo puro (preverBurnout/classificar) continua intacto e
- * testado — só o consumo é zerado. Para religar, volte para false.
+ * O dono desligou o índice porque o número incomodava; religou quando
+ * ficou claro o custo: com a flag em true nada chega a `indice_burnout`,
+ * e ficam vazios o termômetro do professor e da secretaria, o índice que
+ * o psicólogo vê e o escopo `bem_estar` do consentimento. Com true, o
+ * store devolve 0 / "saudável" em todo lugar e não grava nada; o modelo
+ * puro (preverBurnout/classificar) segue testado nos dois casos.
  */
-export const FADIGA_ZERADA = true;
+export const FADIGA_ZERADA = false;
 
 /** Previsão neutra usada em todo lugar quando FADIGA_ZERADA. */
 export const PREVISAO_ZERADA: PrevisaoBurnout = {
@@ -406,7 +407,7 @@ export function sugestaoPausa(classe: ClasseBurnout): { minutos: number; texto: 
     case 'esgotamento':
       return {
         minutos: 1440,
-        texto: 'Hoje o melhor estudo e dormir. Volte amanhã: seu lugar continua aqui.',
+        texto: 'Hoje o melhor estudo é dormir. Volte amanhã: seu lugar continua aqui.',
       };
     case 'fadiga':
       return {
@@ -414,7 +415,7 @@ export function sugestaoPausa(classe: ClasseBurnout): { minutos: number; texto: 
         texto: 'Duas horas longe da tela agora rendem mais que duas horas insistindo.',
       };
     case 'alerta':
-      return { minutos: 20, texto: 'Vinte minutos de pausa e uma revisao curta depois. So isso.' };
+      return { minutos: 20, texto: 'Vinte minutos de pausa e uma revisão curta depois. Só isso.' };
     default:
       return { minutos: 5, texto: 'Ritmo saudável. Uma pausa curta a cada bloco mantém assim.' };
   }
