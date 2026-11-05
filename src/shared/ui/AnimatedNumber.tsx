@@ -70,7 +70,7 @@ interface BarraProgressoProps {
 export function BarraProgresso({
   valor,
   className = '',
-  corClassName = 'bg-gradient-to-r from-amber-500 to-orange-500',
+  corClassName = 'bg-amber-500',
   altura = 'h-1.5',
 }: BarraProgressoProps) {
   const reduzir = useReducedMotion();
@@ -78,7 +78,7 @@ export function BarraProgresso({
 
   return (
     <div
-      className={`${altura} rounded-full bg-white/5 overflow-hidden ${className}`}
+      className={`${altura} rounded-full bg-slate-200 overflow-hidden ${className}`}
       role="progressbar"
       aria-valuenow={Math.round(pct * 100)}
       aria-valuemin={0}

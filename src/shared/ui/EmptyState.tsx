@@ -56,9 +56,9 @@ export function EmptyState({
           }
         }}
       />
-      <p className={`font-medium text-gray-300 ${compacto ? 'text-sm' : 'text-base'}`}>{titulo}</p>
+      <p className={`font-medium text-slate-700 ${compacto ? 'text-sm' : 'text-base'}`}>{titulo}</p>
       {descricao && (
-        <p className="text-sm text-gray-500 mt-1 max-w-xs leading-relaxed">{descricao}</p>
+        <p className="text-sm text-slate-500 mt-1 max-w-xs leading-relaxed">{descricao}</p>
       )}
       {acao && <div className="mt-4">{acao}</div>}
     </div>

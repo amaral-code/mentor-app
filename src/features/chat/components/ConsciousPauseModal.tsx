@@ -47,15 +47,15 @@ export function ConsciousPauseModal({ open, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Pausa consciente de 1 minuto"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-950/70 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-white p-4 backdrop-blur-md"
     >
       <style>{`@keyframes pausa-respiracao { 0%, 100% { transform: scale(1); opacity: 0.75; } 50% { transform: scale(1.45); opacity: 1; } }`}</style>
-      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-midnight-900/95 p-6 text-center shadow-glass-lg animate-scale-in">
-        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300">
+      <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-lip animate-scale-in">
+        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-700">
           <Wind size={20} />
         </span>
-        <h2 className="mt-3 text-lg font-bold text-white">Pausa consciente</h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-300">
+        <h2 className="mt-3 text-lg font-bold text-tinta-900">Pausa consciente</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">
           Notei que essa parte está difícil. Vamos pausar 1 minuto e respirar. O erro faz parte do
           processo.
         </p>
@@ -68,12 +68,12 @@ export function ConsciousPauseModal({ open, onClose }: Props) {
               className="absolute inset-4 rounded-full bg-gradient-to-br from-cyan-400/40 to-emerald-500/30"
               style={{ animation: 'pausa-respiracao 8s ease-in-out infinite' }}
             />
-            <span className="relative font-mono text-2xl font-bold text-white tabular-nums">{mm}</span>
+            <span className="relative font-mono text-2xl font-bold text-tinta-900 tabular-nums">{mm}</span>
           </div>
         </div>
 
         <div
-          className="h-1.5 overflow-hidden rounded-full bg-white/10"
+          className="h-1.5 overflow-hidden rounded-full bg-slate-100"
           role="progressbar"
           aria-valuenow={Math.round(progresso * 100)}
           aria-valuemin={0}
@@ -100,7 +100,7 @@ export function ConsciousPauseModal({ open, onClose }: Props) {
           </button>
           <button
             onClick={() => setRestam(DURACAO_SEG)}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-300 transition-all hover:bg-white/10 active:scale-95"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 active:scale-95"
           >
             +1 min
           </button>

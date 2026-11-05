@@ -106,43 +106,43 @@ export function CodigosEscola({ modo }: Props) {
   return (
     <div className="glass rounded-2xl p-5 border border-amber-500/10">
       <div className="flex items-center gap-2 mb-1">
-        <KeyRound size={15} className="text-amber-400" />
-        <h3 className="text-sm font-semibold text-white">
+        <KeyRound size={15} className="text-amber-600" />
+        <h3 className="text-sm font-semibold text-tinta-900">
           {ehSecretaria ? 'Códigos de entrada' : 'Códigos para passar aos alunos'}
         </h3>
       </div>
-      <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+      <p className="text-xs text-slate-500 mb-4 leading-relaxed">
         {ehSecretaria
           ? 'O aluno digita esses códigos no Perfil: primeiro o da escola, depois o da turma. Não poste em grupo aberto, porque quem tiver o código entra.'
           : 'Em sala, passe os dois: primeiro o da escola, depois o da sua turma. O aluno digita no Perfil. Se um código vazar, peça à secretaria para trocar.'}
       </p>
 
       {carregando ? (
-        <div className="h-20 rounded-xl bg-white/5 animate-pulse" aria-hidden="true" />
+        <div className="h-20 rounded-xl bg-slate-50 animate-pulse" aria-hidden="true" />
       ) : !escola ? (
-        <p className="text-xs text-amber-300">
+        <p className="text-xs text-amber-600">
           Sua conta ainda não está ligada a uma escola. Fale com a secretaria da escola.
         </p>
       ) : (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-black/25 border border-white/[0.06] px-3 py-2.5">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-100 border border-slate-200 px-3 py-2.5">
             <div className="flex-1 min-w-[140px]">
-              <p className="text-[10px] uppercase tracking-widest text-gray-500">Escola · {escola.nome}</p>
-              <p className="text-base font-mono font-bold text-amber-300 tracking-[0.2em]">{escola.codigo}</p>
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">Escola · {escola.nome}</p>
+              <p className="text-base font-mono font-bold text-amber-600 tracking-[0.2em]">{escola.codigo}</p>
             </div>
             <button
               onClick={() => void copiar(escola.codigo, 'inst')}
               aria-label="Copiar código da escola"
-              className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 transition-all min-h-[40px]"
+              className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 hover:bg-slate-100 transition-all min-h-[40px]"
             >
-              {copiado === 'inst' ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              {copiado === 'inst' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
               {copiado === 'inst' ? 'Copiado' : 'Copiar'}
             </button>
             {ehSecretaria && (
               <button
                 onClick={() => void trocarInstituicao()}
                 title="Gerar um novo código (o antigo para de funcionar)"
-                className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-500 hover:text-amber-300 transition-all min-h-[40px]"
+                className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-500 hover:text-amber-600 transition-all min-h-[40px]"
               >
                 <RefreshCw size={13} /> Trocar
               </button>
@@ -150,7 +150,7 @@ export function CodigosEscola({ modo }: Props) {
           </div>
 
           {turmas.length === 0 ? (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-500">
               {ehSecretaria
                 ? 'Nenhuma turma cadastrada ainda. Elas nascem na aba Matrículas, a partir da coluna Sala.'
                 : 'Você ainda não está em nenhuma turma. A secretaria faz esse vínculo na aba Docentes dela.'}
@@ -158,22 +158,22 @@ export function CodigosEscola({ modo }: Props) {
           ) : (
             <ul className="space-y-1.5">
               {turmas.map((t) => (
-                <li key={t.id} className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg hover:bg-white/[0.02]">
-                  <span className="text-gray-200 flex-1 truncate">{t.nome}</span>
-                  <code className="font-mono font-bold text-cyan-300 tracking-[0.15em] text-sm">{t.codigo}</code>
+                <li key={t.id} className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg hover:bg-slate-50">
+                  <span className="text-tinta-700 flex-1 truncate">{t.nome}</span>
+                  <code className="font-mono font-bold text-cyan-700 tracking-[0.15em] text-sm">{t.codigo}</code>
                   <button
                     onClick={() => void copiar(t.codigo, t.id)}
                     aria-label={`Copiar código da turma ${t.nome}`}
-                    className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all"
+                    className="p-2 rounded-lg text-slate-500 hover:text-tinta-900 hover:bg-slate-100 transition-all"
                   >
-                    {copiado === t.id ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                    {copiado === t.id ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                   </button>
                   {ehSecretaria && (
                     <button
                       onClick={() => void trocarTurma(t.id)}
                       title="Gerar novo código (o antigo para de funcionar)"
                       aria-label={`Gerar novo código para a turma ${t.nome}`}
-                      className="p-2 rounded-lg text-gray-500 hover:text-amber-300 hover:bg-white/10 transition-all"
+                      className="p-2 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-slate-100 transition-all"
                     >
                       <RefreshCw size={13} />
                     </button>
@@ -183,7 +183,7 @@ export function CodigosEscola({ modo }: Props) {
             </ul>
           )}
           {erro && (
-            <p role="alert" className="text-xs text-red-400">
+            <p role="alert" className="text-xs text-red-600">
               {erro}
             </p>
           )}

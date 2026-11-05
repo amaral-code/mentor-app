@@ -74,17 +74,17 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
 
   return (
     <div className="glass rounded-2xl overflow-hidden flex flex-col">
-      <div className="px-4 py-3 border-b border-white/[0.05] flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-white truncate">{titulo}</h3>
-        <span className="text-[10px] text-gray-500 inline-flex items-center gap-1 shrink-0">
+      <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-tinta-900 truncate">{titulo}</h3>
+        <span className="text-[10px] text-slate-500 inline-flex items-center gap-1 shrink-0">
           <Lock size={11} /> só vocês dois leem
         </span>
       </div>
 
       {mostrarAvisoEmergencia && (
         <div className="px-4 py-2.5 bg-rose-500/[0.06] border-b border-rose-500/15 flex gap-2 items-start" role="note">
-          <LifeBuoy size={14} className="text-rose-300 shrink-0 mt-0.5" />
-          <p className="text-[11px] text-rose-200/90 leading-relaxed">
+          <LifeBuoy size={14} className="text-rose-600 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-rose-600 leading-relaxed">
             Este canal não é de emergência: a resposta pode levar horas. Se você está em
             crise agora, ligue <strong>188</strong> (CVV, 24 horas, gratuito) ou <strong>192</strong> (SAMU).
           </p>
@@ -93,7 +93,7 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
 
       <div className="px-4 py-4 space-y-2.5 max-h-[420px] min-h-[180px] overflow-y-auto" aria-live="polite">
         {mensagens.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-8">Nenhuma mensagem ainda.</p>
+          <p className="text-sm text-slate-500 text-center py-8">Nenhuma mensagem ainda.</p>
         ) : (
           mensagens.map((m) => {
             const minha = m.autorId === meuId;
@@ -102,12 +102,12 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
                 <div
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
                     minha
-                      ? 'bg-cyan-500/15 text-cyan-50 border border-cyan-500/20 rounded-br-md'
-                      : 'bg-white/[0.05] text-gray-200 border border-white/[0.06] rounded-bl-md'
+                      ? 'bg-cyan-500/15 text-cyan-700 border border-cyan-500/20 rounded-br-md'
+                      : 'bg-slate-50 text-tinta-700 border border-slate-200 rounded-bl-md'
                   }`}
                 >
                   {m.texto}
-                  <span className="block text-[10px] text-gray-500 mt-1 text-right tabular-nums">
+                  <span className="block text-[10px] text-slate-500 mt-1 text-right tabular-nums">
                     {new Date(m.criadoEm).toLocaleString('pt-BR', {
                       day: '2-digit',
                       month: '2-digit',
@@ -124,7 +124,7 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
       </div>
 
       {ativa ? (
-        <div className="px-3 py-3 border-t border-white/[0.05]">
+        <div className="px-3 py-3 border-t border-slate-200">
           <div className="flex gap-2 items-end">
             <label htmlFor={`msg-${psicologoId}-${participanteId}`} className="sr-only">
               Escreva uma mensagem
@@ -141,7 +141,7 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
               }}
               rows={2}
               placeholder="Escreva uma mensagem"
-              className="flex-1 resize-none px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-cyan-500/40"
+              className="flex-1 resize-none px-3 py-2.5 rounded-xl glass-light border border-slate-200 text-sm text-tinta-900 placeholder:text-slate-400 outline-none focus:border-cyan-500/40"
             />
             <button
               type="button"
@@ -154,13 +154,13 @@ export function Conversa({ psicologoId, participanteId, meuId, titulo, ativa, mo
             </button>
           </div>
           {erro && (
-            <p role="alert" className="text-xs text-red-400 mt-2">
+            <p role="alert" className="text-xs text-red-600 mt-2">
               {erro}
             </p>
           )}
         </div>
       ) : (
-        <p className="px-4 py-3 border-t border-white/[0.05] text-xs text-gray-500">
+        <p className="px-4 py-3 border-t border-slate-200 text-xs text-slate-500">
           O acesso entre vocês foi encerrado. O histórico continua legível, mas não dá mais para enviar.
         </p>
       )}

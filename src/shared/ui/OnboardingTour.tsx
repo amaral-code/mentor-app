@@ -233,13 +233,13 @@ export function OnboardingTour() {
             : { top: '50%', transform: 'translate(-50%, -50%)' }
         }
       >
-        <div className="glass-card rounded-3xl p-7 text-center shadow-2xl border border-white/10" style={{ pointerEvents: 'auto', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto' }}>
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-5 shadow-glow">
+        <div className="glass-card rounded-3xl p-7 text-center shadow-2xl border border-slate-200" style={{ pointerEvents: 'auto', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto' }}>
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-5 shadow-none">
             <AppIcon name={step.icon} size={28} className="text-gray-900" />
           </div>
 
-          <h2 className="text-lg font-bold text-white mb-2">{step.title}</h2>
-          <p className="text-sm text-gray-400 leading-relaxed mb-6">{step.description}</p>
+          <h2 className="text-lg font-bold text-tinta-900 mb-2">{step.title}</h2>
+          <p className="text-sm text-slate-600 leading-relaxed mb-6">{step.description}</p>
 
           {/* Dots: só indicam a ordem (1..11), sem pulo. Pular de bolinha
               em bolinha trocava de aba no meio da animação e o destaque
@@ -250,7 +250,7 @@ export function OnboardingTour() {
                 key={s.id}
                 aria-hidden="true"
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  i === tutorialStep ? 'bg-amber-400 w-5' : i < tutorialStep ? 'bg-amber-400/40 w-2' : 'bg-white/10 w-2'
+                  i === tutorialStep ? 'bg-amber-400 w-5' : i < tutorialStep ? 'bg-amber-400/40 w-2' : 'bg-slate-100 w-2'
                 }`}
               />
             ))}
@@ -258,11 +258,11 @@ export function OnboardingTour() {
 
           {/* Buttons */}
           <div className="flex items-center justify-between gap-3">
-            <button onClick={handleSkip} className="btn-ghost text-xs text-gray-500 hover:text-gray-300"> Pular tour
+            <button onClick={handleSkip} className="btn-ghost text-xs text-slate-500 hover:text-slate-700"> Pular tour
             </button>
             <div className="flex items-center gap-2">
               {!isFirst && (
-                <button onClick={() => setTutorialStep(tutorialStep - 1)} className="btn-ghost text-sm px-3 py-2 text-gray-400"> Voltar
+                <button onClick={() => setTutorialStep(tutorialStep - 1)} className="btn-ghost text-sm px-3 py-2 text-slate-600"> Voltar
                 </button>
               )}
               <button onClick={handleNext} className="btn-primary px-6">

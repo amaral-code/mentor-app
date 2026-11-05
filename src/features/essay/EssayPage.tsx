@@ -63,7 +63,7 @@ function ScoreRing({ nota, size = 150 }: { nota: number; size?: number }) {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg className="-rotate-90 w-full h-full" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+        <circle cx="60" cy="60" r={r} fill="none" stroke="#E2E8F0" strokeWidth="7" />
         <circle
           cx="60" cy="60" r={r} fill="none"
           stroke={getNotaColor(nota)}
@@ -79,7 +79,7 @@ function ScoreRing({ nota, size = 150 }: { nota: number; size?: number }) {
         <span className="text-4xl font-extrabold tabular-nums" style={{ color: getNotaColor(nota) }}>
           {nota}
         </span>
-        <span className="text-xs text-gray-500">/ 1000</span>
+        <span className="text-xs text-slate-500">/ 1000</span>
       </div>
     </div>
   );
@@ -275,12 +275,12 @@ export function EssayPage() {
     <div className="space-y-5 animate-fade-up">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Redação 1000</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Treine sua redação ENEM com correção automática pelas 5 competências.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Redação 1000</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Treine sua redação ENEM com correção automática pelas 5 competências.</p>
         </div>
         {challengeResults.length > 0 && (
           <div className="flex items-center gap-2">
-            <span className="badge badge-purple"><Trophy size={16} className="inline-block align-[-0.15em] text-amber-400" /> {challengeResults.length} desafios</span>
+            <span className="badge badge-purple"><Trophy size={16} className="inline-block align-[-0.15em] text-amber-600" /> {challengeResults.length} desafios</span>
             <span className="badge badge-emerald">Nota média: {Math.round(challengeResults.reduce((a, r) => a + r.notaFinal, 0) / challengeResults.length)}</span>
           </div>
         )}
@@ -288,7 +288,7 @@ export function EssayPage() {
 
       <GlassCard>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-300">Sua Redação</h2>
+          <h2 className="text-sm font-semibold text-slate-700">Sua Redação</h2>
           <div className="flex items-center gap-2">
             {aiAvailable(apiKey) && <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Correção IA</span>}
             {wordCount > 0 && (
@@ -303,14 +303,14 @@ export function EssayPage() {
           value={tema}
           onChange={e => setTema(e.target.value)}
           placeholder="Tema da redação (ex: 'Desafios da inclusão digital no Brasil')"
-          className="w-full bg-white/[0.03] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/30 mb-4 transition-all"
+          className="w-full bg-slate-50 rounded-xl px-4 py-2.5 text-sm text-tinta-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500/30 mb-4 transition-all"
         />
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
           placeholder="Digite sua redação aqui..."
           rows={8}
-          className="w-full bg-transparent resize-none text-sm text-white leading-relaxed placeholder-gray-600 focus:outline-none md:rows-12"
+          className="w-full bg-transparent resize-none text-sm text-tinta-900 leading-relaxed placeholder-slate-400 focus:outline-none md:rows-12"
         />
         <div className="flex items-center justify-between mt-4 gap-3">
           <button
@@ -321,7 +321,7 @@ export function EssayPage() {
           </button>
           <button onClick={handleCorrect} disabled={text.trim().length < 50 || isCorrecting} className="btn-primary">
             {isCorrecting ? (
-              <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> Corrigindo...</>
+              <><span className="w-4 h-4 border-2 border-slate-300 border-t-white rounded-full animate-spin mr-2" /> Corrigindo...</>
             ) : 'Corrigir Redação'}
           </button>
         </div>
@@ -341,7 +341,7 @@ export function EssayPage() {
 
       {lastCorrection && (
         <GlassCard>
-          <h2 className="text-sm font-semibold text-gray-300 mb-5">Resultado da Correção</h2>
+          <h2 className="text-sm font-semibold text-slate-700 mb-5">Resultado da Correção</h2>
 
           <div className="flex flex-col items-center mb-8">
             <ScoreRing nota={lastCorrection.notaFinal} />
@@ -360,10 +360,10 @@ export function EssayPage() {
               return (
                 <div key={c.key}>
                   <div className="flex items-center justify-between text-sm mb-1.5">
-                    <span className="text-gray-400">{c.label}</span>
-                    <span className="text-white font-medium tabular-nums">{val}/200</span>
+                    <span className="text-slate-600">{c.label}</span>
+                    <span className="text-tinta-900 font-medium tabular-nums">{val}/200</span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-1.5 rounded-full bg-slate-50 overflow-hidden">
                     <div
                       className="h-full rounded-full xp-bar"
                       style={{
@@ -372,7 +372,7 @@ export function EssayPage() {
                       }}
                     />
                   </div>
-                  <p className="text-[11px] text-gray-600 mt-1">{competenciaDesc(c.key)}</p>
+                  <p className="text-[11px] text-slate-400 mt-1">{competenciaDesc(c.key)}</p>
                 </div>
               );
             })}
@@ -381,10 +381,10 @@ export function EssayPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {lastCorrection.pontosFortes.length > 0 && (
               <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                <h3 className="text-xs font-semibold text-emerald-400 mb-3 uppercase tracking-wider">Pontos Fortes</h3>
+                <h3 className="text-xs font-semibold text-emerald-600 mb-3 uppercase tracking-wider">Pontos Fortes</h3>
                 <ul className="space-y-1.5">
                   {lastCorrection.pontosFortes.map((p, i) => (
-                    <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
+                    <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
                       <span className="text-emerald-500 mt-0.5">•</span>
                       {p}
                     </li>
@@ -394,10 +394,10 @@ export function EssayPage() {
             )}
             {lastCorrection.pontosMelhorar.length > 0 && (
               <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                <h3 className="text-xs font-semibold text-amber-400 mb-3 uppercase tracking-wider">A Melhorar</h3>
+                <h3 className="text-xs font-semibold text-amber-600 mb-3 uppercase tracking-wider">A Melhorar</h3>
                 <ul className="space-y-1.5">
                   {lastCorrection.pontosMelhorar.map((p, i) => (
-                    <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
+                    <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
                       <span className="text-amber-500 mt-0.5">•</span>
                       {p}
                     </li>
@@ -424,7 +424,7 @@ export function EssayPage() {
       {challengeResults.length > 0 && (
         <GlassCard>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-300"><Trophy size={16} className="inline-block align-[-0.15em] text-amber-400" /> Histórico de Desafios</h2>
+            <h2 className="text-sm font-semibold text-slate-700"><Trophy size={16} className="inline-block align-[-0.15em] text-amber-600" /> Histórico de Desafios</h2>
             <span className="badge badge-gray">{challengeResults.length} rodadas</span>
           </div>
           <div className="space-y-3">
@@ -436,11 +436,11 @@ export function EssayPage() {
                   initial={reduzir ? false : { opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={reduzir ? { duration: 0 } : { delay: atrasoDoItem(i), duration: 0.25 }}
-                  className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5"
+                  className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200"
                 >
                   <div className="relative w-12 h-12 shrink-0">
                     <svg className="w-12 h-12 -rotate-90" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                      <circle cx="60" cy="60" r="52" fill="none" stroke="#E2E8F0" strokeWidth="10" />
                       <circle
                         cx="60" cy="60" r="52" fill="none"
                         stroke={color}
@@ -454,15 +454,15 @@ export function EssayPage() {
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-200 truncate">{r.tema}</p>
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-sm font-medium text-tinta-700 truncate">{r.tema}</p>
+                    <p className="text-[11px] text-slate-500">
                       {r.finalizado ? ' Finalizada no prazo' : '⏱ Tempo esgotado'} ·{' '}
                       {Math.floor(r.tempoUsadoSegundos / 60)}min · {new Date(r.timestamp).toLocaleDateString('pt-BR')} · +{r.xpGanho} XP
                     </p>
                   </div>
                   <div className="flex gap-1 flex-wrap shrink-0">
                     {['competencia1','competencia2','competencia3','competencia4','competencia5'].map((c, i) => (
-                      <span key={c} className="px-1.5 py-0.5 rounded bg-white/5 text-[9px] text-gray-400"> C{i + 1}:{r[c as keyof ChallengeResult]}
+                      <span key={c} className="px-1.5 py-0.5 rounded bg-slate-50 text-[9px] text-slate-600"> C{i + 1}:{r[c as keyof ChallengeResult]}
                       </span>
                     ))}
                   </div>
@@ -487,7 +487,7 @@ export function EssayPage() {
               </button>
               <div className="flex items-center gap-2">
                 <span className="badge badge-emerald">🇧🇷 Prova simulada ENEM</span>
-                <span className="hidden sm:inline text-xs text-gray-500">Redação · Dissertativo-argumentativa</span>
+                <span className="hidden sm:inline text-xs text-slate-500">Redação · Dissertativo-argumentativa</span>
               </div>
               <button
                 onClick={newRandomTheme}
@@ -498,12 +498,12 @@ export function EssayPage() {
             </div>
 
             {/* Hero: tema + timer */}
-            <div className="relative z-10 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-6 mb-5 overflow-hidden">
+            <div className="relative z-10 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 mb-5 overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-5 items-center">
                 <div>
-                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-2 inline-block"> Proposta de Redação
+                  <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-2 inline-block"> Proposta de Redação
                   </span>
-                  <h2 className="text-xl md:text-2xl font-extrabold text-white leading-snug challenge-q">
+                  <h2 className="text-xl md:text-2xl font-extrabold text-tinta-900 leading-snug challenge-q">
                     {theme.tema}
                   </h2>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -518,7 +518,7 @@ export function EssayPage() {
                   <div className="flex flex-col items-center gap-1">
                     <div className={`challenge-timer relative ${timeLeft <= 600 ? 'challenge-timer--warn' : ''}`}>
                       <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="#E2E8F0" strokeWidth="7" />
                         <circle
                           cx="60" cy="60" r="52" fill="none"
                           stroke={timerColor}
@@ -530,12 +530,12 @@ export function EssayPage() {
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-extrabold tabular-nums font-mono text-white">{formatTime(timeLeft)}</span>
-                        <span className="text-[9px] uppercase tracking-widest text-white/50">tempo restante</span>
+                        <span className="text-2xl font-extrabold tabular-nums font-mono text-tinta-900">{formatTime(timeLeft)}</span>
+                        <span className="text-[9px] uppercase tracking-widest text-slate-500">tempo restante</span>
                       </div>
                     </div>
                     {startedAt && !challengeSubmitted && (
-                      <span className="text-[10px] text-white/40">iniciou há {minutesUsed} min</span>
+                      <span className="text-[10px] text-slate-500">iniciou há {minutesUsed} min</span>
                     )}
                   </div>
                 </div>
@@ -544,41 +544,41 @@ export function EssayPage() {
               {/* Stats */}
               <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div className="challenge-stat px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Extensão ideal</div>
-                  <div className="text-base font-bold text-white">300+ palavras</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">Extensão ideal</div>
+                  <div className="text-base font-bold text-tinta-900">300+ palavras</div>
                 </div>
                 <div className="challenge-stat px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Nota máxima</div>
-                  <div className="text-base font-bold text-white">1000 pontos</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">Nota máxima</div>
+                  <div className="text-base font-bold text-tinta-900">1000 pontos</div>
                 </div>
                 <div className="challenge-stat px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Competências</div>
-                  <div className="text-base font-bold text-white">5 de 5</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">Competências</div>
+                  <div className="text-base font-bold text-tinta-900">5 de 5</div>
                 </div>
               </div>
             </div>
 
             {/* Coletânea */}
             <div className="mb-5">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-2"> Textos de Apoio (coletânea): repertório sociocultural
+              <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2.5 flex items-center gap-2"> Textos de Apoio (coletânea): repertório sociocultural
                 <span className="badge badge-gray text-[9px] uppercase">use como base para seus argumentos</span>
               </h3>
               <div className="space-y-2.5">
                 {theme.coletanea.map((t, i) => (
-                  <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/5 p-4 pl-5 relative overflow-hidden">
+                  <div key={i} className="rounded-2xl bg-slate-50 border border-slate-200 p-4 pl-5 relative overflow-hidden">
                     <span className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400/60 to-amber-400/40" />
-                    <p className="text-xs font-semibold text-gray-300 mb-1.5 flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-500/15 text-amber-300 text-[10px] font-bold"> T{i + 1}
+                    <p className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-500/15 text-amber-600 text-[10px] font-bold"> T{i + 1}
                       </span>
                       {t.titulo}
                     </p>
-                    <p className="text-sm text-gray-400 leading-relaxed">{t.texto}</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">{t.texto}</p>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 challenge-note rounded-2xl bg-amber-500/[0.06] border border-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
-                <span className="mr-1"><Lightbulb size={16} className="inline-block align-[-0.15em] text-amber-400" /></span>
-                <span className="font-semibold text-amber-300">Dica:</span> {theme.dica}
+              <div className="mt-3 challenge-note rounded-2xl bg-amber-500/[0.06] border border-amber-500/10 px-4 py-3 text-sm text-amber-600">
+                <span className="mr-1"><Lightbulb size={16} className="inline-block align-[-0.15em] text-amber-600" /></span>
+                <span className="font-semibold text-amber-600">Dica:</span> {theme.dica}
               </div>
             </div>
 
@@ -586,7 +586,7 @@ export function EssayPage() {
             <div className="flex-1 min-h-0 flex flex-col">
               <div className="flex items-center justify-between gap-3 mb-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-white uppercase tracking-wider"> Sua Redação</span>
+                  <span className="text-xs font-semibold text-tinta-900 uppercase tracking-wider"> Sua Redação</span>
                   <span className="badge badge-gray">folha oficial</span>
                 </div>
                 <span className={`badge ${challengeWordCount >= 150 ? 'badge-emerald' : 'badge-red'}`}>
@@ -597,16 +597,16 @@ export function EssayPage() {
                 value={challengeText}
                 onChange={e => setChallengeText(e.target.value)}
                 disabled={challengeSubmitted}
-                className="challenge-sheet flex-1 min-h-[220px] w-full rounded-2xl border border-white/5 bg-white/[0.02] p-4 pl-6 pr-6 resize-none text-[15px] leading-8 text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/30 disabled:opacity-80"
+                className="challenge-sheet flex-1 min-h-[220px] w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 pl-6 pr-6 resize-none text-[15px] leading-8 text-tinta-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500/30 disabled:opacity-80"
                 placeholder="Comece sua dissertação-argumentativa aqui. Use a coletânea e a dica como repertório..."
               />
               {/* Progresso de extensão */}
               <div className="mt-3">
-                <div className="flex justify-between text-[10px] text-white/50 mb-1">
+                <div className="flex justify-between text-[10px] text-slate-500 mb-1">
                   <span>Extensão atual: {challengeWordCount} / 300 palavras</span>
                   <span>{extensionPct}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                <div className="h-2 rounded-full bg-slate-50 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all challenge-fill"
                     style={{
@@ -617,7 +617,7 @@ export function EssayPage() {
                     }}
                   />
                 </div>
-                <p className="text-[10px] text-white/40 mt-1">
+                <p className="text-[10px] text-slate-500 mt-1">
                   {challengeWordCount < 150
                     ? `Faltam ${150 - challengeWordCount} palavras para o mínimo exigido pelo ENEM.`
                     : ' Mínimo do ENEM atingido! Continue para alcançar uma boa nota.'}
@@ -628,11 +628,11 @@ export function EssayPage() {
             {/* Footer / resultado */}
             {challengeSubmitted ? (
               challengeIsCorrecting ? (
-                <div className="flex items-center justify-center gap-2 py-5 text-sm text-gray-400">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Corrigindo redação como no ENEM...
+                <div className="flex items-center justify-center gap-2 py-5 text-sm text-slate-600">
+                  <span className="w-4 h-4 border-2 border-slate-300 border-t-white rounded-full animate-spin" /> Corrigindo redação como no ENEM...
                 </div>
               ) : challengeCorrection ? (
-                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
                   <div className="flex flex-col items-center mb-5">
                     <ScoreRing nota={challengeCorrection.notaFinal} />
                     <span className={`badge ${
@@ -646,10 +646,10 @@ export function EssayPage() {
                     {competencias.map(c => {
                       const val = challengeCorrection[c.key];
                       return (
-                        <div key={c.key} className="text-center rounded-lg bg-white/[0.03] border border-white/5 py-2 px-1">
-                          <div className="text-[10px] text-gray-500 mb-1">{c.short}</div>
+                        <div key={c.key} className="text-center rounded-lg bg-slate-50 border border-slate-200 py-2 px-1">
+                          <div className="text-[10px] text-slate-500 mb-1">{c.short}</div>
                           <div className="text-sm font-bold tabular-nums" style={{ color: getNotaColor(val * 5) }}>{val}</div>
-                          <div className="text-[9px] text-gray-600">/200</div>
+                          <div className="text-[9px] text-slate-400">/200</div>
                         </div>
                       );
                     })}
@@ -657,7 +657,7 @@ export function EssayPage() {
                   {challengeCorrection.pontosMelhorar.length > 0 && (
                     <ul className="space-y-1 mb-4">
                       {challengeCorrection.pontosMelhorar.slice(0, 3).map((p, i) => (
-                        <li key={i} className="text-xs text-amber-400/90 flex items-start gap-1.5">
+                        <li key={i} className="text-xs text-amber-600 flex items-start gap-1.5">
                           <span>•</span>{p}
                         </li>
                       ))}
@@ -667,9 +667,9 @@ export function EssayPage() {
                   </button>
                 </div>
               ) : (
-                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-                  <p className="text-sm text-gray-300 mb-4">
-                    ⏱ <span className="text-white font-semibold">Tempo esgotado.</span>{' '}
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm text-slate-700 mb-4">
+                    ⏱ <span className="text-tinta-900 font-semibold">Tempo esgotado.</span>{' '}
                     {challengeWordCount >= 50 ? 'Sua redação foi corrigida.' : 'Você não escreveu uma redação com pelo menos 50 palavras a tempo.'}
                   </p>
                   <button onClick={() => { exitChallenge(); startChallenge(); }} className="btn-primary w-full"> Novo Desafio
@@ -677,8 +677,8 @@ export function EssayPage() {
                 </div>
               )
             ) : (
-              <div className="flex items-center justify-between gap-3 py-4 mt-2 border-t border-white/5">
-                <span className="text-xs text-gray-600 flex items-center gap-1.5">
+              <div className="flex items-center justify-between gap-3 py-4 mt-2 border-t border-slate-200">
+                <span className="text-xs text-slate-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full status-dot-active" /> Enviado automaticamente ao fim do tempo.
                 </span>
                 <button
@@ -695,7 +695,7 @@ export function EssayPage() {
 
       {/* Confirm exit (for accidental press) */}
       <Modal open={confirmExit} title="Sair do desafio?">
-        <p className="text-sm text-gray-300 mb-5"> Se você sair agora, a redação em andamento será <span className="text-white font-semibold">perdida</span> e o cronômetro reiniciado.
+        <p className="text-sm text-slate-700 mb-5"> Se você sair agora, a redação em andamento será <span className="text-tinta-900 font-semibold">perdida</span> e o cronômetro reiniciado.
           Tem certeza de que deseja voltar?
         </p>
         <div className="flex gap-3 justify-end">
@@ -709,36 +709,36 @@ export function EssayPage() {
       {/* ==== Tutorial / onboarding ==== */}
       <Modal open={showTutorial} title=" Como funciona o Modo Desafio">
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
-            <p className="text-sm text-gray-300"> Simule o dia da prova do ENEM. Você recebe um <span className="text-white font-semibold">tema aleatório</span>,
-              um <span className="text-white font-semibold">repertório de apoio</span> e tem{' '}
-              <span className="text-white font-semibold">3 horas</span> para escrever sua dissertação-argumentativa.
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <p className="text-sm text-slate-700"> Simule o dia da prova do ENEM. Você recebe um <span className="text-tinta-900 font-semibold">tema aleatório</span>,
+              um <span className="text-tinta-900 font-semibold">repertório de apoio</span> e tem{' '}
+              <span className="text-tinta-900 font-semibold">3 horas</span> para escrever sua dissertação-argumentativa.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-xl mb-1"></div>
-              <h3 className="text-xs font-semibold text-gray-300 mb-1">Tema surpresa</h3>
-              <p className="text-xs text-gray-500">Sorteado sempre de forma aleatória, como na prova real.</p>
+              <h3 className="text-xs font-semibold text-slate-700 mb-1">Tema surpresa</h3>
+              <p className="text-xs text-slate-500">Sorteado sempre de forma aleatória, como na prova real.</p>
             </div>
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-xl mb-1">⏱</div>
-              <h3 className="text-xs font-semibold text-gray-300 mb-1">3 horas</h3>
-              <p className="text-xs text-gray-500">Cronômetro regressivo. Envio automático ao fim do tempo.</p>
+              <h3 className="text-xs font-semibold text-slate-700 mb-1">3 horas</h3>
+              <p className="text-xs text-slate-500">Cronômetro regressivo. Envio automático ao fim do tempo.</p>
             </div>
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
-              <div className="text-xl mb-1"><BookMarked size={16} className="inline-block align-[-0.15em] text-amber-400" /></div>
-              <h3 className="text-xs font-semibold text-gray-300 mb-1">Repertório de apoio</h3>
-              <p className="text-xs text-gray-500">Use a coletânea para embasar os seus argumentos: sua nota valoriza isso.</p>
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-xl mb-1"><BookMarked size={16} className="inline-block align-[-0.15em] text-amber-600" /></div>
+              <h3 className="text-xs font-semibold text-slate-700 mb-1">Repertório de apoio</h3>
+              <p className="text-xs text-slate-500">Use a coletânea para embasar os seus argumentos: sua nota valoriza isso.</p>
             </div>
-            <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
-              <div className="text-xl mb-1"><PenLine size={16} className="inline-block align-[-0.15em] text-amber-400" /></div>
-              <h3 className="text-xs font-semibold text-gray-300 mb-1">5 competências</h3>
-              <p className="text-xs text-gray-500">Correção avalia norma culta, tema, argumentação, coesão e intervenção.</p>
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-xl mb-1"><PenLine size={16} className="inline-block align-[-0.15em] text-amber-600" /></div>
+              <h3 className="text-xs font-semibold text-slate-700 mb-1">5 competências</h3>
+              <p className="text-xs text-slate-500">Correção avalia norma culta, tema, argumentação, coesão e intervenção.</p>
             </div>
           </div>
-          <div className="challenge-note rounded-xl bg-amber-500/[0.06] border border-amber-500/10 px-4 py-3 text-xs text-amber-100/90">
-            <span className="font-semibold text-amber-300">Importante:</span> se você sair no meio, a redação é perdida. Seu progresso é salvo no histórico ao finalizar.
+          <div className="challenge-note rounded-xl bg-amber-500/[0.06] border border-amber-500/10 px-4 py-3 text-xs text-amber-600">
+            <span className="font-semibold text-amber-600">Importante:</span> se você sair no meio, a redação é perdida. Seu progresso é salvo no histórico ao finalizar.
           </div>
         </div>
         <div className="flex gap-3 justify-end mt-5">

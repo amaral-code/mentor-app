@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Fragment, memo } from 'react';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, GraduationCap, HeartHandshake, Moon, Users } from 'lucide-react';
+import { Eye, EyeOff, GraduationCap, HeartHandshake, Lock, Mail, Presentation, School, User } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { isSupabaseConfigured } from '../../shared/lib/supabase';
@@ -12,8 +12,6 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  *  contas criadas antes desta regra. */
 const MIN_SENHA_CADASTRO = 6;
 
-type AuthStep = 'role' | 'auth';
-
 /**
  * 'admin' e 'psychologist' ficam de fora: nao sao perfis que se escolhem
  * na tela de acesso. O psicologo cria a conta como qualquer pessoa e e
@@ -25,30 +23,26 @@ type AuthStep = 'role' | 'auth';
  */
 type RoleEscolhivel = Exclude<UserRole, 'admin' | 'psychologist'>;
 
-const ROLE_CONFIG: Record<RoleEscolhivel, { label: string; desc: string; icon: React.ReactNode; gradient: string }> = {
+const ROLE_CONFIG: Record<RoleEscolhivel, { label: string; desc: string; icon: React.ReactNode }> = {
   student: {
     label: 'Aluno',
     desc: 'Estudante focado no ENEM',
-    icon: <GraduationCap size={24} />,
-    gradient: 'from-amber-400 to-orange-600',
+    icon: <GraduationCap size={30} strokeWidth={2.25} />,
   },
   educator: {
     label: 'Educacional',
     desc: 'Secretaria da escola',
-    icon: <Users size={24} />,
-    gradient: 'from-emerald-400 to-cyan-600',
+    icon: <School size={30} strokeWidth={2.25} />,
   },
   teacher: {
     label: 'Docente',
     desc: 'Professor em sala',
-    icon: <Users size={24} />,
-    gradient: 'from-sky-400 to-blue-600',
+    icon: <Presentation size={30} strokeWidth={2.25} />,
   },
   parent: {
     label: 'Pais e responsáveis',
     desc: 'Acompanhamento pedagógico',
-    icon: <HeartHandshake size={24} />,
-    gradient: 'from-violet-400 to-purple-600',
+    icon: <HeartHandshake size={30} strokeWidth={2.25} />,
   },
 };
 
@@ -90,19 +84,22 @@ interface CampoAuthProps {
   enterKeyHint?: 'next' | 'send' | 'go';
   acaoDireita?: React.ReactNode;
   comEspacoDireita?: boolean;
+  /** Ícone dentro do campo, à esquerda (visual do Figma). */
+  icone?: React.ReactNode;
 }
 
 const CampoAuth = memo(function CampoAuth({
   id, erroId, label, erro, inputRef, limparErro, campo,
   type = 'text', placeholder, autoComplete, inputMode,
-  enterKeyHint, acaoDireita, comEspacoDireita,
+  enterKeyHint, acaoDireita, comEspacoDireita, icone,
 }: CampoAuthProps) {
   return (
     <div>
-      <label htmlFor={id} className="block text-xs text-gray-500 mb-1.5 font-medium tracking-wide">
+      <label htmlFor={id} className="block text-xs text-slate-500 mb-1.5 font-extrabold uppercase tracking-wider">
         {label}
       </label>
       <div className="relative">
+        {icone && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden="true">{icone}</span>}
         <input
           id={id}
           name={id}
@@ -119,11 +116,11 @@ const CampoAuth = memo(function CampoAuth({
           aria-invalid={!!erro}
           aria-describedby={erro ? erroId : undefined}
           onChange={() => limparErro(campo)}
-          className={`w-full transition-all${comEspacoDireita ? ' pr-12' : ''}${erro ? ' border-red-500/40 focus:border-red-500/60' : ''}`}
+          className={`w-full h-14 transition-all${icone ? ' pl-12' : ''}${comEspacoDireita ? ' pr-12' : ''}${erro ? ' !border-red-400 focus:!border-red-500' : ''}`}
         />
         {acaoDireita}
       </div>
-      {erro && <p id={erroId} className="text-xs text-red-400 mt-1.5">{erro}</p>}
+      {erro && <p id={erroId} className="text-sm font-bold text-red-600 mt-1.5">{erro}</p>}
     </div>
   );
 });
@@ -193,6 +190,7 @@ const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthForm
           autoComplete="name"
           enterKeyHint="next"
           inputRef={nomeRef}
+          icone={<User size={20} strokeWidth={2.5} />}
           erro={erros.nome}
           limparErro={limparErro}
         />
@@ -209,6 +207,7 @@ const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthForm
         autoComplete="email"
         enterKeyHint="next"
         inputRef={emailRef}
+        icone={<Mail size={20} strokeWidth={2.5} />}
         erro={erros.email}
         limparErro={limparErro}
       />
@@ -223,6 +222,7 @@ const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthForm
         autoComplete={isLogin ? 'current-password' : 'new-password'}
         enterKeyHint="send"
         inputRef={senhaRef}
+        icone={<Lock size={20} strokeWidth={2.5} />}
         erro={erros.senha}
         limparErro={limparErro}
         comEspacoDireita
@@ -231,7 +231,7 @@ const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthForm
             type="button"
             onClick={alternarSenha}
             aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-            className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-gray-500 hover:text-amber-400 transition-colors"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-ceu-600 transition-colors"
           >
             {mostrarSenha ? <EyeOff size={17} /> : <Eye size={17} />}
           </button>
@@ -240,10 +240,10 @@ const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthForm
 
       <button
         type="submit"
-        className="btn-primary w-full flex items-center justify-center gap-2 h-12 press"
+        className="btn-primary w-full flex items-center justify-center gap-2 h-14 text-base uppercase"
         disabled={loading}
       >
-        {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+        {loading && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
         {loading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Criar conta')}
       </button>
     </form>
@@ -251,7 +251,6 @@ const AuthForm = memo(function AuthForm({ isLogin, loading, onSubmit }: AuthForm
 });
 
 export function AuthPage() {
-  const [step, setStep] = useState<AuthStep>('role');
   const [selectedRole, setSelectedRole] = useState<RoleEscolhivel>('student');
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
@@ -327,121 +326,50 @@ export function AuthPage() {
     }
   }, [isLogin, selectedRole, setSession, setShowTutorial, setTutorialStep]);
 
-  const voltarParaPapeis = useCallback(() => { setStep('role'); setError(''); }, []);
   const alternarModo = useCallback(() => {
     setIsLogin((v) => !v);
     setError('');
     setAviso('');
   }, []);
+  /* Perfil e formulário na MESMA tela (visual lúdico): escolher o perfil
+     só seleciona; o "Entrar" usa o perfil selecionado, como antes. */
   const escolherPapel = useCallback((role: RoleEscolhivel) => {
     setSelectedRole(role);
-    setStep('auth');
-    setIsLogin(true);
     setError('');
     setAviso('');
   }, []);
 
-  /* ==================================================================
-     Etapa 1: escolha do perfil
-     ================================================================== */
-  if (step === 'role') {
-    return (
-      <Fragment>
-        <ColorBlindnessToggle />
-        <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#0b1120' }}>
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-amber-500/5 blur-[100px]" />
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-orange-500/5 blur-[100px]" />
-          </div>
-
-          <div className="w-full max-w-lg animate-fade-up relative z-10">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-7 text-center sm:text-left">
-              {/* O sagui e a identidade do produto: ele abre a tela.
-                  Empilhado no celular: lado a lado ele saia pela borda
-                  esquerda em 375px. */}
-              <img
-                src="/assets/sagui_pulando_2.png"
-                alt=""
-                width={104}
-                height={104}
-                className="w-24 h-24 shrink-0 object-contain drop-shadow-[0_8px_24px_rgba(245,158,11,0.18)] motion-safe:animate-float-suave"
-              />
-              <div className="min-w-0">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mb-3 mx-auto sm:mx-0 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                  <Moon size={22} className="text-gray-900" />
-                </div>
-                <h1 className="text-2xl font-extrabold text-white leading-tight">
-                  <span className="text-gradient">Midnight Mentor</span>
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  Estuda de dia, revisa de noite. O sagui acompanha.
-                </p>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-500 uppercase tracking-widest font-medium text-center mb-3">
-              Como você entra
-            </p>
-
-            <div className="space-y-3">
-              {(Object.entries(ROLE_CONFIG) as [RoleEscolhivel, typeof ROLE_CONFIG['student']][]).map(([role, cfg]) => (
-                <button
-                  key={role}
-                  onClick={() => escolherPapel(role)}
-                  className="w-full glass rounded-2xl p-5 text-left hover:border-amber-500/20 transition-all group border border-white/5 flex items-center gap-4 press lift"
-                >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cfg.gradient} flex items-center justify-center text-white shadow-lg shrink-0`}>
-                    {cfg.icon}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">{cfg.label}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{cfg.desc}</p>
-                  </div>
-                  <ChevronRight size={20} className="text-gray-600 group-hover:text-amber-400 transition-colors shrink-0" />
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6 text-xs text-center text-gray-400">
-              <div className="glass-light rounded-xl px-4 py-2.5 inline-flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConfigured() ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                {isSupabaseConfigured() ? 'Conectado ao banco de dados' : 'Banco não configurado'}
-              </div>
-            </div>
-          </div>
-        </div>
-      </Fragment>
-    );
-  }
-
-  /* ==================================================================
-     Etapa 2: formulario
-     ================================================================== */
-  const roleCfg = ROLE_CONFIG[selectedRole];
-
   return (
     <Fragment>
       <ColorBlindnessToggle />
-      <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#0b1120' }}>
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-amber-500/5 blur-[100px]" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-orange-500/5 blur-[100px]" />
-        </div>
-
-        <div className="w-full max-w-sm animate-fade-up relative z-10">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-              <Moon size={28} className="text-gray-900" />
+      <div className="min-h-dvh bg-white flex items-center justify-center px-5 py-8 md:p-10">
+        <div className="w-full max-w-md md:max-w-5xl md:grid md:grid-cols-2 md:gap-14 md:items-center animate-fade-up">
+          {/* Herói: o sagui abre a tela, com o balão de fala. */}
+          <div className="flex flex-col items-center text-center">
+            <div className="flex items-center gap-1 md:flex-col md:gap-4">
+              <img
+                src="/assets/sagui_acenando_2.png"
+                alt=""
+                width={240}
+                height={240}
+                className="w-28 h-28 md:w-60 md:h-60 shrink-0 object-contain motion-safe:animate-float-suave"
+              />
+              <div className="relative max-w-[200px] md:max-w-xs rounded-2xl border-2 border-slate-200 shadow-lip bg-white px-4 py-3 text-left md:text-center">
+                <p className="text-sm md:text-base font-bold text-tinta-900 leading-snug">Oi! Eu sou o sagui. Bora estudar pro ENEM?</p>
+              </div>
             </div>
-            <h1 className="text-2xl font-extrabold text-white">
-              <span className="text-gradient">Midnight Mentor</span>
-            </h1>
+            <h1 className="mt-5 text-[32px] md:text-5xl font-black text-azul-600 leading-tight tracking-tight">Midnight Mentor</h1>
+            <p className="text-base md:text-lg font-semibold text-slate-500 mt-1">Seu mentor de estudos para o ENEM</p>
+            <div className="hidden md:inline-flex mt-6 items-center gap-2 text-xs font-bold text-slate-500 rounded-xl border-2 border-slate-200 px-3 py-2">
+              <span className={`w-2 h-2 rounded-full ${isSupabaseConfigured() ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              {isSupabaseConfigured() ? 'Conectado ao banco de dados' : 'Banco não configurado'}
+            </div>
           </div>
 
-          <div className="glass rounded-2xl p-7 relative overflow-hidden">
+          <div className="mt-8 md:mt-0 relative">
             {/* Estado de sucesso: o sagui aprova antes de entrar */}
             {sucesso && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#0b1120]/95 animate-fade-in">
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-white rounded-3xl animate-fade-in">
                 <img loading="lazy"
                   src="/assets/sagui_aprovacao_2.png"
                   alt=""
@@ -449,70 +377,70 @@ export function AuthPage() {
                   height={128}
                   className="w-32 h-32 object-contain motion-safe:animate-scale-in"
                 />
-                <p className="text-sm font-semibold text-amber-400">Boa. Bora estudar.</p>
+                <p className="text-lg font-black text-amber-600">Boa. Bora estudar.</p>
               </div>
             )}
 
-            <button
-              onClick={voltarParaPapeis}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-amber-400 transition-colors mb-3 -ml-2 px-2 min-h-[44px] press"
-            >
-              <ChevronLeft size={14} />
-              Trocar perfil
-            </button>
-
-            {/* O `/10` do Tailwind so afeta a ULTIMA cor do gradiente, entao
-                isto virava um bloco quase solido e a descricao sumia por
-                falta de contraste. Fundo neutro, cor fica so no icone. */}
-            <div className="rounded-xl bg-white/[0.04] border border-white/5 p-3 flex items-center gap-3 mb-5">
-              <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${roleCfg.gradient} flex items-center justify-center text-white shrink-0`}>
-                {roleCfg.icon}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">{roleCfg.label}</p>
-                <p className="text-xs text-gray-500">{roleCfg.desc}</p>
-              </div>
+            <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-3">Quem vai entrar?</p>
+            <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Perfil de acesso">
+              {(Object.entries(ROLE_CONFIG) as [RoleEscolhivel, typeof ROLE_CONFIG['student']][]).map(([role, cfg]) => {
+                const sel = role === selectedRole;
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    role="radio"
+                    aria-checked={sel}
+                    onClick={() => escolherPapel(role)}
+                    title={cfg.desc}
+                    className={`min-h-[92px] rounded-2xl border-2 px-2 py-3 flex flex-col items-center justify-center gap-1.5 text-center transition-[transform,background-color,border-color] active:translate-y-1 active:shadow-none ${
+                      sel ? 'bg-ceu-100 border-ceu-500 shadow-lip-ceu text-ceu-600' : 'bg-white border-slate-200 shadow-lip text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {cfg.icon}
+                    <span className={`text-[15px] font-extrabold leading-tight ${sel ? 'text-ceu-600' : 'text-tinta-900'}`}>{cfg.label}</span>
+                  </button>
+                );
+              })}
             </div>
+            <p className="text-sm font-semibold text-slate-500 mt-3 text-center">{ROLE_CONFIG[selectedRole].desc}</p>
 
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-              <span className="text-xs text-gray-500 uppercase tracking-widest font-medium">
-                {isLogin ? 'Acessar' : 'Criar conta'}
-              </span>
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-            </div>
+            <div className="mt-5">
+              {/* Banners de servidor/conexao (erros de campo vivem no form) */}
+              {error && (
+                <div className="text-red-700 text-sm font-bold bg-red-50 rounded-2xl px-4 py-3 border-2 border-red-200 animate-slide-up mb-4" role="alert">
+                  {error}
+                </div>
+              )}
+              {aviso && (
+                <div className="text-amber-700 text-sm font-bold bg-amber-50 rounded-2xl px-4 py-3 border-2 border-amber-200 animate-slide-up mb-4" role="status">
+                  {aviso}
+                </div>
+              )}
 
-            {/* Banners de servidor/conexao (erros de campo vivem no form) */}
-            {error && (
-              <div className="text-red-400 text-sm bg-red-500/10 rounded-xl px-4 py-2.5 border border-red-500/10 animate-slide-up mb-4" role="alert">
-                {error}
+              {/* key reseta os inputs nao-controlados ao trocar de modo */}
+              <AuthForm
+                key={isLogin ? 'login' : 'cadastro'}
+                isLogin={isLogin}
+                loading={loading}
+                onSubmit={handleAutenticar}
+              />
+
+              <div className="mt-5 text-center">
+                <button
+                  onClick={alternarModo}
+                  className="text-sm font-semibold text-slate-500 min-h-[44px] px-2"
+                >
+                  {isLogin ? 'Ainda não tem conta? ' : 'Já tem conta? '}
+                  <span className="text-ceu-600 font-extrabold">
+                    {isLogin ? 'Criar agora' : 'Entrar'}
+                  </span>
+                </button>
               </div>
-            )}
-
-            {aviso && (
-              <div className="text-amber-300 text-sm bg-amber-500/10 rounded-xl px-4 py-2.5 border border-amber-500/15 animate-slide-up mb-4" role="status">
-                {aviso}
-              </div>
-            )}
-
-            {/* key reseta os inputs nao-controlados ao trocar de modo */}
-            <AuthForm
-              key={isLogin ? 'login' : 'cadastro'}
-              isLogin={isLogin}
-              loading={loading}
-              onSubmit={handleAutenticar}
-            />
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={alternarModo}
-                className="text-sm text-gray-500 hover:text-amber-400 transition-colors"
-              >
-                {isLogin ? 'Ainda não tem conta? ' : 'Já tem conta? '}
-                <span className="text-amber-400 hover:text-amber-300 font-medium">
-                  {isLogin ? 'Criar agora' : 'Entrar'}
-                </span>
-              </button>
+              <p className="md:hidden mt-2 flex items-center justify-center gap-2 text-xs font-bold text-slate-400">
+                <span className={`w-2 h-2 rounded-full ${isSupabaseConfigured() ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                {isSupabaseConfigured() ? 'Conectado ao banco de dados' : 'Banco não configurado'}
+              </p>
             </div>
           </div>
         </div>

@@ -56,7 +56,7 @@ export function XpMilestone({ open, xp, acertos, total, onClose, approval = fals
       {open && (
     <m.div
       className="fixed inset-0 z-[320] flex items-center justify-center p-4"
-      style={{ background: 'rgba(11, 17, 32, 0.78)', backdropFilter: 'blur(12px)' }}
+      style={{ background: 'rgba(11, 15, 25, 0.45)', backdropFilter: 'blur(12px)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -116,12 +116,12 @@ export function XpMilestone({ open, xp, acertos, total, onClose, approval = fals
             />
             <div className="mm-xp-pop relative z-10 flex flex-col items-center">
               <span className="text-5xl md:text-6xl font-black text-gradient-amber drop-shadow">+<AnimatedNumber value={xp} /></span>
-              <span className="text-sm font-bold text-gray-300 tracking-widest uppercase mt-1">XP alcançado!</span>
+              <span className="text-sm font-bold text-slate-700 tracking-widest uppercase mt-1">XP alcançado!</span>
             </div>
           </div>
 
-          <p className="mt-4 text-sm text-gray-400"> Você acertou <span className="text-emerald-400 font-semibold">{acertos}</span> de{' '}
-            <span className="text-white font-semibold">{total}</span> questões. Que maravilha! 
+          <p className="mt-4 text-sm text-slate-600"> Você acertou <span className="text-emerald-600 font-semibold">{acertos}</span> de{' '}
+            <span className="text-tinta-900 font-semibold">{total}</span> questões. Que maravilha! 
           </p>
 
           <m.button

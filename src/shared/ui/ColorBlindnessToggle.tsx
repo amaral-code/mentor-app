@@ -56,8 +56,8 @@ export function ColorBlindnessToggle() {
         onClick={() => setIsOpen(!isOpen)}
         className={`glass-light rounded-xl px-3 py-2 text-xs border transition-all flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] ${
           current !== 'normal'
-            ? 'border-amber-500/30 text-amber-400 hover:border-amber-500/50'
-            : 'border-white/5 text-gray-500 hover:text-gray-300 hover:border-white/10'
+            ? 'border-amber-500/30 text-amber-600 hover:border-amber-500/50'
+            : 'border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-200'
         }`}
         title="Acessibilidade para daltonismo"
       >
@@ -78,14 +78,14 @@ export function ColorBlindnessToggle() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 glass rounded-2xl p-1.5 min-w-[260px] border border-white/5 shadow-xl animate-fade-up overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 glass rounded-2xl p-1.5 min-w-[260px] border border-slate-200 shadow-xl animate-fade-up overflow-hidden">
             {GROUP_ORDER.map(group => {
               const items = group === '' ? OPTIONS.filter(o => o.group === '') : OPTIONS.filter(o => o.group === group);
               if (items.length === 0) return null;
               return (
                 <div key={group || 'normal'}>
                   {group && (
-                    <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-gray-600 font-semibold">
+                    <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
                       {group}
                     </div>
                   )}
@@ -95,14 +95,14 @@ export function ColorBlindnessToggle() {
                       onClick={() => handleSelect(type)}
                       className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-3 ${
                         current === type
-                          ? 'bg-amber-500/10 text-amber-400'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          ? 'bg-amber-500/10 text-amber-600'
+                          : 'text-slate-600 hover:text-tinta-900 hover:bg-slate-50'
                       }`}
                     >
                       <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                         current === type
                           ? 'border-amber-400 bg-amber-400/20'
-                          : 'border-gray-600'
+                          : 'border-slate-300'
                       }`}>
                         {current === type && (
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />

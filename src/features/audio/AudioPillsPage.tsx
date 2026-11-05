@@ -146,24 +146,24 @@ export function AudioPillsPage() {
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-600/10 flex items-center justify-center">
-          <Headphones size={20} className="text-violet-400" />
+          <Headphones size={20} className="text-violet-600" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-white">Pilulas de Audio</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Tres minutos por tema. Fone no ouvido, tela apagada.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Pilulas de Audio</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Tres minutos por tema. Fone no ouvido, tela apagada.</p>
         </div>
       </div>
 
       {ativo && (
         <div className="glass rounded-2xl p-5 space-y-4 border border-violet-500/15">
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-violet-400/80">{ativo.materia}</p>
-            <h2 className="text-lg font-bold text-white mt-0.5">{ativo.titulo}</h2>
-            <p className="text-xs text-gray-500 mt-1">{ativo.resumo}</p>
+            <p className="text-[11px] uppercase tracking-wider text-violet-600">{ativo.materia}</p>
+            <h2 className="text-lg font-bold text-tinta-900 mt-0.5">{ativo.titulo}</h2>
+            <p className="text-xs text-slate-500 mt-1">{ativo.resumo}</p>
           </div>
 
           {gerando ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400">
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600">
               <Loader2 size={16} className="animate-spin" />
               Preparando o audio desta pílula...
             </div>
@@ -178,7 +178,7 @@ export function AudioPillsPage() {
                 onFim={() => concluir(ativo)}
               />
 
-              <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/[0.04]">
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-200">
                 <select
                   value={voz}
                   onChange={(e) => {
@@ -186,24 +186,24 @@ export function AudioPillsPage() {
                     setAudio(null);
                   }}
                   aria-label="Voz da locucao"
-                  className="bg-transparent text-xs text-gray-400 border border-white/[0.06] rounded-lg px-2 py-1.5"
+                  className="bg-transparent text-xs text-slate-600 border border-slate-200 rounded-lg px-2 py-1.5"
                 >
                   {VOZES.map((v) => (
-                    <option key={v.id} value={v.id} className="bg-slate-900">
+                    <option key={v.id} value={v.id} className="bg-white">
                       {v.nome} ({v.genero})
                     </option>
                   ))}
                 </select>
 
-                <button onClick={() => setAtivo(null)} className="btn-ghost text-xs text-gray-500">
+                <button onClick={() => setAtivo(null)} className="btn-ghost text-xs text-slate-500">
                   Fechar
                 </button>
               </div>
 
               {roteiro && (
-                <details className="text-xs text-gray-500">
-                  <summary className="cursor-pointer hover:text-gray-300">Ler o roteiro</summary>
-                  <p className="mt-2 leading-relaxed whitespace-pre-line text-gray-400">{roteiro}</p>
+                <details className="text-xs text-slate-500">
+                  <summary className="cursor-pointer hover:text-slate-700">Ler o roteiro</summary>
+                  <p className="mt-2 leading-relaxed whitespace-pre-line text-slate-600">{roteiro}</p>
                 </details>
               )}
             </>
@@ -211,7 +211,7 @@ export function AudioPillsPage() {
         </div>
       )}
 
-      {carregando && <p className="text-sm text-gray-500 text-center py-8">Carregando catálogo...</p>}
+      {carregando && <p className="text-sm text-slate-500 text-center py-8">Carregando catálogo...</p>}
 
       {!carregando && modulos.length === 0 && (
         <div className="glass rounded-2xl p-5">
@@ -225,7 +225,7 @@ export function AudioPillsPage() {
 
       {porMateria.map(([materia, lista]) => (
         <div key={materia} className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">{materia}</h2>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">{materia}</h2>
           <div className="space-y-2">
             {lista.map((m) => {
               const p = progresso[m.id];
@@ -233,20 +233,20 @@ export function AudioPillsPage() {
                 <button
                   key={m.id}
                   onClick={() => abrir(m)}
-                  className="w-full flex items-center gap-3 py-3 px-3 rounded-xl glass-light border border-white/[0.03] hover:border-violet-500/20 text-left press"
+                  className="w-full flex items-center gap-3 py-3 px-3 rounded-xl glass-light border border-slate-200 hover:border-violet-500/20 text-left press"
                 >
                   <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0">
                     {p?.concluido ? (
-                      <CheckCircle2 size={16} className="text-emerald-400" />
+                      <CheckCircle2 size={16} className="text-emerald-600" />
                     ) : (
-                      <Sparkles size={16} className="text-violet-400" />
+                      <Sparkles size={16} className="text-violet-600" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{m.titulo}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{m.topico}</p>
+                    <p className="text-sm font-medium text-tinta-900 truncate">{m.titulo}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{m.topico}</p>
                   </div>
-                  <span className="text-[11px] text-gray-500 tabular-nums shrink-0">
+                  <span className="text-[11px] text-slate-500 tabular-nums shrink-0">
                     {p && !p.concluido && p.segundosOuvidos > 5
                       ? `${formatarTempo(p.segundosOuvidos)} / ${formatarTempo(m.duracaoSegundos)}`
                       : formatarTempo(m.duracaoSegundos)}

@@ -120,40 +120,40 @@ export function SecaoResponsaveis() {
 
   return (
     <div id="secao-responsaveis" className="glass-card rounded-2xl p-5 scroll-mt-24">
-      <h2 className="text-sm font-semibold text-gray-300 mb-1 flex items-center gap-2">
-        <ShieldCheck size={15} className="text-violet-400" /> Responsáveis
+      <h2 className="text-sm font-semibold text-slate-700 mb-1 flex items-center gap-2">
+        <ShieldCheck size={15} className="text-violet-600" /> Responsáveis
       </h2>
-      <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+      <p className="text-xs text-slate-500 mb-4 leading-relaxed">
         Quem tem seu código vê seu ritmo de estudo e seus sinais de cansaço. Nunca suas
         conversas, seu caderno ou o que você escreve sobre como está se sentindo.
       </p>
 
       {/* ---------- Código ---------- */}
-      <div className="glass-light rounded-xl p-4 border border-white/[0.05]">
-        <label className="block text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">
+      <div className="glass-light rounded-xl p-4 border border-slate-200">
+        <label className="block text-xs text-slate-500 mb-2 font-medium uppercase tracking-wider">
           Seu código
         </label>
         {carregando ? (
-          <div className="h-9 w-40 rounded-lg bg-white/5 animate-pulse" />
+          <div className="h-9 w-40 rounded-lg bg-slate-50 animate-pulse" />
         ) : codigo ? (
           <div className="flex flex-wrap items-center gap-2">
-            <code className="text-xl font-extrabold tracking-[0.2em] text-amber-300 tabular-nums select-all">
+            <code className="text-xl font-extrabold tracking-[0.2em] text-amber-600 tabular-nums select-all">
               {formatarCodigo(codigo)}
             </code>
             <button
               type="button"
               onClick={copiar}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:border-amber-400/40 hover:text-amber-200 transition-all min-h-[40px]"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 hover:border-amber-400/40 hover:text-amber-600 transition-all min-h-[40px]"
             >
-              {copiado ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              {copiado ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
               {copiado ? 'Copiado' : 'Copiar'}
             </button>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">Código indisponível. Tente recarregar a página.</p>
+          <p className="text-sm text-slate-500">Código indisponível. Tente recarregar a página.</p>
         )}
 
-        <p className="text-xs text-gray-500 mt-3 leading-relaxed">
+        <p className="text-xs text-slate-500 mt-3 leading-relaxed">
           Entregue este código a quem você quer que acompanhe seus estudos. Quem digitar
           passa a te acompanhar na hora, então só dê a quem você confia.
         </p>
@@ -163,7 +163,7 @@ export function SecaoResponsaveis() {
             <div className="mt-3 rounded-lg bg-amber-500/[0.07] border border-amber-500/20 p-3">
               {/* A confusao que esta frase evita: trocar o codigo NAO
                   remove quem ja entrou. */}
-              <p className="text-xs text-amber-200/90 leading-relaxed">
+              <p className="text-xs text-amber-600 leading-relaxed">
                 O código atual para de funcionar. Quem <strong>já</strong> acompanha você
                 continua na lista abaixo. Para tirar alguém, use “Remover”.
               </p>
@@ -172,14 +172,14 @@ export function SecaoResponsaveis() {
                   type="button"
                   onClick={trocarCodigo}
                   disabled={trocando}
-                  className="px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/40 text-xs font-semibold text-amber-200 min-h-[40px] disabled:opacity-60"
+                  className="px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/40 text-xs font-semibold text-amber-600 min-h-[40px] disabled:opacity-60"
                 >
                   {trocando ? 'Trocando…' : 'Trocar mesmo assim'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmandoTroca(false)}
-                  className="px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-gray-200 min-h-[40px]"
+                  className="px-3 py-2 rounded-lg text-xs text-slate-600 hover:text-tinta-700 min-h-[40px]"
                 >
                   Cancelar
                 </button>
@@ -189,7 +189,7 @@ export function SecaoResponsaveis() {
             <button
               type="button"
               onClick={() => setConfirmandoTroca(true)}
-              className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-amber-400 transition-colors mt-3 min-h-[40px]"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors mt-3 min-h-[40px]"
             >
               <RefreshCw size={13} /> Gerar um código novo
             </button>
@@ -197,14 +197,14 @@ export function SecaoResponsaveis() {
       </div>
 
       {/* ---------- Quem acompanha ---------- */}
-      <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mt-5 mb-2">
+      <h3 className="text-xs text-slate-500 uppercase tracking-wider font-medium mt-5 mb-2">
         Quem acompanha você
       </h3>
       {carregando ? (
-        <div className="h-14 rounded-xl bg-white/5 animate-pulse" />
+        <div className="h-14 rounded-xl bg-slate-50 animate-pulse" />
       ) : lista.length === 0 ? (
-        <p className="text-sm text-gray-500 glass-light rounded-xl px-3 py-4 flex items-center gap-2">
-          <UserPlus size={15} className="text-gray-600 shrink-0" />
+        <p className="text-sm text-slate-500 glass-light rounded-xl px-3 py-4 flex items-center gap-2">
+          <UserPlus size={15} className="text-slate-400 shrink-0" />
           Ninguém ainda. Enquanto a lista estiver vazia, só você vê seus dados.
         </p>
       ) : (
@@ -212,17 +212,17 @@ export function SecaoResponsaveis() {
           {lista.map((v) => (
             <li
               key={v.id}
-              className="glass-light rounded-xl px-3 py-3 flex items-center justify-between gap-3 border border-white/[0.04]"
+              className="glass-light rounded-xl px-3 py-3 flex items-center justify-between gap-3 border border-slate-200"
             >
               <div className="min-w-0">
-                <p className="text-sm text-white font-medium truncate">{v.nome}</p>
-                <p className="text-xs text-gray-500 truncate">{v.email}</p>
+                <p className="text-sm text-tinta-900 font-medium truncate">{v.nome}</p>
+                <p className="text-xs text-slate-500 truncate">{v.email}</p>
               </div>
               <button
                 type="button"
                 onClick={() => revogar(v)}
                 disabled={revogando === v.id}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-gray-400 border border-white/10 hover:border-red-500/40 hover:text-red-300 transition-all min-h-[40px] shrink-0 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-slate-600 border border-slate-200 hover:border-red-500/40 hover:text-red-600 transition-all min-h-[40px] shrink-0 disabled:opacity-50"
               >
                 <Trash2 size={13} />
                 {revogando === v.id ? 'Removendo…' : 'Remover'}
@@ -233,10 +233,10 @@ export function SecaoResponsaveis() {
       )}
 
       {/* ---------- Data de nascimento ---------- */}
-      <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mt-5 mb-2">
+      <h3 className="text-xs text-slate-500 uppercase tracking-wider font-medium mt-5 mb-2">
         Data de nascimento
       </h3>
-      <p className="text-xs text-gray-500 mb-2 leading-relaxed">
+      <p className="text-xs text-slate-500 mb-2 leading-relaxed">
         Só decide uma coisa: quem tem menos de 16 anos precisa da autorização de um
         responsável para falar com um psicólogo pelo app (LGPD).
         {menor && ' Sem data informada, o app pede essa autorização por segurança.'}
@@ -247,13 +247,13 @@ export function SecaoResponsaveis() {
           aria-label="Data de nascimento"
           value={nascimento}
           onChange={(e) => setNascimento(e.target.value)}
-          className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white outline-none focus:border-amber-400/40 min-h-[44px]"
+          className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-slate-200 text-sm text-tinta-900 outline-none focus:border-amber-400/40 min-h-[44px]"
         />
         <button
           type="button"
           onClick={salvarNascimento}
           disabled={salvandoData || !nascimento || nascimento === (session?.dataNascimento ?? '')}
-          className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold text-gray-200 hover:border-amber-400/40 transition-all min-h-[44px] disabled:opacity-40"
+          className="px-5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-tinta-700 hover:border-amber-400/40 transition-all min-h-[44px] disabled:opacity-40"
         >
           {salvandoData ? 'Salvando…' : 'Salvar'}
         </button>

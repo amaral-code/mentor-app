@@ -66,15 +66,15 @@ export function StudentStore() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-400 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-tinta-900">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
               <path d="M16 10a4 4 0 0 1-8 0" />
             </svg>
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white">Loja do Sagui</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Customize o seu companheiro de estudos</p>
+            <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Loja do Sagui</h1>
+            <p className="text-sm text-slate-500 mt-0.5">Customize o seu companheiro de estudos</p>
           </div>
         </div>
 
@@ -86,13 +86,13 @@ export function StudentStore() {
             </svg>
           </div>
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Saldo de XP</p>
-            <p className="text-xl font-extrabold text-amber-400 leading-none">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Saldo de XP</p>
+            <p className="text-xl font-extrabold text-amber-600 leading-none">
               <AnimatedNumber value={gamification.xp} agrupar />{' '}
-              <span className="text-xs font-medium text-gray-500">XP</span>
+              <span className="text-xs font-medium text-slate-500">XP</span>
             </p>
           </div>
-          <span className="ml-1 px-2 py-1 rounded-full bg-white/5 text-[10px] text-gray-400 font-medium">Nv. {level}</span>
+          <span className="ml-1 px-2 py-1 rounded-full bg-slate-50 text-[10px] text-slate-600 font-medium">Nv. {level}</span>
         </div>
       </div>
 
@@ -106,7 +106,7 @@ export function StudentStore() {
               animate={{ opacity: 1, y: 0 }}
               transition={reduzir ? { duration: 0 } : { delay: atrasoDoItem(i), duration: 0.25 }}
               className={`glass rounded-2xl overflow-hidden border transition-all group lift ${
-                equipped ? 'border-emerald-500/30' : 'border-white/5 hover:border-white/10'
+                equipped ? 'border-emerald-500/30' : 'border-slate-200 hover:border-slate-200'
               }`}
             >
               {/* Preview do item sobre o Sagui */}
@@ -115,10 +115,10 @@ export function StudentStore() {
                   src={SAGUI_IDLE}
                   alt="Sagui"
                   draggable={false}
-                  className="w-32 h-32 object-contain mascot-assist-idle drop-shadow-[0_10px_20px_rgba(0,0,0,0.4)]"
+                  className="w-32 h-32 object-contain mascot-assist-idle "
                 />
                 <span className="absolute top-3 right-3 text-3xl select-none" aria-hidden>
-                  <AppIcon name={item.icon} size={30} className="text-amber-300" />
+                  <AppIcon name={item.icon} size={30} className="text-amber-600" />
                 </span>
                 {equipped && (
                   <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full bg-emerald-500/90 text-[10px] font-bold text-emerald-950 shadow-lg"> EQUIPADO
@@ -129,17 +129,17 @@ export function StudentStore() {
               {/* Conteúdo */}
               <div className="p-5">
                 <div className="flex items-center justify-between mb-1.5">
-                  <h3 className="font-bold text-white">{item.name}</h3>
+                  <h3 className="font-bold text-tinta-900">{item.name}</h3>
                 </div>
-                <p className="text-xs text-gray-500 leading-relaxed min-h-[2rem]">{item.desc}</p>
-                <p className="text-[10px] text-gray-600 mt-1.5"><Lightbulb size={16} className="inline-block align-[-0.15em] text-amber-400" /> {item.benefit}</p>
+                <p className="text-xs text-slate-500 leading-relaxed min-h-[2rem]">{item.desc}</p>
+                <p className="text-[10px] text-slate-400 mt-1.5"><Lightbulb size={16} className="inline-block align-[-0.15em] text-amber-600" /> {item.benefit}</p>
 
                 {/* Valor */}
                 <div className="flex items-center gap-1.5 mt-3">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                   </svg>
-                  <span className={`font-bold tabular-nums ${affordable || purchased ? 'text-amber-400' : 'text-red-400'}`}>
+                  <span className={`font-bold tabular-nums ${affordable || purchased ? 'text-amber-600' : 'text-red-600'}`}>
                     {item.price} XP
                   </span>
                 </div>
@@ -151,24 +151,24 @@ export function StudentStore() {
                       onClick={() => handleBuy(item.id)}
                       disabled={!affordable || operando !== null}
                       aria-busy={operando === item.id}
-                      className={`btn w-full ${affordable ? 'btn-primary' : '!bg-white/[0.03] !text-gray-500 border border-white/5'}`}
+                      className={`btn w-full ${affordable ? 'btn-primary' : '!bg-slate-50 !text-slate-500 border border-slate-200'}`}
                     >
                       {operando === item.id ? (
                         <>Processando…</>
                       ) : affordable ? (
-                        <><Gift size={16} className="inline-block align-[-0.15em] text-violet-400" /> Comprar</>
+                        <><Gift size={16} className="inline-block align-[-0.15em] text-violet-600" /> Comprar</>
                       ) : (
-                        <><Lock size={16} className="inline-block align-[-0.15em] text-gray-500" /> {item.price - gamification.xp} XP restantes</>
+                        <><Lock size={16} className="inline-block align-[-0.15em] text-slate-500" /> {item.price - gamification.xp} XP restantes</>
                       )}
                     </button>
                   ) : equipped ? (
                     <button
                       disabled
-                      className="btn w-full !bg-emerald-500/15 !text-emerald-400 border border-emerald-500/25 cursor-default"
+                      className="btn w-full !bg-emerald-500/15 !text-emerald-600 border border-emerald-500/25 cursor-default"
                     > Equipado
                     </button>
                   ) : (
-                    <button onClick={() => handleEquip(item.id)} disabled={operando !== null} aria-busy={operando === item.id} className="btn w-full btn-secondary border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/10">{operando === item.id ? 'Equipando…' : 'Equipar'}
+                    <button onClick={() => handleEquip(item.id)} disabled={operando !== null} aria-busy={operando === item.id} className="btn w-full btn-secondary border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/10">{operando === item.id ? 'Equipando…' : 'Equipar'}
                     </button>
                   )}
                 </div>
@@ -180,16 +180,16 @@ export function StudentStore() {
 
       {/* Como ganhar XP */}
       <div className="glass rounded-2xl p-5 border border-amber-500/10 bg-gradient-to-br from-amber-500/5 to-transparent">
-        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /> Como ganhar mais XP?</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-400">
-          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex items-center gap-2.5">
-            <span className="text-lg">⏱</span> Complete ciclos de <b className="text-gray-200">foco</b> na Companhia do Sagui
+        <h3 className="text-sm font-bold text-tinta-900 mb-3 flex items-center gap-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-600" /> Como ganhar mais XP?</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600">
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center gap-2.5">
+            <span className="text-lg">⏱</span> Complete ciclos de <b className="text-tinta-700">foco</b> na Companhia do Sagui
           </div>
-          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex items-center gap-2.5">
-            <span className="text-lg"><Target size={16} className="inline-block align-[-0.15em] text-emerald-400" /></span> Acerte questões no <b className="text-gray-200">Quiz</b> e nos desafios
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center gap-2.5">
+            <span className="text-lg"><Target size={16} className="inline-block align-[-0.15em] text-emerald-600" /></span> Acerte questões no <b className="text-tinta-700">Quiz</b> e nos desafios
           </div>
-          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex items-center gap-2.5">
-            <span className="text-lg"><Flame size={16} className="inline-block align-[-0.15em] text-amber-400" /></span> Mantenha sua <b className="text-gray-200">sequência</b> diária de estudos
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center gap-2.5">
+            <span className="text-lg"><Flame size={16} className="inline-block align-[-0.15em] text-amber-600" /></span> Mantenha sua <b className="text-tinta-700">sequência</b> diária de estudos
           </div>
         </div>
       </div>

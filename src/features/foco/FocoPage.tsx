@@ -31,16 +31,16 @@ const FocoStats = memo(function FocoStats({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       <div className="glass rounded-xl px-4 py-3 text-center">
-        <p className="text-lg font-bold text-white tabular-nums">{sessoesHoje}</p>
-        <p className="text-[10px] text-gray-500 mt-0.5">Sessões hoje</p>
+        <p className="text-lg font-bold text-tinta-900 tabular-nums">{sessoesHoje}</p>
+        <p className="text-[10px] text-slate-500 mt-0.5">Sessões hoje</p>
       </div>
       <div className="glass rounded-xl px-4 py-3 text-center">
-        <p className="text-lg font-bold text-white tabular-nums">{totalSessoes}</p>
-        <p className="text-[10px] text-gray-500 mt-0.5">Total sessões</p>
+        <p className="text-lg font-bold text-tinta-900 tabular-nums">{totalSessoes}</p>
+        <p className="text-[10px] text-slate-500 mt-0.5">Total sessões</p>
       </div>
       <div className="glass rounded-xl px-4 py-3 text-center">
-        <p className="text-lg font-bold text-white tabular-nums">{Math.round(totalFocoMin)}</p>
-        <p className="text-[10px] text-gray-500 mt-0.5">Min focados</p>
+        <p className="text-lg font-bold text-tinta-900 tabular-nums">{Math.round(totalFocoMin)}</p>
+        <p className="text-[10px] text-slate-500 mt-0.5">Min focados</p>
       </div>
     </div>
   );
@@ -68,19 +68,19 @@ const FocoHistorico = memo(function FocoHistorico({
 
       {metricasAtencao.length > 0 && (
         <div className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">
-            <BarChart3 size={16} className="inline-block align-[-0.15em] text-violet-400" /> Atenção recente
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">
+            <BarChart3 size={16} className="inline-block align-[-0.15em] text-violet-600" /> Atenção recente
           </h2>
           <div className="space-y-1.5">
             {metricasAtencao.map((m) => (
-              <div key={m.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
+              <div key={m.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-slate-50 transition-all">
                 <div className="flex items-center gap-2">
-                  <span className="text-violet-400">●</span>
-                  <span className="text-gray-400">
+                  <span className="text-violet-600">●</span>
+                  <span className="text-slate-600">
                     {new Date(`${m.sessionDate}T12:00:00`).toLocaleDateString()}
                   </span>
                 </div>
-                <span className="text-gray-500 text-xs tabular-nums">
+                <span className="text-slate-500 text-xs tabular-nums">
                   {m.focusedMinutes}min focados • {m.distractionCount} {m.distractionCount === 1 ? 'distração' : 'distrações'}
                 </span>
               </div>
@@ -91,15 +91,15 @@ const FocoHistorico = memo(function FocoHistorico({
 
       {sessoes.length > 0 && (
         <div className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3"><BarChart3 size={16} className="inline-block align-[-0.15em] text-cyan-400" /> Últimas sessões</h2>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3"><BarChart3 size={16} className="inline-block align-[-0.15em] text-cyan-700" /> Últimas sessões</h2>
           <div className="space-y-1.5">
             {[...sessoes].reverse().slice(0, 7).map((h, i) => (
-              <div key={i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02] transition-all">
+              <div key={i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-slate-50 transition-all">
                 <div className="flex items-center gap-2">
-                  <span className="text-emerald-400">●</span>
-                  <span className="text-gray-400">{new Date(h.data).toLocaleDateString()}</span>
+                  <span className="text-emerald-600">●</span>
+                  <span className="text-slate-600">{new Date(h.data).toLocaleDateString()}</span>
                 </div>
-                <span className="text-gray-500 text-xs tabular-nums">{h.minutos}min • {new Date(h.data).toLocaleTimeString()}</span>
+                <span className="text-slate-500 text-xs tabular-nums">{h.minutos}min • {new Date(h.data).toLocaleTimeString()}</span>
               </div>
             ))}
           </div>
@@ -177,13 +177,13 @@ const TravaFocoModal = memo(function TravaFocoModal({
       aria-label="Foco interrompido"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6"
     >
-      <div className="w-full max-w-sm rounded-3xl border border-red-500/25 bg-[#0e1628] p-6 text-center shadow-glass-lg animate-scale-in">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-400">
+      <div className="w-full max-w-sm rounded-3xl border border-red-500/25 bg-white p-6 text-center shadow-lip animate-scale-in">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-600">
           <ShieldAlert size={24} />
         </span>
-        <h2 className="mt-3 text-lg font-bold text-white">Foco Interrompido</h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-300">
-          Você saiu do app e o cronômetro <strong className="text-white">pausou em {restantes}</strong>.
+        <h2 className="mt-3 text-lg font-bold text-tinta-900">Foco Interrompido</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">
+          Você saiu do app e o cronômetro <strong className="text-tinta-900">pausou em {restantes}</strong>.
           nenhum segundo foi perdido. O Modo Aula exige atenção exclusiva.
         </p>
         <p className="mt-2 text-xs text-slate-500">
@@ -198,7 +198,7 @@ const TravaFocoModal = memo(function TravaFocoModal({
           onPointerCancel={pararHold}
           onContextMenu={(e) => e.preventDefault()}
           aria-label={`Segure por 3 segundos para voltar ao foco. Faltam ${faltam} segundos.`}
-          className="relative mt-6 h-14 w-full select-none touch-none overflow-hidden rounded-2xl border border-amber-500/40 bg-white/[0.04] text-sm font-bold text-white active:scale-[0.99] transition-transform"
+          className="relative mt-6 h-14 w-full select-none touch-none overflow-hidden rounded-2xl border border-amber-500/40 bg-slate-50 text-sm font-bold text-tinta-900 active:scale-[0.99] transition-transform"
         >
           <span
             aria-hidden="true"
@@ -206,7 +206,7 @@ const TravaFocoModal = memo(function TravaFocoModal({
             style={{ width: `${progresso}%` }}
           />
           <span className="relative flex items-center justify-center gap-2">
-            <Hand size={17} className="text-amber-300" />
+            <Hand size={17} className="text-amber-600" />
             {progresso > 0 ? `Segurando… ${faltam}s` : 'Segure 3s para voltar ao foco'}
           </span>
         </button>
@@ -436,16 +436,16 @@ export function FocoPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 flex items-center justify-center">
-          <Timer size={20} className="text-emerald-400" />
+          <Timer size={20} className="text-emerald-600" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-white">Foco Total</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Timer Pomodoro para estudos</p>
+          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Foco Total</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Timer Pomodoro para estudos</p>
         </div>
         {cansaco >= 4 && (
           <button
             onClick={() => setMeditando(true)}
-            className="btn-secondary !px-4 !py-3 min-h-[44px] text-sm border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/10"
+            className="btn-secondary !px-4 !py-3 min-h-[44px] text-sm border-emerald-500/25 text-emerald-600 hover:bg-emerald-500/10"
             title="Você parece cansado. Respire um pouco antes de continuar"
           > Meditar
           </button>
@@ -457,7 +457,7 @@ export function FocoPage() {
         {/* Progress ring */}
         <div className="relative w-48 h-48 mx-auto mb-6">
           <svg className="w-48 h-48 -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#E2E8F0" strokeWidth="6" />
             <circle
               cx="60" cy="60" r="52" fill="none"
               stroke={state === 'foco' || state === 'concluido' ? '#10b981' : state === 'pausa' ? '#f59e0b' : '#475569'}
@@ -467,10 +467,10 @@ export function FocoPage() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-5xl font-extrabold tabular-nums text-white tracking-tight">
+            <span className="text-5xl font-extrabold tabular-nums text-tinta-900 tracking-tight">
               {formatTime(segundos)}
             </span>
-            <span className="text-xs text-gray-500 mt-1 uppercase tracking-wider">
+            <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">
               {state === 'idle' && 'Pronto'}
               {state === 'foco' && 'Foco'}
               {state === 'pausa' && 'Pausa'}
@@ -489,7 +489,7 @@ export function FocoPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } salvarMetricasFoco(); setTravado(false); setState('concluido'); }}
-                className="btn-ghost text-sm text-gray-400 hover:text-red-400"
+                className="btn-ghost text-sm text-slate-600 hover:text-red-600"
               > Parar
               </button>
               {state === 'pausa' ? (
@@ -514,21 +514,21 @@ export function FocoPage() {
         </div>
 
         {/* Cycle info */}
-        <div className="flex items-center justify-center gap-4 mt-5 text-xs text-gray-500">
+        <div className="flex items-center justify-center gap-4 mt-5 text-xs text-slate-500">
           <span>{FOCO_MIN}min foco</span>
-          <span className="w-1 h-1 rounded-full bg-gray-600" />
+          <span className="w-1 h-1 rounded-full bg-slate-200" />
           <span>{PAUSA_MIN}min pausa</span>
-          <span className="w-1 h-1 rounded-full bg-gray-600" />
+          <span className="w-1 h-1 rounded-full bg-slate-200" />
           <span>{cicles} ciclos hoje</span>
         </div>
 
         {/* Modo Foco Consciente: tempo de atenção + perdas de foco ao vivo. */}
         <div className="flex items-center justify-center gap-4 mt-3 text-xs" aria-live="polite">
-          <span className="text-indigo-300/90 tabular-nums" title="Tempo de foco contínuo (aba visível)">
+          <span className="text-indigo-600 tabular-nums" title="Tempo de foco contínuo (aba visível)">
             Foco {formatFocusTime(tracker.focusSeconds)}
           </span>
-          <span className="w-1 h-1 rounded-full bg-gray-600" />
-          <span className={tracker.distractionCount > 0 ? 'text-violet-300/90' : 'text-gray-500'} title="Mudanças de aba nesta sessão">
+          <span className="w-1 h-1 rounded-full bg-slate-200" />
+          <span className={tracker.distractionCount > 0 ? 'text-violet-600' : 'text-slate-500'} title="Mudanças de aba nesta sessão">
             {tracker.distractionCount} {tracker.distractionCount === 1 ? 'distração' : 'distrações'}
           </span>
         </div>
@@ -541,7 +541,7 @@ export function FocoPage() {
       <FocoHistorico historico={historico} metricasAtencao={metricasAtencao} />
 
       {/* Dica */}
-      <div className="text-center text-xs text-gray-600 leading-relaxed px-4 py-3 glass-light rounded-xl"> O ciclo Pomodoro ajuda a manter o foco e prevenir o cansaço mental. Complete ciclos para ganhar XP extra!
+      <div className="text-center text-xs text-slate-400 leading-relaxed px-4 py-3 glass-light rounded-xl"> O ciclo Pomodoro ajuda a manter o foco e prevenir o cansaço mental. Complete ciclos para ganhar XP extra!
       </div>
 
       {/* Meditação (respiro) */}

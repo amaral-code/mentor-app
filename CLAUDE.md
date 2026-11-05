@@ -20,7 +20,7 @@ precisam passar. O projeto tem baseline limpo — qualquer erro novo é seu.
 
 ```
 src/
-  app/AppShell.tsx        sidebar (md+) + drawer (mobile), lazy import por aba
+  app/AppShell.tsx        sidebar (md+) + barra inferior e folha "Mais" (mobile), lazy import por aba
   App.tsx                 gating: login -> troca de senha -> onboarding -> papel
   features/<dominio>/     uma pasta por tela
   shared/lib/             lógica pura, testável (é onde ficam os testes)
@@ -268,6 +268,47 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-11-05 — Visual lúdico claro (estilo Duolingo)
+- **Só interface.** Nenhuma regra, rota, store, repositório ou migration
+  mudou. Desenho aprovado pelo dono no Figma ("Midnight Mentor · Visual
+  Lúdico", arquivo `mekZ4BJKJNBpBXewIEu1ZE`).
+- **Tema claro**: fundo branco, azul-noite (`azul-600 #2A3B63`) como cor de
+  título e de ação, âmbar para XP/ofensiva/prêmio, esmeralda para acerto,
+  céu (`ceu-500 #4C8DF6`) para seleção e links. Fonte **Nunito** no lugar
+  da Plus Jakarta Sans. Tokens novos no `tailwind.config.js` (`tinta`,
+  `azul`, `ceu`, `superficie`, sombras `lip-*`).
+- **Botão e cartão "adesivo"**: borda de 2px e um "lábio" de sombra sólida
+  de 4px; ao pressionar, o lábio some e o elemento desce 4px. Classes
+  `.btn-primary`, `.btn-secondary`, `.btn-ambar`, `.btn-sucesso`, `.btn-ceu`,
+  `.btn-perigo` e `.cartao`. Os nomes `.glass*` ficaram por compatibilidade,
+  mas agora desenham o cartão adesivo (sem vidro, sem desfoque).
+- **Conversão das ~80 telas**: classes do tema escuro (`text-white`,
+  `text-gray-*`, `bg-white/5`, `border-white/10`, `bg-midnight-*`, acentos
+  `-300/-400`) foram trocadas por equivalentes claros com um script de
+  regras explícitas, rodado uma única vez. `text-white` só ficou onde há
+  fundo colorido na mesma string. Brilhos neon e sombras pretas saíram.
+- **Navegação**: sidebar clara no desktop (itens em caixa alta, aba ativa
+  em pílula céu, ofensiva/XP/nível no rodapé). No celular, o menu lateral
+  virou **barra superior** (ofensiva, XP, nível) + **barra inferior**
+  (Central, Mentor, Quiz, Ligas, Mais); "Mais" abre uma folha com as outras
+  abas, com o mesmo `data-tab` que o tour procura.
+- **Central em trilha**: as tarefas do Plano do Dia viram bolinhas em
+  zigue-zague (`TrilhaDoDia`). Tocar na bolinha abre a MESMA comprovação de
+  antes; tarefa concluída continua travada (anti XP infinito).
+- **Login numa tela só**: escolher o perfil apenas seleciona; "Entrar" usa
+  o perfil selecionado, como antes.
+- **Quiz**: alternativas adesivo, faixa verde ("Mandou bem!") ou vermelha
+  ("Quase lá!") com explicação e tutor, fim de lição com o sagui e três
+  cartões (XP, acertos, precisão). A resposta continua registrada no toque.
+- Mentor sem o fundo "cósmico"; histórico começa fechado no celular quando
+  não há preferência salva (cobria a conversa inteira).
+- Ranking ganhou pódio dos três primeiros (a lista completa segue igual).
+- `MoonLogo` com IDs únicos por instância: com IDs fixos a lua sumia no
+  topo do celular (o `url(#...)` apontava para a sidebar escondida).
+- Testes: `cssVidro` agora trava o cartão adesivo (sem `backdrop-filter`)
+  no lugar do vidro; 8 casos de `animacoesCss` deixaram de existir junto
+  com as animações cósmicas removidas (765 testes).
 
 ### 2026-09-24 (4) — Índice de cansaço religado
 - **`FADIGA_ZERADA = false`** (decisão do dono). Desligado, nada chegava a

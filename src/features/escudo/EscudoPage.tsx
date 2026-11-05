@@ -147,13 +147,13 @@ export function EscudoPage() {
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/15 to-blue-600/10 flex items-center justify-center">
-          <ShieldCheck size={20} className="text-cyan-400" />
+          <ShieldCheck size={20} className="text-cyan-700" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-white">Escudo de Dopamina</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Ganhe moedas pelo tempo em que você NÃO olha a tela</p>
+          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Escudo de Dopamina</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Ganhe moedas pelo tempo em que você NÃO olha a tela</p>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600">
           <Coins size={16} />
           <span className="font-bold tabular-nums">{carteira.saldo}</span>
         </div>
@@ -172,12 +172,12 @@ export function EscudoPage() {
                   className={`rounded-2xl px-3 py-3 text-left border transition-all ${
                     modo === m.id
                       ? 'border-cyan-500/40 bg-cyan-500/10'
-                      : 'border-white/[0.04] glass-light hover:border-white/[0.08]'
+                      : 'border-slate-200 glass-light hover:border-slate-200'
                   }`}
                 >
-                  <p className={`text-sm font-bold ${modo === m.id ? 'text-cyan-300' : 'text-white'}`}>{m.nome}</p>
-                  <p className="text-[10px] text-gray-500 mt-1 leading-snug">{m.descricao}</p>
-                  <p className="text-[10px] text-amber-400/80 mt-1.5 tabular-nums">
+                  <p className={`text-sm font-bold ${modo === m.id ? 'text-cyan-700' : 'text-tinta-900'}`}>{m.nome}</p>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-snug">{m.descricao}</p>
+                  <p className="text-[10px] text-amber-600 mt-1.5 tabular-nums">
                     x{MULTIPLICADOR_MODO[m.id].toFixed(2)}
                   </p>
                 </button>
@@ -188,7 +188,7 @@ export function EscudoPage() {
               <Lock size={18} /> Ativar escudo
             </button>
 
-            <p className="text-xs text-gray-500 mt-4 leading-relaxed max-w-sm mx-auto">
+            <p className="text-xs text-slate-500 mt-4 leading-relaxed max-w-sm mx-auto">
               Ao ativar, bloqueie a tela e deixe o aparelho de lado. O app conta o tempo em segundo plano
               e converte em moedas de foco.
             </p>
@@ -197,7 +197,7 @@ export function EscudoPage() {
           <>
             <div className="relative w-48 h-48 mx-auto mb-6">
               <svg className="w-48 h-48 -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#E2E8F0" strokeWidth="6" />
                 <circle
                   cx="60"
                   cy="60"
@@ -211,21 +211,21 @@ export function EscudoPage() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-extrabold tabular-nums text-white tracking-tight">
+                <span className="text-5xl font-extrabold tabular-nums text-tinta-900 tracking-tight">
                   {String(minutos).padStart(2, '0')}:{String(segundos).padStart(2, '0')}
                 </span>
-                <span className="text-xs text-gray-500 mt-1 uppercase tracking-wider">offline</span>
+                <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">offline</span>
               </div>
             </div>
 
             <div className="flex items-center justify-center gap-4 text-sm mb-5">
-              <span className="text-amber-400 font-bold tabular-nums">+{previa.moedas} moedas</span>
-              <span className="w-1 h-1 rounded-full bg-gray-600" />
-              <span className="text-gray-400">faixa: {faixaDe(minutos).rotulo}</span>
+              <span className="text-amber-600 font-bold tabular-nums">+{previa.moedas} moedas</span>
+              <span className="w-1 h-1 rounded-full bg-slate-200" />
+              <span className="text-slate-600">faixa: {faixaDe(minutos).rotulo}</span>
               {escudo.interrupcoes > 0 && (
                 <>
-                  <span className="w-1 h-1 rounded-full bg-gray-600" />
-                  <span className="text-red-400 flex items-center gap-1">
+                  <span className="w-1 h-1 rounded-full bg-slate-200" />
+                  <span className="text-red-600 flex items-center gap-1">
                     <TriangleAlert size={13} /> {escudo.interrupcoes} retorno(s)
                   </span>
                 </>
@@ -233,7 +233,7 @@ export function EscudoPage() {
             </div>
 
             {proxima && (
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-slate-500 mb-4">
                 Faltam {proxima.faltam} min para o multiplicador x{proxima.mult.toFixed(2)}.
               </p>
             )}
@@ -247,7 +247,7 @@ export function EscudoPage() {
                   cancelarEscudo();
                   setToast('Sessão descartada.', 'info');
                 }}
-                className="btn-ghost text-sm text-gray-400 hover:text-red-400"
+                className="btn-ghost text-sm text-slate-600 hover:text-red-600"
               >
                 Descartar
               </button>
@@ -258,12 +258,12 @@ export function EscudoPage() {
 
       {resultado && (
         <div className="glass rounded-2xl p-5 text-center border border-cyan-500/20 animate-fade-up">
-          <p className="text-sm text-gray-300">
-            Você ficou <strong className="text-white">{resultado.minutos} min</strong> longe da tela e ganhou{' '}
-            <strong className="text-amber-400">{resultado.moedas} moedas</strong>.
+          <p className="text-sm text-slate-700">
+            Você ficou <strong className="text-tinta-900">{resultado.minutos} min</strong> longe da tela e ganhou{' '}
+            <strong className="text-amber-600">{resultado.moedas} moedas</strong>.
           </p>
           {jaHoje >= TETO_DIARIO_MOEDAS && (
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-slate-500 mt-2">
               Você chegou ao teto de {TETO_DIARIO_MOEDAS} moedas de hoje. As próximas sessões continuam
               contando no histórico.
             </p>
@@ -280,16 +280,16 @@ export function EscudoPage() {
           { valor: carteira.totalGanho, rotulo: 'Moedas ganhas' },
         ].map((s) => (
           <div key={s.rotulo} className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums">{s.valor}</p>
-            <p className="text-[10px] text-gray-500 mt-0.5">{s.rotulo}</p>
+            <p className="text-lg font-bold text-tinta-900 tabular-nums">{s.valor}</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">{s.rotulo}</p>
           </div>
         ))}
       </div>
 
       {/* Loja de recompensas */}
       <div className="glass rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300 mb-1">Trocar moedas de foco</h2>
-        <p className="text-xs text-gray-500 mb-4">
+        <h2 className="text-sm font-semibold text-slate-700 mb-1">Trocar moedas de foco</h2>
+        <p className="text-xs text-slate-500 mb-4">
           Recompensas de descanso: nada aqui é mais conteúdo para estudar.
         </p>
         <div className="space-y-2">
@@ -298,19 +298,19 @@ export function EscudoPage() {
             return (
               <div
                 key={r.id}
-                className="flex items-center gap-3 py-2.5 px-3 rounded-xl glass-light border border-white/[0.03]"
+                className="flex items-center gap-3 py-2.5 px-3 rounded-xl glass-light border border-slate-200"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">{r.nome}</p>
-                  <p className="text-[11px] text-gray-500 leading-snug">{r.descricao}</p>
+                  <p className="text-sm font-medium text-tinta-900">{r.nome}</p>
+                  <p className="text-[11px] text-slate-500 leading-snug">{r.descricao}</p>
                 </div>
                 <button
                   onClick={() => resgatar(r.id, r.custo, r.nome)}
                   disabled={!podeComprar}
                   className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold tabular-nums ${
                     podeComprar
-                      ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25'
-                      : 'bg-white/[0.03] text-gray-600 cursor-not-allowed'
+                      ? 'bg-amber-500/15 text-amber-600 hover:bg-amber-500/25'
+                      : 'bg-slate-50 text-slate-400 cursor-not-allowed'
                   }`}
                 >
                   {r.custo} moedas
@@ -333,19 +333,19 @@ export function EscudoPage() {
         </div>
       ) : (
         <div className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-            <Smartphone size={16} className="text-cyan-400" /> Últimas sessões
+          <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <Smartphone size={16} className="text-cyan-700" /> Últimas sessões
           </h2>
           <div className="space-y-1.5">
             {sessoesOffline.slice(0, 8).map((s, i) => (
-              <div key={s.id ?? i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-white/[0.02]">
+              <div key={s.id ?? i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-slate-50">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-cyan-400">·</span>
-                  <span className="text-gray-400 truncate">
+                  <span className="text-cyan-700">·</span>
+                  <span className="text-slate-600 truncate">
                     {new Date(s.inicio).toLocaleDateString('pt-BR')} · {s.modo}
                   </span>
                 </div>
-                <span className="text-gray-500 text-xs tabular-nums shrink-0">
+                <span className="text-slate-500 text-xs tabular-nums shrink-0">
                   {s.minutosOffline} min · +{s.moedasCreditadas}
                 </span>
               </div>
@@ -354,7 +354,7 @@ export function EscudoPage() {
         </div>
       )}
 
-      <p className="text-center text-xs text-gray-600 leading-relaxed px-4 py-3 glass-light rounded-xl">
+      <p className="text-center text-xs text-slate-400 leading-relaxed px-4 py-3 glass-light rounded-xl">
         No navegador o escudo mede o tempo com o app em segundo plano. No aplicativo nativo (Android/iOS)
         ele lê o estado real da tela bloqueada. O código está em mobile/react-native.
       </p>

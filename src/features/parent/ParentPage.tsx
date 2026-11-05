@@ -76,27 +76,27 @@ export function ParentPage() {
   }, [agendamentos, aluno]);
 
   return (
-    <div className="min-h-screen" style={{ background: '#0b1120' }}>
+    <div className="min-h-screen" style={{ background: '#ffffff' }}>
       {/* Header */}
-      <header className="glass border-b border-white/[0.03]">
+      <header className="glass border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/10">
               <Moon size={20} className="text-gray-900" />
             </div>
             <div>
-              <h1 className="text-sm font-extrabold text-white">
+              <h1 className="text-sm font-extrabold text-tinta-900">
                 <span className="text-gradient">Midnight Mentor</span>
               </h1>
-              <p className="text-[10px] text-gray-500 tracking-wide uppercase">Painel dos Pais</p>
+              <p className="text-[10px] text-slate-500 tracking-wide uppercase">Painel dos Pais</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 hidden md:block">{session?.nome}</span>
-            <span className="px-2 py-1 rounded-full bg-violet-500/10 text-violet-400 text-[10px] font-medium border border-violet-500/20">
+            <span className="text-xs text-slate-600 hidden md:block">{session?.nome}</span>
+            <span className="px-2 py-1 rounded-full bg-violet-500/10 text-violet-600 text-[10px] font-medium border border-violet-500/20">
               Responsável
             </span>
-            <button onClick={logout} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Sair">
+            <button onClick={logout} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-500/10 transition-all" title="Sair">
               <LogOut size={16} />
             </button>
           </div>
@@ -122,8 +122,8 @@ export function ParentPage() {
                     onClick={() => setAlunoId(a.id)}
                     className={`shrink-0 px-3 py-2 rounded-xl text-sm border min-h-[44px] ${
                       aluno.id === a.id
-                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-200'
-                        : 'border-white/[0.04] glass-light text-gray-400'
+                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-600'
+                        : 'border-slate-200 glass-light text-slate-600'
                     }`}
                   >
                     {a.nome}
@@ -137,7 +137,7 @@ export function ParentPage() {
             <div
               role="tablist"
               aria-label="Painel do responsável"
-              className="grid grid-cols-3 sm:flex gap-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-1 sm:w-fit"
+              className="grid grid-cols-3 sm:flex gap-1 rounded-2xl bg-slate-50 border border-slate-200 p-1 sm:w-fit"
             >
               {([
                 ['estudos', 'Estudos', GraduationCap],
@@ -151,8 +151,8 @@ export function ParentPage() {
                   onClick={() => setAba(id)}
                   className={`relative flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 rounded-xl px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-center leading-tight transition-all min-h-[52px] sm:min-h-[40px] ${
                     abaAtual === id
-                      ? 'bg-violet-500/15 text-violet-100 border border-violet-500/30'
-                      : 'text-gray-400 hover:text-white border border-transparent'
+                      ? 'bg-violet-500/15 text-violet-600 border border-violet-500/30'
+                      : 'text-slate-600 hover:text-tinta-900 border border-transparent'
                   }`}
                 >
                   <Icone size={15} /> {rotulo}
@@ -173,8 +173,8 @@ export function ParentPage() {
                 onClick={() => setAba('cuidado')}
                 className="mt-3 w-full text-left rounded-xl border border-red-500/25 bg-red-500/[0.07] px-4 py-3 flex items-center gap-3 min-h-[52px]"
               >
-                <BellRing size={16} className="text-red-300 shrink-0" />
-                <span className="text-sm text-red-100">
+                <BellRing size={16} className="text-red-600 shrink-0" />
+                <span className="text-sm text-red-600">
                   {alertasAbertos === 1 ? 'Há 1 alerta' : `Há ${alertasAbertos} alertas`} sobre {aluno.nome}. Toque para ver o que fazer.
                 </span>
               </button>

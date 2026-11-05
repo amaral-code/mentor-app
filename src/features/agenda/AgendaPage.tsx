@@ -277,21 +277,21 @@ export function AgendaPage() {
       <div className="fixed bottom-10 right-0 md:right-10 w-72 md:w-[30rem] h-72 md:h-[30rem] max-w-[100vw] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none animate-pulse-slow z-0" style={{ animationDelay: '-3s' }} aria-hidden="true" />
 
       <div className="relative z-10">
-        <header className="border-b border-white/10 bg-midnight-900/70 backdrop-blur-md px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl">
+        <header className="border-b border-slate-200 bg-white backdrop-blur-md px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm shadow-emerald-500/10">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399] animate-ping" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm shadow-emerald-500/10">
+              <span className="w-2 h-2 rounded-full bg-emerald-400  animate-ping" />
               Ambiente Seguro &amp; Criptografado
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-midnight-800 text-slate-300 border border-white/10">
-              <BadgeCheck size={14} className="text-amber-400" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-50 text-slate-700 border border-slate-200">
+              <BadgeCheck size={14} className="text-amber-600" />
               Profissionais Registrados no CRP
             </span>
           </div>
-          <a className="text-xs text-slate-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors group" href="tel:188">
+          <a className="text-xs text-slate-600 hover:text-amber-600 flex items-center gap-1.5 transition-colors group" href="tel:188">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80 animate-pulse" />
             Precisa desabafar agora?{' '}
-            <span className="font-semibold text-slate-300 group-hover:underline inline-flex items-center gap-1">
+            <span className="font-semibold text-slate-700 group-hover:underline inline-flex items-center gap-1">
               <Phone size={12} /> Ligue 188 (CVV gratuito)
             </span>
           </a>
@@ -301,24 +301,24 @@ export function AgendaPage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-md border border-amber-500/20 shadow-sm">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2.5 py-0.5 rounded-md border border-amber-500/20 shadow-sm">
                   Espaço de Acolhimento
                 </span>
-                <span className="text-xs text-slate-400">|</span>
-                <span className="text-xs text-slate-400">Seu momento seguro de escuta</span>
+                <span className="text-xs text-slate-600">|</span>
+                <span className="text-xs text-slate-600">Seu momento seguro de escuta</span>
               </div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+              <h1 className="text-3xl lg:text-4xl font-extrabold text-tinta-900 tracking-tight">
                 Minha Agenda &amp; Sessões
               </h1>
-              <p className="text-sm text-slate-400 max-w-2xl mt-1.5">
+              <p className="text-sm text-slate-600 max-w-2xl mt-1.5">
                 Aqui estão todas as suas conversas confirmadas. Seu espaço privado e confidencial para aliviar o peso da rotina do ENEM, respirar e cuidar de você.
               </p>
             </div>
-            <div className="flex items-center gap-3 bg-midnight-850 px-4 py-2.5 rounded-2xl border border-white/10 shadow-sm transition-all hover:border-emerald-500/30 shrink-0">
-              <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.9)] animate-ping" />
+            <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-emerald-500/30 shrink-0">
+              <div className="w-3 h-3 rounded-full bg-emerald-400  animate-ping" />
               <div>
-                <p className="text-xs text-slate-400">Próximo compromisso</p>
-                <p className="text-sm font-bold text-white flex items-center gap-2 tabular-nums">{statusProximo}</p>
+                <p className="text-xs text-slate-600">Próximo compromisso</p>
+                <p className="text-sm font-bold text-tinta-900 flex items-center gap-2 tabular-nums">{statusProximo}</p>
               </div>
             </div>
           </div>
@@ -335,12 +335,12 @@ export function AgendaPage() {
             />
           ) : (
             <section
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-midnight-800 via-midnight-850 to-midnight-800 border border-dashed border-midnight-600 p-6 sm:p-8 text-center"
+              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-white to-white border border-dashed border-slate-200 p-6 sm:p-8 text-center"
               data-purpose="imminent-session-hero"
             >
-              <CalendarHeart size={40} className="mx-auto mb-3 text-emerald-400" />
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Você ainda não tem sessões marcadas</h2>
-              <p className="text-sm text-slate-400 max-w-xl mx-auto mt-2 mb-5">
+              <CalendarHeart size={40} className="mx-auto mb-3 text-emerald-600" />
+              <h2 className="text-xl sm:text-2xl font-bold text-tinta-900">Você ainda não tem sessões marcadas</h2>
+              <p className="text-sm text-slate-600 max-w-xl mx-auto mt-2 mb-5">
                 Marque seu primeiro momento de escuta com um psicólogo registrado no CRP. É privado, seguro e no seu ritmo.
               </p>
               <button
@@ -381,7 +381,7 @@ export function AgendaPage() {
 
         <footer className="mt-16 text-center text-xs text-slate-500 max-w-4xl mx-auto space-y-1.5" data-purpose="page-footer">
           <p>Midnight Mentor © 2025 • Acolhimento e Orientação Emocional para Estudantes Pré-Vestibular.</p>
-          <p className="text-[11px] text-slate-600">
+          <p className="text-[11px] text-slate-400">
             Todas as sessões são conduzidas por profissionais devidamente registrados e habilitados no Conselho Regional de Psicologia (CRP). Em caso de urgência emocional, ligue 188 (CVV).
           </p>
         </footer>

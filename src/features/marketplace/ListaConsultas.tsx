@@ -64,8 +64,8 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
 
   return (
     <div className="glass rounded-2xl p-5">
-      <h2 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-        <CalendarClock size={16} className="text-violet-400" /> Consultas
+      <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+        <CalendarClock size={16} className="text-violet-600" /> Consultas
       </h2>
 
       <div className="space-y-2.5">
@@ -75,18 +75,18 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
           const politica = politicaCancelamento(a.inicio);
 
           return (
-            <div key={a.id} className="rounded-xl glass-light border border-white/[0.03] p-3">
+            <div key={a.id} className="rounded-xl glass-light border border-slate-200 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   {/* Quem atende procura o PACIENTE; quem é atendido, o
                       profissional. Antes o psicólogo via o próprio nome
                       primeiro e o do paciente cortado ("Miguel..."). */}
-                  <p className="text-sm font-medium text-white truncate">
+                  <p className="text-sm font-medium text-tinta-900 truncate">
                     {papel === 'psychologist'
                       ? (a.alunoNome ?? 'Paciente')
                       : `${a.psicologoNome ?? 'Profissional'}${papel === 'parent' && a.alunoNome ? ` · ${a.alunoNome}` : ''}`}
                   </p>
-                  <p className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5">
+                  <p className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                     <Clock size={11} /> {formatarDataHora(a.inicio)} · {tempoAte(a.inicio)}
                   </p>
                 </div>
@@ -96,8 +96,8 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
                 <span
                   className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium ${
                     a.statusPagamento === 'pago' || a.statusPagamento === 'isento'
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-amber-500/10 text-amber-400'
+                      ? 'bg-emerald-500/10 text-emerald-600'
+                      : 'bg-amber-500/10 text-amber-600'
                   }`}
                 >
                   {a.statusPagamento === 'pago'
@@ -109,7 +109,7 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
               </div>
 
               <div className="flex items-center justify-between gap-2 mt-3">
-                <span className="text-[11px] text-gray-500 tabular-nums">
+                <span className="text-[11px] text-slate-500 tabular-nums">
                   {formatarPreco(a.valorCentavos)}
                 </span>
 
@@ -117,7 +117,7 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
                   {politica.podeCancelar && (
                     <button
                       onClick={() => cancelar(a.id)}
-                      className="btn-ghost !px-2.5 !py-1.5 text-[11px] text-gray-500 hover:text-red-400"
+                      className="btn-ghost !px-2.5 !py-1.5 text-[11px] text-slate-500 hover:text-red-600"
                       title={politica.texto}
                     >
                       Cancelar
@@ -127,8 +127,8 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
                   {/* Consulta que ja terminou mostrava "sala pronta", como se
                       ainda desse para entrar. */}
                   {new Date(a.fim).getTime() < Date.now() ? (
-                    <span className="text-[11px] text-gray-500 inline-flex items-center gap-1">
-                      <CircleCheck size={12} className="text-gray-500" /> realizada
+                    <span className="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                      <CircleCheck size={12} className="text-slate-500" /> realizada
                     </span>
                   ) : temLink && aberta ? (
                     <a
@@ -140,11 +140,11 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
                       <Video size={13} /> Entrar na sala
                     </a>
                   ) : temLink ? (
-                    <span className="text-[11px] text-gray-500 inline-flex items-center gap-1">
-                      <CircleCheck size={12} className="text-emerald-400" /> sala pronta
+                    <span className="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                      <CircleCheck size={12} className="text-emerald-600" /> sala pronta
                     </span>
                   ) : (
-                    <span className="text-[11px] text-gray-600">sala após o pagamento</span>
+                    <span className="text-[11px] text-slate-400">sala após o pagamento</span>
                   )}
                 </div>
               </div>

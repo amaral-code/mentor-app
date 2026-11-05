@@ -53,29 +53,29 @@ export const ChatMessages = memo(function ChatMessages({
             onMouseLeave={() => onHover(null)}
           >
             <div className="min-w-0">
-              <div className="bg-gradient-to-br from-[#1e2942] to-[#141d30] border border-amber-400/40 rounded-2xl rounded-tr-none px-4 py-3 text-sm text-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+              <div className="bg-azul-600 rounded-[18px] rounded-br-md px-4 py-3 text-base text-white shadow-lip-azul">
                 {msg.image && (
-                  <div className="mb-2 rounded-xl overflow-hidden border border-white/10">
+                  <div className="mb-2 rounded-xl overflow-hidden border border-slate-200">
                     <img src={msg.image} alt="Foto da questão" className="w-full h-auto max-h-56 object-cover" />
                   </div>
                 )}
                 {msg.text && (
-                  <TextoFormatado texto={msg.text} className="text-sm text-slate-100 leading-relaxed font-inter" />
+                  <TextoFormatado texto={msg.text} className="text-[15px] font-semibold text-white leading-relaxed" />
                 )}
               </div>
-              <div className="flex items-center justify-end gap-2 mt-1">
+              <div className="flex items-center justify-end gap-2 mt-1.5">
                 <span className="text-[10px] text-slate-500 font-mono">{formatarHora(msg.timestamp)}</span>
                 <button
                   onClick={() => onSaveNota(msg)}
                   title="Salvar no Caderno"
                   aria-label="Salvar mensagem no Caderno"
-                  className={`transition-all duration-200 p-1 -m-1 ${hoveredId === msg.id ? 'text-amber-400 opacity-100' : 'text-slate-500 opacity-100 md:opacity-0'}`}
+                  className={`transition-all duration-200 p-1 -m-1 ${hoveredId === msg.id ? 'text-amber-600 opacity-100' : 'text-slate-500 opacity-100 md:opacity-0'}`}
                 >
                   <Bookmark size={14} />
                 </button>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 text-midnight-950 font-black text-xs flex items-center justify-center flex-shrink-0 shadow-[0_0_10px_rgba(245,158,11,0.4)]">
+            <div className="w-9 h-9 rounded-full bg-ceu-500 text-white font-black text-sm flex items-center justify-center flex-shrink-0">
               {userInicial}
             </div>
           </div>
@@ -86,7 +86,7 @@ export const ChatMessages = memo(function ChatMessages({
             onMouseEnter={() => onHover(msg.id)}
             onMouseLeave={() => onHover(null)}
           >
-            <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-slate-900 border border-emerald-400/60 shadow-[0_0_14px_rgba(16,185,129,0.35)] flex-shrink-0 mt-0.5">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden bg-azul-100 border-2 border-white flex-shrink-0 mt-0.5">
               <img
                 src="/assets/ele_feliz_pulando.png"
                 alt="Sagui"
@@ -98,28 +98,28 @@ export const ChatMessages = memo(function ChatMessages({
                 className="w-full h-full object-cover object-top"
               />
             </div>
-            <div className="min-w-0 bg-[#0e1628]/95 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tl-none p-4 text-sm text-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.5)] leading-relaxed">
-              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
-                <span className="font-display font-bold text-amber-300 text-xs flex items-center gap-1.5">
-                  <Lightbulb size={12} className="text-amber-400" />
+            <div className="min-w-0 bg-white border-2 border-slate-200 rounded-[18px] rounded-tl-md p-4 text-sm text-tinta-700 shadow-lip leading-relaxed">
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-slate-100">
+                <span className="font-extrabold text-azul-600 text-sm flex items-center gap-1.5">
+                  <Lightbulb size={14} className="text-amber-500" />
                   Mentor ENEM
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">{formatarHora(msg.timestamp)}</span>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 ml-auto font-bold whitespace-nowrap">
+                <span className="text-[10px] text-slate-600 font-mono">{formatarHora(msg.timestamp)}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 ml-auto font-extrabold whitespace-nowrap">
                   {(msg.modoResposta ?? msg.modoChat) === 'comunicativo' ? 'Macete Rápido' : 'Didático'}
                 </span>
               </div>
               {msg.text ? (
-                <TextoFormatado texto={msg.text} className="text-sm text-slate-200 leading-relaxed font-inter" />
+                <TextoFormatado texto={msg.text} className="text-[15px] text-tinta-900 leading-relaxed" />
               ) : (
-                <p className="text-sm text-slate-400 italic">Resposta vazia da IA. Tente enviar de novo.</p>
+                <p className="text-sm text-slate-600 italic">Resposta vazia da IA. Tente enviar de novo.</p>
               )}
               {msg.role === 'assistant' && (msg.fontes?.length || msg.citouProva) && (
-                <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-2">
+                <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
                   {msg.citouProva && (
                     <span
                       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        msg.groundingUsado ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                        msg.groundingUsado ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'
                       }`}
                     >
                       {msg.groundingUsado ? <BadgeCheck size={11} /> : <TriangleAlert size={11} />}
@@ -135,7 +135,7 @@ export const ChatMessages = memo(function ChatMessages({
                           target="_blank"
                           rel="noopener noreferrer"
                           title={f.titulo}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.04] text-[10px] text-gray-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors max-w-[190px]"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-50 text-[10px] text-slate-600 hover:text-emerald-600 hover:bg-emerald-500/10 transition-colors max-w-[190px]"
                         >
                           <Link2 size={10} className="shrink-0" />
                           <span className="truncate">{f.dominio}</span>
@@ -150,7 +150,7 @@ export const ChatMessages = memo(function ChatMessages({
                   onClick={() => onSaveNota(msg)}
                   title="Salvar no Caderno"
                   aria-label="Salvar resposta no Caderno"
-                  className={`transition-all duration-200 p-1 -m-1 ${hoveredId === msg.id ? 'text-amber-400 opacity-100' : 'text-slate-500 opacity-100 md:opacity-0'}`}
+                  className={`transition-all duration-200 p-1 -m-1 ${hoveredId === msg.id ? 'text-amber-600 opacity-100' : 'text-slate-500 opacity-100 md:opacity-0'}`}
                 >
                   <Bookmark size={14} />
                 </button>
@@ -163,7 +163,7 @@ export const ChatMessages = memo(function ChatMessages({
       {/* Resposta em streaming: mesma estrutura do balão do Mentor + cursor. */}
       {streamingText !== null && (
         <div className="flex items-start gap-3 self-start max-w-[90%]">
-          <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-slate-900 border border-emerald-400/60 shadow-[0_0_14px_rgba(16,185,129,0.35)] flex-shrink-0 mt-0.5">
+          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-azul-100 border-2 border-white flex-shrink-0 mt-0.5">
             <img
               src="/assets/ele_feliz_pulando.png"
               alt="Sagui"
@@ -174,19 +174,19 @@ export const ChatMessages = memo(function ChatMessages({
               className="w-full h-full object-cover object-top"
             />
           </div>
-          <div className="min-w-0 bg-[#0e1628]/95 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tl-none p-4 text-sm text-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.5)] leading-relaxed">
-            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
-              <span className="font-display font-bold text-amber-300 text-xs flex items-center gap-1.5">
-                <Lightbulb size={12} className="text-amber-400" />
+          <div className="min-w-0 bg-white border-2 border-slate-200 rounded-[18px] rounded-tl-md p-4 text-sm text-tinta-700 shadow-lip leading-relaxed">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b-2 border-slate-100">
+              <span className="font-extrabold text-azul-600 text-sm flex items-center gap-1.5">
+                <Lightbulb size={14} className="text-amber-500" />
                 Mentor ENEM
               </span>
-              <span className="text-[10px] text-slate-400">digitando…</span>
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 ml-auto font-bold whitespace-nowrap">
+              <span className="text-[10px] text-slate-600">digitando…</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 ml-auto font-extrabold whitespace-nowrap">
                 {streamingModo === 'explicativo' ? 'Didático' : 'Macete Rápido'}
               </span>
             </div>
-            <TextoFormatado texto={streamingText} className="text-sm text-slate-200 leading-relaxed font-inter" />
-            <span className="inline-block w-2 h-4 bg-amber-400 animate-pulse rounded-[2px] ml-0.5" aria-hidden="true" />
+            <TextoFormatado texto={streamingText} className="text-[15px] text-tinta-900 leading-relaxed" />
+            <span className="inline-block w-2 h-4 bg-ceu-500 animate-pulse rounded-[2px] ml-0.5" aria-hidden="true" />
           </div>
         </div>
       )}
@@ -194,7 +194,7 @@ export const ChatMessages = memo(function ChatMessages({
       {/* Digitando (antes do primeiro chunk chegar). */}
       {isGenerating && streamingText === null && (
         <div className="flex items-start gap-3 self-start max-w-[90%]">
-          <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-slate-900 border border-emerald-400/60 shadow-[0_0_14px_rgba(16,185,129,0.35)] flex-shrink-0 mt-0.5 mascot-assist-idle">
+          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-azul-100 border-2 border-white flex-shrink-0 mt-0.5 mascot-assist-idle">
             <img
               src="/assets/ele_feliz_pulando.png"
               alt="Sagui digitando"
@@ -206,8 +206,8 @@ export const ChatMessages = memo(function ChatMessages({
               className="w-full h-full object-cover object-top"
             />
           </div>
-          <div className="bg-[#0e1628]/95 border border-white/10 rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-2.5">
-            <span className="text-sm text-gray-400">Sagui está digitando</span>
+          <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-2.5">
+            <span className="text-sm text-slate-600">Sagui está digitando</span>
             <span className="flex gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />

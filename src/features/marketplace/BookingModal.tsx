@@ -81,34 +81,34 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
             {psicologo.nome.charAt(0)}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white">{psicologo.nome}</p>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-sm font-bold text-tinta-900">{psicologo.nome}</p>
+            <p className="text-[11px] text-slate-500">
               CRP {psicologo.crp} · {psicologo.duracaoMinutos} min por sessão
             </p>
-            <p className="text-sm font-semibold text-amber-400 mt-1 tabular-nums">
+            <p className="text-sm font-semibold text-amber-600 mt-1 tabular-nums">
               {formatarPreco(psicologo.valorCentavos)}
             </p>
           </div>
         </div>
 
         {aluno && (
-          <p className="text-xs text-gray-500">
-            Atendimento para <strong className="text-gray-300">{aluno.nome}</strong>.
+          <p className="text-xs text-slate-500">
+            Atendimento para <strong className="text-slate-700">{aluno.nome}</strong>.
           </p>
         )}
 
         {carregandoAgenda ? (
-          <p className="flex items-center gap-2 text-sm text-gray-400 py-6 justify-center">
+          <p className="flex items-center gap-2 text-sm text-slate-600 py-6 justify-center">
             <Loader2 size={15} className="animate-spin" /> Buscando horários livres...
           </p>
         ) : dias.length === 0 ? (
-          <p className="text-sm text-gray-400 py-6 text-center">
+          <p className="text-sm text-slate-600 py-6 text-center">
             Este profissional não tem horários abertos nos próximos 14 dias.
           </p>
         ) : (
           <>
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-1.5">
+              <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
                 <CalendarClock size={13} /> Dia
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1">
@@ -121,19 +121,19 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
                     }}
                     className={`shrink-0 px-3 py-2 rounded-xl text-xs font-medium border ${
                       diaSelecionado === d.data
-                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-200'
-                        : 'border-white/[0.04] glass-light text-gray-400'
+                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-600'
+                        : 'border-slate-200 glass-light text-slate-600'
                     }`}
                   >
                     {d.rotulo}
-                    <span className="block text-[10px] text-gray-500 mt-0.5">{d.slots.length} horários</span>
+                    <span className="block text-[10px] text-slate-500 mt-0.5">{d.slots.length} horários</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-gray-500 mb-2">Horário</p>
+              <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Horário</p>
               <div className="grid grid-cols-4 gap-2">
                 {doDia.map((s) => (
                   <button
@@ -141,8 +141,8 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
                     onClick={() => setSlotSelecionado(s)}
                     className={`py-2 rounded-xl text-xs font-semibold tabular-nums border ${
                       slotSelecionado?.inicio === s.inicio
-                        ? 'border-violet-500/50 bg-violet-500/15 text-violet-200'
-                        : 'border-white/[0.04] glass-light text-gray-300 hover:border-white/[0.1]'
+                        ? 'border-violet-500/50 bg-violet-500/15 text-violet-600'
+                        : 'border-slate-200 glass-light text-slate-700 hover:border-slate-200'
                     }`}
                   >
                     {formatarHora(s.inicio)}
@@ -155,10 +155,10 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
 
         {politica && (
           <div className="rounded-xl glass-light p-3 space-y-1.5">
-            <p className="text-xs text-gray-300 flex items-center gap-1.5">
-              <ShieldCheck size={13} className="text-emerald-400" /> {politica.texto}
+            <p className="text-xs text-slate-700 flex items-center gap-1.5">
+              <ShieldCheck size={13} className="text-emerald-600" /> {politica.texto}
             </p>
-            <p className="text-[11px] text-gray-500 leading-relaxed">
+            <p className="text-[11px] text-slate-500 leading-relaxed">
               O link da sala de video e criado automaticamente quando o pagamento e confirmado e aparece
               na agenda do estudante e do profissional.
             </p>

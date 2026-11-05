@@ -315,11 +315,11 @@ export function ComunidadePage() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 flex items-center justify-center">
-            <Users size={20} className="text-emerald-400" />
+            <Users size={20} className="text-emerald-600" />
           </div>
           <div>
-            <h1 className="text-lg md:text-xl font-bold text-white">Ligas de estudo</h1>
-            <p className="text-xs text-gray-500">
+            <h1 className="text-lg md:text-xl font-bold text-tinta-900">Ligas de estudo</h1>
+            <p className="text-xs text-slate-500">
               {turmaAtual ? `${turmaAtual.nome} • ${escolaAtual?.nome}` : 'Selecione sua turma no Perfil'}
             </p>
           </div>
@@ -327,7 +327,7 @@ export function ComunidadePage() {
         {/* O indicador diz a verdade sobre o mural: verde quando carregou,
             ambar quando a consulta falhou. Antes as duas situacoes exibiam
             "0 mensagens", e o aluno concluia que a turma estava calada. */}
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-1 text-xs text-slate-500">
           <span
             className={`w-2 h-2 rounded-full ${
               falhaAoCarregar ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse-subtle'
@@ -342,23 +342,23 @@ export function ComunidadePage() {
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-                <Sparkles size={16} className="text-cyan-400" />
+                <Sparkles size={16} className="text-cyan-700" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-sm md:text-base font-semibold text-white">Seu espaço de liga</h2>
-                <p className="text-xs text-gray-500">Escolha uma liga, entre nela e acesse a sala da equipe.</p>
+                <h2 className="text-sm md:text-base font-semibold text-tinta-900">Seu espaço de liga</h2>
+                <p className="text-xs text-slate-500">Escolha uma liga, entre nela e acesse a sala da equipe.</p>
               </div>
             </div>
-            <span className="px-2 py-1 rounded-full bg-white/5 text-[10px] text-gray-400">{ligas.length} ligas</span>
+            <span className="px-2 py-1 rounded-full bg-slate-50 text-[10px] text-slate-600">{ligas.length} ligas</span>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-3">
             <div className="flex flex-col gap-2 lg:w-[300px] lg:shrink-0">
               <div className="flex items-center justify-between px-1">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-400">Ligas disponíveis</p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-700">Ligas disponíveis</p>
                 <button
                   onClick={() => setMostrarFormLiga(v => !v)}
-                  className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 hover:brightness-110 min-h-[36px]"
+                  className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-700 border border-cyan-500/20 hover:brightness-110 min-h-[36px]"
                 >
                   {mostrarFormLiga ? 'Fechar' : '+ Nova liga'}
                 </button>
@@ -426,7 +426,7 @@ export function ComunidadePage() {
                       key={liga.id}
                       onClick={() => { setSelectedLeagueId(liga.id); }}
                       className={`group relative w-full rounded-2xl border text-left transition-all duration-200 overflow-hidden min-h-[88px] ${
-                        isSelected ? `${dc.border} shadow-lg` : 'border-white/[0.06] hover:border-white/15'
+                        isSelected ? `${dc.border} shadow-lg` : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <div className={`absolute inset-0 bg-gradient-to-br ${dc.from}/10 ${dc.via}/5 to-transparent opacity-${isSelected ? '100' : '0'} group-hover:opacity-100 transition-opacity`} />
@@ -434,36 +434,36 @@ export function ComunidadePage() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 mb-1">
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.06] text-gray-400">{liga.discipline}</span>
-                              {isAccepted && <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full"><Check size={16} className="inline-block align-[-0.15em] text-emerald-400" /> Ativa</span>}
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{liga.discipline}</span>
+                              {isAccepted && <span className="text-[10px] text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full"><Check size={16} className="inline-block align-[-0.15em] text-emerald-600" /> Ativa</span>}
                             </div>
-                            <h3 className="text-sm font-semibold text-white leading-tight">{liga.title}</h3>
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                              <span><User size={16} className="inline-block align-[-0.15em] text-gray-400" /></span>
+                            <h3 className="text-sm font-semibold text-tinta-900 leading-tight">{liga.title}</h3>
+                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                              <span><User size={16} className="inline-block align-[-0.15em] text-slate-600" /></span>
                               <span>{liga.authorName}</span>
                             </p>
                           </div>
                           <span className={`shrink-0 text-[10px] font-semibold px-2 py-1 rounded-full ${
-                            isAccepted ? 'bg-amber-500/10 text-amber-400' : 'bg-cyan-500/10 text-cyan-400'
+                            isAccepted ? 'bg-amber-500/10 text-amber-600' : 'bg-cyan-500/10 text-cyan-700'
                           }`}>
                             +{liga.xpReward} XP
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-white/[0.04]">
+                        <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-slate-200">
                           <div className="flex -space-x-1.5">
                             {liga.joinedByNames.slice(0, 4).map((name, i) => (
-                              <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-[8px] font-bold text-white ring-1 ring-black/30">
+                              <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-slate-100 to-slate-100 flex items-center justify-center text-[8px] font-bold text-white ring-1 ring-black/30">
                                 {name.charAt(0).toUpperCase()}
                               </div>
                             ))}
                             {liga.joinedByNames.length > 4 && (
-                              <div className="w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center text-[8px] text-gray-400 ring-1 ring-black/30">
+                              <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] text-slate-600 ring-1 ring-black/30">
                                 +{liga.joinedByNames.length - 4}
                               </div>
                             )}
                           </div>
-                          <span className="text-[10px] text-gray-500">{liga.joinedByNames.length} participante{liga.joinedByNames.length !== 1 ? 's' : ''}</span>
-                          <div className="ml-auto hidden md:flex items-center gap-1 text-[10px] text-gray-600">
+                          <span className="text-[10px] text-slate-500">{liga.joinedByNames.length} participante{liga.joinedByNames.length !== 1 ? 's' : ''}</span>
+                          <div className="ml-auto hidden md:flex items-center gap-1 text-[10px] text-slate-400">
                             <span>{liga.escola}</span>
                             <span>•</span>
                             <span>{liga.turma}</span>
@@ -481,24 +481,24 @@ export function ComunidadePage() {
                 <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-3 md:p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-400">Liga selecionada</p>
-                      <h3 className="text-base font-semibold text-white truncate">{selectedLeague.title}</h3>
-                      <p className="text-xs text-gray-300 mt-1">{selectedLeague.prompt}</p>
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-600">Liga selecionada</p>
+                      <h3 className="text-base font-semibold text-tinta-900 truncate">{selectedLeague.title}</h3>
+                      <p className="text-xs text-slate-700 mt-1">{selectedLeague.prompt}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-full bg-white/10 text-[10px] text-gray-200">{selectedLeague.discipline}</span>
-                      <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-[10px] text-amber-400">+{selectedLeague.xpReward} XP</span>
+                      <span className="px-2.5 py-1 rounded-full bg-slate-100 text-[10px] text-tinta-700">{selectedLeague.discipline}</span>
+                      <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-[10px] text-amber-600">+{selectedLeague.xpReward} XP</span>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-gray-300">
-                    <span className="px-2 py-0.5 rounded-full bg-black/10">{selectedLeague.escola}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-black/10">{selectedLeague.turma}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-black/10">{selectedLeague.joinedByNames.length} participantes</span>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-slate-700">
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100">{selectedLeague.escola}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100">{selectedLeague.turma}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100">{selectedLeague.joinedByNames.length} participantes</span>
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-xs text-gray-300 min-w-0 flex-1">
+                    <div className="text-xs text-slate-700 min-w-0 flex-1">
                       {selectedLeague.joinedByNames.length > 0 ? `Equipe: ${selectedLeague.joinedByNames.join(', ')}` : 'Ainda sem participantes'}
                     </div>
                     <button
@@ -506,10 +506,10 @@ export function ComunidadePage() {
                       disabled={!profile?.uid}
                       className={`px-4 md:px-3 py-2.5 md:py-1.5 rounded-xl text-sm md:text-xs font-semibold transition-all min-h-[44px] ${
                         selectedLeague.joinedBy.includes(profile?.uid || '')
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
                           : pendingJoinLeagueId === selectedLeague.id
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse-subtle'
-                            : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:brightness-110'
+                            ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20 animate-pulse-subtle'
+                            : 'bg-cyan-500/10 text-cyan-700 border border-cyan-500/20 hover:brightness-110'
                       }`}
                     >
                       {selectedLeague.joinedBy.includes(profile?.uid || '')
@@ -520,27 +520,27 @@ export function ComunidadePage() {
                     </button>
                   </div>
 
-                  <div className="mt-3 rounded-xl border border-white/8 bg-black/10 p-3">
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-slate-100 p-3">
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-400">Progresso da liga</p>
-                        <p className="text-xs text-gray-300">{selectedProgress}% concluído</p>
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-600">Progresso da liga</p>
+                        <p className="text-xs text-slate-700">{selectedProgress}% concluído</p>
                       </div>
-                      <div className="h-2 w-24 rounded-full bg-white/10 overflow-hidden shrink-0">
+                      <div className="h-2 w-24 rounded-full bg-slate-100 overflow-hidden shrink-0">
                         <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: `${selectedProgress}%` }} />
                       </div>
                     </div>
                     {nextGoal && (
-                      <div className="mt-2 rounded-lg border border-white/8 bg-white/5 px-3 py-2">
-                        <p className="text-[11px] text-gray-400">Próximo desafio</p>
-                        <p className="text-sm text-white">{nextGoal.title}</p>
+                      <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                        <p className="text-[11px] text-slate-600">Próximo desafio</p>
+                        <p className="text-sm text-tinta-900">{nextGoal.title}</p>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex-1 rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-gray-500"> Escolha uma liga para abrir o painel de desafios.
+              <div className="flex-1 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500"> Escolha uma liga para abrir o painel de desafios.
               </div>
             )}
           </div>

@@ -4,6 +4,13 @@ export default {
   theme: {
     extend: {
       colors: {
+          /* Tema lúdico claro (Figma "Midnight Mentor · Visual Lúdico").
+             O azul-noite do Mentor virou cor de TINTA e de ação; o fundo
+             agora é papel branco, como no Duolingo. */
+          tinta: { 900: '#0B0F19', 700: '#1E2538', 500: '#475569' },
+          azul: { 50: '#F3F6FC', 100: '#E6ECF7', 200: '#CCD7EC', 500: '#3A5088', 600: '#2A3B63', 700: '#1E2538' },
+          ceu: { 50: '#F0F6FF', 100: '#E3EEFF', 200: '#C7DCFD', 500: '#4C8DF6', 600: '#2F6FDB', 700: '#1E56B8' },
+          superficie: '#F4F7FB',
           midnight: {
             950: '#060911',
             900: '#0B0F19',
@@ -55,12 +62,22 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', 'sans-serif'],
-        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
-        inter: ['"Inter"', 'sans-serif'],
+        /* Nunito: redonda e grossa, a voz "de brinquedo" do visual lúdico. */
+        display: ['"Nunito"', 'system-ui', 'sans-serif'],
+        sans: ['"Nunito"', 'system-ui', 'sans-serif'],
+        inter: ['"Nunito"', 'system-ui', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       boxShadow: {
+        /* "Lábio" 3D dos botões e cartões adesivo: sombra sólida sem
+           desfoque. Ao pressionar, some e o elemento desce 4px. */
+        lip: '0 4px 0 #CBD5E1',
+        'lip-sm': '0 2px 0 #CBD5E1',
+        'lip-azul': '0 4px 0 #1E2538',
+        'lip-ceu': '0 4px 0 #2F6FDB',
+        'lip-ambar': '0 4px 0 #D97706',
+        'lip-esmeralda': '0 4px 0 #059669',
+        'lip-vermelho': '0 4px 0 #DC2626',
         glass: '0 8px 32px 0 rgba(0, 0, 0, 0.55)',
         'glass-sm': '0 4px 16px rgba(0,0,0,0.3)',
         'glass-lg': '0 16px 48px rgba(0,0,0,0.5)',

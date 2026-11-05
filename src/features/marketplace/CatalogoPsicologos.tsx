@@ -50,20 +50,20 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
   return (
     <div className="space-y-4">
       <div className="glass rounded-2xl p-4 space-y-3">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl glass-light border border-white/[0.04]">
-          <Search size={15} className="text-gray-500 shrink-0" />
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl glass-light border border-slate-200">
+          <Search size={15} className="text-slate-500 shrink-0" />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome, abordagem ou especialidade"
-            className="bg-transparent text-sm text-white placeholder:text-gray-600 outline-none flex-1 min-w-0"
+            className="bg-transparent text-sm text-tinta-900 placeholder:text-slate-400 outline-none flex-1 min-w-0"
           />
         </div>
 
         <div>
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
             <span>Valor máximo por sessão</span>
-            <span className="text-amber-400 font-semibold tabular-nums">{formatarPreco(teto)}</span>
+            <span className="text-amber-600 font-semibold tabular-nums">{formatarPreco(teto)}</span>
           </div>
           <input
             type="range"
@@ -78,7 +78,7 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
         </div>
       </div>
 
-      {carregando && <p className="text-sm text-gray-500 text-center py-6">Carregando profissionais...</p>}
+      {carregando && <p className="text-sm text-slate-500 text-center py-6">Carregando profissionais...</p>}
 
       {!carregando && lista.length === 0 && (
         <div className="glass rounded-2xl p-5">
@@ -101,21 +101,21 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-bold text-white truncate">{p.nome}</p>
-                  <BadgeCheck size={14} className="text-cyan-400 shrink-0" />
+                  <p className="text-sm font-bold text-tinta-900 truncate">{p.nome}</p>
+                  <BadgeCheck size={14} className="text-cyan-700 shrink-0" />
                 </div>
-                <p className="text-[11px] text-gray-500">CRP {p.crp}</p>
+                <p className="text-[11px] text-slate-500">CRP {p.crp}</p>
 
-                <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500">
+                <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
                   {/* Nota sem avaliações por trás era o 5,0 padrão do banco,
                       exibido como se fosse elogio. */}
                   {p.totalAvaliacoes > 0 ? (
-                    <span className="flex items-center gap-1 text-amber-400" title={`${p.totalAvaliacoes} avaliação(ões)`}>
+                    <span className="flex items-center gap-1 text-amber-600" title={`${p.totalAvaliacoes} avaliação(ões)`}>
                       <Star size={11} fill="currentColor" /> {p.notaMedia.toFixed(1)}
-                      <span className="text-gray-500">({p.totalAvaliacoes})</span>
+                      <span className="text-slate-500">({p.totalAvaliacoes})</span>
                     </span>
                   ) : (
-                    <span className="text-gray-500">sem avaliações</span>
+                    <span className="text-slate-500">sem avaliações</span>
                   )}
                   <span aria-hidden="true">·</span>
                   <span>{p.totalAtendimentos} atendimentos</span>
@@ -123,14 +123,14 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
                   <span>{p.duracaoMinutos} min</span>
                 </div>
 
-                {p.bio && <p className="text-xs text-gray-400 mt-2 leading-relaxed line-clamp-3">{p.bio}</p>}
+                {p.bio && <p className="text-xs text-slate-600 mt-2 leading-relaxed line-clamp-3">{p.bio}</p>}
 
                 {p.especialidades.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {p.especialidades.slice(0, 4).map((e) => (
                       <span
                         key={e}
-                        className="px-2 py-0.5 rounded-full bg-white/[0.04] text-[10px] text-gray-400"
+                        className="px-2 py-0.5 rounded-full bg-slate-50 text-[10px] text-slate-600"
                       >
                         {e}
                       </span>
@@ -140,8 +140,8 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.04]">
-              <span className="text-base font-bold text-amber-400 tabular-nums">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
+              <span className="text-base font-bold text-amber-600 tabular-nums">
                 {formatarPreco(p.valorCentavos)}
               </span>
               <button onClick={() => setEscolhido(p)} className="btn-primary !px-4 !py-2 text-sm">

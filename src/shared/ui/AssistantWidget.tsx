@@ -102,7 +102,7 @@ export function AssistantWidget() {
       <button
         onClick={() => setOpen((v) => !v)}
         className={`assistant-bot flex items-center gap-3 w-full px-3 py-3 rounded-xl transition-all duration-200 border ${
-          open ? 'bg-amber-500/10 border-amber-500/30' : 'hover:bg-white/[0.03] border-transparent'
+          open ? 'bg-amber-500/10 border-amber-500/30' : 'hover:bg-slate-50 border-transparent'
         }`}
         aria-expanded={open}
         aria-label="Abrir assistente do Sagui"
@@ -114,13 +114,13 @@ export function AssistantWidget() {
             draggable={false}
             className="w-full h-full object-contain mascot-assist-idle"
           />
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#0b1120]" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-200" />
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-semibold text-white">Sagui Assistente</p>
-          <p className="text-[10px] text-gray-500 truncate">Pergunte sobre o ENEM</p>
+          <p className="text-sm font-semibold text-tinta-900">Sagui Assistente</p>
+          <p className="text-[10px] text-slate-500 truncate">Pergunte sobre o ENEM</p>
         </div>
-        <span className="text-xs text-gray-500">{open ? '▾' : '▸'}</span>
+        <span className="text-xs text-slate-500">{open ? '▾' : '▸'}</span>
       </button>
 
       {/* Chat: desktop = balão ancorado · mobile = overlay quase tela inteira */}
@@ -129,19 +129,19 @@ export function AssistantWidget() {
           {/* Backdrop só no mobile */}
           <div className="md:hidden fixed inset-0 z-[998] bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-          <div className="assistant-chat flex flex-col overflow-hidden fixed inset-0 z-[999] md:absolute md:inset-auto md:left-0 md:right-0 md:top-[calc(100%+10px)] md:z-30 md:w-[400px] md:h-[600px] md:max-h-[80vh] md:rounded-2xl md:border md:border-white/10 md:glass md:shadow-2xl bg-[#0d1424]/98">
+          <div className="assistant-chat flex flex-col overflow-hidden fixed inset-0 z-[999] md:absolute md:inset-auto md:left-0 md:right-0 md:top-[calc(100%+10px)] md:z-30 md:w-[400px] md:h-[600px] md:max-h-[80vh] md:rounded-2xl md:border md:border-slate-200 md:glass md:shadow-2xl bg-white">
             {/* Cabeçalho com avatar de tutoria */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06] bg-white/[0.03] shrink-0">
-              <img src={TUTOR_AVATAR} alt="Sagui tutor" className="w-9 h-9 rounded-xl object-cover border border-white/10" />
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 bg-slate-50 shrink-0">
+              <img src={TUTOR_AVATAR} alt="Sagui tutor" className="w-9 h-9 rounded-xl object-cover border border-slate-200" />
               <div className="min-w-0">
-                <p className="text-sm font-bold text-white leading-tight">Sagui Assistente</p>
-                <p className="text-[10px] text-emerald-400 flex items-center gap-1">
+                <p className="text-sm font-bold text-tinta-900 leading-tight">Sagui Assistente</p>
+                <p className="text-[10px] text-emerald-600 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Online · tutor ENEM
                 </p>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="ml-auto w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all text-lg"
+                className="ml-auto w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 hover:text-tinta-900 hover:bg-slate-100 transition-all text-lg"
                 aria-label="Fechar chat"
                 title="Fechar chat"
               >
@@ -154,12 +154,12 @@ export function AssistantWidget() {
               {messages.length === 0 && (
                 <div className="text-center py-6">
                   <img src={TUTOR_AVATAR} alt="" className="w-16 h-16 object-cover rounded-2xl mx-auto mb-3" />
-                  <p className="text-sm text-gray-300">Olá! Sou o Sagui do Midnight Mentor </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-sm text-slate-700">Olá! Sou o Sagui do Midnight Mentor </p>
+                  <p className="text-xs text-slate-500 mt-1">
                     {materiaRetomada ? (
                       <>
                         Retomamos seu estudo em{' '}
-                        <span className="text-emerald-400 font-medium">{materiaRetomada}</span>. Pergunte sobre dúvidas, matérias ou o ENEM.
+                        <span className="text-emerald-600 font-medium">{materiaRetomada}</span>. Pergunte sobre dúvidas, matérias ou o ENEM.
                       </>
                     ) : (
                       <>Pergunte sobre dúvidas, matérias ou o ENEM. Eu começo de onde você quiser.</>
@@ -170,13 +170,13 @@ export function AssistantWidget() {
               {messages.map((m) => (
                 <div key={m.id} className={`flex items-end gap-2.5 ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {m.from === 'bot' && (
-                    <img src={TUTOR_AVATAR} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0" />
+                    <img src={TUTOR_AVATAR} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0" />
                   )}
                   <span
                     className={`max-w-[80%] md:max-w-[75%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed whitespace-pre-line ${
                       m.from === 'user'
-                        ? 'bg-amber-500/15 text-amber-100 rounded-br-sm'
-                        : 'bg-white/[0.07] text-gray-100 rounded-bl-sm'
+                        ? 'bg-amber-500/15 text-amber-600 rounded-br-sm'
+                        : 'bg-slate-100 text-tinta-700 rounded-bl-sm'
                     }`}
                   >
                     {m.text}
@@ -185,8 +185,8 @@ export function AssistantWidget() {
               ))}
               {typing && (
                 <div className="flex items-end gap-2.5 justify-start">
-                  <img src={TUTOR_AVATAR} alt="" className="w-7 h-7 rounded-full object-cover border border-white/10 shrink-0" />
-                  <span className="bg-white/[0.07] px-4 py-2.5 rounded-2xl text-xs text-gray-400">sagui digitando…</span>
+                  <img src={TUTOR_AVATAR} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0" />
+                  <span className="bg-slate-100 px-4 py-2.5 rounded-2xl text-xs text-slate-600">sagui digitando…</span>
                 </div>
               )}
             </div>
@@ -197,7 +197,7 @@ export function AssistantWidget() {
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="text-[10px] px-2.5 py-1.5 rounded-full bg-white/[0.06] text-gray-300 hover:bg-amber-500/10 hover:text-amber-300 transition-all"
+                  className="text-[10px] px-2.5 py-1.5 rounded-full bg-slate-100 text-slate-700 hover:bg-amber-500/10 hover:text-amber-600 transition-all"
                 >
                   {s}
                 </button>
@@ -206,7 +206,7 @@ export function AssistantWidget() {
 
             {/* Campo de digitação */}
             <form
-              className="shrink-0 flex items-center gap-2 px-3 py-2.5 border-t border-white/[0.06] bg-white/[0.02] pb-[max(0.625rem,env(safe-area-inset-bottom))]"
+              className="shrink-0 flex items-center gap-2 px-3 py-2.5 border-t border-slate-200 bg-slate-50 pb-[max(0.625rem,env(safe-area-inset-bottom))]"
               onSubmit={(e) => { e.preventDefault(); send(input); }}
             >
               <input
@@ -215,7 +215,7 @@ export function AssistantWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Escreva sua dúvida…"
                 enterKeyHint="send"
-                className="flex-1 min-w-0 bg-white/[0.05] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-amber-400/50"
+                className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-tinta-900 placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50"
               />
               <button
                 type="submit"
