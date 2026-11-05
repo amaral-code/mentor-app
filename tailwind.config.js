@@ -78,6 +78,12 @@ export default {
         'lip-ambar': '0 4px 0 #D97706',
         'lip-esmeralda': '0 4px 0 #059669',
         'lip-vermelho': '0 4px 0 #DC2626',
+        /* Lábios das faixas de cabeçalho: tons mais fortes, porque o fundo
+           da faixa também é o tom forte (texto branco precisa de contraste). */
+        'lip-ambar-forte': '0 4px 0 #B45309',
+        'lip-esmeralda-forte': '0 4px 0 #047857',
+        'lip-ceu-forte': '0 4px 0 #1E56B8',
+        'lip-violeta': '0 4px 0 #5B21B6',
         glass: '0 8px 32px 0 rgba(0, 0, 0, 0.55)',
         'glass-sm': '0 4px 16px rgba(0,0,0,0.3)',
         'glass-lg': '0 16px 48px rgba(0,0,0,0.5)',

@@ -7,6 +7,7 @@ import { ListSkeleton } from '../../shared/ui/Skeleton';
 import { getRankingData } from '../../shared/lib/rankingEngine';
 import { calcLevel } from '../../shared/lib/utils';
 import type { RankingFilter, RankingData, RankingEntry } from '../../shared/types';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 const FILTERS: { id: RankingFilter; label: string; icon: typeof Trophy }[] = [
   { id: 'geral', label: 'Geral', icon: Trophy },
@@ -228,15 +229,7 @@ export function RankingPage() {
   return (
     <div className="space-y-5 animate-fade-up">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-amber-500 shadow-lip-ambar flex items-center justify-center">
-          <Trophy size={24} className="text-white" strokeWidth={2.5} />
-        </div>
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-tinta-900">Ranking</h1>
-          <p className="text-sm font-semibold text-slate-500 mt-0.5">Compare seu desempenho com outros alunos</p>
-        </div>
-      </div>
+      <CabecalhoPagina titulo="Ranking" subtitulo="Compare seu desempenho com outros alunos" cor="ambar" pose="pulando" />
 
       {/* Filter tabs */}
       <div className="flex gap-2">

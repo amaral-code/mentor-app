@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Coins, Lock, ShieldCheck, Smartphone, TriangleAlert } from 'lucide-react';
+import { Coins, Lock, Smartphone, TriangleAlert } from 'lucide-react';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
 import { useAppStore } from '../../stores/appStore';
 import {
@@ -15,6 +15,7 @@ import {
 } from '../../shared/lib/focusShield';
 import type { ModoEscudo } from '../../shared/types';
 import { EmptyState } from '../../shared/ui/EmptyState';
+import { CabecalhoPagina, SELO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 /**
  * ESCUDO DE DOPAMINA - tela do aluno.
@@ -145,19 +146,13 @@ export function EscudoPage() {
 
   return (
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/15 to-blue-600/10 flex items-center justify-center">
-          <ShieldCheck size={20} className="text-cyan-700" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Escudo de Dopamina</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Ganhe moedas pelo tempo em que você NÃO olha a tela</p>
-        </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600">
-          <Coins size={16} />
-          <span className="font-bold tabular-nums">{carteira.saldo}</span>
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo="Escudo de Dopamina"
+        subtitulo="Ganhe moedas pelo tempo em que você NÃO olha a tela"
+        cor="violeta"
+        pose="aprovacao"
+        acao={<span className={SELO_NA_FAIXA}><Coins size={16} /> <span className="tabular-nums">{carteira.saldo}</span> moedas</span>}
+      />
 
       {/* Cronometro / seletor de modo */}
       <div className="glass rounded-2xl p-6 text-center">

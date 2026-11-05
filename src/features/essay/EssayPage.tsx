@@ -12,6 +12,7 @@ import { aiAvailable } from '../../shared/lib/aiService';
 import { getRandomTheme, ChallengeTheme } from '../../shared/lib/challengeBank';
 import { EssayCorrection, ChallengeResult } from '../../shared/types';
 import { playCorrect, playError } from '../../shared/lib/sfx';
+import { CabecalhoPagina, SELO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 const CHALLENGE_SECONDS = 3 * 60 * 60; // 3 horas
 
@@ -273,18 +274,18 @@ export function EssayPage() {
 
   return (
     <div className="space-y-5 animate-fade-up">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Redação 1000</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Treine sua redação ENEM com correção automática pelas 5 competências.</p>
-        </div>
-        {challengeResults.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="badge badge-purple"><Trophy size={16} className="inline-block align-[-0.15em] text-amber-600" /> {challengeResults.length} desafios</span>
-            <span className="badge badge-emerald">Nota média: {Math.round(challengeResults.reduce((a, r) => a + r.notaFinal, 0) / challengeResults.length)}</span>
-          </div>
-        )}
-      </div>
+      <CabecalhoPagina
+        titulo="Redação 1000"
+        subtitulo="Treine sua redação ENEM com correção automática pelas 5 competências."
+        cor="violeta"
+        pose="estudando_caderno"
+        acao={challengeResults.length > 0 ? (
+          <>
+            <span className={SELO_NA_FAIXA}><Trophy size={16} /> {challengeResults.length} desafios</span>
+            <span className={SELO_NA_FAIXA}>Nota média: {Math.round(challengeResults.reduce((a, r) => a + r.notaFinal, 0) / challengeResults.length)}</span>
+          </>
+        ) : undefined}
+      />
 
       <GlassCard>
         <div className="flex items-center justify-between mb-4">

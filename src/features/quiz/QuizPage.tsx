@@ -21,6 +21,7 @@ import { playCorrect, playError, playLevelUp } from '../../shared/lib/sfx';
 import { mascotStore } from '../../stores/mascotStore';
 import { XpMilestone } from '../../shared/ui/XpMilestone';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
+import { CabecalhoPagina, BOTAO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 type Stage = 'select' | 'topics' | 'playing' | 'result';
 
@@ -754,13 +755,7 @@ export function QuizPage() {
   if (stage === 'select') {
     return (
       <div className="space-y-5 animate-fade-up">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/10 flex items-center justify-center text-lg"><Target size={16} className="inline-block align-[-0.15em] text-emerald-600" /></div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Quiz Adaptativo IA</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Escolha uma matéria para praticar</p>
-          </div>
-        </div>
+        <CabecalhoPagina titulo="Quiz Adaptativo IA" subtitulo="Escolha uma matéria para praticar" cor="ceu" pose="estudando" />
 
         {rascunhoDisponivel && (
           <div className="glass rounded-2xl p-5 border border-cyan-500/20 bg-cyan-500/5 animate-slide-up">
@@ -865,18 +860,13 @@ export function QuizPage() {
     const topics = TOPIC_MAP[materia] || [];
     return (
       <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: '#f59e0b15' }}>
-              {MAT_ICONS[materia] || ''}
-            </div>
-          <div>
-            <h1 className="text-xl font-bold text-tinta-900">{materia}</h1>
-            <p className="text-sm text-slate-500">Conteúdos cobrados no ENEM, FUVEST, UNICAMP e UNESP</p>
-          </div>
-          </div>
-          <button onClick={() => setStage('select')} className="btn-ghost text-xs"> Voltar</button>
-        </div>
+        <CabecalhoPagina
+          titulo={<>{MAT_ICONS[materia] ? <span className="mr-2" aria-hidden="true">{MAT_ICONS[materia]}</span> : null}{materia}</>}
+          subtitulo="Conteúdos cobrados no ENEM, FUVEST, UNICAMP e UNESP"
+          cor="ceu"
+          pose="estudando_caderno"
+          acao={<button onClick={() => setStage('select')} className={BOTAO_NA_FAIXA}>Voltar</button>}
+        />
 
         <div className="glass rounded-2xl p-6 space-y-4">
           <p className="text-sm text-slate-600">Escolha um ou mais tópicos para a IA gerar questões personalizadas.</p>
@@ -1086,9 +1076,12 @@ export function QuizPage() {
   const question = questions[currentIndex];
   const respondeu = selectedAlt !== null;
   const acertouAgora = respondeu && selectedAlt === question.correta;
+  /* Alternativas curtas cabem em duas colunas no computador; texto longo
+     em duas colunas vira tijolo de leitura, então fica em uma. */
+  const alternativasCurtas = question.alternativas.every((a) => a.length <= 40);
 
   return (
-    <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
+    <div className="space-y-5 animate-fade-up max-w-2xl md:max-w-3xl mx-auto">
       {/* Topo da lição: barra grossa de progresso, como no Duolingo. Saber
           quanto falta é o que sustenta o aluno até o fim do bloco. */}
       <div className="flex items-center gap-3">
@@ -1148,7 +1141,22 @@ export function QuizPage() {
         animate={reduzir ? undefined : 'animar'}
         exit={reduzir ? undefined : 'sair'}
       >
-        <p className="text-xl md:text-2xl text-tinta-900 font-extrabold mb-6 leading-snug">{question.enunciado}</p>
+        {/* No computador o sagui "fala" a pergunta, como o personagem das
+            lições do Duolingo. No celular o enunciado vem direto, sem balão,
+            para não roubar altura da tela. */}
+        <div className="mb-6 md:flex md:items-end md:gap-4">
+          <img
+            src="/assets/sagui_estudando_2.png"
+            alt=""
+            width={128}
+            height={128}
+            className="hidden md:block w-32 h-32 shrink-0 object-contain motion-safe:animate-float-suave"
+          />
+          <div className="md:relative md:flex-1 md:rounded-[22px] md:border-2 md:border-slate-200 md:bg-white md:px-6 md:py-5 md:shadow-lip">
+            <span className="hidden md:block absolute -left-[9px] bottom-8 w-4 h-4 rotate-45 bg-white border-l-2 border-b-2 border-slate-200" aria-hidden="true" />
+            <p className="text-xl md:text-2xl text-tinta-900 font-extrabold leading-snug">{question.enunciado}</p>
+          </div>
+        </div>
 
         {question.dica && !respondeu && (
           <div className="mb-4">
@@ -1170,7 +1178,7 @@ export function QuizPage() {
 
         {/* Alternativas "adesivo": borda grossa e lábio. Depois de responder,
             a certa fica verde, a escolhida errada fica vermelha. */}
-        <div className="space-y-3">
+        <div className={`grid gap-3 ${alternativasCurtas ? 'md:grid-cols-2' : ''}`}>
           {question.alternativas.map((alt, idx) => {
             const certa = respondeu && idx === question.correta;
             const errada = respondeu && idx === selectedAlt && idx !== question.correta;
@@ -1211,9 +1219,14 @@ export function QuizPage() {
             explicação, o tutor e o botão de seguir. */}
         {respondeu && (
           <div
-            className={`mt-6 rounded-[20px] p-5 space-y-3 animate-slide-up ${acertouAgora ? 'bg-emerald-100' : 'bg-red-100'}`}
+            className={`mt-6 rounded-[20px] p-5 md:p-6 space-y-3 md:space-y-0 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-6 md:items-end md:sticky md:bottom-4 md:z-20 md:border-2 animate-slide-up ${
+              acertouAgora ? 'bg-emerald-100 md:border-emerald-300' : 'bg-red-100 md:border-red-300'
+            }`}
             role="status"
           >
+            {/* No computador vira a barra do Duolingo: texto à esquerda,
+                botão à direita, grudada no fim da tela. */}
+            <div className="space-y-3 min-w-0">
             <div className="flex items-center gap-3">
               <span className={`w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 ${acertouAgora ? 'text-emerald-500' : 'text-red-500'}`}>
                 {acertouAgora ? <Check size={24} strokeWidth={3.5} /> : <X size={24} strokeWidth={3.5} />}
@@ -1252,9 +1265,10 @@ export function QuizPage() {
                 </button>
               )
             )}
+            </div>
             <m.button
               onClick={nextQuestion}
-              className={`${acertouAgora ? 'btn-sucesso' : 'btn-perigo'} w-full h-12 uppercase`}
+              className={`${acertouAgora ? 'btn-sucesso' : 'btn-perigo'} w-full md:w-auto md:px-12 h-12 uppercase`}
               whileTap={reduzir ? undefined : { scale: 0.98 }}
               transition={springTap}
             >

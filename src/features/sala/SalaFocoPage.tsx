@@ -1,5 +1,5 @@
 import { memo, useCallback, useState } from 'react';
-import { DoorOpen, MessageSquareOff, Users } from 'lucide-react';
+import { DoorOpen, MessageSquareOff } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import {
@@ -13,6 +13,7 @@ import {
   type PresencaSala,
 } from '../../shared/lib/salaFoco';
 import { useSalaFoco } from './useSalaFoco';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /** Materias sugeridas na entrada — digitar antes de estudar ja e atrito. */
 const MATERIAS = [
@@ -110,15 +111,7 @@ export function SalaFocoPage() {
 
   return (
     <div className="mx-auto max-w-lg animate-fade-up space-y-5">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/15 to-indigo-600/10">
-          <Users size={20} className="text-violet-600" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-tinta-900 md:text-2xl">Sala de Foco</h1>
-          <p className="mt-0.5 text-sm text-slate-500">Estude junto, em silêncio</p>
-        </div>
-      </div>
+      <CabecalhoPagina titulo="Sala de Foco" subtitulo="Estude junto, em silêncio" cor="esmeralda" pose="meditando" />
 
       {/* Estado da sala + entrada/saida. */}
       <div className="glass rounded-2xl p-5">

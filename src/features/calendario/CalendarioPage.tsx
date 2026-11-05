@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Brain, CalendarDays, CircleAlert, Plus } from 'lucide-react';
+import { Brain, CircleAlert, Plus } from 'lucide-react';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
 import { useAppStore } from '../../stores/appStore';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../../shared/lib/srsEngine';
 import type { RevisaoEspacada } from '../../shared/types';
 import { EmptyState } from '../../shared/ui/EmptyState';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /**
  * CALENDARIO ADAPTATIVO (curva de Ebbinghaus).
@@ -60,17 +61,12 @@ export function CalendarioPage() {
 
   return (
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/15 to-indigo-600/10 flex items-center justify-center">
-          <CalendarDays size={20} className="text-sky-600" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Calendario Adaptativo</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            As revisões entram sozinhas, no dia em que a memória começa a falhar
-          </p>
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo="Calendário Adaptativo"
+        subtitulo="As revisões entram sozinhas, no dia em que a memória começa a falhar"
+        cor="ambar"
+        pose="estudando_caderno"
+      />
 
       {/* Fila de hoje */}
       <div className="glass rounded-2xl p-5">

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Headphones, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { conteudoRepository } from '../../shared/storage/ConteudoRepository';
 import { useAppStore } from '../../stores/appStore';
 import { aiAvailable, gerarRoteiroAudio, sintetizarAudio, hasProxy } from '../../shared/lib/aiService';
@@ -8,6 +8,7 @@ import { safeGet, safeSet } from '../../shared/lib/safeStorage';
 import type { ModuloAudio, ProgressoAudio } from '../../shared/types';
 import { AudioPlayer } from './AudioPlayer';
 import { EmptyState } from '../../shared/ui/EmptyState';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /**
  * PILULAS DE AUDIO - modo "tela desligada".
@@ -144,15 +145,12 @@ export function AudioPillsPage() {
 
   return (
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-600/10 flex items-center justify-center">
-          <Headphones size={20} className="text-violet-600" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Pilulas de Audio</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Tres minutos por tema. Fone no ouvido, tela apagada.</p>
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo="Pílulas de Áudio"
+        subtitulo="Três minutos por tema. Fone no ouvido, tela apagada."
+        cor="violeta"
+        pose="acenando"
+      />
 
       {ativo && (
         <div className="glass rounded-2xl p-5 space-y-4 border border-violet-500/15">

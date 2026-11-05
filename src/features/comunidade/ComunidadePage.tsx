@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, Sparkles, User, Users } from 'lucide-react';
+import { Check, Sparkles, User } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { getProfile, getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
 import type { CommunityMessage, Escola, Turma } from '../../shared/types';
@@ -7,6 +7,7 @@ import { createStudyLeague, joinLeague, normalizeStudyLeague, canJoinMoreLeagues
 import { LeagueDetail } from './LeagueDetail';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /*
  * Mural e ligas agora vivem no banco.
@@ -313,17 +314,13 @@ export function ComunidadePage() {
   return (
     <div className="flex flex-col h-[calc(100dvh-10rem)] md:h-[calc(100dvh-8rem)] animate-fade-up">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 flex items-center justify-center">
-            <Users size={20} className="text-emerald-600" />
-          </div>
-          <div>
-            <h1 className="text-lg md:text-xl font-bold text-tinta-900">Ligas de estudo</h1>
-            <p className="text-xs text-slate-500">
-              {turmaAtual ? `${turmaAtual.nome} • ${escolaAtual?.nome}` : 'Selecione sua turma no Perfil'}
-            </p>
-          </div>
-        </div>
+        <CabecalhoPagina
+          className="flex-1 min-w-0"
+          titulo="Ligas de estudo"
+          subtitulo={turmaAtual ? `${turmaAtual.nome} • ${escolaAtual?.nome}` : 'Selecione sua turma no Perfil'}
+          cor="esmeralda"
+          pose="aprovacao"
+        />
         {/* O indicador diz a verdade sobre o mural: verde quando carregou,
             ambar quando a consulta falhou. Antes as duas situacoes exibiam
             "0 mensagens", e o aluno concluia que a turma estava calada. */}

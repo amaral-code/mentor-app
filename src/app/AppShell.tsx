@@ -2,6 +2,7 @@ import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef, 
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, ChevronRight, Flame, Headphones, House, LayoutGrid, LogOut, NotebookPen, PenLine, ShieldCheck, ShoppingBag, Star, Target, Timer, Trophy, User, Users, UsersRound, X, Zap } from 'lucide-react';
 import { MoonLogo } from '../shared/ui/MoonLogo';
+import { PainelLateral } from './PainelLateral';
 import { useAppStore } from '../stores/appStore';
 import { TabId } from '../shared/types';
 import { CrisisOverlay } from '../features/overlays/CrisisOverlay';
@@ -84,6 +85,10 @@ const TABS: Aba[] = [
  */
 const ABAS_BARRA: TabId[] = ['dashboard', 'chat', 'quiz', 'comunidade'];
 const ABAS_MAIS = TABS.filter((t) => !ABAS_BARRA.includes(t.id));
+
+/* Abas que ganham o painel lateral no computador largo (xl). Ficam de fora o
+   Mentor (já tem a coluna do histórico) e a Central (tem coluna própria). */
+const ABAS_COM_PAINEL: TabId[] = ['quiz', 'profile', 'ranking', 'comunidade', 'estatisticas', 'calendario', 'essay', 'foco', 'notebook', 'store'];
 
 /* Ofensiva, XP e nível: os três números que o Duolingo deixa sempre à
    vista. Assina a gamificação AQUI dentro, pelo mesmo motivo do XpFooter:
@@ -463,6 +468,7 @@ export function AppShell() {
 
   const inicial = session?.nome?.charAt(0)?.toUpperCase() || '?';
   const abaEstaNoMais = !ABAS_BARRA.includes(activeTab);
+  const comPainel = ABAS_COM_PAINEL.includes(activeTab);
 
   /* overflow-x-clip, e nao hidden: hidden cria area de rolagem e quebra o
      `sticky` do seletor de abas de algumas paginas. */
@@ -569,7 +575,12 @@ export function AppShell() {
             : 'p-3 md:p-6 lg:p-8 pt-[calc(4.75rem+env(safe-area-inset-top,0px))] md:pt-8 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-10'
         }`}
       >
-        <div id="conteudo" tabIndex={-1} className={`${activeTab === 'chat' ? 'max-w-none' : 'max-w-5xl'} mx-auto min-h-[calc(100dvh-3rem)]`}>
+        <div
+          id="conteudo"
+          tabIndex={-1}
+          className={`${activeTab === 'chat' ? 'max-w-none' : comPainel ? 'max-w-5xl xl:max-w-[1240px] xl:grid xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-8 xl:items-start' : 'max-w-5xl'} mx-auto min-h-[calc(100dvh-3rem)]`}
+        >
+          <div className="min-w-0">
           {/* Troca de aba nao recarrega a pagina: esta regiao anuncia o nome
               da nova secao ao leitor de tela, sem roubar o foco. */}
           <span aria-live="polite" aria-atomic="true" className="sr-only">
@@ -592,6 +603,12 @@ export function AppShell() {
               </Suspense>
             </m.div>
           </AnimatePresence>
+          </div>
+          {comPainel && (
+            <div className="hidden xl:block self-stretch">
+              <PainelLateral aba={activeTab} />
+            </div>
+          )}
         </div>
       </main>
 

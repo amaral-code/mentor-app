@@ -11,6 +11,7 @@ import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { hasProxy, testGeneration, getAIProviderInfo } from '../../shared/lib/aiService';
 import type { Escola, Turma } from '../../shared/types';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 export function ProfilePage() {
   const session = useAppStore((s) => s.session);
@@ -126,7 +127,11 @@ export function ProfilePage() {
 
 
   return (
-    <div className="space-y-5 animate-fade-up max-w-lg mx-auto">
+    <div className="space-y-5 animate-fade-up max-w-lg md:max-w-2xl mx-auto">
+      {/* No computador a faixa colorida dá o tom da seção; no celular o
+          avatar já abre a tela e a faixa só empurraria o conteúdo. */}
+      <CabecalhoPagina className="hidden md:block" titulo="Seu perfil" subtitulo="Conta, escola, responsáveis e preferências" cor="ceu" pose="aprovacao" />
+
       {/* Cabeçalho do perfil: avatar redondo céu, nome em destaque e nível. */}
       <div className="flex flex-col items-center text-center pt-2">
         <div className="w-24 h-24 rounded-full bg-ceu-500 border-4 border-white shadow-lip-ceu flex items-center justify-center text-4xl font-black text-white">

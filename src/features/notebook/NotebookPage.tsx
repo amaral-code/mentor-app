@@ -3,9 +3,10 @@ import { useAppStore, persistir } from '../../stores/appStore';
 import { Nota } from '../../shared/types';
 import { playClick } from '../../shared/lib/sfx';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { NotebookPen, Pencil, Sparkles, Trash2, X } from 'lucide-react';
+import { Pencil, Sparkles, Trash2, X } from 'lucide-react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';
+import { CabecalhoPagina, BOTAO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 export function NotebookPage() {
   const reduzir = useReducedMotion();
@@ -66,21 +67,18 @@ export function NotebookPage() {
 
   return (
     <div className="space-y-5 animate-fade-up">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/10 flex items-center justify-center">
-            <NotebookPen size={19} className="text-amber-600" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Caderno de Estudos</h1>
-            <p className="text-sm text-slate-500 mt-0.5">{notas.length} anotações</p>
-          </div>
-        </div>
-        <button onClick={() => setShowNotebookStudio(true)} className="btn-secondary text-sm px-4 py-2 min-h-[44px] press inline-flex items-center gap-1.5">
-          <Sparkles size={15} className="text-amber-600" />
-          Studio
-        </button>
-      </div>
+      <CabecalhoPagina
+        titulo="Caderno de Estudos"
+        subtitulo={`${notas.length} anotações`}
+        cor="azul"
+        pose="estudando_caderno"
+        acao={
+          <button onClick={() => setShowNotebookStudio(true)} className={BOTAO_NA_FAIXA}>
+            <Sparkles size={15} className="text-amber-500" />
+            Studio
+          </button>
+        }
+      />
 
       {/* Add note */}
       <div className="glass rounded-2xl p-5">

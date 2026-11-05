@@ -8,6 +8,7 @@ import { SHOP_ITEMS } from '../../shared/lib/storeCatalog';
 import { calcLevel } from '../../shared/lib/utils';
 import { AppIcon } from '../../shared/ui/AppIcon';
 import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 // Imagem padrão do Sagui exibida como "preview" dos itens
 const SAGUI_IDLE = '/assets/sagui_meditando_2.png';
@@ -63,20 +64,8 @@ export function StudentStore() {
   return (
     <div className="space-y-5 animate-fade-up">
       {/* Cabeçalho da loja */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-400 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-tinta-900">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Loja do Sagui</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Customize o seu companheiro de estudos</p>
-          </div>
-        </div>
+      <div className="flex flex-col gap-4">
+        <CabecalhoPagina titulo="Loja do Sagui" subtitulo="Customize o seu companheiro de estudos" cor="ambar" pose="pulando" />
 
         {/* Saldo de XP */}
         <div className="glass rounded-2xl px-5 py-3 flex items-center gap-3 border-amber-500/20">

@@ -269,6 +269,25 @@ compatível com esse padrão.
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
 
+### 2026-11-05 (2) — Mais vida no computador
+- Pedido do dono: no PC as telas pareciam vazias. Só interface, celular
+  quase igual (ganhou só as faixas coloridas).
+- **Painel lateral** (`app/PainelLateral.tsx`), a partir de 1280px nas abas
+  Quiz, Perfil, Ranking, Ligas, Estatísticas, Revisões, Redação, Foco,
+  Caderno e Loja: ofensiva da semana, meta do dia, atalho Ligas/Ranking e
+  dica do sagui por aba. Lê só o `appStore`, sem consulta nova. A Central
+  reaproveita os cartões na coluna dela. Cuidado no seletor: lista criada
+  dentro do `useAppStore(...)` derruba a tela em laço de render.
+- **Faixa colorida com o sagui** (`shared/ui/CabecalhoPagina.tsx`) no topo
+  das páginas do aluno, uma cor por seção, em tons fortes para o título
+  branco ter contraste.
+- **Trilha maior** a partir de 1024px: bolinhas maiores, zigue-zague mais
+  aberto, sagui em outras poses ao longo do caminho e troféu no fim (só
+  visual). A Central vira duas colunas a partir de 1280px.
+- **Quiz no PC**: o sagui "fala" o enunciado num balão, alternativas curtas
+  em duas colunas e a faixa de resultado gruda embaixo, com o botão à
+  direita.
+
 ### 2026-11-05 — Visual lúdico claro (estilo Duolingo)
 - **Só interface.** Nenhuma regra, rota, store, repositório ou migration
   mudou. Desenho aprovado pelo dono no Figma ("Midnight Mentor · Visual

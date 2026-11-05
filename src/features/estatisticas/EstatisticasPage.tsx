@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Crosshair, Play } from 'lucide-react';
+import { Crosshair, Play } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { supabaseRepository, DesempenhoTopico } from '../../shared/storage/SupabaseRepository';
 import { calcularEstatisticas } from '../../shared/lib/quizStats';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /**
  * ESTATISTICAS - aproveitamento e pontos fracos por materia/topico.
@@ -58,15 +59,7 @@ export function EstatisticasPage() {
   if (resumo.totalQuestoes === 0) {
     return (
       <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/15 to-cyan-600/10 flex items-center justify-center">
-            <BarChart3 size={16} className="text-cyan-700" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Estatísticas</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Seu aproveitamento por matéria e tópico</p>
-          </div>
-        </div>
+        <CabecalhoPagina titulo="Estatísticas" subtitulo="Seu aproveitamento por matéria e tópico" cor="ceu" pose="estudando" />
         <div className="glass rounded-2xl p-8 text-center">
           <p className="text-slate-700 font-medium">Sem dados ainda.</p>
           <p className="text-sm text-slate-500 mt-2">
@@ -87,17 +80,12 @@ export function EstatisticasPage() {
 
   return (
     <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/15 to-cyan-600/10 flex items-center justify-center">
-          <BarChart3 size={16} className="text-cyan-700" />
-        </div>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Estatísticas</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            {resumo.totalQuestoes} questões respondidas • {resumo.totalAcertos} acertos
-          </p>
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo="Estatísticas"
+        subtitulo={`${resumo.totalQuestoes} questões respondidas • ${resumo.totalAcertos} acertos`}
+        cor="ceu"
+        pose="estudando"
+      />
 
       <div className="glass rounded-2xl p-6 text-center">
         <p className="text-xs text-slate-500 uppercase tracking-widest font-medium">Aproveitamento geral</p>

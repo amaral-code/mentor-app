@@ -1,5 +1,5 @@
 import { memo, useCallback, useState, useEffect, useRef } from 'react';
-import { BarChart3, Hand, ShieldAlert, Timer } from 'lucide-react';
+import { BarChart3, Hand, ShieldAlert } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { MeditationOverlay } from '../../shared/ui/MeditationOverlay';
 import { EmptyState } from '../../shared/ui/EmptyState';
@@ -8,6 +8,7 @@ import { focusMetricsRepository, type FocusMetricRow } from '../../shared/storag
 import { useFocusTracker } from './useFocusTracker';
 import { ConsciousPauseOverlay } from './ConsciousPauseOverlay';
 import { distractionStage, formatFocusTime } from './focusLogic';
+import { CabecalhoPagina, BOTAO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 type FocoState = 'idle' | 'foco' | 'pausa' | 'concluido';
 const FOCO_MIN = 25;
@@ -434,23 +435,21 @@ export function FocoPage() {
         trava estrita estão abertas. */}
     <div className={`space-y-5 animate-fade-up max-w-lg mx-auto transition-all duration-300 ${(pausaAberta || travado) ? 'pointer-events-none select-none blur-sm' : ''}`}>
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 flex items-center justify-center">
-          <Timer size={20} className="text-emerald-600" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-tinta-900">Foco Total</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Timer Pomodoro para estudos</p>
-        </div>
-        {cansaco >= 4 && (
+      <CabecalhoPagina
+        titulo="Foco Total"
+        subtitulo="Timer Pomodoro para estudos"
+        cor="azul"
+        pose="meditando"
+        acao={cansaco >= 4 ? (
           <button
             onClick={() => setMeditando(true)}
-            className="btn-secondary !px-4 !py-3 min-h-[44px] text-sm border-emerald-500/25 text-emerald-600 hover:bg-emerald-500/10"
+            className={BOTAO_NA_FAIXA}
             title="Você parece cansado. Respire um pouco antes de continuar"
-          > Meditar
+          >
+            Meditar
           </button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Timer card */}
       <div className="glass rounded-2xl p-8 text-center">
