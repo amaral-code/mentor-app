@@ -53,8 +53,8 @@ export function PersonaManager() {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowPersonaManager(false)} />
       <div className="relative z-10 w-full max-w-lg animate-scale-in">
         <div className="glass-card rounded-3xl max-h-[85dvh] overflow-y-auto">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
-            <h2 className="text-lg font-bold text-white"> Gerenciar Personas</h2>
+          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+            <h2 className="text-lg font-bold text-tinta-900"> Gerenciar Personas</h2>
             <button onClick={() => setShowPersonaManager(false)} className="btn-ghost text-lg leading-none"></button>
           </div>
 
@@ -71,7 +71,7 @@ export function PersonaManager() {
                     className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl text-center transition-all group ${
                       isActive
                         ? 'ring-2 shadow-lg'
-                        : 'hover:bg-white/[0.03] border border-white/5'
+                        : 'hover:bg-slate-50 border border-slate-200'
                     }`}
                     style={isActive ? { backgroundColor: p.color + '15', boxShadow: `0 0 0 2px ${p.color}`, borderColor: p.color + '40' } : {}}
                   >
@@ -79,11 +79,11 @@ export function PersonaManager() {
                       className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm transition-transform group-hover:scale-110"
                       style={{ backgroundColor: p.color + '20' }}
                     >
-                      <AppIcon name={p.icon} size={20} className="text-amber-300" />
+                      <AppIcon name={p.icon} size={20} className="text-amber-600" />
                     </div>
                     <div className="min-w-0 w-full">
-                      <p className="text-sm font-semibold text-white truncate">{p.name}</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">{p.instruction}</p>
+                      <p className="text-sm font-semibold text-tinta-900 truncate">{p.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{p.instruction}</p>
                     </div>
                     {isActive && (
                       <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: p.color }}>
@@ -93,7 +93,7 @@ export function PersonaManager() {
                     {!isBuiltIn && (
                       <button
                         onClick={(e) => { e.stopPropagation(); removePersona(p.id); }}
-                        className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-red-500/80 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-red-500/80 text-tinta-900 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         
                       </button>
@@ -104,8 +104,8 @@ export function PersonaManager() {
             </div>
 
             {/* Create new */}
-            <div className="pt-4 border-t border-white/5">
-              <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">Criar Nova Persona</p>
+            <div className="pt-4 border-t border-slate-200">
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Criar Nova Persona</p>
               <div className="space-y-3">
                 <input
                   value={name}
@@ -121,7 +121,7 @@ export function PersonaManager() {
                   className="w-full resize-none"
                 />
                 <div>
-                  <p className="text-[11px] text-gray-500 mb-2">Ícone</p>
+                  <p className="text-[11px] text-slate-500 mb-2">Ícone</p>
                   <div className="flex flex-wrap gap-1.5">
                     {ICONS.map(i => (
                       <button
@@ -130,27 +130,27 @@ export function PersonaManager() {
                         aria-label={`Ícone ${i}`}
                         aria-pressed={icon === i}
                         className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
-                          icon === i ? 'bg-amber-500/20 ring-1 ring-amber-500/30' : 'hover:bg-white/5'
+                          icon === i ? 'bg-amber-500/20 ring-1 ring-amber-500/30' : 'hover:bg-slate-50'
                         }`}
                       >
-                        <AppIcon name={i} size={19} className="text-amber-300" />
+                        <AppIcon name={i} size={19} className="text-amber-600" />
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-500 mb-2">Cor</p>
+                  <p className="text-[11px] text-slate-500 mb-2">Cor</p>
                   <div className="flex flex-wrap gap-2">
                     {COLORS.map(c => (
                       <button key={c} onClick={() => setColor(c)} className={`w-7 h-7 rounded-full transition-all ${
-                        color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-900 scale-110' : ''
+                        color === c ? 'ring-2 ring-slate-200 ring-offset-2 ring-offset-white scale-110' : ''
                       }`} style={{ backgroundColor: c }} />
                     ))}
                   </div>
                 </div>
                 <button onClick={handleCreate} disabled={!name.trim() || !instruction.trim()} className="btn-primary w-full"> Criar Persona
                 </button>
-                <p className="text-[11px] text-gray-500 leading-relaxed">
+                <p className="text-[11px] text-slate-500 leading-relaxed">
                   Personas criadas aqui valem para estudos com travas de segurança automáticas: hacking, conteúdos perigosos, atividades ilícitas e xingamentos são sempre recusados.
                 </p>
               </div>

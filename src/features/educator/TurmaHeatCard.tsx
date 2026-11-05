@@ -16,27 +16,27 @@ import {
 const CORES: Record<NivelCalor, { barra: string; texto: string; borda: string; chip: string }> = {
   calmo: {
     barra: 'from-emerald-500 to-emerald-400',
-    texto: 'text-emerald-300',
+    texto: 'text-emerald-600',
     borda: 'border-emerald-500/25',
-    chip: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
+    chip: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/25',
   },
   atencao: {
     barra: 'from-amber-500 to-yellow-400',
-    texto: 'text-amber-300',
+    texto: 'text-amber-600',
     borda: 'border-amber-500/25',
-    chip: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
+    chip: 'bg-amber-500/10 text-amber-600 border-amber-500/25',
   },
   alerta: {
     barra: 'from-orange-500 to-red-400',
-    texto: 'text-orange-300',
+    texto: 'text-orange-600',
     borda: 'border-orange-500/30',
-    chip: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
+    chip: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
   },
   critico: {
     barra: 'from-red-600 to-rose-500',
-    texto: 'text-red-300',
+    texto: 'text-red-600',
     borda: 'border-red-500/40',
-    chip: 'bg-red-500/15 text-red-300 border-red-500/40',
+    chip: 'bg-red-500/15 text-red-600 border-red-500/40',
   },
 };
 
@@ -67,11 +67,11 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo
   return (
     <article
       aria-label={`Termômetro da ${turma.turmaNome}`}
-      className={`rounded-2xl border bg-midnight-900/80 p-5 backdrop-blur transition-colors ${cor.borda}`}
+      className={`rounded-2xl border bg-white p-5 backdrop-blur transition-colors ${cor.borda}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-bold text-white">{turma.turmaNome}</h3>
+          <h3 className="truncate text-sm font-bold text-tinta-900">{turma.turmaNome}</h3>
           <p className="mt-0.5 text-[11px] text-slate-500 tabular-nums">
             {turma.comIndice} de {turma.totalAlunos} alunos com índice na janela
           </p>
@@ -84,7 +84,7 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo
       {/* Barra de calor: a leitura de 1 segundo do professor. */}
       <div className="mt-4 flex items-center gap-3">
         <span className={`text-3xl font-black tabular-nums ${cor.texto}`}>{pct}%</span>
-        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
           <div
             role="meter"
             aria-valuenow={pct}
@@ -96,51 +96,51 @@ export const TurmaHeatCard = memo(function TurmaHeatCard({ turma, janela, escopo
           />
         </div>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-slate-300">{resumoTurma(turma, janela)}</p>
+      <p className="mt-2 text-sm leading-relaxed text-slate-700">{resumoTurma(turma, janela)}</p>
 
       {/* Sinais que compoem o calor. */}
       <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div className="rounded-xl bg-white/[0.03] px-3 py-2">
+        <div className="rounded-xl bg-slate-50 px-3 py-2">
           <dt className="flex items-center gap-1 text-[10px] text-slate-500">
             <Gauge size={11} /> Índice médio
           </dt>
-          <dd className="text-sm font-bold text-white tabular-nums">{turma.scoreMedio.toFixed(0)}/100</dd>
+          <dd className="text-sm font-bold text-tinta-900 tabular-nums">{turma.scoreMedio.toFixed(0)}/100</dd>
         </div>
-        <div className="rounded-xl bg-white/[0.03] px-3 py-2">
+        <div className="rounded-xl bg-slate-50 px-3 py-2">
           <dt className="flex items-center gap-1 text-[10px] text-slate-500">
             <Timer size={11} /> Foco contínuo
           </dt>
-          <dd className="text-sm font-bold text-white tabular-nums">{Math.round(turma.minutosFocoMedio)} min</dd>
+          <dd className="text-sm font-bold text-tinta-900 tabular-nums">{Math.round(turma.minutosFocoMedio)} min</dd>
         </div>
-        <div className="rounded-xl bg-white/[0.03] px-3 py-2">
+        <div className="rounded-xl bg-slate-50 px-3 py-2">
           <dt className="flex items-center gap-1 text-[10px] text-slate-500">
             <AlarmClock size={11} /> Distrações
           </dt>
-          <dd className="text-sm font-bold text-white tabular-nums">{/* toFixed usa ponto; em português o decimal é vírgula. */}
+          <dd className="text-sm font-bold text-tinta-900 tabular-nums">{/* toFixed usa ponto; em português o decimal é vírgula. */}
             {turma.distracoesMedia.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}/sessão</dd>
         </div>
-        <div className="rounded-xl bg-white/[0.03] px-3 py-2">
+        <div className="rounded-xl bg-slate-50 px-3 py-2">
           <dt className="flex items-center gap-1 text-[10px] text-slate-500">
             <MoonStar size={11} /> Estudo de madrugada
           </dt>
-          <dd className="text-sm font-bold text-white tabular-nums">{Math.round(turma.fracaoMadrugada * 100)}%</dd>
+          <dd className="text-sm font-bold text-tinta-900 tabular-nums">{Math.round(turma.fracaoMadrugada * 100)}%</dd>
         </div>
       </dl>
 
       {pctAlerta > 0 && (
         <p className="mt-3 text-[11px] text-slate-500">
-          Mais <span className="font-semibold text-slate-400 tabular-nums">{pctAlerta}%</span> em alerta.
+          Mais <span className="font-semibold text-slate-600 tabular-nums">{pctAlerta}%</span> em alerta.
           Ainda dá para evitar que virem exaustão.
         </p>
       )}
 
       {/* Intervencao pedagogica sugerida (a razao de o painel existir). */}
       <div className="mt-4 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] p-3">
-        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-300">
+        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-600">
           <Lightbulb size={12} /> {escopo === 'escola' ? 'Para conversar com o professor da turma' : 'Sugestão para a aula'}
         </p>
-        <p className="mt-1 text-sm font-semibold text-white">{intervencao.titulo}</p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-400">{intervencao.acao}</p>
+        <p className="mt-1 text-sm font-semibold text-tinta-900">{intervencao.titulo}</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-600">{intervencao.acao}</p>
         <p className="mt-1.5 text-[11px] text-slate-500">Por quê: {intervencao.motivo}</p>
       </div>
     </article>

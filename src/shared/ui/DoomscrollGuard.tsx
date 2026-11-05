@@ -93,7 +93,7 @@ export function DoomscrollGuard() {
       {intervencao && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
           <m.button
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
+            className="absolute inset-0 bg-white backdrop-blur-md"
             aria-label="Continuar navegando"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -106,7 +106,7 @@ export function DoomscrollGuard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="doomscroll-titulo"
-            className="relative z-10 w-full max-w-sm glass rounded-3xl p-6 text-center border border-white/[0.06]"
+            className="relative z-10 w-full max-w-sm glass rounded-3xl p-6 text-center border border-slate-200"
             initial={reduzir ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
             animate={reduzir ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
             exit={reduzir ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
@@ -120,10 +120,10 @@ export function DoomscrollGuard() {
               className="mx-auto mb-3 opacity-90"
             />
 
-            <h2 id="doomscroll-titulo" className="text-lg font-bold text-white">
+            <h2 id="doomscroll-titulo" className="text-lg font-bold text-tinta-900">
               {intervencao.titulo}
             </h2>
-            <p className="text-sm text-gray-400 mt-2 leading-relaxed">{intervencao.convite}</p>
+            <p className="text-sm text-slate-600 mt-2 leading-relaxed">{intervencao.convite}</p>
 
             <div className="flex flex-col gap-2 mt-5">
               <button onClick={aceitar} className="btn-primary py-3">
@@ -131,13 +131,13 @@ export function DoomscrollGuard() {
               </button>
               <button
                 onClick={() => responderIntervencao(false)}
-                className="btn-ghost text-sm text-gray-500 hover:text-gray-300 py-2"
+                className="btn-ghost text-sm text-slate-500 hover:text-slate-700 py-2"
               >
                 Agora não
               </button>
             </div>
 
-            <p className="text-[10px] text-gray-600 mt-4">
+            <p className="text-[10px] text-slate-400 mt-4">
               Aparece no máximo uma vez a cada 15 minutos.
             </p>
           </m.div>

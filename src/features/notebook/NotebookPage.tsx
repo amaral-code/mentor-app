@@ -3,9 +3,10 @@ import { useAppStore, persistir } from '../../stores/appStore';
 import { Nota } from '../../shared/types';
 import { playClick } from '../../shared/lib/sfx';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { NotebookPen, Pencil, Sparkles, Trash2, X } from 'lucide-react';
+import { Pencil, Sparkles, Trash2, X } from 'lucide-react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';
+import { CabecalhoPagina, BOTAO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 export function NotebookPage() {
   const reduzir = useReducedMotion();
@@ -66,25 +67,22 @@ export function NotebookPage() {
 
   return (
     <div className="space-y-5 animate-fade-up">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/10 flex items-center justify-center">
-            <NotebookPen size={19} className="text-amber-400" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white">Caderno de Estudos</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{notas.length} anotações</p>
-          </div>
-        </div>
-        <button onClick={() => setShowNotebookStudio(true)} className="btn-secondary text-sm px-4 py-2 min-h-[44px] press inline-flex items-center gap-1.5">
-          <Sparkles size={15} className="text-amber-400" />
-          Studio
-        </button>
-      </div>
+      <CabecalhoPagina
+        titulo="Caderno de Estudos"
+        subtitulo={`${notas.length} anotações`}
+        cor="azul"
+        pose="estudando_caderno"
+        acao={
+          <button onClick={() => setShowNotebookStudio(true)} className={BOTAO_NA_FAIXA}>
+            <Sparkles size={15} className="text-amber-500" />
+            Studio
+          </button>
+        }
+      />
 
       {/* Add note */}
       <div className="glass rounded-2xl p-5">
-        <h2 className="text-sm font-semibold text-gray-300 mb-3">Nova Anotação</h2>
+        <h2 className="text-sm font-semibold text-slate-700 mb-3">Nova Anotação</h2>
         <textarea
           value={newText}
           onChange={e => setNewText(e.target.value)}
@@ -105,7 +103,7 @@ export function NotebookPage() {
               <button
                 onClick={() => setNewTag('')}
                 aria-label="Limpar tag"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
               >
                 <X size={14} />
               </button>
@@ -129,8 +127,8 @@ export function NotebookPage() {
             loading="lazy"
             className="w-32 h-32 object-contain mb-3 opacity-90 motion-safe:animate-float-suave"
           />
-          <p className="text-gray-300 font-medium">O caderno está em branco</p>
-          <p className="text-sm text-gray-500 mt-1 max-w-xs">
+          <p className="text-slate-700 font-medium">O caderno está em branco</p>
+          <p className="text-sm text-slate-500 mt-1 max-w-xs">
             Salve uma resposta do Mentor ou escreva o primeiro resumo. O sagui guarda para você.
           </p>
         </div>
@@ -157,24 +155,24 @@ export function NotebookPage() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed flex-1">{nota.text}</p>
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.03]">
+                    <p className="text-sm text-tinta-700 whitespace-pre-wrap leading-relaxed flex-1">{nota.text}</p>
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-gray-600 tabular-nums">{new Date(nota.data).toLocaleDateString()}</span>
+                        <span className="text-[11px] text-slate-400 tabular-nums">{new Date(nota.data).toLocaleDateString()}</span>
                         {nota.tag && <span className="badge badge-amber">{nota.tag}</span>}
                       </div>
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleEdit(nota.id)}
                           aria-label="Editar nota"
-                          className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 transition-all press"
+                          className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:text-amber-600 hover:bg-amber-500/10 transition-all press"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           onClick={() => handleDelete(nota.id)}
                           aria-label="Excluir nota"
-                          className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all press"
+                          className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-500/10 transition-all press"
                         >
                           <Trash2 size={15} />
                         </button>

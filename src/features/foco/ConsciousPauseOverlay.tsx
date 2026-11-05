@@ -111,20 +111,20 @@ export function ConsciousPauseOverlay({
       `}</style>
 
       <div
-        className={`relative m-auto w-full max-w-md rounded-3xl border border-indigo-400/15 bg-gradient-to-b from-[#141B33]/95 to-[#1B1140]/95 p-6 text-center shadow-[0_24px_80px_-12px_rgba(76,29,149,0.55)] backdrop-blur-xl transition-all duration-300 sm:p-8 ${
+        className={`relative m-auto w-full max-w-md rounded-3xl border border-indigo-400/15 bg-gradient-to-b from-azul-50 to-azul-50 p-6 text-center shadow-[0_24px_80px_-12px_rgba(76,29,149,0.55)] backdrop-blur-xl transition-all duration-300 sm:p-8 ${
           open ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-300/80">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-600">
           Modo foco consciente
         </p>
-        <h2 id="pausa-consciente-titulo" className="mt-2 text-xl font-bold text-slate-50 sm:text-2xl">
+        <h2 id="pausa-consciente-titulo" className="mt-2 text-xl font-bold text-tinta-700 sm:text-2xl">
           Pausa para respirar
         </h2>
 
         <p
           id="pausa-consciente-descricao"
-          className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-300/90"
+          className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-700"
         >
           Percebemos {distractionCount} idas e vindas em poucos minutos, e está tudo bem.
           Sua mente não está falhando, ela só está cansada. A cobrança pode esperar:
@@ -147,16 +147,16 @@ export function ConsciousPauseOverlay({
             }}
           />
           <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center">
-            <span className="text-3xl font-extrabold tabular-nums text-white">
+            <span className="text-3xl font-extrabold tabular-nums text-tinta-900">
               {formatFocusTime(remaining)}
             </span>
-            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-indigo-200/70">
+            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-indigo-600">
               {finished ? 'concluído' : 'respire junto'}
             </span>
           </div>
         </div>
 
-        <p className="mt-4 text-xs text-slate-400" aria-live="polite">
+        <p className="mt-4 text-xs text-slate-600" aria-live="polite">
           {finished
             ? 'Ciclo de respiração completo. Volte no seu ritmo.'
             : 'Acompanhe o círculo: cresce inspirando pelo nariz, encolhe soltando pela boca.'}
@@ -164,7 +164,7 @@ export function ConsciousPauseOverlay({
 
         {/* Progresso da pausa */}
         <div
-          className="mx-auto mt-4 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/5"
+          className="mx-auto mt-4 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-50"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={durationSec}
@@ -185,8 +185,8 @@ export function ConsciousPauseOverlay({
           title={finished ? 'Voltar aos estudos' : 'Disponível ao fim dos 2 minutos'}
           className={`mt-6 w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all duration-300 ${
             finished
-              ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-[0_0_30px_-6px_rgba(124,58,237,0.6)] hover:brightness-110 active:scale-[0.99]'
-              : 'cursor-not-allowed bg-white/5 text-slate-500'
+              ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white  hover:brightness-110 active:scale-[0.99]'
+              : 'cursor-not-allowed bg-slate-50 text-slate-500'
           }`}
         >
           {finished ? 'Retomar Estudo' : `Respire… (${formatFocusTime(remaining)})`}

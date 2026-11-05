@@ -121,55 +121,55 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
     <div className="glass rounded-2xl p-5 space-y-4">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-          <ShieldCheck size={18} className="text-cyan-400" />
+          <ShieldCheck size={18} className="text-cyan-700" />
         </div>
         <div>
-          <h2 className="text-sm font-semibold text-gray-200">
+          <h2 className="text-sm font-semibold text-tinta-700">
             {ehAluno ? 'O que o psicólogo pode ver' : `O que o psicólogo pode ver de ${aluno.nome}`}
           </h2>
-          <p className="text-[11px] text-gray-500">Sempre com prazo, e dá para encerrar a qualquer hora.</p>
+          <p className="text-[11px] text-slate-500">Sempre com prazo, e dá para encerrar a qualquer hora.</p>
         </div>
       </div>
 
-      <div className="glass-light rounded-xl px-3.5 py-3 border border-white/[0.04] flex gap-2.5">
-        <EyeOff size={15} className="text-gray-500 shrink-0 mt-0.5" />
-        <p className="text-xs text-gray-400 leading-relaxed">
-          <strong className="text-gray-300">Nunca é compartilhado:</strong> conversas com o Mentor,
+      <div className="glass-light rounded-xl px-3.5 py-3 border border-slate-200 flex gap-2.5">
+        <EyeOff size={15} className="text-slate-500 shrink-0 mt-0.5" />
+        <p className="text-xs text-slate-600 leading-relaxed">
+          <strong className="text-slate-700">Nunca é compartilhado:</strong> conversas com o Mentor,
           o caderno e o que {ehAluno ? 'você escreve' : 'o estudante escreve'} sobre como está se
           sentindo. Nem com o psicólogo, nem com ninguém.
         </p>
       </div>
 
       {quem === null ? (
-        <div className="h-24 rounded-xl bg-white/5 animate-pulse" aria-hidden="true" />
+        <div className="h-24 rounded-xl bg-slate-50 animate-pulse" aria-hidden="true" />
       ) : !podeConceder ? (
         <div className="rounded-xl bg-violet-500/[0.06] border border-violet-500/15 px-3.5 py-3 flex gap-2.5" role="note">
-          <UserRoundCheck size={15} className="text-violet-300 shrink-0 mt-0.5" />
-          <p className="text-xs text-violet-200/90 leading-relaxed">
+          <UserRoundCheck size={15} className="text-violet-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-violet-600 leading-relaxed">
             {ehAluno
               ? 'Como você tem menos de 16 anos, quem autoriza é o seu responsável, pelo painel dele. É a lei (LGPD). Você vê tudo o que foi liberado aqui, e pode encerrar quando quiser.'
               : `${aluno.nome} tem 16 anos ou mais, então quem decide é o próprio estudante, pelo app dele. Você vê o que foi liberado e também pode encerrar.`}
           </p>
         </div>
       ) : profissionais.length === 0 ? (
-        <p className="text-sm text-gray-500 glass-light rounded-xl px-3.5 py-3">
+        <p className="text-sm text-slate-500 glass-light rounded-xl px-3.5 py-3">
           Só dá para autorizar um profissional com quem já existe consulta marcada. Marque uma
           consulta primeiro, na lista de psicólogos.
         </p>
       ) : (
         <div className="space-y-3.5">
           <div>
-            <label htmlFor="consent-psico" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+            <label htmlFor="consent-psico" className="block text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wider">
               Profissional
             </label>
             <select
               id="consent-psico"
               value={psicologoId}
               onChange={(e) => setPsicologoId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white outline-none focus:border-cyan-500/40 min-h-[44px]"
+              className="w-full px-3 py-2.5 rounded-xl glass-light border border-slate-200 text-sm text-tinta-900 outline-none focus:border-cyan-500/40 min-h-[44px]"
             >
               {profissionais.map((p) => (
-                <option key={p.id} value={p.id} className="bg-[#0d1426]">
+                <option key={p.id} value={p.id} className="bg-white">
                   {p.nome}
                 </option>
               ))}
@@ -177,7 +177,7 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
           </div>
 
           <fieldset>
-            <legend className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+            <legend className="block text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wider">
               O que liberar
             </legend>
             <div className="space-y-2">
@@ -187,7 +187,7 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
                   <label
                     key={e.id}
                     className={`flex gap-3 items-start rounded-xl px-3.5 py-3 border cursor-pointer transition-all ${
-                      marcado ? 'border-cyan-500/40 bg-cyan-500/[0.07]' : 'border-white/[0.06] glass-light'
+                      marcado ? 'border-cyan-500/40 bg-cyan-500/[0.07]' : 'border-slate-200 glass-light'
                     }`}
                   >
                     <input
@@ -197,8 +197,8 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
                       className="mt-0.5 accent-cyan-400 w-4 h-4"
                     />
                     <span>
-                      <span className="block text-sm text-white font-medium">{e.rotulo}</span>
-                      <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">{e.detalhe}</span>
+                      <span className="block text-sm text-tinta-900 font-medium">{e.rotulo}</span>
+                      <span className="block text-xs text-slate-500 mt-0.5 leading-relaxed">{e.detalhe}</span>
                     </span>
                   </label>
                 );
@@ -207,7 +207,7 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
           </fieldset>
 
           <fieldset>
-            <legend className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Por quanto tempo</legend>
+            <legend className="block text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wider">Por quanto tempo</legend>
             <div className="grid grid-cols-3 gap-2" role="radiogroup">
               {DURACOES.map((d) => (
                 <button
@@ -218,15 +218,15 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
                   onClick={() => setDias(d.dias)}
                   className={`py-2.5 rounded-xl text-sm font-semibold border transition-all min-h-[44px] ${
                     dias === d.dias
-                      ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/40'
-                      : 'text-gray-400 border-white/[0.06] glass-light'
+                      ? 'bg-cyan-500/15 text-cyan-700 border-cyan-500/40'
+                      : 'text-slate-600 border-slate-200 glass-light'
                   }`}
                 >
                   {d.rotulo}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-gray-600 mt-1.5">Depois disso o acesso termina sozinho.</p>
+            <p className="text-[11px] text-slate-400 mt-1.5">Depois disso o acesso termina sozinho.</p>
           </fieldset>
 
           <button
@@ -238,35 +238,35 @@ export function AcessoPsicologo({ aluno, papel }: Props) {
             {salvando ? 'Autorizando…' : 'Autorizar acesso'}
           </button>
           {escopo.length === 0 && (
-            <p className="text-xs text-amber-300/90">Marque pelo menos um item para autorizar.</p>
+            <p className="text-xs text-amber-600">Marque pelo menos um item para autorizar.</p>
           )}
         </div>
       )}
 
       <div>
-        <h3 className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">Acessos ativos</h3>
+        <h3 className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-2">Acessos ativos</h3>
         {lista.length === 0 ? (
-          <p className="text-sm text-gray-500 glass-light rounded-xl px-3.5 py-3">
+          <p className="text-sm text-slate-500 glass-light rounded-xl px-3.5 py-3">
             Nenhum. Enquanto for assim, nenhum psicólogo vê esses dados.
           </p>
         ) : (
           <ul className="space-y-2">
             {lista.map((c) => (
-              <li key={c.id} className="glass-light rounded-xl px-3.5 py-3 border border-white/[0.04]">
+              <li key={c.id} className="glass-light rounded-xl px-3.5 py-3 border border-slate-200">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm text-white font-medium truncate">{c.psicologoNome}</p>
-                    <p className="text-[11px] text-gray-500">CRP {c.crp}</p>
-                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                    <p className="text-sm text-tinta-900 font-medium truncate">{c.psicologoNome}</p>
+                    <p className="text-[11px] text-slate-500">CRP {c.crp}</p>
+                    <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
                       Vê {rotuloEscopo(c.escopo)}. Termina em {diasRestantes(c.validoAte)} dia(s).
                     </p>
-                    <p className="text-[11px] text-gray-600 mt-0.5">Autorizado por {c.concedidoPor}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Autorizado por {c.concedidoPor}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => encerrar(c)}
                     disabled={encerrando === c.id}
-                    className="px-3 py-2 rounded-lg text-xs text-gray-400 border border-white/10 hover:border-red-500/40 hover:text-red-300 transition-all min-h-[40px] shrink-0 disabled:opacity-50"
+                    className="px-3 py-2 rounded-lg text-xs text-slate-600 border border-slate-200 hover:border-red-500/40 hover:text-red-600 transition-all min-h-[40px] shrink-0 disabled:opacity-50"
                   >
                     {encerrando === c.id ? 'Encerrando…' : 'Encerrar'}
                   </button>

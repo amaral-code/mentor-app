@@ -141,11 +141,11 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
     <div className="glass rounded-2xl p-5 space-y-4">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/15 to-cyan-600/10 flex items-center justify-center shrink-0">
-          <ScanLine size={18} className="text-sky-400" />
+          <ScanLine size={18} className="text-sky-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-gray-300">Escreveu no caderno?</h2>
-          <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
+          <h2 className="text-sm font-semibold text-slate-700">Escreveu no caderno?</h2>
+          <p className="text-[11px] text-slate-500 leading-snug mt-0.5">
             Fotografe a folha: a IA transcreve a sua letra e corrige pelas 5 competências do ENEM.
           </p>
         </div>
@@ -182,7 +182,7 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
           />
           <input ref={inputArquivo} type="file" accept="image/*" onChange={aoEscolher} className="hidden" />
 
-          <p className="text-[11px] text-gray-600 leading-relaxed">
+          <p className="text-[11px] text-slate-400 leading-relaxed">
             Dica: folha inteira no enquadramento, luz de cima e sem sombra da própria mão. A imagem é
             reduzida e tratada no seu aparelho antes de subir.
           </p>
@@ -190,11 +190,11 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
       )}
 
       {enviando && (
-        <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
+        <div className="flex items-center gap-2 text-sm text-slate-600 py-2">
           <Loader2 size={15} className="animate-spin" />
           {etapa}
           {info && (
-            <span className="text-[11px] text-gray-600">
+            <span className="text-[11px] text-slate-400">
               ({formatarBytes(info.antes)} → {formatarBytes(info.depois)})
             </span>
           )}
@@ -203,10 +203,10 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
 
       {resultado?.ilegivel && (
         <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] p-3">
-          <p className="flex items-center gap-2 text-xs font-semibold text-amber-300">
+          <p className="flex items-center gap-2 text-xs font-semibold text-amber-600">
             <TriangleAlert size={14} /> Não consegui ler esta foto
           </p>
-          <p className="text-xs text-amber-200/70 mt-1.5 leading-relaxed">
+          <p className="text-xs text-amber-600 mt-1.5 leading-relaxed">
             A nota não foi calculada. O problema foi a imagem, não o seu texto. Tente de novo com mais
             luz, sem sombra e com a folha reta.
           </p>
@@ -220,19 +220,19 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
         <div className="grid gap-4 lg:grid-cols-2">
           {/* ---------------- Lado A: imagem + transcricao ---------------- */}
           <div className="space-y-3 min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-gray-500">Sua folha</p>
+            <p className="text-[11px] uppercase tracking-wider text-slate-500">Sua folha</p>
 
             {(previa || resultado.image_url) && (
               <a
                 href={resultado.image_url || previa || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden border border-white/[0.06]"
+                className="block rounded-xl overflow-hidden border border-slate-200"
               >
                 <img
                   src={previa || resultado.image_url || ''}
                   alt="Foto da redação enviada"
-                  className="w-full h-auto max-h-72 object-contain bg-black/30"
+                  className="w-full h-auto max-h-72 object-contain bg-slate-100"
                   onError={(e) => {
                     // URL assinada do Supabase expira em 7 dias: tenta a outra
                     // fonte antes de mostrar ícone quebrado.
@@ -249,20 +249,20 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[11px] uppercase tracking-wider text-gray-500">Transcrição (OCR)</p>
+                <p className="text-[11px] uppercase tracking-wider text-slate-500">Transcrição (OCR)</p>
                 <button
                   onClick={() => onUsarTranscricao(resultado.transcription)}
-                  className="text-[11px] text-amber-400 hover:text-amber-300"
+                  className="text-[11px] text-amber-600 hover:text-amber-600"
                 >
                   Editar no campo de texto
                 </button>
               </div>
-              <div className="max-h-64 overflow-y-auto rounded-xl bg-white/[0.02] border border-white/[0.04] p-3">
-                <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-line">
+              <div className="max-h-64 overflow-y-auto rounded-xl bg-slate-50 border border-slate-200 p-3">
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
                   {resultado.transcription}
                 </p>
               </div>
-              <p className="text-[10px] text-gray-600 mt-1.5">
+              <p className="text-[10px] text-slate-400 mt-1.5">
                 Confira a transcrição: se a IA leu errado, a nota avaliou outro texto.
               </p>
             </div>
@@ -271,15 +271,15 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
           {/* ---------------- Lado B: nota e competencias ---------------- */}
           <div className="space-y-3 min-w-0">
             <div className="flex items-baseline justify-between">
-              <p className="text-[11px] uppercase tracking-wider text-gray-500">Correção ENEM</p>
-              <span className="text-[11px] text-gray-500 truncate max-w-[60%]" title={resultado.detected_theme}>
+              <p className="text-[11px] uppercase tracking-wider text-slate-500">Correção ENEM</p>
+              <span className="text-[11px] text-slate-500 truncate max-w-[60%]" title={resultado.detected_theme}>
                 {resultado.detected_theme}
               </span>
             </div>
 
             <div className="rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 p-4 text-center">
-              <p className="text-4xl font-extrabold text-white tabular-nums">{resultado.total_score}</p>
-              <p className="text-[11px] text-gray-500">de 1000</p>
+              <p className="text-4xl font-extrabold text-tinta-900 tabular-nums">{resultado.total_score}</p>
+              <p className="text-[11px] text-slate-500">de 1000</p>
             </div>
 
             <div className="space-y-2">
@@ -287,22 +287,22 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
                 const nota = resultado.scores[c.chave];
                 const cor = CORES_NOTA(nota.score);
                 return (
-                  <details key={c.chave} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-3">
+                  <details key={c.chave} className="rounded-xl bg-slate-50 border border-slate-200 p-3">
                     <summary className="flex items-center justify-between cursor-pointer list-none gap-2">
-                      <span className="text-xs text-gray-300 truncate">
+                      <span className="text-xs text-slate-700 truncate">
                         C{i + 1}. {c.titulo}
                       </span>
                       <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: cor }}>
                         {nota.score}
                       </span>
                     </summary>
-                    <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden my-2">
+                    <div className="h-1 rounded-full bg-slate-50 overflow-hidden my-2">
                       <div
                         className="h-full rounded-full transition-[width] duration-700"
                         style={{ width: `${(nota.score / 200) * 100}%`, background: cor }}
                       />
                     </div>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">{nota.feedback}</p>
+                    <p className="text-[11px] text-slate-600 leading-relaxed">{nota.feedback}</p>
                   </details>
                 );
               })}
@@ -310,10 +310,10 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
 
             {resultado.strengths.length > 0 && (
               <div className="rounded-xl bg-emerald-500/[0.06] border border-emerald-500/15 p-3">
-                <p className="text-[11px] font-semibold text-emerald-300 mb-1.5">O que já funciona</p>
+                <p className="text-[11px] font-semibold text-emerald-600 mb-1.5">O que já funciona</p>
                 <ul className="space-y-1">
                   {resultado.strengths.map((s) => (
-                    <li key={s} className="text-[11px] text-emerald-100/80 leading-snug">• {s}</li>
+                    <li key={s} className="text-[11px] text-emerald-600 leading-snug">• {s}</li>
                   ))}
                 </ul>
               </div>
@@ -321,10 +321,10 @@ export function RedacaoFoto({ tema, onUsarTranscricao }: RedacaoFotoProps) {
 
             {resultado.actionable_improvements.length > 0 && (
               <div className="rounded-xl bg-sky-500/[0.06] border border-sky-500/15 p-3">
-                <p className="text-[11px] font-semibold text-sky-300 mb-1.5">Na próxima redação</p>
+                <p className="text-[11px] font-semibold text-sky-600 mb-1.5">Na próxima redação</p>
                 <ul className="space-y-1">
                   {resultado.actionable_improvements.map((s) => (
-                    <li key={s} className="text-[11px] text-sky-100/80 leading-snug">• {s}</li>
+                    <li key={s} className="text-[11px] text-sky-600 leading-snug">• {s}</li>
                   ))}
                 </ul>
               </div>

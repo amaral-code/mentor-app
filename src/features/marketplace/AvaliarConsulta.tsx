@@ -32,8 +32,8 @@ export function AvaliarConsulta({ agendamentoId, aoAvaliar }: { agendamentoId: s
   }
 
   return (
-    <div className="mt-3 pt-3 border-t border-white/[0.05]">
-      <p className="text-[11px] text-gray-500 mb-2">
+    <div className="mt-3 pt-3 border-t border-slate-200">
+      <p className="text-[11px] text-slate-500 mb-2">
         Como foi? O profissional vê a nota e o comentário, mas não quem escreveu.
       </p>
       <div className="flex items-center gap-1" role="radiogroup" aria-label="Nota de 1 a 5">
@@ -47,7 +47,7 @@ export function AvaliarConsulta({ agendamentoId, aoAvaliar }: { agendamentoId: s
             onClick={() => setNota(n)}
             className="p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
-            <Star size={20} className={n <= nota ? 'text-amber-400' : 'text-gray-600'} fill={n <= nota ? 'currentColor' : 'none'} />
+            <Star size={20} className={n <= nota ? 'text-amber-600' : 'text-slate-400'} fill={n <= nota ? 'currentColor' : 'none'} />
           </button>
         ))}
       </div>
@@ -62,7 +62,7 @@ export function AvaliarConsulta({ agendamentoId, aoAvaliar }: { agendamentoId: s
             onChange={(e) => setComentario(e.target.value.slice(0, 1000))}
             rows={2}
             placeholder="Comentário (opcional)"
-            className="w-full px-3 py-2 rounded-xl glass-light border border-white/[0.05] text-sm text-white placeholder:text-gray-600 outline-none focus:border-amber-500/40"
+            className="w-full px-3 py-2 rounded-xl glass-light border border-slate-200 text-sm text-tinta-900 placeholder:text-slate-400 outline-none focus:border-amber-500/40"
           />
           <button
             type="button"
@@ -75,7 +75,7 @@ export function AvaliarConsulta({ agendamentoId, aoAvaliar }: { agendamentoId: s
         </div>
       )}
       {erro && (
-        <p role="alert" className="text-xs text-red-400 mt-2">
+        <p role="alert" className="text-xs text-red-600 mt-2">
           {erro}
         </p>
       )}

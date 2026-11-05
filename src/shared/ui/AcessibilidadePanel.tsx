@@ -36,7 +36,7 @@ function Interruptor({
       <span
         aria-hidden="true"
         className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${
-          ligado ? 'bg-emerald-500' : 'bg-white/10'
+          ligado ? 'bg-emerald-500' : 'bg-slate-100'
         }`}
       >
         <span
@@ -46,8 +46,8 @@ function Interruptor({
         />
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-medium text-gray-200">{rotulo}</span>
-        <span className="block text-[11px] text-gray-500">{descricao}</span>
+        <span className="block text-sm font-medium text-tinta-700">{rotulo}</span>
+        <span className="block text-[11px] text-slate-500">{descricao}</span>
       </span>
     </button>
   );
@@ -74,17 +74,17 @@ export function AcessibilidadePanel() {
     <section id="secao-acessibilidade" aria-label="Acessibilidade" className="glass-card rounded-2xl p-5 scroll-mt-24">
       <div className="flex items-center gap-2.5 mb-1">
         <div className="w-9 h-9 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-          <Accessibility size={17} className="text-cyan-300" />
+          <Accessibility size={17} className="text-cyan-700" />
         </div>
         <div>
-          <h2 className="text-sm font-semibold text-white">Acessibilidade</h2>
-          <p className="text-[11px] text-gray-500">Conforto visual e de movimento, só neste aparelho</p>
+          <h2 className="text-sm font-semibold text-tinta-900">Acessibilidade</h2>
+          <p className="text-[11px] text-slate-500">Conforto visual e de movimento, só neste aparelho</p>
         </div>
       </div>
 
       {/* Tamanho da fonte */}
       <div className="mt-3">
-        <p className="flex items-center gap-1.5 text-xs font-medium text-gray-400 mb-2">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-2">
           <CaseSensitive size={13} /> Tamanho da letra
         </p>
         <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tamanho da letra">
@@ -98,20 +98,20 @@ export function AcessibilidadePanel() {
                 onClick={() => mudar({ tamanhoFonte: f.id })}
                 className={`rounded-xl border px-2 py-2 text-center transition-all ${
                   ativo
-                    ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-200'
-                    : 'border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
+                    ? 'border-cyan-400/50 bg-cyan-500/10 text-cyan-700'
+                    : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-tinta-900'
                 }`}
               >
                 <span className="block text-sm font-bold">A</span>
                 <span className="block text-[11px] font-medium">{f.rotulo}</span>
-                <span className="block text-[10px] text-gray-500">{f.desc}</span>
+                <span className="block text-[10px] text-slate-500">{f.desc}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="mt-2 divide-y divide-white/[0.05]">
+      <div className="mt-2 divide-y divide-slate-200">
         <Interruptor
           ligado={pref.altoContraste}
           aoMudar={(v) => mudar({ altoContraste: v })}
@@ -128,19 +128,19 @@ export function AcessibilidadePanel() {
 
       {/* Daltonismo */}
       <div className="mt-2">
-        <label htmlFor="a11y-daltonismo" className="flex items-center gap-1.5 text-xs font-medium text-gray-400 mb-2">
+        <label htmlFor="a11y-daltonismo" className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-2">
           <PersonStanding size={13} /> Filtro de daltonismo
         </label>
         <select
           id="a11y-daltonismo"
           value={pref.daltonismo}
           onChange={(e) => mudar({ daltonismo: e.target.value as PreferenciasAcessibilidade['daltonismo'] })}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-cyan-400/50"
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-tinta-700 focus:outline-none focus:border-cyan-400/50"
         >
           {['', 'Vermelho-Verde', 'Azul-Amarelo', 'Completo'].map((grupo) => (
             <optgroup key={grupo || 'sem'} label={grupo || 'Sem filtro'}>
               {DALTONISMO_OPCOES.filter((o) => o.grupo === grupo).map((o) => (
-                <option key={o.tipo} value={o.tipo} className="bg-slate-900">
+                <option key={o.tipo} value={o.tipo} className="bg-white">
                   {o.rotulo}
                 </option>
               ))}
@@ -149,7 +149,7 @@ export function AcessibilidadePanel() {
         </select>
       </div>
 
-      <p className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-600">
+      <p className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400">
         <Contrast size={12} /> Vale na hora, sem conta e sem internet.
       </p>
     </section>

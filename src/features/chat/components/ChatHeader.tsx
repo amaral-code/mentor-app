@@ -59,29 +59,29 @@ export const ChatHeader = memo(function ChatHeader({
 }: ChatHeaderProps) {
   return (
     <header
-      className="relative z-10 h-16 border-b border-white/10 bg-[#0a0f1d]/85 backdrop-blur-xl px-3 md:px-6 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 shadow-[0_4px_25px_rgba(0,0,0,0.4)] shrink-0"
+      className="relative z-10 h-16 border-b-2 border-slate-200 bg-white px-3 md:px-6 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 shrink-0"
       data-purpose="mentor-header"
     >
       {/* Identidade do Mentor */}
       <div className="flex items-center gap-3 min-w-0">
-        <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-500/50 flex items-center justify-center text-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.3)] shrink-0" aria-hidden="true">
-          <Lightbulb size={16} className="drop-shadow-[0_0_6px_#f59e0b]" />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0a0f1d] emerald-ping-glow" />
+        <div className="relative w-10 h-10 rounded-xl bg-azul-100 flex items-center justify-center text-azul-600 shrink-0" aria-hidden="true">
+          <Lightbulb size={16} className="" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-200 emerald-ping-glow" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="font-display font-bold text-white text-sm tracking-wide truncate">
+            <h2 className="font-display font-bold text-tinta-900 text-sm tracking-wide truncate">
               {titulo}
             </h2>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono font-bold shrink-0">
+            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-600 border border-amber-500/40 font-mono font-bold shrink-0">
               PRO
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-400/50 px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.35)] shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-400/50 px-2 py-0.5 rounded-full  shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse " />
               online
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 font-sans hidden sm:block truncate">
+          <p className="text-[11px] text-slate-600 font-sans hidden sm:block truncate">
             {descricao}
           </p>
         </div>
@@ -90,7 +90,7 @@ export const ChatHeader = memo(function ChatHeader({
       {/* Abas de tópico com glider deslizante (scroll horizontal no mobile). */}
       <div
         ref={topicTabsRef}
-        className="relative bg-[#0e1424]/90 p-1 rounded-xl border border-white/10 flex items-center text-xs backdrop-blur-md shadow-inner shrink-0 overflow-x-auto hide-scrollbar max-w-[38vw] md:max-w-none"
+        className="relative bg-white p-1 rounded-xl border border-slate-200 flex items-center text-xs backdrop-blur-md shadow-none shrink-0 overflow-x-auto hide-scrollbar max-w-[38vw] md:max-w-none"
         data-purpose="topic-filter-tabs"
         role="tablist"
         aria-label="Áreas de estudo"
@@ -107,8 +107,8 @@ export const ChatHeader = memo(function ChatHeader({
               onClick={() => onTrocarAba(t)}
               className={`topic-tab relative z-10 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
                 ativo
-                  ? `font-semibold ${t.id === 'natureza' ? 'text-emerald-300' : 'text-amber-300'}`
-                  : 'font-medium text-slate-400 hover:text-white'
+                  ? `font-semibold ${t.id === 'natureza' ? 'text-emerald-600' : 'text-amber-600'}`
+                  : 'font-medium text-slate-600 hover:text-tinta-900'
               }`}
             >
               {t.label}
@@ -121,8 +121,8 @@ export const ChatHeader = memo(function ChatHeader({
           style={{ left: glider.left, width: glider.width || undefined }}
           className={`absolute inset-y-1 rounded-lg border pointer-events-none ${
             gliderEmerald
-              ? 'bg-gradient-to-r from-emerald-500/25 to-teal-500/20 border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
-              : 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+              ? 'bg-gradient-to-r from-emerald-500/25 to-teal-500/20 border-emerald-400/50 '
+              : 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border-amber-400/50 '
           }`}
         />
       </div>
@@ -136,20 +136,20 @@ export const ChatHeader = memo(function ChatHeader({
           aria-pressed={modoAula}
           className={`h-8 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm active:scale-95 ${
             modoAula
-              ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300'
-              : 'bg-[#131b2e]/90 hover:bg-[#1a253f] border-white/10 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300'
+              ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-700'
+              : 'bg-white hover:bg-white border-slate-200 hover:border-cyan-500/50 text-slate-700 hover:text-cyan-700'
           }`}
         >
-          <GraduationCap size={14} className={modoAula ? 'text-cyan-300' : 'text-slate-400'} />
+          <GraduationCap size={14} className={modoAula ? 'text-cyan-700' : 'text-slate-600'} />
           <span className="hidden lg:inline text-[11px] font-semibold">Modo Aula</span>
         </button>
         <button
           onClick={onAbrirFoco}
           title="Pomodoro (25 min): guarde o celular e foque no caderno"
           aria-label="Iniciar Pomodoro de 25 minutos"
-          className="h-8 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm active:scale-95 bg-[#131b2e]/90 hover:bg-[#1a253f] border-white/10 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-300"
+          className="h-8 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm active:scale-95 bg-white hover:bg-white border-slate-200 hover:border-emerald-500/50 text-slate-700 hover:text-emerald-600"
         >
-          <Timer size={14} className="text-slate-400" />
+          <Timer size={14} className="text-slate-600" />
           <span className="hidden lg:inline text-[11px] font-semibold">Pomodoro</span>
         </button>
         <button
@@ -159,11 +159,11 @@ export const ChatHeader = memo(function ChatHeader({
           aria-expanded={historicoAberto}
           className={`h-8 px-2.5 rounded-xl border flex items-center gap-1.5 transition-all text-xs cursor-pointer shadow-sm active:scale-95 ${
             historicoAberto
-              ? 'bg-amber-500/15 border-amber-500/50 text-amber-300'
-              : 'bg-[#131b2e]/90 hover:bg-[#1a253f] border-white/10 hover:border-amber-500/50 text-slate-300 hover:text-amber-300'
+              ? 'bg-amber-500/15 border-amber-500/50 text-amber-600'
+              : 'bg-white hover:bg-white border-slate-200 hover:border-amber-500/50 text-slate-700 hover:text-amber-600'
           }`}
         >
-          {historicoAberto ? <PanelRightClose size={14} className="text-amber-400" /> : <History size={14} className="text-amber-400" />}
+          {historicoAberto ? <PanelRightClose size={14} className="text-amber-600" /> : <History size={14} className="text-amber-600" />}
           <span className="hidden lg:inline text-[11px] font-semibold">Histórico</span>
         </button>
         <button
@@ -173,8 +173,8 @@ export const ChatHeader = memo(function ChatHeader({
           aria-pressed={!isMuted}
           className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all shadow-sm active:scale-95 ${
             isMuted
-              ? 'bg-[#131b2e]/90 hover:bg-[#1a253f] border-white/10 text-slate-300 hover:text-amber-300 hover:border-amber-500/50'
-              : 'bg-amber-500/15 border-amber-500/50 text-amber-300'
+              ? 'bg-white hover:bg-white border-slate-200 text-slate-700 hover:text-amber-600 hover:border-amber-500/50'
+              : 'bg-amber-500/15 border-amber-500/50 text-amber-600'
           }`}
         >
           {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
@@ -183,7 +183,7 @@ export const ChatHeader = memo(function ChatHeader({
           onClick={onOpenPersonas}
           title="Trocar de professor"
           aria-label="Trocar de professor"
-          className="w-8 h-8 rounded-xl bg-[#131b2e]/90 hover:bg-[#1a253f] border border-white/10 text-slate-300 hover:text-amber-300 hover:border-amber-500/50 flex items-center justify-center transition-all shadow-sm active:scale-95"
+          className="w-8 h-8 rounded-xl bg-white hover:bg-white border border-slate-200 text-slate-700 hover:text-amber-600 hover:border-amber-500/50 flex items-center justify-center transition-all shadow-sm active:scale-95"
         >
           <EllipsisVertical size={14} />
         </button>

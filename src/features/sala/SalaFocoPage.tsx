@@ -1,5 +1,5 @@
 import { memo, useCallback, useState } from 'react';
-import { DoorOpen, MessageSquareOff, Users } from 'lucide-react';
+import { DoorOpen, MessageSquareOff } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import {
@@ -13,6 +13,7 @@ import {
   type PresencaSala,
 } from '../../shared/lib/salaFoco';
 import { useSalaFoco } from './useSalaFoco';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /** Materias sugeridas na entrada — digitar antes de estudar ja e atrito. */
 const MATERIAS = [
@@ -33,7 +34,7 @@ const CartaoPresenca = memo(function CartaoPresenca({ pessoa }: { pessoa: Presen
       className={`flex items-center gap-3 rounded-2xl border p-3 transition-colors ${
         pessoa.ehVoce
           ? 'border-violet-500/35 bg-violet-500/[0.07]'
-          : 'border-white/[0.07] bg-white/[0.02]'
+          : 'border-slate-200 bg-slate-50'
       }`}
     >
       <span className="relative shrink-0">
@@ -45,24 +46,24 @@ const CartaoPresenca = memo(function CartaoPresenca({ pessoa }: { pessoa: Presen
             className="h-11 w-11 rounded-xl object-cover"
           />
         ) : (
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-midnight-700/80 text-sm font-bold text-slate-300">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-700">
             {iniciaisDeSala(pessoa.nome)}
           </span>
         )}
         {/* Verde discreto: "presente", nao "online para conversar". */}
         <span
           aria-hidden="true"
-          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-midnight-900 bg-emerald-500"
+          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-200 bg-emerald-500"
         />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-white">
+        <p className="truncate text-sm font-semibold text-tinta-900">
           {pessoa.nome}
-          {pessoa.ehVoce && <span className="ml-1.5 text-[10px] font-bold text-violet-300">VOCÊ</span>}
+          {pessoa.ehVoce && <span className="ml-1.5 text-[10px] font-bold text-violet-600">VOCÊ</span>}
         </p>
         <p className="truncate text-xs text-slate-500">{rotuloMateria(pessoa.materia)}</p>
       </div>
-      <span className="shrink-0 rounded-lg bg-white/[0.04] px-2.5 py-1 text-xs font-semibold text-emerald-300 tabular-nums">
+      <span className="shrink-0 rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 tabular-nums">
         {formatarTempoFoco(pessoa.minutosFoco)}
       </span>
     </li>
@@ -110,27 +111,19 @@ export function SalaFocoPage() {
 
   return (
     <div className="mx-auto max-w-lg animate-fade-up space-y-5">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/15 to-indigo-600/10">
-          <Users size={20} className="text-violet-300" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-white md:text-2xl">Sala de Foco</h1>
-          <p className="mt-0.5 text-sm text-gray-500">Estude junto, em silêncio</p>
-        </div>
-      </div>
+      <CabecalhoPagina titulo="Sala de Foco" subtitulo="Estude junto, em silêncio" cor="esmeralda" pose="meditando" />
 
       {/* Estado da sala + entrada/saida. */}
       <div className="glass rounded-2xl p-5">
-        <p className="text-sm leading-relaxed text-slate-300" aria-live="polite">
+        <p className="text-sm leading-relaxed text-slate-700" aria-live="polite">
           {resumoSala(colegas, dentro)}
         </p>
 
         {dentro ? (
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <div className="flex-1 rounded-xl bg-white/[0.03] px-4 py-3">
+            <div className="flex-1 rounded-xl bg-slate-50 px-4 py-3">
               <p className="text-[10px] uppercase tracking-wider text-slate-500">Seu foco nesta sessão</p>
-              <p className="text-lg font-bold text-white tabular-nums">{formatarCronometro(segundosFoco)}</p>
+              <p className="text-lg font-bold text-tinta-900 tabular-nums">{formatarCronometro(segundosFoco)}</p>
             </div>
             <button onClick={() => void aoSair()} className="btn-secondary min-h-[44px] px-5 text-sm">
               <DoorOpen size={16} className="mr-1.5 inline-block align-[-0.15em]" />
@@ -147,7 +140,7 @@ export function SalaFocoPage() {
                 id="sala-materia"
                 value={materia}
                 onChange={(e) => setMateria(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/10 bg-midnight-850 px-3 py-3 text-sm text-white focus:border-violet-500/40 focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-tinta-900 focus:border-violet-500/40 focus:outline-none"
               >
                 {MATERIAS.map((m) => (
                   <option key={m} value={m}>
@@ -169,14 +162,14 @@ export function SalaFocoPage() {
 
       {/* Quem esta focando agora. */}
       <div className="glass rounded-2xl p-5">
-        <h2 className="mb-3 text-sm font-semibold text-gray-300">
-          Focando agora <span className="text-gray-500 tabular-nums">({lista.length})</span>
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">
+          Focando agora <span className="text-slate-500 tabular-nums">({lista.length})</span>
         </h2>
 
         {carregando ? (
           <div className="space-y-2" aria-label="Carregando a sala">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-16 animate-pulse rounded-2xl bg-white/5" />
+              <div key={i} className="h-16 animate-pulse rounded-2xl bg-slate-50" />
             ))}
           </div>
         ) : lista.length === 0 ? (
@@ -195,8 +188,8 @@ export function SalaFocoPage() {
         )}
       </div>
 
-      <p className="flex items-start gap-2 rounded-xl glass-light px-4 py-3 text-xs leading-relaxed text-gray-500">
-        <MessageSquareOff size={15} className="mt-0.5 shrink-0 text-gray-600" />
+      <p className="flex items-start gap-2 rounded-xl glass-light px-4 py-3 text-xs leading-relaxed text-slate-500">
+        <MessageSquareOff size={15} className="mt-0.5 shrink-0 text-slate-400" />
         A sala não tem chat, curtida nem cutucada, só presença. Você aparece apenas para colegas da
         sua escola, com o primeiro nome, e some da lista dois minutos depois de fechar o app.
       </p>

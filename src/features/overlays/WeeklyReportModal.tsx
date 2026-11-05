@@ -40,8 +40,8 @@ class LimiteDeErro extends Component<{ children: ReactNode }, { erro: boolean }>
     if (this.state.erro) {
       return (
         <div className="text-center py-8">
-          <p className="text-gray-300 font-medium">Não foi possível montar o relatório</p>
-          <p className="text-sm text-gray-500 mt-1">Seus dados da semana continuam salvos.</p>
+          <p className="text-slate-700 font-medium">Não foi possível montar o relatório</p>
+          <p className="text-sm text-slate-500 mt-1">Seus dados da semana continuam salvos.</p>
           <button onClick={() => this.setState({ erro: false })} className="btn-primary mt-4 text-sm">
             Tentar de novo
           </button>
@@ -159,47 +159,47 @@ function Conteudo() {
       <div className="grid grid-cols-2 gap-3">
         {destaques.map((d) => (
           <div key={d.rotulo} className="glass-light rounded-xl p-3">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide">{d.rotulo}</p>
-            <p className="text-2xl font-bold text-white tabular-nums mt-1">{d.valor}</p>
-            <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">{d.nota}</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wide">{d.rotulo}</p>
+            <p className="text-2xl font-bold text-tinta-900 tabular-nums mt-1">{d.valor}</p>
+            <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{d.nota}</p>
           </div>
         ))}
       </div>
 
       <div className="rounded-2xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.07] to-transparent p-4">
-        <p className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-emerald-400/80 mb-2">
+        <p className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-emerald-600 mb-2">
           <Sparkles size={13} /> Sua semana
         </p>
         {gerando ? (
-          <p className="flex items-center gap-2 text-sm text-gray-400">
+          <p className="flex items-center gap-2 text-sm text-slate-600">
             <Loader2 size={14} className="animate-spin" /> Lendo o que você fez nesta semana...
           </p>
         ) : (
-          <p className="text-sm text-gray-200 leading-relaxed">{texto}</p>
+          <p className="text-sm text-tinta-700 leading-relaxed">{texto}</p>
         )}
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="glass-light rounded-xl py-3">
-          <ShieldCheck size={16} className="text-cyan-400 mx-auto" />
-          <p className="text-sm font-bold text-white tabular-nums mt-1">{metricas.minutosOffline}</p>
-          <p className="text-[10px] text-gray-500">min offline</p>
+          <ShieldCheck size={16} className="text-cyan-700 mx-auto" />
+          <p className="text-sm font-bold text-tinta-900 tabular-nums mt-1">{metricas.minutosOffline}</p>
+          <p className="text-[10px] text-slate-500">min offline</p>
         </div>
         <div className="glass-light rounded-xl py-3">
-          <Moon size={16} className="text-violet-400 mx-auto" />
-          <p className="text-sm font-bold text-white tabular-nums mt-1">
+          <Moon size={16} className="text-violet-600 mx-auto" />
+          <p className="text-sm font-bold text-tinta-900 tabular-nums mt-1">
             {metricas.sessoesMadrugada}
           </p>
-          <p className="text-[10px] text-gray-500">noites de madrugada</p>
+          <p className="text-[10px] text-slate-500">noites de madrugada</p>
         </div>
         <div className="glass-light rounded-xl py-3">
-          <Flame size={16} className="text-amber-400 mx-auto" />
-          <p className="text-sm font-bold text-white tabular-nums mt-1">{metricas.streak}</p>
-          <p className="text-[10px] text-gray-500">dias seguidos</p>
+          <Flame size={16} className="text-amber-600 mx-auto" />
+          <p className="text-sm font-bold text-tinta-900 tabular-nums mt-1">{metricas.streak}</p>
+          <p className="text-[10px] text-slate-500">dias seguidos</p>
         </div>
       </div>
 
-      <p className="text-[11px] text-gray-600 text-center leading-relaxed">
+      <p className="text-[11px] text-slate-400 text-center leading-relaxed">
         Este relatório não mede acertos. Ele registra o que sustentou a sua semana, e isso também
         chega para quem acompanha você.
       </p>

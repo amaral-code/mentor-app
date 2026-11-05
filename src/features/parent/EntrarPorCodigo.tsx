@@ -77,16 +77,16 @@ export function EntrarPorCodigo({ aoVincular, variante = 'compacto' }: Props) {
   return (
     <div>
       <h2
-        className={`font-bold text-white flex items-start gap-2 ${
-          destaque ? 'text-lg' : 'text-sm font-semibold text-gray-300'
+        className={`font-bold text-tinta-900 flex items-start gap-2 ${
+          destaque ? 'text-lg' : 'text-sm font-semibold text-slate-700'
         }`}
       >
-        <KeyRound size={destaque ? 18 : 15} className="text-violet-400 shrink-0 mt-[3px]" />
+        <KeyRound size={destaque ? 18 : 15} className="text-violet-600 shrink-0 mt-[3px]" />
         {destaque ? 'Entre com o código do estudante' : 'Vincular outro estudante'}
       </h2>
       {destaque && (
-        <p className="text-sm text-gray-400 mt-2 leading-relaxed">
-          O estudante abre <strong className="text-gray-200">Perfil → Responsáveis</strong> no
+        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+          O estudante abre <strong className="text-tinta-700">Perfil → Responsáveis</strong> no
           app dele e te passa o código de 8 caracteres. Só ele pode gerar esse código, e é
           assim que a decisão de ser acompanhado fica com quem está sendo acompanhado.
         </p>
@@ -109,7 +109,7 @@ export function EntrarPorCodigo({ aoVincular, variante = 'compacto' }: Props) {
           }}
           onKeyDown={(e) => e.key === 'Enter' && void vincular()}
           placeholder="A1B2C3D4"
-          className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-white/[0.05] text-sm text-white tracking-[0.2em] uppercase placeholder:tracking-normal placeholder:text-gray-600 outline-none focus:border-violet-500/40 min-h-[44px]"
+          className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-slate-200 text-sm text-tinta-900 tracking-[0.2em] uppercase placeholder:tracking-normal placeholder:text-slate-400 outline-none focus:border-violet-500/40 min-h-[44px]"
         />
         <button
           onClick={vincular}
@@ -121,15 +121,15 @@ export function EntrarPorCodigo({ aoVincular, variante = 'compacto' }: Props) {
       </div>
 
       {aviso && !erro && (
-        <p className="text-xs text-amber-300/90 bg-amber-500/10 rounded-xl px-3 py-2 mt-2">{aviso}</p>
+        <p className="text-xs text-amber-600 bg-amber-500/10 rounded-xl px-3 py-2 mt-2">{aviso}</p>
       )}
       {erro && (
-        <p role="alert" className="text-xs text-red-400 bg-red-500/10 rounded-xl px-3 py-2 mt-2">
+        <p role="alert" className="text-xs text-red-600 bg-red-500/10 rounded-xl px-3 py-2 mt-2">
           {erro}
         </p>
       )}
       {ok && (
-        <p role="status" className="text-xs text-emerald-300 bg-emerald-500/10 rounded-xl px-3 py-2 mt-2">
+        <p role="status" className="text-xs text-emerald-600 bg-emerald-500/10 rounded-xl px-3 py-2 mt-2">
           {ok}
         </p>
       )}

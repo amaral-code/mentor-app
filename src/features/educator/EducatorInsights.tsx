@@ -38,25 +38,25 @@ export function EducatorInsights() {
     <section aria-label="Dashboard de inteligência da turma" className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
             <BarChart3 size={20} />
           </span>
           <div>
-            <h2 className="text-lg font-bold text-white">O que a turma está errando</h2>
+            <h2 className="text-lg font-bold text-tinta-900">O que a turma está errando</h2>
             <p className="text-xs text-slate-500">
               Agregado das últimas {horas}h • sem expor conversas individuais
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div role="group" aria-label="Janela de análise" className="flex gap-1 rounded-xl bg-white/5 p-1">
+          <div role="group" aria-label="Janela de análise" className="flex gap-1 rounded-xl bg-slate-50 p-1">
             {JANELAS.map((j) => (
               <button
                 key={j}
                 onClick={() => setHoras(j)}
                 aria-pressed={horas === j}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                  horas === j ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-white'
+                  horas === j ? 'bg-amber-500/20 text-amber-600' : 'text-slate-600 hover:text-tinta-900'
                 }`}
               >
                 {j}h
@@ -67,7 +67,7 @@ export function EducatorInsights() {
             onClick={() => void carregar()}
             disabled={carregando}
             aria-label="Atualizar insights"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 disabled:opacity-40"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
           >
             <RefreshCw size={15} className={carregando ? 'animate-spin' : ''} />
           </button>
@@ -77,16 +77,16 @@ export function EducatorInsights() {
       {carregando ? (
         <div className="space-y-3" aria-label="Carregando insights">
           {[0, 1].map((i) => (
-            <div key={i} className="h-28 animate-pulse rounded-2xl bg-white/5" />
+            <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-50" />
           ))}
         </div>
       ) : erro ? (
-        <p role="alert" className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+        <p role="alert" className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-600">
           {erro}
         </p>
       ) : dados.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-midnight-900/60 px-5 py-8 text-center">
-          <p className="text-sm font-semibold text-white">Nenhum ponto crítico na janela 🎉</p>
+        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center">
+          <p className="text-sm font-semibold text-tinta-900">Nenhum ponto crítico na janela 🎉</p>
           <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500">
             Sem erros agregados nas últimas {horas}h, ou a turma ainda não respondeu quizzes.
             Sugestão de lote: revisar o tópico mais pedido da semana passada.

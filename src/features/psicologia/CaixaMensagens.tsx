@@ -58,7 +58,7 @@ export function CaixaMensagens({ meuId, psicologos }: Props) {
             setAberta(null);
             void carregar();
           }}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-cyan-300 min-h-[40px]"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-cyan-700 min-h-[40px]"
         >
           <ArrowLeft size={15} /> Todas as conversas
         </button>
@@ -75,12 +75,12 @@ export function CaixaMensagens({ meuId, psicologos }: Props) {
 
   return (
     <div className="glass rounded-2xl p-5">
-      <h2 className="text-sm font-semibold text-gray-200 flex items-center gap-2 mb-3">
-        <MessageCircle size={16} className="text-cyan-400" /> Mensagens com o psicólogo
+      <h2 className="text-sm font-semibold text-tinta-700 flex items-center gap-2 mb-3">
+        <MessageCircle size={16} className="text-cyan-700" /> Mensagens com o psicólogo
       </h2>
 
       {itens.length === 0 ? (
-        <p className="text-sm text-gray-500 glass-light rounded-xl px-3.5 py-3">
+        <p className="text-sm text-slate-500 glass-light rounded-xl px-3.5 py-3">
           As conversas aparecem aqui depois da primeira consulta marcada.
         </p>
       ) : (
@@ -90,11 +90,11 @@ export function CaixaMensagens({ meuId, psicologos }: Props) {
               <button
                 type="button"
                 onClick={() => setAberta({ psicologoId: i.psicologoId, nome: i.nome, ativa: i.ativa })}
-                className="w-full text-left glass-light rounded-xl px-3.5 py-3 border border-white/[0.04] hover:border-cyan-500/30 transition-all flex items-center justify-between gap-3 min-h-[56px]"
+                className="w-full text-left glass-light rounded-xl px-3.5 py-3 border border-slate-200 hover:border-cyan-500/30 transition-all flex items-center justify-between gap-3 min-h-[56px]"
               >
                 <span className="min-w-0">
-                  <span className="block text-sm text-white font-medium truncate">{i.nome}</span>
-                  <span className="block text-xs text-gray-500 truncate mt-0.5">
+                  <span className="block text-sm text-tinta-900 font-medium truncate">{i.nome}</span>
+                  <span className="block text-xs text-slate-500 truncate mt-0.5">
                     {/* A prévia repete só o que já está na tela de quem abriu
                         o app. A notificação do celular nunca traz o texto. */}
                     {i.ultima || 'Começar uma conversa'}

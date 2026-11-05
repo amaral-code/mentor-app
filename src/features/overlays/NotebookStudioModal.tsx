@@ -315,7 +315,7 @@ export function NotebookStudioModal() {
         {tools.map(t => (
           <button key={t.id} onClick={() => { setActiveTool(t.id); runTool(t.id); }}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
-              activeTool === t.id ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'glass-hover text-gray-400 border border-white/5'
+              activeTool === t.id ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' : 'glass-hover text-slate-600 border border-slate-200'
             }`}>
             <AppIcon name={t.icon} size={15} className="inline-block align-[-0.15em] mr-1.5" />{t.label}
           </button>
@@ -325,52 +325,52 @@ export function NotebookStudioModal() {
       <GlassCard className="mt-5">
         {notasList.length === 0 && !result && !loading && (
           <div className="text-center py-12">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl mx-auto mb-3"><PenLine size={16} className="inline-block align-[-0.15em] text-amber-400" /></div>
-            <p className="text-gray-400">Nenhuma nota salva.</p>
-            <p className="text-sm text-gray-500 mt-1">Adicione notas ao Caderno primeiro.</p>
+            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl mx-auto mb-3"><PenLine size={16} className="inline-block align-[-0.15em] text-amber-600" /></div>
+            <p className="text-slate-600">Nenhuma nota salva.</p>
+            <p className="text-sm text-slate-500 mt-1">Adicione notas ao Caderno primeiro.</p>
           </div>
         )}
 
         {loading && (
           <div className="text-center py-12">
             <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm text-gray-400">Processando suas notas...</p>
+            <p className="text-sm text-slate-600">Processando suas notas...</p>
           </div>
         )}
 
         {mermaidSvg && (
-          <div className="mb-4 overflow-x-auto bg-black/20 rounded-xl p-4" ref={mermaidRef} />
+          <div className="mb-4 overflow-x-auto bg-slate-100 rounded-xl p-4" ref={mermaidRef} />
         )}
 
         {result && !loading && (
-          <div className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed space-y-4">
+          <div className="text-sm text-tinta-700 whitespace-pre-wrap leading-relaxed space-y-4">
             {result}
 
             {flashcards.length > 0 && (
               <div className="space-y-3 mt-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Flashcard {flashcardIndex + 1} de {flashcards.length}</span>
+                  <span className="text-xs text-slate-600">Flashcard {flashcardIndex + 1} de {flashcards.length}</span>
                   <div className="flex gap-1">
                     {flashcards.map((_, i) => (
-                      <div key={i} className={`w-2 h-2 rounded-full ${i === flashcardIndex ? 'bg-amber-400' : 'bg-white/10'}`} />
+                      <div key={i} className={`w-2 h-2 rounded-full ${i === flashcardIndex ? 'bg-amber-400' : 'bg-slate-100'}`} />
                     ))}
                   </div>
                 </div>
 
                 <div
                   onClick={() => setFlashcardFlipped(!flashcardFlipped)}
-                  className="glass rounded-2xl p-6 text-center cursor-pointer min-h-[160px] flex flex-col items-center justify-center transition-all hover:border-amber-500/20 border border-white/5"
+                  className="glass rounded-2xl p-6 text-center cursor-pointer min-h-[160px] flex flex-col items-center justify-center transition-all hover:border-amber-500/20 border border-slate-200"
                 >
                   {flashcardFlipped ? (
                     <div className="space-y-3">
-                      <span className="text-xs text-emerald-400 font-medium uppercase tracking-wider">Resposta</span>
-                      <p className="text-base text-white font-medium">{flashcards[flashcardIndex].alternativas[flashcards[flashcardIndex].correta]}</p>
+                      <span className="text-xs text-emerald-600 font-medium uppercase tracking-wider">Resposta</span>
+                      <p className="text-base text-tinta-900 font-medium">{flashcards[flashcardIndex].alternativas[flashcards[flashcardIndex].correta]}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <span className="text-xs text-amber-400 font-medium uppercase tracking-wider">Pergunta</span>
-                      <p className="text-base text-white font-medium">{flashcards[flashcardIndex].enunciado}</p>
-                      <p className="text-xs text-gray-500 mt-2">Clique para ver a resposta</p>
+                      <span className="text-xs text-amber-600 font-medium uppercase tracking-wider">Pergunta</span>
+                      <p className="text-base text-tinta-900 font-medium">{flashcards[flashcardIndex].enunciado}</p>
+                      <p className="text-xs text-slate-500 mt-2">Clique para ver a resposta</p>
                     </div>
                   )}
                 </div>
@@ -404,8 +404,8 @@ export function NotebookStudioModal() {
 
         {!loading && !result && notasList.length > 0 && (
           <div className="text-center py-8">
-            <p className="text-sm text-gray-400">Selecione uma ferramenta acima para processar suas anotações.</p>
-            {aiAvailable(apiKey) && <p className="text-xs text-amber-400 mt-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-400" /> IA disponível: resultados mais precisos</p>}
+            <p className="text-sm text-slate-600">Selecione uma ferramenta acima para processar suas anotações.</p>
+            {aiAvailable(apiKey) && <p className="text-xs text-amber-600 mt-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-600" /> IA disponível: resultados mais precisos</p>}
           </div>
         )}
       </GlassCard>

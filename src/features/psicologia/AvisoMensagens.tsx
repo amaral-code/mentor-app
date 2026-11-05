@@ -44,14 +44,14 @@ export function AvisoMensagens() {
       className="w-full text-left rounded-2xl border border-cyan-500/25 bg-cyan-500/[0.07] px-4 py-3 flex items-center gap-3 min-h-[56px] hover:border-cyan-400/40 transition-all"
     >
       <span className="w-9 h-9 rounded-xl bg-cyan-500/15 flex items-center justify-center shrink-0">
-        <MessageCircle size={17} className="text-cyan-300" />
+        <MessageCircle size={17} className="text-cyan-700" />
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block text-sm font-semibold text-cyan-100">
+        <span className="block text-sm font-semibold text-cyan-700">
           {naoLidas === 1 ? '1 mensagem nova' : `${naoLidas} mensagens novas`}
           {nome ? ` de ${nome}` : ' do seu psicólogo'}
         </span>
-        <span className="block text-xs text-cyan-200/70">Toque para ler e responder.</span>
+        <span className="block text-xs text-cyan-700">Toque para ler e responder.</span>
       </span>
     </button>
   );

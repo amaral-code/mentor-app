@@ -28,38 +28,36 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Tokens exatos do Design System v2.4 (Midnight Glow). */
+  /* Tokens do visual lúdico claro (Figma "Midnight Mentor · Visual Lúdico").
+     Os nomes antigos continuam valendo para quem ainda lê var(--...). */
   :root {
-    --canvas: #0B0F19;
-    --surface: #0E131F;
-    --surface-subtle: #161B28;
-    --surface-highlight: #1E2538;
-    --surface-glass: rgba(22, 27, 40, 0.75);
+    --canvas: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-subtle: #F4F7FB;
+    --surface-highlight: #E6ECF7;
+    --surface-glass: #FFFFFF;
     --brand-gold: #F59E0B;
     --brand-gold-hover: #D97706;
-    --gold-light: #FDE047;
+    --gold-light: #FCD34D;
     --gold-glow: rgba(245, 158, 11, 0.25);
     --accent-emerald: #10B981;
     --emerald-light: #34D399;
     --emerald-glow: rgba(16, 185, 129, 0.25);
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
+    --azul: #2A3B63;
+    --ceu: #4C8DF6;
+    --text-primary: #0B0F19;
+    --text-secondary: #475569;
     --text-muted: #64748B;
-    --text-gold: #FBBF24;
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-glass: rgba(255, 255, 255, 0.12);
+    --text-gold: #D97706;
+    --border-subtle: #E2E8F0;
+    --border-glass: #E2E8F0;
     --border-active-gold: rgba(245, 158, 11, 0.5);
   }
 
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #060911;
-    background-image:
-      radial-gradient(circle at 20% 15%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
-      radial-gradient(circle at 85% 75%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
-      radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, 32px 32px;
-    color: #F8FAFC;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    background-color: #fff;
+    color: #0B0F19;
     min-height: 100dvh;
     overflow-x: hidden;
   }
@@ -74,30 +72,30 @@
   }
 
   ::selection {
-    background: rgba(245, 158, 11, 0.25);
-    color: #fff;
+    background: #C7DCFD;
+    color: #0B0F19;
   }
 
   /* Scrollbar global: versao do code.html (5px, thumb claro, hover ouro).
      A regra detalhada vive no bloco transferido abaixo. */
 
   input, textarea, select {
-    background: rgba(30, 41, 59, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 0.75rem;
+    background: #F4F7FB;
+    border: 2px solid #E2E8F0;
+    border-radius: 0.875rem;
     padding: 0.75rem 1rem;
-    color: #f1f5f9;
-    font-size: 0.875rem;
+    color: #0B0F19;
+    font-size: 0.9375rem;
+    font-weight: 600;
     line-height: 1.5;
     outline: none;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
     width: 100%;
   }
-  input::placeholder, textarea::placeholder { color: rgba(148,163,184,0.4); }
+  input::placeholder, textarea::placeholder { color: #94A3B8; font-weight: 600; }
   input:focus, textarea:focus, select:focus {
-    border-color: rgba(245, 158, 11, 0.35);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.06), 0 1px 0 0 rgba(255,255,255,0.03) inset;
-    background: rgba(30, 41, 59, 0.7);
+    border-color: #4C8DF6;
+    background: #fff;
   }
   textarea { resize: vertical; min-height: 80px; }
 
@@ -127,37 +125,35 @@
     touch-action: pan-y;
   }
   input[type="range"]::-webkit-slider-runnable-track {
-    height: 4px;
-    background: rgba(71, 85, 105, 0.3);
-    border-radius: 2px;
-    transition: background 0.2s;
-  }
-  input[type="range"]:hover::-webkit-slider-runnable-track {
-    background: rgba(71, 85, 105, 0.5);
+    height: 10px;
+    background: #E2E8F0;
+    border-radius: 999px;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 28px;
     height: 28px;
-    background: linear-gradient(135deg, #fbbf24, #d97706);
+    background: #fff;
+    border: 3px solid #4C8DF6;
     border-radius: 50%;
-    margin-top: -12px;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), 0 2px 4px rgba(0,0,0,0.2);
+    margin-top: -9px;
+    box-shadow: 0 3px 0 #2F6FDB;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease;
   }
-  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 28px rgba(245, 158, 11, 0.4); }
-  input[type="range"]::-moz-range-track { height: 4px; background: rgba(71,85,105,0.3); border-radius: 2px; border: none; }
-  input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; background: linear-gradient(135deg, #fbbf24, #d97706); border-radius: 50%; border: none; box-shadow: 0 0 20px rgba(245,158,11,0.3); cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+  input[type="range"]::-moz-range-track { height: 10px; background: #E2E8F0; border-radius: 999px; border: none; }
+  input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; background: #fff; border: 3px solid #4C8DF6; border-radius: 50%; box-shadow: 0 3px 0 #2F6FDB; cursor: pointer; }
 
   input[type="checkbox"] {
     -webkit-appearance: none;
     appearance: none;
-    width: 22px;
-    height: 22px;
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 0.375rem;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 2px solid #CBD5E1;
+    border-radius: 0.5rem;
+    padding: 0;
     cursor: pointer;
     transition: all 0.15s ease;
     display: inline-flex;
@@ -167,31 +163,26 @@
     position: relative;
   }
   input[type="checkbox"]:checked {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    border-color: transparent;
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+    background: #10B981;
+    border-color: #059669;
   }
   /*
-   * Tique DESENHADO, nao um caractere.
-   *
-   * Antes era `content: '✓'` (U+2713), que depende da fonte instalada: o
-   * mesmo checkbox saia com espessura e tamanho diferentes em cada
-   * sistema, e num aparelho sem o glifo apareceria o retangulo vazio. Duas
-   * bordas giradas 45 graus resolvem sem depender de fonte nenhuma e ficam
-   * nitidas em qualquer densidade de tela.
+   * Tique DESENHADO, nao um caractere: o glifo U+2713 mudava de espessura
+   * conforme a fonte instalada. Duas bordas giradas 45 graus ficam iguais
+   * em qualquer sistema e densidade de tela.
    */
   input[type="checkbox"]:checked::after {
     content: '';
     position: absolute;
     top: 45%;
     left: 50%;
-    width: 5px;
-    height: 9px;
-    border: solid #0f172a;
-    border-width: 0 2px 2px 0;
+    width: 6px;
+    height: 11px;
+    border: solid #fff;
+    border-width: 0 3px 3px 0;
     transform: translate(-50%, -50%) rotate(45deg);
   }
-  input[type="checkbox"]:hover:not(:checked) { border-color: rgba(245, 158, 11, 0.35); }
+  input[type="checkbox"]:hover:not(:checked) { border-color: #4C8DF6; }
 
   @media (max-width: 767px) {
     input, textarea, select { font-size: 16px; padding: 0.75rem; }
@@ -217,62 +208,38 @@ html.a11y-sem-movimento *::after {
   scroll-behavior: auto !important;
 }
 
-/* Alto contraste: textos apagados (cinzas) sobem para tons legíveis
-   sobre o fundo midnight. Só mexe em cor; layout e tamanho intactos. */
-html.a11y-contraste .text-gray-500 { color: #c3cad4 !important; }
-html.a11y-contraste .text-gray-400 { color: #d7dce3 !important; }
-html.a11y-contraste .text-gray-600 { color: #aeb6c2 !important; }
-html.a11y-contraste .text-slate-500 { color: #c3cad4 !important; }
-html.a11y-contraste .text-slate-400 { color: #d7dce3 !important; }
-html.a11y-contraste .placeholder-gray-500::placeholder,
-html.a11y-contraste .placeholder-slate-400::placeholder,
-html.a11y-contraste .placeholder-slate-500::placeholder { color: #9aa3b2 !important; }
-html.a11y-contraste .border-white\/5 { border-color: rgb(255 255 255 / 0.22) !important; }
-html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !important; }
+/* Alto contraste: no tema claro, os cinzas de apoio escurecem e as
+   bordas ficam mais marcadas. Só mexe em cor; layout e tamanho intactos. */
+html.a11y-contraste .text-slate-400 { color: #334155 !important; }
+html.a11y-contraste .text-slate-500 { color: #1E293B !important; }
+html.a11y-contraste .text-slate-600 { color: #0F172A !important; }
+html.a11y-contraste .placeholder-slate-400::placeholder { color: #475569 !important; }
+html.a11y-contraste .border-slate-100,
+html.a11y-contraste .border-slate-200 { border-color: #64748B !important; }
 
 @layer components {
   /* === Glass === */
+  /* === Cartões ===
+     Os nomes .glass* ficaram por compatibilidade (dezenas de telas usam),
+     mas o desenho agora é o cartão adesivo do visual lúdico: papel branco,
+     borda grossa e lábio cinza. Sem vidro, sem desfoque, sem brilho. */
   .glass {
-    background: rgba(17, 24, 39, 0.75);
-    /*
-     * ORDEM IMPORTA: prefixo primeiro, propriedade padrao por ultimo.
-     *
-     * Com a ordem invertida o minificador do build descartava a
-     * propriedade padrao e publicava so a `-webkit-`, e o Chrome ignora a
-     * prefixada quando a padrao nao esta presente. Resultado: o desfoque
-     * do vidro funcionava em `npm run dev` e sumia em `npm run build`,
-     * onde raramente se olha. Medido com listras de alto contraste atras
-     * do painel (desvio padrao da luminancia, menor = mais borrado):
-     *   so -webkit-  : 19.2  (identico a nao ter filtro)
-     *   so padrao    :  0.3  (borrado)
-     *   sem nenhum   : 19.2
-     */
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    backdrop-filter: blur(24px) saturate(1.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: #fff;
+    border: 2px solid #E2E8F0;
+    box-shadow: 0 4px 0 #E2E8F0;
   }
   .glass-light {
-    background: rgba(30, 41, 59, 0.35);
-    /* Prefixo antes do padrao: ver a nota em .glass. */
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    background: #F4F7FB;
+    border: 2px solid #E2E8F0;
   }
   .glass-card {
-    background: rgba(17, 24, 39, 0.7);
-    /* Prefixo antes do padrao: ver a nota em .glass. */
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
-    backdrop-filter: blur(24px) saturate(1.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+    background: #fff;
+    border: 2px solid #E2E8F0;
+    box-shadow: 0 4px 0 #E2E8F0;
+    transition: border-color 0.2s ease, transform 0.2s ease;
   }
   .glass-card:hover:not(:has(button:hover)) {
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    transform: translateY(-1px);
+    border-color: #C7DCFD;
   }
 
   /* === Mood borders === */
@@ -285,71 +252,82 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
   .card-mood-focus { border-left: 3px solid #10b981; box-shadow: inset 2px 0 0 rgba(16,185,129,0.05); }
   .card-mood-anxiety { border-left: 3px solid #f59e0b; box-shadow: inset 2px 0 0 rgba(245,158,11,0.05); }
 
-  /* === Buttons === */
+  /* === Botões "adesivo" ===
+     Visual lúdico: cantos bem redondos, rótulo em caixa alta e um
+     "lábio" de 4px embaixo (sombra sólida). Ao pressionar, o lábio some e
+     o botão desce os mesmos 4px: parece uma tecla de verdade. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    border-radius: 0.75rem;
+    border-radius: 1rem;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 800;
+    letter-spacing: 0.04em;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s ease, filter 0.15s ease;
     border: none;
     white-space: nowrap;
     padding: 0.75rem 1.25rem;
-    line-height: 1.4;
+    line-height: 1.3;
   }
   .btn:disabled {
-    opacity: 0.35;
     cursor: not-allowed;
     transform: none !important;
     box-shadow: none !important;
+    background: #E2E8F0 !important;
+    color: #94A3B8 !important;
+    border-color: #E2E8F0 !important;
   }
   .btn-primary {
     @apply btn;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: #0f172a;
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+    background: #2A3B63;
+    color: #fff;
+    box-shadow: 0 4px 0 #1E2538;
   }
-  .btn-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 28px rgba(245, 158, 11, 0.3);
-  }
-  /* Resposta ao toque: a escala confirma o clique antes mesmo da acao
-     acontecer, o que faz a interface parecer mais rapida do que e. */
-  .btn-primary:active:not(:disabled) { transform: scale(0.96); }
+  .btn-primary:hover:not(:disabled) { filter: brightness(1.12); }
+  .btn-primary:active:not(:disabled),
   .btn-secondary:active:not(:disabled),
+  .btn-danger:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
   .btn-ghost:active:not(:disabled) { transform: scale(0.96); }
   .btn-secondary {
     @apply btn;
-    background: rgba(255, 255, 255, 0.04);
-    color: #cbd5e1;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #fff;
+    color: #2F6FDB;
+    border: 2px solid #E2E8F0;
+    box-shadow: 0 4px 0 #E2E8F0;
   }
-  .btn-secondary:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: #f1f5f9;
-  }
+  .btn-secondary:hover:not(:disabled) { background: #F0F6FF; }
   .btn-ghost {
     @apply btn;
     background: transparent;
     color: #64748b;
     padding: 0.5rem;
   }
-  .btn-ghost:hover { color: #e2e8f0; background: rgba(255, 255, 255, 0.04); }
+  .btn-ghost:hover { color: #1E2538; background: #F1F5F9; }
   .btn-danger {
     @apply btn;
-    background: rgba(239, 68, 68, 0.08);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.12);
+    background: #fff;
+    color: #DC2626;
+    border: 2px solid #FECACA;
+    box-shadow: 0 4px 0 #FECACA;
   }
-  .btn-danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.2);
-    color: #fef2f2;
+  .btn-danger:hover:not(:disabled) { background: #FEF2F2; }
+  /* Variantes coloridas do mesmo botão (prêmio, acerto, céu). */
+  .btn-ambar { @apply btn; background: #F59E0B; color: #fff; box-shadow: 0 4px 0 #D97706; }
+  .btn-sucesso { @apply btn; background: #10B981; color: #fff; box-shadow: 0 4px 0 #059669; }
+  .btn-ceu { @apply btn; background: #4C8DF6; color: #fff; box-shadow: 0 4px 0 #2F6FDB; }
+  .btn-perigo { @apply btn; background: #EF4444; color: #fff; box-shadow: 0 4px 0 #DC2626; }
+  .btn-ambar:active:not(:disabled), .btn-sucesso:active:not(:disabled), .btn-ceu:active:not(:disabled), .btn-perigo:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
+  .btn-ambar:hover:not(:disabled), .btn-sucesso:hover:not(:disabled), .btn-ceu:hover:not(:disabled), .btn-perigo:hover:not(:disabled) { filter: brightness(1.06); }
+
+  /* Cartão adesivo: borda grossa e lábio cinza. */
+  .cartao {
+    background: #fff;
+    border: 2px solid #E2E8F0;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 0 #E2E8F0;
   }
 
   /* === Badges === */
@@ -360,14 +338,14 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.6875rem;
-    font-weight: 500;
+    font-weight: 700;
     line-height: 1.5;
   }
-  .badge-amber { background: rgba(245,158,11,0.1); color: #fbbf24; }
-  .badge-emerald { background: rgba(16,185,129,0.1); color: #34d399; }
-  .badge-red { background: rgba(239,68,68,0.1); color: #f87171; }
-  .badge-purple { background: rgba(168,85,247,0.1); color: #c084fc; }
-  .badge-gray { background: rgba(255,255,255,0.04); color: #64748b; }
+  .badge-amber { background: #FEF3C7; color: #B45309; }
+  .badge-emerald { background: #D1FAE5; color: #047857; }
+  .badge-red { background: #FEE2E2; color: #B91C1C; }
+  .badge-purple { background: #EDE9FE; color: #6D28D9; }
+  .badge-gray { background: #F1F5F9; color: #475569; }
 
   /* === Utility === */
   .xp-bar {
@@ -1665,14 +1643,6 @@ html.a11y-contraste .border-white\/10 { border-color: rgb(255 255 255 / 0.3) !im
 #sidebarNav.collapsed > div:last-child > div.flex > div { justify-content: center; }
 
 /* Aliases do protótipo para os tokens do tailwind.config (mesmos nomes). */
-.animate-orb-1 { animation: orbFloat1 10s ease-in-out infinite; }
-.animate-orb-2 { animation: orbFloat2 12s ease-in-out infinite; }
-.animate-orb-3 { animation: orbFloat3 9s ease-in-out infinite; }
-.animate-hero-bulb { animation: pulseAuraHero 3.6s ease-in-out infinite; }
-.animate-spin-orbit { animation: ringSpinClockwise 16s linear infinite; }
-.animate-spin-orbit-rev { animation: ringSpinCounter 11s linear infinite; }
-.animate-particle-1 { animation: particleOrbit 7s linear infinite; }
-.animate-particle-2 { animation: particleOrbitReverse 9s linear infinite; }
 .twinkle-star-fast { animation: starTwinkleFast 3.2s ease-in-out infinite; }
 .twinkle-star-slow { animation: starTwinkleSlow 4.5s ease-in-out infinite; }
 .shimmer-sweep { animation: xpLiquidShimmer 2.2s cubic-bezier(0.4, 0.2, 1) infinite; }
@@ -1889,3 +1859,67 @@ html.a11y-sem-movimento .animate-spin {
   border-color: currentColor !important;
   opacity: 0.6;
 }
+
+/* =====================================================================
+   Visual lúdico claro: ajustes das peças herdadas do tema escuro.
+   Fica no FIM de propósito: vence as regras antigas sem precisar
+   reescrever cada bloco decorativo acima (orbes, estrelas, brilhos).
+   ===================================================================== */
+
+/* Decoração do céu noturno não existe no papel branco. */
+.orb, .star-particle { display: none !important; }
+
+*:focus-visible {
+  outline: 3px solid #4C8DF6;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+::selection { background: #C7DCFD; color: #0B0F19; }
+
+::-webkit-scrollbar-thumb { background: #CBD5E1; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+.notification-dot { border-color: #fff; }
+.challenge-hero { background: #F3F6FC; }
+.challenge-hero::after { background: none; }
+.challenge-sheet {
+  background: repeating-linear-gradient(0deg, transparent 0 31px, #E2E8F0 31px 32px);
+  background-attachment: local;
+}
+.challenge-stat { background: #fff; border: 2px solid #E2E8F0; border-radius: 1rem; }
+.challenge-stat:hover { background: #F3F6FC; border-color: #C7DCFD; }
+
+.prompt-card { background: #fff; border: 2px solid #E2E8F0; box-shadow: 0 4px 0 #E2E8F0; }
+.prompt-card::before { display: none; }
+.prompt-card:hover { border-color: #4C8DF6; }
+
+/* Seguidor da barra lateral: pílula céu com borda, como a aba ativa
+   da navegação de baixo. */
+.sidebar-follower { background: #E3EEFF; border: 2px solid #4C8DF6; box-shadow: none; }
+.sidebar-follower::after { display: none; }
+
+.skeleton {
+  background: linear-gradient(90deg, #EEF2F7 0%, #E2E8F0 45%, #EEF2F7 90%);
+  background-size: 200% 100%;
+}
+
+/* Balão do sagui: igual ao componente "Balão do sagui" do Figma. */
+.mascot-bubble {
+  background: #fff;
+  border: 2px solid #E2E8F0;
+  box-shadow: 0 4px 0 #E2E8F0;
+  color: #0B0F19;
+  font-weight: 700;
+}
+.mascot-bubble::after { border-right: 2px solid #E2E8F0; border-bottom: 2px solid #E2E8F0; bottom: -8px; }
+.mascot-bubble--floating::after { border-right: none; border-left: 2px solid #E2E8F0; border-bottom: 2px solid #E2E8F0; }
+.mascot-shadow { background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.18), transparent 72%); }
+.mm-approval-bubble { background: #FEF3C7; border: 2px solid #FCD34D; color: #92400E; }
+
+.levelup-overlay { background: rgba(11, 15, 25, 0.45); }
+.levelup-inner { background: #fff; border: 2px solid #E2E8F0; box-shadow: 0 6px 0 #E2E8F0; }
+.levelup-title { color: #0B0F19; }
+.levelup-sub { color: #475569; }
+.levelup-badge { color: #fff; }
+
+.cyber-input-wrap { background: #E2E8F0; }

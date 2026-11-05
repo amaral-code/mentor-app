@@ -108,7 +108,7 @@ export function OnboardingFlow() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#0b1120' }}>
+    <div className="min-h-screen flex items-center justify-center p-4 relative" style={{ background: '#ffffff' }}>
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-amber-500/5 blur-[100px]" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/5 blur-[100px]" />
@@ -122,7 +122,7 @@ export function OnboardingFlow() {
               key={i}
               aria-hidden="true"
               className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                i + 1 < passo ? 'bg-amber-400/50' : i + 1 === passo ? 'bg-amber-400' : 'bg-white/10'
+                i + 1 < passo ? 'bg-amber-400/50' : i + 1 === passo ? 'bg-amber-400' : 'bg-slate-100'
               }`}
             />
           ))}
@@ -136,17 +136,17 @@ export function OnboardingFlow() {
                 alt="Sagui dando boas-vindas"
                 width={128}
                 height={128}
-                className="w-32 h-32 object-contain mx-auto drop-shadow-[0_8px_24px_rgba(245,158,11,0.18)] motion-safe:animate-float-suave"
+                className="w-32 h-32 object-contain mx-auto  motion-safe:animate-float-suave"
               />
-              <h1 className="text-xl font-extrabold text-white mt-4">
+              <h1 className="text-xl font-extrabold text-tinta-900 mt-4">
                 Boas-vindas, {primeiroNome}!
               </h1>
-              <p className="text-sm text-gray-400 leading-relaxed mt-2">
-                Eu sou o <strong className="text-amber-300">Sagui</strong>, e vou montar seus estudos
+              <p className="text-sm text-slate-600 leading-relaxed mt-2">
+                Eu sou o <strong className="text-amber-600">Sagui</strong>, e vou montar seus estudos
                 do seu jeito. Chegou cansado do trabalho? Sem culpa: o app se adapta ao
                 seu cansaço e pede só o que dá para hoje.
               </p>
-              <p className="text-xs text-gray-500 mt-3">4 passinhos rápidos e já liberamos tudo.</p>
+              <p className="text-xs text-slate-500 mt-3">4 passinhos rápidos e já liberamos tudo.</p>
             </div>
           )}
 
@@ -155,8 +155,8 @@ export function OnboardingFlow() {
               <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mb-4">
                 <Target size={20} className="text-gray-900" />
               </span>
-              <h1 className="text-xl font-extrabold text-white">O que você quer conquistar?</h1>
-              <p className="text-sm text-gray-500 mt-1 mb-4">Pode marcar mais de um. Vale mudar depois.</p>
+              <h1 className="text-xl font-extrabold text-tinta-900">O que você quer conquistar?</h1>
+              <p className="text-sm text-slate-500 mt-1 mb-4">Pode marcar mais de um. Vale mudar depois.</p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Metas de estudo">
                 {METAS.map((meta) => {
                   const ativa = metas.includes(meta);
@@ -168,8 +168,8 @@ export function OnboardingFlow() {
                       aria-pressed={ativa}
                       className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-semibold border transition-all min-h-[44px] active:scale-95 ${
                         ativa
-                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 shadow-[0_0_14px_rgba(245,158,11,0.2)]'
-                          : 'bg-white/[0.03] text-gray-400 border-white/10 hover:border-white/20 hover:text-gray-200'
+                          ? 'bg-amber-500/15 text-amber-600 border-amber-500/40 '
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300 hover:text-tinta-700'
                       }`}
                     >
                       {ativa && <Check size={13} />}
@@ -184,10 +184,10 @@ export function OnboardingFlow() {
           {passo === 3 && (
             <div>
               <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center mb-4">
-                <Clock size={20} className="text-white" />
+                <Clock size={20} className="text-tinta-900" />
               </span>
-              <h1 className="text-xl font-extrabold text-white">Quanto tempo você tem por dia?</h1>
-              <p className="text-sm text-gray-500 mt-1 mb-4">Sinceridade aqui vira plano que funciona.</p>
+              <h1 className="text-xl font-extrabold text-tinta-900">Quanto tempo você tem por dia?</h1>
+              <p className="text-sm text-slate-500 mt-1 mb-4">Sinceridade aqui vira plano que funciona.</p>
               <div className="grid grid-cols-2 gap-2" role="group" aria-label="Tempo diário">
                 {TEMPOS.map((t) => (
                   <button
@@ -197,15 +197,15 @@ export function OnboardingFlow() {
                     aria-pressed={tempo === t}
                     className={`py-3.5 rounded-xl text-sm font-bold border transition-all min-h-[52px] active:scale-95 ${
                       tempo === t
-                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-                        : 'bg-white/[0.03] text-gray-400 border-white/10 hover:text-gray-200'
+                        ? 'bg-amber-500/15 text-amber-600 border-amber-500/40'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:text-tinta-700'
                     }`}
                   >
                     {t}
                   </button>
                 ))}
               </div>
-              <p className="text-sm text-gray-500 mt-5 mb-2 font-medium">E o turno principal?</p>
+              <p className="text-sm text-slate-500 mt-5 mb-2 font-medium">E o turno principal?</p>
               <div className="grid grid-cols-3 gap-2" role="group" aria-label="Turno principal">
                 {TURNOS.map((t) => {
                   const Icone = t.icone;
@@ -218,8 +218,8 @@ export function OnboardingFlow() {
                       aria-pressed={ativo}
                       className={`flex flex-col items-center gap-1 py-3 rounded-xl text-xs font-semibold border transition-all min-h-[52px] active:scale-95 ${
                         ativo
-                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-                          : 'bg-white/[0.03] text-gray-400 border-white/10 hover:text-gray-200'
+                          ? 'bg-amber-500/15 text-amber-600 border-amber-500/40'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:text-tinta-700'
                       }`}
                     >
                       <Icone size={17} />
@@ -234,18 +234,18 @@ export function OnboardingFlow() {
           {passo === 4 && (
             <div>
               <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center mb-4">
-                <Cake size={20} className="text-white" />
+                <Cake size={20} className="text-tinta-900" />
               </span>
-              <h1 className="text-xl font-extrabold text-white">Quando você nasceu?</h1>
+              <h1 className="text-xl font-extrabold text-tinta-900">Quando você nasceu?</h1>
               {/* Dizer PARA QUE serve muda a taxa de resposta: sem o
                   motivo, um campo de data no meio do cadastro parece
                   coleta gratuita de dado pessoal. */}
-              <p className="text-sm text-gray-500 mt-1 mb-4 leading-relaxed">
+              <p className="text-sm text-slate-500 mt-1 mb-4 leading-relaxed">
                 Serve para uma coisa só: se você tem menos de 16 anos, falar com um
                 psicólogo pelo app precisa da autorização de um responsável. É a lei
                 (LGPD). Nada disso aparece para colegas ou professores.
               </p>
-              <label htmlFor="ob-nascimento" className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">
+              <label htmlFor="ob-nascimento" className="block text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wider">
                 Data de nascimento
               </label>
               <input
@@ -255,23 +255,23 @@ export function OnboardingFlow() {
                 onChange={(e) => setNascimento(e.target.value)}
                 aria-invalid={!!erroNascimento}
                 aria-describedby={erroNascimento ? 'ob-nascimento-erro' : undefined}
-                className={`w-full px-3 py-3 rounded-xl glass-light border text-sm text-white outline-none transition-colors min-h-[52px] ${
-                  erroNascimento ? 'border-red-500/50' : 'border-white/10 focus:border-amber-400/40'
+                className={`w-full px-3 py-3 rounded-xl glass-light border text-sm text-tinta-900 outline-none transition-colors min-h-[52px] ${
+                  erroNascimento ? 'border-red-500/50' : 'border-slate-200 focus:border-amber-400/40'
                 }`}
               />
               {erroNascimento && (
-                <p id="ob-nascimento-erro" role="alert" className="text-xs text-red-400 mt-2">
+                <p id="ob-nascimento-erro" role="alert" className="text-xs text-red-600 mt-2">
                   {erroNascimento}
                 </p>
               )}
               <button
                 type="button"
                 onClick={() => { setNascimento(''); setPasso(5); }}
-                className="text-xs text-gray-500 hover:text-amber-400 underline underline-offset-4 mt-4 min-h-[44px]"
+                className="text-xs text-slate-500 hover:text-amber-600 underline underline-offset-4 mt-4 min-h-[44px]"
               >
                 Prefiro não informar agora
               </button>
-              <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
+              <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
                 Sem a data, o app pede a autorização do responsável por segurança.
                 Dá para preencher depois no Perfil.
               </p>
@@ -280,21 +280,21 @@ export function OnboardingFlow() {
 
           {passo === 5 && (
             <div className="text-center">
-              <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(16,185,129,0.25)]">
-                <Rocket size={24} className="text-white" />
+              <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto mb-4 ">
+                <Rocket size={24} className="text-tinta-900" />
               </span>
-              <h1 className="text-xl font-extrabold text-white">Tudo pronto!</h1>
-              <p className="text-sm text-gray-400 leading-relaxed mt-2">
+              <h1 className="text-xl font-extrabold text-tinta-900">Tudo pronto!</h1>
+              <p className="text-sm text-slate-600 leading-relaxed mt-2">
                 {metas.length > 0 && (
-                  <>Vamos mirar em <strong className="text-amber-300">{metas.join(', ')}</strong>, </>
+                  <>Vamos mirar em <strong className="text-amber-600">{metas.join(', ')}</strong>, </>
                 )}
                 {tempo && turno && (
-                  <>com <strong className="text-amber-300">{tempo} por dia</strong> no período da{' '}
-                  <strong className="text-amber-300">{turno === 'manha' ? 'manhã' : turno}</strong>.</>
+                  <>com <strong className="text-amber-600">{tempo} por dia</strong> no período da{' '}
+                  <strong className="text-amber-600">{turno === 'manha' ? 'manhã' : turno}</strong>.</>
                 )}
               </p>
               {erro && (
-                <p className="text-xs text-red-400 bg-red-500/10 rounded-xl px-3 py-2 mt-3" role="alert">{erro}</p>
+                <p className="text-xs text-red-600 bg-red-500/10 rounded-xl px-3 py-2 mt-3" role="alert">{erro}</p>
               )}
             </div>
           )}
@@ -306,7 +306,7 @@ export function OnboardingFlow() {
                 type="button"
                 onClick={() => setPasso((p) => p - 1)}
                 disabled={salvando}
-                className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-amber-400 transition-colors min-h-[44px] px-2 disabled:opacity-40"
+                className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-amber-600 transition-colors min-h-[44px] px-2 disabled:opacity-40"
               >
                 <ArrowLeft size={15} /> Voltar
               </button>
@@ -329,7 +329,7 @@ export function OnboardingFlow() {
                 disabled={salvando}
                 className="btn-primary px-6 h-12 inline-flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {salvando && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {salvando && <span className="w-4 h-4 border-2 border-slate-300 border-t-white rounded-full animate-spin" />}
                 {salvando ? 'Preparando tudo…' : 'Começar minha jornada'}
               </button>
             )}

@@ -7,6 +7,7 @@ import { ListSkeleton } from '../../shared/ui/Skeleton';
 import { getRankingData } from '../../shared/lib/rankingEngine';
 import { calcLevel } from '../../shared/lib/utils';
 import type { RankingFilter, RankingData, RankingEntry } from '../../shared/types';
+import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 const FILTERS: { id: RankingFilter; label: string; icon: typeof Trophy }[] = [
   { id: 'geral', label: 'Geral', icon: Trophy },
@@ -16,7 +17,7 @@ const FILTERS: { id: RankingFilter; label: string; icon: typeof Trophy }[] = [
 
 /* O brief pede Medal em tres cores para o podio. Eram emojis, que cada
    sistema desenhava diferente. */
-const MEDALHA_COR = ['text-amber-400', 'text-gray-300', 'text-orange-700'];
+const MEDALHA_COR = ['text-amber-600', 'text-slate-700', 'text-orange-700'];
 
 /** Inicial do apelido: identifica sem expor nome real e sem emoji. */
 function inicialDoApelido(nome: string): string {
@@ -36,10 +37,10 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+      className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors duration-200 border-2 ${
         isCurrentUser
-          ? 'bg-amber-500/8 border border-amber-500/15 shadow-[0_0_12px_rgba(245,158,11,0.04)]'
-          : 'hover:bg-white/[0.02] border border-transparent'
+          ? 'bg-ceu-100 border-ceu-500'
+          : 'hover:bg-slate-50 border-transparent'
       }`}
     >
       {/* Position */}
@@ -47,17 +48,17 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
         {isTop3 ? (
           <Medal size={20} className={`mx-auto ${MEDALHA_COR[entry.posicao - 1]}`} />
         ) : (
-          <span className="text-sm font-bold tabular-nums text-gray-500">{entry.posicao}</span>
+          <span className="text-base font-black tabular-nums text-slate-500">{entry.posicao}</span>
         )}
       </div>
 
       {/* Avatar */}
       {isCurrentUser ? (
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-sm font-bold text-gray-900 shrink-0">
+        <div className="w-10 h-10 rounded-full bg-ceu-500 flex items-center justify-center text-base font-black text-white shrink-0">
           {entry.avatarInicial}
         </div>
       ) : (
-        <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center text-sm font-bold text-gray-400 shrink-0">
+        <div className="w-10 h-10 rounded-full bg-azul-100 flex items-center justify-center text-base font-black text-azul-600 shrink-0">
           {inicialDoApelido(entry.nome)}
         </div>
       )}
@@ -65,30 +66,30 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={`text-sm font-semibold truncate ${isCurrentUser ? 'text-amber-300' : 'text-gray-200'}`}>
+          <span className={`text-base font-extrabold truncate ${isCurrentUser ? 'text-ceu-700' : 'text-tinta-900'}`}>
             {entry.nome}
           </span>
           {isCurrentUser && (
-            <span className="text-[9px] font-medium text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded-full shrink-0"> VOCÊ
+            <span className="text-[10px] font-extrabold text-white bg-ceu-500 px-2 py-0.5 rounded-full shrink-0">VOCÊ
             </span>
           )}
         </div>
         {/* Uma linha so: quebrando em tres, a altura variava e o ranking
             ficava dificil de varrer com o olho. */}
-        <div className="flex items-center gap-2 text-[11px] text-gray-500 min-w-0">
+        <div className="flex items-center gap-2 text-[11px] text-slate-500 min-w-0">
           <span className="truncate">{entry.turma}</span>
-          <span className="w-1 h-1 rounded-full bg-gray-600 shrink-0" />
+          <span className="w-1 h-1 rounded-full bg-slate-200 shrink-0" />
           <span className="truncate">{entry.escola}</span>
         </div>
       </div>
 
       {/* XP */}
       <div className="text-right shrink-0">
-        <p className="text-sm font-bold tabular-nums text-white">{entry.xp.toLocaleString()}</p>
+        <p className="text-sm font-black tabular-nums text-tinta-900">{entry.xp.toLocaleString()} XP</p>
         <div className="flex items-center justify-end gap-1">
-          <p className="text-[10px] text-gray-500 tabular-nums">Nv.{entry.level}</p>
+          <p className="text-[10px] text-slate-500 tabular-nums">Nv.{entry.level}</p>
           {entry.variacao !== 0 && entry.variacao !== undefined && (
-            <span className={`text-[10px] font-medium ${(entry.variacao || 0) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <span className={`text-[10px] font-medium ${(entry.variacao || 0) > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {(entry.variacao || 0) > 0 ? '+' : ''}{entry.variacao}
             </span>
           )}
@@ -97,6 +98,33 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
     </div>
   );
 });
+
+/* Pódio dos três primeiros: 2º à esquerda, 1º no centro (mais alto), 3º à direita. */
+function Podio({ entradas }: { entradas: RankingEntry[] }) {
+  const ordem = [entradas[1], entradas[0], entradas[2]];
+  const altura = ['h-20', 'h-28', 'h-16'];
+  const cor = ['bg-slate-300', 'bg-amber-500', 'bg-orange-300'];
+  return (
+    <div className="flex items-end justify-center gap-3 pt-2" aria-label="Pódio">
+      {ordem.map((e, i) => (
+        <div key={`${e.nome}_${e.escolaId}`} className="flex-1 max-w-[120px] flex flex-col items-center">
+          <div
+            className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-black border-4 border-white ${
+              e.destaque ? 'bg-ceu-500 text-white' : 'bg-azul-100 text-azul-600'
+            }`}
+          >
+            {inicialDoApelido(e.nome)}
+          </div>
+          <p className="mt-1.5 text-sm font-extrabold text-tinta-900 truncate max-w-full">{e.nome}</p>
+          <p className="text-xs font-bold text-slate-500 tabular-nums">{e.xp.toLocaleString()} XP</p>
+          <div className={`mt-2 w-full ${altura[i]} ${cor[i]} rounded-t-2xl flex items-start justify-center pt-2`}>
+            <span className="text-2xl font-black text-white tabular-nums">{e.posicao}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function RankingPage() {
   const reduzir = useReducedMotion();
@@ -201,15 +229,7 @@ export function RankingPage() {
   return (
     <div className="space-y-5 animate-fade-up">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-600/10 flex items-center justify-center">
-          <Trophy size={20} className="text-amber-400" />
-        </div>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Ranking</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Compare seu desempenho com outros alunos</p>
-        </div>
-      </div>
+      <CabecalhoPagina titulo="Ranking" subtitulo="Compare seu desempenho com outros alunos" cor="ambar" pose="pulando" />
 
       {/* Filter tabs */}
       <div className="flex gap-2">
@@ -220,10 +240,11 @@ export function RankingPage() {
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-sm font-medium transition-all ${
+              aria-pressed={isActive}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-2xl text-sm font-extrabold border-2 transition-colors ${
                 isActive
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200 border border-white/5 hover:bg-white/[0.03]'
+                  ? 'bg-ceu-100 text-ceu-600 border-ceu-500'
+                  : 'text-slate-500 border-slate-200 hover:bg-slate-50'
               }`}
             >
               <Icon size={16} />
@@ -236,38 +257,42 @@ export function RankingPage() {
       {/* Stats summary */}
       {data && !loading && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums">{data.totalParticipantes}</p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Participantes</p>
+          <div className="cartao px-4 py-3 text-center">
+            <p className="text-xl font-black text-tinta-900 tabular-nums">{data.totalParticipantes}</p>
+            <p className="text-xs font-bold text-slate-500 mt-0.5">Participantes</p>
           </div>
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums">
+          <div className="cartao px-4 py-3 text-center">
+            <p className="text-xl font-black text-tinta-900 tabular-nums">
               {currentUserEntry?.posicao ? `${currentUserEntry.posicao}°` : 'sem posição'}
             </p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Sua posição</p>
+            <p className="text-xs font-bold text-slate-500 mt-0.5">Sua posição</p>
           </div>
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums">
+          <div className="cartao px-4 py-3 text-center">
+            <p className="text-xl font-black text-tinta-900 tabular-nums">
               {gamification.xp.toLocaleString()}
             </p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Seu XP</p>
+            <p className="text-xs font-bold text-slate-500 mt-0.5">Seu XP</p>
           </div>
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <p className="text-lg font-bold text-white tabular-nums"> Nv. {calcLevel(gamification.xp).level}
+          <div className="cartao px-4 py-3 text-center">
+            <p className="text-xl font-black text-tinta-900 tabular-nums"> Nv. {calcLevel(gamification.xp).level}
             </p>
-            <p className="text-[10px] text-gray-500 mt-0.5">Seu nível</p>
+            <p className="text-xs font-bold text-slate-500 mt-0.5">Seu nível</p>
           </div>
         </div>
       )}
 
+      {/* Pódio: os três primeiros em destaque, como nas ligas do Duolingo.
+          A lista completa continua logo abaixo, com as mesmas linhas. */}
+      {!loading && !erroRanking && entradas.length >= 3 && <Podio entradas={entradas.slice(0, 3)} />}
+
       {/* Ranking list */}
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="cartao overflow-hidden">
         {erroRanking && !loading ? (
           <div className="p-6 text-center">
-            <p className="text-sm text-amber-300">{erroRanking}</p>
+            <p className="text-sm text-amber-600">{erroRanking}</p>
             <button
               onClick={loadRanking}
-              className="mt-3 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/30 text-sm font-semibold hover:brightness-110 transition-all"
+              className="mt-3 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-600 border border-amber-400/30 text-sm font-semibold hover:brightness-110 transition-all"
             >
               Tentar de novo
             </button>
@@ -292,8 +317,8 @@ export function RankingPage() {
                   loading="lazy"
                   className="w-28 h-28 object-contain mb-3 opacity-90 motion-safe:animate-float-suave"
                 />
-                <p className="text-gray-300 font-medium">Ranking ainda vazio</p>
-                <p className="text-sm text-gray-500 mt-1 max-w-xs">
+                <p className="text-slate-700 font-medium">Ranking ainda vazio</p>
+                <p className="text-sm text-slate-500 mt-1 max-w-xs">
                   Chame a galera da sua turma. O sagui guarda o primeiro lugar.
                 </p>
               </div>
@@ -337,8 +362,8 @@ export function RankingPage() {
       </div>
 
       {/* Info footer */}
-      <div className="text-center text-xs text-gray-600 leading-relaxed">
-        <p><Trophy size={16} className="inline-block align-[-0.15em] text-amber-400" /> Ranking atualizado em tempo real. Complete atividades e quizzes para ganhar XP e subir posições!</p>
+      <div className="text-center text-xs text-slate-400 leading-relaxed">
+        <p><Trophy size={16} className="inline-block align-[-0.15em] text-amber-600" /> Ranking atualizado em tempo real. Complete atividades e quizzes para ganhar XP e subir posições!</p>
       </div>
     </div>
   );

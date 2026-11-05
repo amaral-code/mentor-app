@@ -90,8 +90,8 @@ export function Modal({ open, onClose, children, title, fullScreen }: ModalProps
               {/* `shrink-0` + corpo rolável: antes o cartão inteiro rolava,
                   então em conteúdo longo o título e o X saíam de vista. */}
               {title && (
-                <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-white/5">
-                  <h2 className="text-base md:text-lg font-bold text-white min-w-0 break-words">{title}</h2>
+                <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200">
+                  <h2 className="text-base md:text-lg font-bold text-tinta-900 min-w-0 break-words">{title}</h2>
                   {onClose && (
                     <m.button
                       onClick={onClose}

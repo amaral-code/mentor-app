@@ -105,7 +105,7 @@ export function LevelUpOverlay({ open, level, onClose }: LevelUpOverlayProps) {
         </div>
 
         <h2 className="levelup-title">
-          Level up! <PartyPopper size={18} className="inline-block align-[-0.15em] text-amber-400" />
+          Level up! <PartyPopper size={18} className="inline-block align-[-0.15em] text-amber-600" />
         </h2>
         <p className="levelup-sub">Seu foco te levou mais alto. Continue assim.</p>
 

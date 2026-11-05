@@ -49,18 +49,18 @@ export function TrocarSenha() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center px-4" style={{ background: '#0b1120' }}>
+    <div className="min-h-dvh flex items-center justify-center px-4" style={{ background: '#ffffff' }}>
       <div className="w-full max-w-sm glass rounded-3xl p-6 md:p-8 text-center animate-fade-up">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-4">
           <Moon size={22} className="text-gray-900" />
         </div>
-        <h1 className="text-lg font-bold text-white">Quase lá, crie sua senha</h1>
-        <p className="text-sm text-gray-500 mt-1 mb-5">
+        <h1 className="text-lg font-bold text-tinta-900">Quase lá, crie sua senha</h1>
+        <p className="text-sm text-slate-500 mt-1 mb-5">
           Sua conta chegou por email com uma senha temporária. Defina agora a sua senha definitiva e secreta.
         </p>
         <div className="space-y-3 text-left">
           <label className="block">
-            <span className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Nova senha</span>
+            <span className="block text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wider">Nova senha</span>
             <input
               type="password"
               value={nova}
@@ -71,7 +71,7 @@ export function TrocarSenha() {
             />
           </label>
           <label className="block">
-            <span className="block text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wider">Repita a senha</span>
+            <span className="block text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wider">Repita a senha</span>
             <input
               type="password"
               value={confirma}
@@ -84,7 +84,7 @@ export function TrocarSenha() {
           </label>
         </div>
         {erro && (
-          <p role="alert" className="text-xs text-red-400 bg-red-500/10 rounded-xl px-3 py-2 mt-3">
+          <p role="alert" className="text-xs text-red-600 bg-red-500/10 rounded-xl px-3 py-2 mt-3">
             {erro}
           </p>
         )}

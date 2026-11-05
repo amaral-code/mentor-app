@@ -163,9 +163,14 @@ export function ChatPage() {
   const [isListening, setIsListening] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
-  const [historicoAberto, setHistoricoAberto] = useState<boolean>(() =>
-    safeGet(CHAVE_HISTORICO_ABERTO) !== '0',
-  );
+  /* Sem preferência salva, o histórico começa aberto só no computador: no
+     celular ele cobre a conversa inteira, e o aluno abria o Mentor sem ver
+     onde digitar. Quem já escolheu continua com a escolha. */
+  const [historicoAberto, setHistoricoAberto] = useState<boolean>(() => {
+    const salvo = safeGet(CHAVE_HISTORICO_ABERTO);
+    if (salvo === null) return typeof window !== 'undefined' && window.innerWidth >= 768;
+    return salvo !== '0';
+  });
   const [buscaHistorico, setBuscaHistorico] = useState('');
   const [criandoConversa, setCriandoConversa] = useState(false);
   const [trocandoConversaId, setTrocandoConversaId] = useState<string | null>(null);
@@ -719,19 +724,19 @@ export function ChatPage() {
 
   /*
    * A altura desconta EXATAMENTE o respiro que o <main> do AppShell reserva
-   * no mobile: 5rem para o header fixo + 0.5rem embaixo, mais as duas
-   * safe-areas. O valor antigo era um 6rem fixo, que ignorava os insets —
+   * no mobile: 4.25rem para o topo fixo + 5rem para a barra inferior, mais
+   * as duas safe-areas. O valor antigo era um 6rem fixo, que ignorava os insets —
    * num iPhone com notch o workspace do Mentor passava da viewport e a barra
    * de digitar ficava abaixo da dobra.
    */
   return (
-    <div className="flex gap-2 md:gap-3 h-[calc(100dvh-5.5rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-2rem)] animate-fade-up relative">
+    <div className="flex gap-2 md:gap-3 h-[calc(100dvh-9.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-2rem)] animate-fade-up relative">
       {historicoAberto && (
         <button
           aria-hidden="true"
           tabIndex={-1}
           onClick={alternarHistorico}
-          className="md:hidden absolute inset-0 z-20 bg-black/50 backdrop-blur-[1px]"
+          className="md:hidden absolute inset-0 z-20 bg-tinta-900/40"
         />
       )}
 
@@ -739,24 +744,9 @@ export function ChatPage() {
           A sidebar global do AppShell cobre a #sidebarNav do protótipo
           (mesmos links, card Sagui e XP — com dados reais). */}
       <div
-        className="flex-1 flex flex-col min-w-0 relative overflow-hidden rounded-2xl bg-[#060913] border border-white/10"
+        className="flex-1 flex flex-col min-w-0 relative overflow-hidden rounded-3xl bg-superficie border-2 border-slate-200"
         data-purpose="mentor-chat-workspace"
       >
-        {/* Atmosfera cósmica */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-          <div className="absolute -top-20 left-[22%] w-[560px] h-[560px] rounded-full bg-gradient-to-br from-amber-500/22 via-amber-600/12 to-transparent blur-[100px] animate-orb-1" />
-          <div className="absolute top-[26%] right-[8%] w-[520px] h-[520px] rounded-full bg-gradient-to-tr from-indigo-600/22 via-purple-600/15 to-transparent blur-[115px] animate-orb-2" />
-          <div className="absolute bottom-[-10%] left-[16%] w-[580px] h-[580px] rounded-full bg-gradient-to-tr from-emerald-500/18 via-teal-500/12 to-cyan-500/12 blur-[105px] animate-orb-3" />
-          <div className="absolute top-[42%] left-[42%] w-[420px] h-[420px] rounded-full bg-cyan-500/12 blur-[95px] animate-orb-2" style={{ animationDelay: '2.5s' }} />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,#060913_88%)] opacity-85" />
-          <div className="absolute top-16 left-[28%] w-2 h-2 bg-amber-300 rounded-full twinkle-star-fast shadow-[0_0_8px_#fde047]" />
-          <div className="absolute top-40 right-[32%] w-2.5 h-2.5 bg-cyan-200 rounded-full twinkle-star-slow shadow-[0_0_10px_#67e8f9]" style={{ animationDelay: '1.2s' }} />
-          <div className="absolute bottom-44 left-[35%] w-1.5 h-1.5 bg-amber-200 rounded-full twinkle-star-fast" style={{ animationDelay: '2.1s' }} />
-          <div className="absolute top-32 left-[58%] w-2 h-2 bg-emerald-300 rounded-full twinkle-star-slow shadow-[0_0_8px_#6ee7b7]" style={{ animationDelay: '0.7s' }} />
-          <div className="absolute bottom-28 right-[24%] w-2 h-2 bg-purple-300 rounded-full twinkle-star-fast" style={{ animationDelay: '1.8s' }} />
-          <div className="absolute top-[68%] left-[22%] w-1.5 h-1.5 bg-amber-100 rounded-full twinkle-star-slow" style={{ animationDelay: '3s' }} />
-        </div>
-
         <ChatHeader
           titulo={tituloMentor}
           descricao={descMentor}
@@ -781,8 +771,8 @@ export function ChatPage() {
         <TeamProgressBanner />
 
         {personaCustomizada && (
-          <p className="relative z-10 text-[11px] text-gray-500 px-4 pt-1.5 shrink-0">
-            Falando com o seu professor <strong className="text-gray-300">{personaCustomizada.name}</strong>. Volte às categorias acima para o modo temático.
+          <p className="relative z-10 text-[11px] text-slate-500 px-4 pt-1.5 shrink-0">
+            Falando com o seu professor <strong className="text-slate-700">{personaCustomizada.name}</strong>. Volte às categorias acima para o modo temático.
           </p>
         )}
 
@@ -816,7 +806,7 @@ export function ChatPage() {
         {modoAula ? (
           /* Modo Sala de Aula: sem input de texto, so o scanner + aviso. */
           <div className="relative z-10 flex shrink-0 flex-col items-center gap-2 px-4 pb-3">
-            <p role="status" className="w-full max-w-4xl rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-center text-xs font-semibold text-cyan-200">
+            <p role="status" className="w-full max-w-4xl rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-center text-xs font-semibold text-cyan-700">
               Chat silenciado. Use apenas a câmera para escanear a matéria.
             </p>
             <OcrUploader
@@ -883,11 +873,11 @@ export function ChatPage() {
             title="Expandir histórico"
             aria-label="Mostrar histórico"
             aria-expanded={false}
-            className="p-2 rounded-xl bg-white/5 hover:bg-amber-500/15 border border-white/10 hover:border-amber-500/40 text-slate-400 hover:text-amber-300 transition-all active:scale-95"
+            className="p-2 rounded-xl bg-slate-50 hover:bg-amber-500/15 border border-slate-200 hover:border-amber-500/40 text-slate-600 hover:text-amber-600 transition-all active:scale-95"
           >
             <PanelRightOpen size={16} />
           </button>
-          <span className="mt-2 text-[9px] font-bold uppercase tracking-widest text-slate-600 [writing-mode:vertical-lr]">
+          <span className="mt-2 text-[9px] font-bold uppercase tracking-widest text-slate-400 [writing-mode:vertical-lr]">
             Histórico
           </span>
         </div>

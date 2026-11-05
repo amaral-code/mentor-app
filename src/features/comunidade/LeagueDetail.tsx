@@ -128,34 +128,34 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/[0.04] transition-all text-gray-400 hover:text-white shrink-0">
+          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-50 transition-all text-slate-600 hover:text-tinta-900 shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
             </svg>
           </button>
           <div className="min-w-0">
-            <h1 className="text-base md:text-lg font-bold text-white truncate">{league?.title || 'Sala'}</h1>
-            <p className="text-xs text-gray-500">
+            <h1 className="text-base md:text-lg font-bold text-tinta-900 truncate">{league?.title || 'Sala'}</h1>
+            <p className="text-xs text-slate-500">
               <Users size={12} className="inline mr-1" />
               {participanteCount} participante{participanteCount !== 1 ? 's' : ''} • {league?.escola || ''}
             </p>
           </div>
         </div>
-        <span className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium shrink-0">{league?.discipline || ''}</span>
+        <span className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium shrink-0">{league?.discipline || ''}</span>
       </div>
 
       {/* Content: Chat + Challenge */}
       <div className="flex-1 flex flex-col lg:flex-row gap-3 overflow-hidden min-h-0">
         {/* Chat Panel - WhatsApp style */}
         <div className="flex-1 flex flex-col glass rounded-2xl overflow-hidden min-h-0">
-          <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-white/[0.04]">
-            <h2 className="text-sm font-semibold text-white">Chat da Liga</h2>
-            <span className="text-xs text-gray-500">{messages.length} mensagens</span>
+          <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-200">
+            <h2 className="text-sm font-semibold text-tinta-900">Chat da Liga</h2>
+            <span className="text-xs text-slate-500">{messages.length} mensagens</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 flex flex-col space-y-3 scroll-smooth">
             {messages.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center text-sm text-gray-500"> Nenhuma mensagem ainda. Seja o primeiro a contribuir!
+              <div className="flex-1 flex items-center justify-center text-sm text-slate-500"> Nenhuma mensagem ainda. Seja o primeiro a contribuir!
               </div>
             ) : (
               messages.map(msg => {
@@ -166,9 +166,9 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
                 if (isSystem) {
                   return (
                     <div key={msg.id} className="flex justify-center">
-                      <div className="bg-gray-200/10 text-gray-400 text-xs rounded-full px-4 py-1 text-center max-w-[85%]">
+                      <div className="bg-gray-200/10 text-slate-600 text-xs rounded-full px-4 py-1 text-center max-w-[85%]">
                         {msg.text?.includes('Entrou na liga') ? (
-                          <span>Entrou na liga e passou a fazer parte do grupo. <strong className="text-gray-300">{msg.userName}</strong></span>
+                          <span>Entrou na liga e passou a fazer parte do grupo. <strong className="text-slate-700">{msg.userName}</strong></span>
                         ) : msg.text}
                       </div>
                     </div>
@@ -180,14 +180,14 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
                     <div className={`px-3.5 py-2 text-sm leading-relaxed ${
                       isSelf
                         ? 'bg-green-100 text-gray-800 rounded-lg rounded-br-none'
-                        : 'bg-white/10 text-gray-200 rounded-lg rounded-bl-none'
+                        : 'bg-slate-100 text-tinta-700 rounded-lg rounded-bl-none'
                     }`}>
                       {!isSelf && (
-                        <p className="text-[11px] font-bold text-gray-400 mb-0.5">{msg.userName}</p>
+                        <p className="text-[11px] font-bold text-slate-600 mb-0.5">{msg.userName}</p>
                       )}
                       <p>{msg.text}</p>
                     </div>
-                    <p className={`text-[10px] text-gray-600 mt-0.5 px-1 ${isSelf ? 'text-right' : 'text-left'}`}>
+                    <p className={`text-[10px] text-slate-400 mt-0.5 px-1 ${isSelf ? 'text-right' : 'text-left'}`}>
                       {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </p>
                   </div>
@@ -197,14 +197,14 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="flex items-end gap-2 px-3 pt-2 pb-3 border-t border-white/[0.04] shrink-0">
+          <div className="flex items-end gap-2 px-3 pt-2 pb-3 border-t border-slate-200 shrink-0">
             <textarea
               value={message}
               onChange={e => setMessage(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
               rows={1}
               placeholder="Digite sua mensagem..."
-              className="flex-1 resize-none bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-emerald-400/40 max-h-32 placeholder:text-gray-600 min-h-[44px]"
+              className="flex-1 resize-none bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-tinta-700 focus:outline-none focus:border-emerald-400/40 max-h-32 placeholder:text-slate-400 min-h-[44px]"
             />
             <button
               onClick={sendMessage}
@@ -220,16 +220,16 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
         <div className="lg:w-72 flex flex-col gap-3">
           <div className="glass rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={16} className="text-amber-400" />
-              <h2 className="text-sm font-semibold text-white">Desafio da Liga</h2>
+              <Sparkles size={16} className="text-amber-600" />
+              <h2 className="text-sm font-semibold text-tinta-900">Desafio da Liga</h2>
             </div>
-            <p className="text-sm text-gray-300 leading-relaxed mb-3">{dailyPrompt}</p>
+            <p className="text-sm text-slate-700 leading-relaxed mb-3">{dailyPrompt}</p>
             <div className="rounded-xl bg-amber-500/5 border border-amber-500/10 p-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-400">Atualiza em</span>
-                <span className="text-amber-400 font-bold tabular-nums">{timer?.label || ''}</span>
+                <span className="text-slate-600">Atualiza em</span>
+                <span className="text-amber-600 font-bold tabular-nums">{timer?.label || ''}</span>
               </div>
-              <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
+              <div className="mt-2 h-1 rounded-full bg-slate-50 overflow-hidden">
                 <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
                   style={{ width: `${(1 - (Date.now() % 86400000) / 86400000) * 100}%` }} />
               </div>
@@ -238,10 +238,10 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
 
           <div className="glass rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold text-white">Metas</h2>
-              <span className="text-xs text-gray-500">{progress}%</span>
+              <h2 className="text-sm font-semibold text-tinta-900">Metas</h2>
+              <span className="text-xs text-slate-500">{progress}%</span>
             </div>
-            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden mb-3">
+            <div className="h-1.5 rounded-full bg-slate-50 overflow-hidden mb-3">
               <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: `${progress}%` }} />
             </div>
             <div className="space-y-1.5">
@@ -249,10 +249,10 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
                 if (!goal) return null;
                 const completed = (goal.completedBy || []).includes(profile?.uid || '');
                 return (
-                  <div key={goal.id} className={`rounded-lg border px-3 py-2 ${completed ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-white/5 bg-white/[0.02]'}`}>
+                  <div key={goal.id} className={`rounded-lg border px-3 py-2 ${completed ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-slate-200 bg-slate-50'}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <p className={`text-xs ${completed ? 'text-emerald-400 line-through' : 'text-gray-300'}`}>{goal.title}</p>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${completed ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/5 text-gray-500'}`}>
+                      <p className={`text-xs ${completed ? 'text-emerald-600 line-through' : 'text-slate-700'}`}>{goal.title}</p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${completed ? 'bg-emerald-500/15 text-emerald-600' : 'bg-slate-50 text-slate-500'}`}>
                         {goal.target} {goal.unit}
                       </span>
                     </div>
@@ -265,17 +265,17 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
           <div className="glass rounded-2xl p-3">
             <div className="flex -space-x-1.5">
               {joinedByNames.slice(0, 6).map((name, i) => (
-                <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center text-[9px] font-bold text-white ring-2 ring-[#0b1120]">
+                <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-100 to-slate-100 flex items-center justify-center text-[9px] font-bold text-white ring-2 ring-slate-200">
                   {(name || '?').charAt(0).toUpperCase()}
                 </div>
               ))}
               {joinedByNames.length > 6 && (
-                <div className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-[9px] text-gray-400 ring-2 ring-[#0b1120]">
+                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[9px] text-slate-600 ring-2 ring-slate-200">
                   +{joinedByNames.length - 6}
                 </div>
               )}
             </div>
-            <p className="text-[10px] text-gray-500 mt-1.5">{participanteCount} participante{participanteCount !== 1 ? 's' : ''}</p>
+            <p className="text-[10px] text-slate-500 mt-1.5">{participanteCount} participante{participanteCount !== 1 ? 's' : ''}</p>
           </div>
         </div>
       </div>
