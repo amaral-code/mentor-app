@@ -37,7 +37,7 @@ import { precisaOnboarding } from './shared/lib/onboardingLocal';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
 import { mascotStore } from './stores/mascotStore';
-import { getToday, proximoStreak } from './shared/lib/utils';
+import { ofensivaAoAbrir } from './shared/lib/utils';
 
 /*
  * Carregamento tardio das features de animação.
@@ -120,7 +120,7 @@ export default function App() {
         .filter(Boolean);
       if (falhas.length > 0) {
         console.warn('[boot] tabelas nao carregadas:', falhas.join(', '));
-        useAppStore.getState().setToast(`Alguns dados nao carregaram (${falhas.join(', ')}). O resto esta normal.`, 'info');
+        useAppStore.getState().setToast('Alguns dados não carregaram. O resto está normal. Recarregue a página para tentar de novo.', 'info');
       }
       const gam = valor<Awaited<ReturnType<typeof supabaseRepository.loadGamification>>>(0, null);
       const logs = valor(1, useAppStore.getState().logs);
@@ -275,14 +275,9 @@ export default function App() {
    */
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'student') return;
-    const today = getToday();
-    const lastAccess = gamification.lastAccessDate;
-    if (lastAccess === today) return;
-
-    updateGamification({
-      lastAccessDate: today,
-      streak: proximoStreak(lastAccess, gamification.streak),
-    });
+    // Dia de BRASÍLIA, o mesmo relógio do servidor (migration 030).
+    const mudanca = ofensivaAoAbrir(gamification.lastAccessDate, gamification.streak);
+    if (mudanca) updateGamification(mudanca);
   }, [isAuthenticated, userRole, gamification.lastAccessDate, gamification.streak, updateGamification]);
 
   /*
@@ -430,6 +425,34 @@ export default function App() {
         </Suspense>
         <Toast />
       </LazyMotion>
+      </ErrorBoundary>
+    );
+  }
+
+  /*
+   * Administrador não tem painel no app: a promoção de papel e os demais
+   * atos administrativos são feitos por SQL. Antes a conta caía no ramo
+   * do aluno, com quiz, ranking e ofensiva, como se fosse um estudante.
+   */
+  if (userRole === 'admin') {
+    return (
+      <ErrorBoundary nome="admin">
+        <div className="min-h-dvh flex items-center justify-center px-4 bg-white">
+          <div className="cartao w-full max-w-sm p-6 text-center">
+            <h1 className="text-lg font-extrabold text-tinta-900">Conta de administração</h1>
+            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+              Esta conta não tem painel dentro do app. As tarefas de administração são feitas direto no banco de dados.
+            </p>
+            <button
+              type="button"
+              className="btn-secondary w-full mt-5"
+              onClick={() => { void useAppStore.getState().logout(); }}
+            >
+              Sair da conta
+            </button>
+          </div>
+        </div>
+        <Toast />
       </ErrorBoundary>
     );
   }

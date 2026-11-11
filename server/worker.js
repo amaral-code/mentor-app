@@ -56,10 +56,20 @@ import {
 } from './essaySchema.js';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = 'gemini-2.0-flash';
+/*
+ * `gemini-flash-latest` e um APELIDO mantido pelo Google: aponta sempre
+ * para o Flash estavel da vez. Os padroes anteriores eram nomes fixos
+ * (`gemini-1.5-flash`, `gemini-2.0-flash`) e os dois foram desligados
+ * pelo provedor - a redacao por foto e o scanner do caderno pararam sem
+ * ninguem mexer no codigo. Nome fixo continua possivel pelas variaveis
+ * de ambiente; o padrao e que nao pode ter prazo de validade.
+ */
+const DEFAULT_MODEL = 'gemini-flash-latest';
 const DEEPSEEK_DEFAULT_MODEL = 'deepseek-v4-flash';
 const DEEPSEEK_DEFAULT_BASE = 'https://api.deepseek.com';
-const MODELOS_PERMITIDOS = new Set(['gemini-2.0-flash', 'gemini-2.0-flash-lite', DEEPSEEK_DEFAULT_MODEL]);
+const MODELOS_PERMITIDOS = new Set(['gemini-flash-latest', 'gemini-flash-lite-latest', DEEPSEEK_DEFAULT_MODEL]);
+/** Formato de um nome de modelo aceitavel vindo do AMBIENTE (nunca do cliente). */
+const NOME_DE_MODELO = /^(gemini|deepseek)-[a-z0-9.-]{1,60}$/i;
 
 /* ===================================================================
    Provedor e modelo vindos do ambiente
@@ -108,8 +118,21 @@ const TTS_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
  * saida estruturada tem suporte diferente. Trocar o modelo no painel do
  * provedor nao deve exigir deploy.
  */
-const MODELO_CHAT_PADRAO = 'gemini-1.5-flash';
-const MODELO_VISAO_PADRAO = 'gemini-1.5-flash';
+const MODELO_CHAT_PADRAO = DEFAULT_MODEL;
+const MODELO_VISAO_PADRAO = DEFAULT_MODEL;
+
+/**
+ * Modelo de visao (redacao por foto e scanner do caderno).
+ *
+ * Aceita os DOIS nomes de variavel. O `.env.example` e o `/api/config`
+ * sempre documentaram `AI_VISION_MODEL`, mas este arquivo so lia
+ * `GEMINI_MODEL_VISION`: quem seguia a documentacao trocava o modelo no
+ * painel e nada mudava.
+ */
+function modeloDeVisao(env) {
+  const pedido = String(env.GEMINI_MODEL_VISION || env.AI_VISION_MODEL || '').trim();
+  return NOME_DE_MODELO.test(pedido) ? pedido : MODELO_VISAO_PADRAO;
+}
 const BUCKET_REDACOES = 'essay_scans';
 
 function cors(env) {
@@ -322,8 +345,18 @@ function modeloEfetivo(payload, env, provedor) {
   const pedido = String(payload?.model || '').trim();
   if (pedido && MODELOS_PERMITIDOS.has(pedido)) return pedido;
   const padraoEnv = modeloDoAmbiente(env);
-  if (padraoEnv && MODELOS_PERMITIDOS.has(padraoEnv)) return padraoEnv;
-  if (padraoEnv && /^deepseek-/i.test(padraoEnv)) return padraoEnv;
+  /*
+   * O modelo do AMBIENTE vale sempre que tiver formato de modelo. Antes
+   * so passava se estivesse na lista fixa, e a lista so tinha modelos
+   * 2.0: com AI_PROVIDER=gemini era impossivel apontar para um modelo
+   * vivo, por mais que a variavel estivesse certa no painel. A lista
+   * continua limitando o que o CLIENTE pode pedir.
+   */
+  if (pedido && pedido === padraoEnv && NOME_DE_MODELO.test(padraoEnv)) return padraoEnv;
+  if (padraoEnv && NOME_DE_MODELO.test(padraoEnv)) {
+    const ehDeepseek = /^deepseek-/i.test(padraoEnv);
+    if ((provedor === 'deepseek') === ehDeepseek) return padraoEnv;
+  }
   return provedor === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_MODEL;
 }
 
@@ -414,12 +447,73 @@ async function chamarDeepSeek(env, model, messages, generationConfig) {
 async function usuarioDoToken(env, request) {
   const jwt = request.headers.get('X-Supabase-Auth');
   if (!jwt || !env.SUPABASE_URL) return null;
-  const resposta = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${jwt}` },
-  });
-  if (!resposta.ok) return null;
-  const dados = await resposta.json();
-  return dados?.id ? dados : null;
+  /*
+   * Conferir um JWT nao exige a service_role: a chave anon basta. Antes
+   * so a service_role era aceita, e sem ela TODA rota com login respondia
+   * "Faca login novamente" - um erro de configuracao do servidor
+   * disfarçado de problema do aluno.
+   */
+  const apikey = env.SUPABASE_SERVICE_KEY || env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY;
+  if (!apikey) return null;
+  try {
+    const resposta = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey, Authorization: `Bearer ${jwt}` },
+    });
+    if (!resposta.ok) return null;
+    const dados = await resposta.json();
+    return dados?.id ? dados : null;
+  } catch {
+    // Auth fora do ar: sem como conferir, a resposta segura e "sem sessao".
+    return null;
+  }
+}
+
+/* ===================================================================
+   Porteiro das rotas de IA
+   -------------------------------------------------------------------
+   `/generate`, `/tts` e `/api/chat/completions` eram abertas: sem
+   API_TOKEN (que de todo modo vai no bundle) qualquer pessoa na internet
+   gastava a cota de IA e de voz de quem publicou o app. Agora exigem a
+   sessao do Supabase, como as rotas de foto ja exigiam.
+
+   Sem SUPABASE_URL no ambiente nao ha como conferir sessao: e o caso de
+   `npm run dev` sem banco, e ai a rota segue aberta (maquina local).
+
+   O limite por minuto mora na MEMORIA da instancia. Em serverless cada
+   instancia conta a sua, entao isto e um freio contra laco e abuso
+   grosseiro, nao uma cota exata. Cota de verdade pede contador no banco.
+   =================================================================== */
+const JANELA_MS = 60_000;
+const chamadasPorUsuario = new Map();
+
+function dentroDoLimite(chave, maximo, agora = Date.now()) {
+  const recentes = (chamadasPorUsuario.get(chave) || []).filter((t) => agora - t < JANELA_MS);
+  if (recentes.length >= maximo) {
+    chamadasPorUsuario.set(chave, recentes);
+    return false;
+  }
+  recentes.push(agora);
+  chamadasPorUsuario.set(chave, recentes);
+  // Mapa nao cresce para sempre numa instancia de vida longa.
+  if (chamadasPorUsuario.size > 5000) chamadasPorUsuario.clear();
+  return true;
+}
+
+/** Devolve uma Response de recusa, ou null quando o pedido pode seguir. */
+async function barrarSemSessao(env, request, corsHeaders, { rota, maximoPorMinuto }) {
+  if (!env.SUPABASE_URL) return null;
+  const usuario = await usuarioDoToken(env, request);
+  if (!usuario) {
+    return json({ error: 'sem_sessao', message: 'Faça login novamente.' }, 401, corsHeaders);
+  }
+  if (!dentroDoLimite(`${rota}:${usuario.id}`, maximoPorMinuto)) {
+    return json(
+      { error: 'muitas_chamadas', message: 'Muitos pedidos em pouco tempo. Espere um minuto e tente de novo.' },
+      429,
+      corsHeaders,
+    );
+  }
+  return null;
 }
 
 /* ===================================================================
@@ -457,13 +551,71 @@ async function enviarEmail(env, para, assunto, corpo) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: env.EMAIL_REMETENTE || 'Ampli-IA <avisos@ampli-ia.app>',
+      from: env.EMAIL_REMETENTE || 'Midnight Mentor <avisos@ampli-ia.app>',
       to: [para],
       subject: assunto,
       text: corpo,
     }),
   });
   return resposta.ok;
+}
+
+/**
+ * Envia os e-mails pendentes da fila `notificacoes`.
+ *
+ * Funcao a parte (e nao so a rota) porque quem confirma um pagamento
+ * chama direto: a confirmacao da consulta sai na hora, sem depender de
+ * cron nenhum.
+ */
+async function esvaziarFila(env) {
+  const pendentes = await supabaseSelect(
+    env,
+    'notificacoes?canal=eq.email&enviada_em=is.null&tentativas=lt.3&select=id,user_id,titulo,corpo,tentativas&limit=50',
+  );
+
+  let enviadas = 0;
+  for (const n of pendentes) {
+    const perfis = await supabaseSelect(env, `perfis?id=eq.${encodeURIComponent(n.user_id)}&select=email`);
+    const email = perfis[0]?.email;
+    const ok = email ? await enviarEmail(env, email, n.titulo, n.corpo) : false;
+
+    await supabasePatch(
+      env,
+      `notificacoes?id=eq.${encodeURIComponent(n.id)}`,
+      ok
+        ? { enviada_em: new Date().toISOString() }
+        : // Antes gravava `tentativas: 1` fixo: a fila tentava para
+          // sempre. Incremento real (lê o valor atual da linha).
+          { tentativas: (Number(n.tentativas) || 0) + 1 },
+    );
+    if (ok) enviadas++;
+  }
+  return { pendentes: pendentes.length, enviadas };
+}
+
+/** Mesma coisa, para quem nao pode falhar por causa de e-mail. */
+async function esvaziarFilaSemFalhar(env) {
+  try {
+    await esvaziarFila(env);
+  } catch (err) {
+    console.warn('fila de avisos nao esvaziada:', err && err.message);
+  }
+}
+
+/**
+ * Endereco que o Mercado Pago chama quando o pagamento muda de estado.
+ *
+ * Dois defeitos somados faziam o aviso nunca chegar:
+ *   1. Na Vercel so `/api/*` e funcao, e o endereco saia como
+ *      `/webhook/pagamento` (o adapter tira o `/api` antes de entregar
+ *      a requisicao aqui, entao `url` nao sabe do prefixo).
+ *   2. A rota exige `?secret=`, e o endereco ia sem ele.
+ * O adapter passa o prefixo original no cabecalho `x-rota-prefixo`.
+ */
+function urlDoWebhook(env, request, url) {
+  const prefixo = request.headers.get('x-rota-prefixo') === '/api' ? '/api' : '';
+  const segredo = env.MP_WEBHOOK_SECRET ? `?secret=${encodeURIComponent(env.MP_WEBHOOK_SECRET)}` : '';
+  return `${url.origin}${prefixo}/webhook/pagamento${segredo}`;
 }
 
 /* ===================================================================
@@ -622,7 +774,7 @@ async function perfilDoImportado(env, uid, patch) {
   return resposta.ok;
 }
 
-function emailBoasVindas({ paraQuem, login, senha, linkMagico, escola, codigoInstituicao, turma, appUrl }) {
+function emailBoasVindas({ login, senha, linkMagico, escola, codigoInstituicao, turma, appUrl }) {
   const linhasTexto = [
     `Olá! Sua conta no Midnight Mentor foi criada pela secretaria (${escola}).`,
     '',
@@ -660,7 +812,6 @@ async function importarLinha(env, escola, turmas, linha) {
 
   // Docente usa o próprio email como login; aluno usa login institucional
   // e o email do responsável só recebe (nunca vira login do aluno).
-  const emailDono = tipo === 'teacher' ? linha.email : null;
   if (tipo === 'teacher' && !EMAIL_OK_IMPORT.test(linha.email)) {
     return { ok: false, erro: 'email do docente inválido', emailEnviado: false };
   }
@@ -669,6 +820,31 @@ async function importarLinha(env, escola, turmas, linha) {
     if (!EMAIL_OK_IMPORT.test(linha.email)) return { ok: false, erro: 'email do responsável inválido', emailEnviado: false };
     if (linha.telefone && !FONE_OK_IMPORT.test(linha.telefone)) {
       return { ok: false, erro: 'telefone do responsável inválido', emailEnviado: false };
+    }
+  }
+
+  /*
+   * Reenvio da mesma planilha nao pode duplicar a turma.
+   *
+   * O login do aluno leva um sufixo aleatorio, entao "login ja existe"
+   * nunca disparava para aluno: importar duas vezes criava duas contas
+   * por pessoa. E reenviar e exatamente o que a secretaria faz quando a
+   * primeira tentativa cai no meio. A chave e nome + e-mail do
+   * responsavel dentro da mesma escola.
+   */
+  if (tipo === 'student') {
+    try {
+      const iguais = await supabaseSelect(
+        env,
+        `perfis?escola_id=eq.${encodeURIComponent(escola.id)}&papel=eq.student` +
+          `&nome=eq.${encodeURIComponent(linha.nome.trim())}` +
+          `&email_responsaveis=eq.${encodeURIComponent(linha.email.trim())}&select=id&limit=1`,
+      );
+      if (Array.isArray(iguais) && iguais.length > 0) {
+        return { ok: false, jaExistia: true, erro: 'aluno já cadastrado (mesmo nome e mesmo responsável)', emailEnviado: false };
+      }
+    } catch {
+      /* consulta falhou: segue e deixa a criacao decidir */
     }
   }
 
@@ -713,7 +889,6 @@ async function importarLinha(env, escola, turmas, linha) {
   }
 
   const convite = emailBoasVindas({
-    paraQuem: tipo,
     login: loginAluno,
     senha: senhaAluno,
     linkMagico,
@@ -790,6 +965,9 @@ export default {
       if (!tokenValido(request, env)) {
         return json({ error: 'Unauthorized', message: 'API_TOKEN inválido' }, 401, corsHeaders);
       }
+      // 40/min: um quiz de 30 questoes sai em lotes paralelos e ainda cabe.
+      const recusaGenerate = await barrarSemSessao(env, request, corsHeaders, { rota: 'generate', maximoPorMinuto: 40 });
+      if (recusaGenerate) return recusaGenerate;
 
       let payload;
       try {
@@ -861,6 +1039,8 @@ export default {
       if (!tokenValido(request, env)) {
         return json({ error: 'Unauthorized' }, 401, corsHeaders);
       }
+      const recusaTts = await barrarSemSessao(env, request, corsHeaders, { rota: 'tts', maximoPorMinuto: 10 });
+      if (recusaTts) return recusaTts;
       if (!env.GOOGLE_TTS_KEY) {
         return json(
           { error: 'misconfigured', message: 'Defina GOOGLE_TTS_KEY para gerar áudio.' },
@@ -938,12 +1118,13 @@ export default {
         return json({ error: 'invalid_json' }, 400, corsHeaders);
       }
 
-      const { agendamentoId, valorCentavos, descricao, emailPagador } = corpo;
+      /*
+       * `valorCentavos` do corpo e IGNORADO de proposito. Ele vinha do
+       * navegador e VENCIA o valor do banco: bastava mandar 1 para pagar
+       * um centavo por uma consulta. O preco e o do agendamento, e so.
+       */
+      const { agendamentoId, descricao, emailPagador } = corpo;
       if (!agendamentoId) return json({ error: 'agendamento_ausente' }, 400, corsHeaders);
-      const valor = valorCentavos ?? null;
-      if (valor !== null && (!Number.isFinite(Number(valor)) || Number(valor) <= 0)) {
-        return json({ error: 'valor_invalido' }, 400, corsHeaders);
-      }
 
       // O agendamento tem de ser mesmo de quem está pagando.
       let agendamento;
@@ -964,6 +1145,10 @@ export default {
       if (agendamento.status_pagamento === 'pago') {
         return json({ error: 'ja_pago' }, 409, corsHeaders);
       }
+      const precoCentavos = Number(agendamento.valor_centavos);
+      if (env.MP_ACCESS_TOKEN && !(Number.isFinite(precoCentavos) && precoCentavos > 0)) {
+        return json({ error: 'valor_invalido', message: 'Esta consulta está sem valor definido.' }, 400, corsHeaders);
+      }
 
       // ---- Modo demonstração ----
       if (!env.MP_ACCESS_TOKEN) {
@@ -978,6 +1163,7 @@ export default {
         } catch (err) {
           return json({ error: 'confirmacao_falhou', message: String(err.message) }, 502, corsHeaders);
         }
+        await esvaziarFilaSemFalhar(env);
         return json({ ref: 'simulado', confirmadoNaHora: true, meetingUrl: sala.url }, 200, corsHeaders);
       }
 
@@ -995,13 +1181,13 @@ export default {
                 title: descricao || 'Consulta psicológica',
                 quantity: 1,
                 currency_id: 'BRL',
-                unit_price: (valorCentavos ?? agendamento.valor_centavos) / 100,
+                unit_price: precoCentavos / 100,
               },
             ],
             payer: emailPagador ? { email: emailPagador } : undefined,
             // external_reference é o que amarra o webhook ao agendamento.
             external_reference: agendamentoId,
-            notification_url: `${url.origin}/webhook/pagamento`,
+            notification_url: urlDoWebhook(env, request, url),
             back_urls: {
               success: `${env.PUBLIC_APP_URL || url.origin}/?consulta=${agendamentoId}`,
               pending: `${env.PUBLIC_APP_URL || url.origin}/?consulta=${agendamentoId}`,
@@ -1068,6 +1254,23 @@ export default {
         if (!agendamentoId || typeof agendamentoId !== 'string') {
           return json({ ok: true, ignorado: true }, 200, corsHeaders);
         }
+        /*
+         * Confere o VALOR pago contra o preco gravado no agendamento.
+         * "approved" so diz que alguem pagou alguma coisa; sem esta
+         * conta, um pagamento de qualquer valor liberava a consulta.
+         */
+        const linhasAg = await supabaseSelect(
+          env,
+          `agendamentos?id=eq.${encodeURIComponent(agendamentoId)}&select=id,valor_centavos,status_pagamento`,
+        );
+        const ag = linhasAg[0];
+        if (!ag) return json({ ok: true, ignorado: true }, 200, corsHeaders);
+        if (ag.status_pagamento === 'pago') return json({ ok: true, jaPago: true }, 200, corsHeaders);
+        const pagoCentavos = Math.round(Number(pagamento.transaction_amount) * 100);
+        if (!(pagoCentavos >= Number(ag.valor_centavos))) {
+          console.warn('webhook: valor pago menor que o preco da consulta');
+          return json({ ok: true, ignorado: true, motivo: 'valor_divergente' }, 200, corsHeaders);
+        }
         const sala = criarSala(env, agendamentoId);
 
         await supabaseRpc(env, 'confirmar_pagamento_consulta', {
@@ -1076,6 +1279,7 @@ export default {
           p_meeting_url: sala.url,
           p_provider: sala.provider,
         });
+        await esvaziarFilaSemFalhar(env);
 
         return json({ ok: true }, 200, corsHeaders);
       } catch (err) {
@@ -1090,34 +1294,27 @@ export default {
     // e-mail sai do servidor porque um alerta de saúde mental não pode
     // depender de o navegador do responsável estar aberto.
     // =============================================================
-    if (url.pathname === '/notify/drain' && request.method === 'POST') {
-      if (!tokenValido(request, env)) return json({ error: 'Unauthorized' }, 401, corsHeaders);
+    if (url.pathname === '/notify/drain' && (request.method === 'POST' || request.method === 'GET')) {
+      /*
+       * Quem pode esvaziar a fila:
+       *   - o cron da Vercel (GET com `Authorization: Bearer CRON_SECRET`);
+       *   - o cron da Cloudflare ou um agendador externo (API_TOKEN);
+       *   - um usuario logado (o app chama logo apos gerar um alerta, para
+       *     o e-mail nao esperar o proximo cron).
+       * Antes, sem API_TOKEN, a rota era aberta a qualquer um.
+       */
+      const portador = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+      const porSegredo =
+        (!!env.CRON_SECRET && portador === env.CRON_SECRET) || (!!env.API_TOKEN && portador === env.API_TOKEN);
+      if (!porSegredo) {
+        const usuario = await usuarioDoToken(env, request);
+        if (!usuario) return json({ error: 'Unauthorized' }, 401, corsHeaders);
+        if (!dentroDoLimite(`drain:${usuario.id}`, 6)) return json({ ok: true, adiado: true }, 200, corsHeaders);
+      }
 
       try {
-        const pendentes = await supabaseSelect(
-          env,
-          'notificacoes?canal=eq.email&enviada_em=is.null&tentativas=lt.3&select=id,user_id,titulo,corpo,tentativas&limit=50',
-        );
-
-        let enviadas = 0;
-        for (const n of pendentes) {
-          const perfis = await supabaseSelect(env, `perfis?id=eq.${encodeURIComponent(n.user_id)}&select=email`);
-          const email = perfis[0]?.email;
-          const ok = email ? await enviarEmail(env, email, n.titulo, n.corpo) : false;
-
-          await supabasePatch(
-            env,
-            `notificacoes?id=eq.${encodeURIComponent(n.id)}`,
-            ok
-              ? { enviada_em: new Date().toISOString() }
-              : // Antes gravava `tentativas: 1` fixo: a fila tentava para
-                // sempre. Incremento real (lê o valor atual da linha).
-                { tentativas: (Number(n.tentativas) || 0) + 1 },
-          );
-          if (ok) enviadas++;
-        }
-
-        return json({ ok: true, pendentes: pendentes.length, enviadas }, 200, corsHeaders);
+        const resultado = await esvaziarFila(env);
+        return json({ ok: true, ...resultado }, 200, corsHeaders);
       } catch (err) {
         return json({ error: 'drain_falhou', message: String(err && err.message) }, 502, corsHeaders);
       }
@@ -1133,6 +1330,8 @@ export default {
     // =============================================================
     if (url.pathname === '/api/chat/completions' && request.method === 'POST') {
       if (!tokenValido(request, env)) return json({ error: 'Unauthorized' }, 401, corsHeaders);
+      const recusaChat = await barrarSemSessao(env, request, corsHeaders, { rota: 'chat', maximoPorMinuto: 30 });
+      if (recusaChat) return recusaChat;
 
       let corpo;
       try {
@@ -1300,10 +1499,14 @@ export default {
         return json({ error: 'misconfigured', message: 'Defina GEMINI_API_KEY.' }, 500, corsHeaders);
       }
 
+      if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+        return json({ error: 'misconfigured', message: 'Defina SUPABASE_URL e SUPABASE_SERVICE_KEY.' }, 500, corsHeaders);
+      }
+
       // A foto e material escolar de um menor de idade: sem sessao, nao entra.
       const usuario = await usuarioDoToken(env, request);
       if (!usuario) {
-        return json({ error: 'sem_sessao', message: 'Faca login novamente.' }, 401, corsHeaders);
+        return json({ error: 'sem_sessao', message: 'Faça login novamente.' }, 401, corsHeaders);
       }
 
       let formulario;
@@ -1323,11 +1526,11 @@ export default {
       const buffer = await arquivo.arrayBuffer();
       const tipoReal = tipoPorMagicBytes(buffer);
       if (!tipoReal || !MIMES_ACEITOS.includes(tipoReal)) {
-        return json({ error: 'tipo_invalido', message: 'Formato de imagem nao aceito. Use JPG ou PNG.' }, 415, corsHeaders);
+        return json({ error: 'tipo_invalido', message: 'Formato de imagem não aceito. Use JPG ou PNG.' }, 415, corsHeaders);
       }
       if (arquivo.size > TAMANHO_MAXIMO_BYTES) {
         return json(
-          { error: 'imagem_grande', message: 'A foto passou de 8 MB mesmo depois da compressao.' },
+          { error: 'imagem_grande', message: 'A foto passou de 8 MB mesmo depois da compressão.' },
           413,
           corsHeaders,
         );
@@ -1348,7 +1551,7 @@ export default {
         //    imagem, e separa-las dobraria custo e latencia - alem de
         //    permitir que a nota fosse calculada sobre uma transcricao
         //    diferente da que o aluno le na tela.
-        const modelo = env.GEMINI_MODEL_VISION || MODELO_VISAO_PADRAO;
+        const modelo = modeloDeVisao(env);
         const resposta = await fetch(
           `${GEMINI_BASE}/${modelo}:generateContent?key=${env.GEMINI_API_KEY}`,
           {
@@ -1448,7 +1651,7 @@ export default {
 
       const educador = await usuarioDoToken(env, request);
       if (!educador) {
-        return json({ error: 'sem_sessao', message: 'Faca login novamente.' }, 401, corsHeaders);
+        return json({ error: 'sem_sessao', message: 'Faça login novamente.' }, 401, corsHeaders);
       }
 
       let corpo;
@@ -1474,11 +1677,11 @@ export default {
       }
       const papel = String(perfil?.papel || '');
       if (papel !== 'educator' && papel !== 'admin') {
-        return json({ error: 'sem_permissao', message: 'So a secretaria da escola importa turmas.' }, 403, corsHeaders);
+        return json({ error: 'sem_permissao', message: 'Só a secretaria da escola importa turmas.' }, 403, corsHeaders);
       }
       const escolaId = perfil?.escola_id;
       if (!escolaId) {
-        return json({ error: 'sem_escola', message: 'Sua conta nao esta vinculada a uma escola.' }, 400, corsHeaders);
+        return json({ error: 'sem_escola', message: 'Sua conta não está vinculada a uma escola.' }, 400, corsHeaders);
       }
 
       // Escola (codigo da instituicao) + turmas (id, nome, codigo).
@@ -1545,7 +1748,7 @@ export default {
 
       const usuario = await usuarioDoToken(env, request);
       if (!usuario) {
-        return json({ error: 'sem_sessao', message: 'Faca login novamente.' }, 401, corsHeaders);
+        return json({ error: 'sem_sessao', message: 'Faça login novamente.' }, 401, corsHeaders);
       }
 
       let corpo;
@@ -1568,10 +1771,10 @@ export default {
       }
       // ~6MB em base64 ~= 4.5MB binarios: teto do scanner rapido.
       if (base64.length > 6 * 1024 * 1024) {
-        return json({ error: 'imagem_grande', message: 'Foto muito grande. Aproxime so do trecho da duvida.' }, 413, corsHeaders);
+        return json({ error: 'imagem_grande', message: 'Foto muito grande. Aproxime só do trecho da dúvida.' }, 413, corsHeaders);
       }
 
-      const modelo = env.GEMINI_MODEL_VISION || MODELO_VISAO_PADRAO;
+      const modelo = modeloDeVisao(env);
       const promptOcr = [
         'Voce e o scanner do Midnight Mentor. Transcreva o texto MANUSCRITO da foto com fidelidade total (mantenha numeros, formulas e unidades).',
         'Depois, em UMA frase, extraia a duvida principal do aluno sobre esse trecho.',

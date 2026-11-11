@@ -45,10 +45,18 @@ export function CrisisOverlay() {
   if (!showCrisisOverlay) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-xl">
-      <div className="text-center max-w-sm px-8 animate-scale-in space-y-6">
-        <div className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-amber-500/5 to-orange-600/5 border border-amber-500/20 flex items-center justify-center animate-breathe ">
-          <span className="text-5xl">{phase === 'inicio' ? '' : phase === 'respirando' ? '' : ''}</span>
+    /* z acima da Companhia de Foco (z-[80]), que ficava por cima deste aviso.
+       O conteúdo vai num cartão BRANCO: na troca para o tema claro os
+       textos viraram azul-noite e ficaram ilegíveis sobre o fundo escuro. */
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Pausa para respirar"
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4"
+    >
+      <div className="text-center w-full max-w-sm px-6 py-8 animate-scale-in space-y-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl">
+        <div className="w-24 h-24 mx-auto rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center animate-breathe">
+          <Wind size={40} className="text-amber-600" aria-hidden="true" />
         </div>
 
         {phase === 'inicio' && (
@@ -61,6 +69,11 @@ export function CrisisOverlay() {
               <button onClick={() => { startBreathing(); playClick(); }} className="btn-primary w-full"><Wind size={16} className="inline-block align-[-0.15em] text-cyan-700" /> Respiração Guiada 4-7-8</button>
               <button onClick={() => { setShowCrisisOverlay(false); playClick(); }} className="btn-secondary w-full">Estou melhor agora</button>
             </div>
+            {/* Respirar ajuda no cansaço; não é resposta para quem está em
+                sofrimento. O telefone fica à vista para esse caso. */}
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Se o que você sente for mais do que cansaço, ligue para o CVV, no <strong className="text-tinta-900">188</strong>. É gratuito e funciona 24 horas.
+            </p>
           </div>
         )}
 
@@ -68,14 +81,14 @@ export function CrisisOverlay() {
           <div className="space-y-5">
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-tinta-900">
-                {breathPhase === 'inspira' && 'Inspire '}
-                {breathPhase === 'segura' && 'Segure '}
-                {breathPhase === 'expira' && 'Expire ‍'}
+                {breathPhase === 'inspira' && 'Inspire'}
+                {breathPhase === 'segura' && 'Segure'}
+                {breathPhase === 'expira' && 'Expire'}
               </h2>
               <p className="text-6xl font-extrabold text-amber-600 tabular-nums animate-pulse-subtle">{timeLeft}</p>
-              <p className="text-xs text-slate-400">Siga o ritmo da respiração</p>
+              <p className="text-xs text-slate-500">Siga o ritmo da respiração</p>
             </div>
-            <div className="w-16 h-1 mx-auto rounded-full bg-slate-50 overflow-hidden">
+            <div className="w-16 h-1 mx-auto rounded-full bg-slate-200 overflow-hidden">
               <div className="h-full rounded-full bg-amber-500/50 xp-bar" style={{ width: `${((4 - timeLeft) / 4) * 100}%` }} />
             </div>
           </div>

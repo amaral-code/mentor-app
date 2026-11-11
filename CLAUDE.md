@@ -9,7 +9,7 @@ Publicada na **Vercel**. Todo o texto do produto e dos comentários é em
 ```bash
 npm run dev      # dev server na porta 5180 (já inclui o back-end /api)
 npm run build    # tsc -b && vite build
-npm test         # vitest run  (773 testes)
+npm test         # vitest run  (818 testes)
 npm run lint     # oxlint
 ```
 
@@ -59,6 +59,20 @@ existir nos três ambientes de graça. Se a rota for na raiz, acrescente-a ao
 
 O front chama sempre `urlBackendIA('/rota-do-worker')` (`shared/lib/runtimeConfig.ts`),
 que resolve para `/api/...` na mesma origem ou para o worker externo.
+
+### Toda rota de IA exige login
+
+`/generate`, `/tts` e `/api/chat/completions` recusam pedido sem a sessão
+do Supabase (`barrarSemSessao` no worker), como as rotas de foto já
+faziam. Eram abertas: qualquer pessoa na internet gastava a cota de IA.
+
+No front, **toda** chamada a `/api/*` monta os cabeçalhos com
+`cabecalhosBackend()` (`shared/lib/backendAuth.ts`), que anexa a sessão.
+Rota nova que use o helper já nasce autenticada; `fetch` com cabeçalho
+montado à mão volta a criar rota aberta.
+
+Sem `SUPABASE_URL` no ambiente (dev local sem banco) não há como conferir
+sessão, e só nesse caso a rota segue aberta.
 
 ## Configuração: a regra que mais importa
 
@@ -268,6 +282,66 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-11-10 — Revisão geral: o que estava quebrado
+- Revisão completa do app, a pedido do dono. Só correção: nenhuma
+  funcionalidade nova além de "esqueci minha senha".
+- **Migration 030 — rodar no Supabase.** Três coisas:
+  - `registrar_xp` conta o dia em **Brasília** (`dia_de_brasilia()`), não
+    em UTC. Quem estudava depois das 21h via a ofensiva voltar para 1: o
+    servidor gravava a data "de amanhã" e a tela, em horário local,
+    tratava como buraco. O app também passou a contar por Brasília
+    (`diaDeBrasilia`, `ofensivaAoAbrir`) e não zera mais com data à frente.
+  - **Teto de 3000 XP por dia.** Eram 500 por chamada, sem limite de
+    chamadas. O valor por evento ainda vem do cliente: fechar de vez pede
+    calcular o XP do quiz no servidor.
+  - **`data_nascimento` só é gravada uma vez pelo app.** O menor trocava
+    o ano e autorizava o psicólogo sozinho. Correção de data é por SQL.
+- **Rotas de IA exigem login** (ver seção acima) e têm freio por minuto,
+  em memória da instância: é contra laço, não cota exata.
+- **Pagamento.** O preço mandado pelo navegador vencia o do banco (dava
+  para pagar R$ 0,01). Agora só vale `agendamentos.valor_centavos`, e o
+  aviso do Mercado Pago confere o valor pago antes de liberar a sala.
+- **O aviso do Mercado Pago nunca chegava na Vercel**: o endereço saía
+  sem `/api` e sem o `?secret=` que a rota exige. `urlDoWebhook` corrige;
+  o adapter passa o prefixo em `x-rota-prefixo`.
+- **Fila de e-mails.** Só o cron da Cloudflare a esvaziava. Agora: cron
+  diário no `vercel.json` (GET com `CRON_SECRET`), envio na hora ao
+  confirmar pagamento e `acionarFilaDeAvisos()` quando nasce um alerta.
+  `/notify/drain` deixou de ser aberta.
+- **Modelos do Gemini.** `gemini-1.5-flash` e `gemini-2.0-flash` foram
+  desligados pelo Google; redação por foto e scanner pararam. O padrão
+  virou o apelido `gemini-flash-latest`. O servidor lê `AI_VISION_MODEL`
+  (o nome documentado) além de `GEMINI_MODEL_VISION`, e aceita qualquer
+  modelo válido vindo do AMBIENTE; a lista fixa só limita o cliente.
+- **Mensagem de risco tem resposta fixa** (`shared/lib/riscoCrise.ts`):
+  CVV 188, SAMU 192 e Rede de Apoio, antes de qualquer IA. Com a IA fora
+  do ar, "quero me matar" recebia "não encontrei informações sobre
+  aguento, quero, matar". **Não troque a resposta fixa por chamada de
+  IA.** O prompt do servidor ganhou a mesma orientação para o que escapar.
+- Resposta da base local agora diz que a IA não respondeu, e
+  `searchKB` deixou de casar "mitose" com "mito".
+- **Ranking sem colegas inventados.** Com banco configurado, a lista é só
+  o que o banco devolve; sozinho, a tela diz isso. A faixa "A turma já
+  resolveu 45 desafios hoje" (texto fixo) foi removida.
+- "Sobrecarga Detectada" estava ilegível (texto escuro em fundo escuro
+  desde o tema claro). Virou cartão branco, com o 188.
+- CSP ganhou `media-src data: blob:` (a voz neural era bloqueada pelo
+  próprio app) e o `vercel.json` liberou `microphone=(self)` (o ditado
+  do Mentor só funcionava em dev).
+- **Esqueci minha senha** (`pedirRecuperacaoDeSenha`); o link cai na
+  mesma tela de troca de senha da conta importada.
+- Importação de turma em lotes de 8, com relatório parcial, e o servidor
+  não duplica aluno já cadastrado (mesmo nome e mesmo responsável).
+- Erro de IA em português claro (`explicarErroIA`), sem JSON na tela.
+- Conta `admin` tem tela própria ("sem painel"), em vez de cair no aluno.
+- Service worker deixou de baixar 29 MB de imagens que nenhuma tela usa
+  (`globIgnores`). Os arquivos seguem em `public/`; podem ser apagados.
+- Companhia de Foco encolhe no celular quando parada (cobria botões).
+- ~50 textos de tela ganharam acento; XP em `pt-BR`; data da Central sem
+  "De Novembro"; o Perfil não diz mais "dados salvos apenas no navegador".
+- A chave `service_role` saiu dos **18** scripts de `tools/` (não era só
+  um). Eles leem `SUPABASE_SERVICE_KEY` do ambiente.
 
 ### 2026-11-05 (2) — Mais vida no computador
 - Pedido do dono: no PC as telas pareciam vazias. Só interface, celular
@@ -510,10 +584,18 @@ principal, regra de permissão. Mais recente no topo.
 
 ## Pendências conhecidas
 
-- `tools/validar_visual.mjs` tem uma chave **`service_role` do Supabase
-  commitada** (linhas ~20-24), válida até 2036, e ela está no histórico do git.
-  Precisa ser **rotacionada no painel do Supabase** — remover do arquivo não
-  basta.
+- **Rotacionar a `service_role` do Supabase.** Ela ficou gravada em 18
+  scripts de `tools/` e continua no histórico do git, válida até 2036.
+  Já saiu dos arquivos, mas só a troca no painel a invalida.
+- XP por evento ainda é dito pelo cliente (há teto diário, migration 030).
+  O certo é o servidor calcular o XP do quiz a partir das respostas.
+- Sem política de privacidade, termos de uso, exclusão de conta e
+  exportação de dados. Com dado de menor e de saúde mental, é pendência
+  de LGPD, e depende de decisão do dono.
+- A sala de consulta é um Jitsi público. Para atendimento de menor,
+  vale uma sala com controle de entrada.
+- O quiz gera 4 alternativas; o ENEM tem 5.
+- Sem CI rodando `tsc`, testes e build a cada push.
 - Muitos warnings de `react-hooks/exhaustive-deps` (`npm run lint`). Alguns são
   intencionais, outros causam estado velho — avaliar caso a caso.
 - `SESSAO-RESUMO.md` e os `.zip` na raiz são de sessões antigas e descrevem um

@@ -21,7 +21,27 @@ import { onboardingConcluidoLocal } from '../lib/onboardingLocal';
  * dois e gravavel pelo cliente: o papel e travado por trigger no banco.
  */
 
-const SEM_SUPABASE = 'Banco de dados nao configurado. Verifique o .env.';
+const SEM_SUPABASE = 'O app ainda não está ligado ao banco de dados. Avise quem administra a plataforma.';
+
+/*
+ * Recuperação de senha em curso.
+ *
+ * O link do e-mail traz `type=recovery` no endereço e já abre com sessão
+ * válida. Sem esta marca o app abriria direto na tela inicial, e o aluno
+ * que esqueceu a senha entraria sem nunca definir uma nova. Com ela, a
+ * sessão sai com `deveTrocarSenha` e o `App` mostra a troca de senha,
+ * a mesma tela da conta importada.
+ *
+ * Lida uma vez, no carregamento do módulo: o supabase-js limpa o
+ * endereço assim que consome o token.
+ */
+let recuperandoSenha =
+  typeof window !== 'undefined' && /type=recovery/.test(`${window.location.hash}${window.location.search}`);
+
+export const emRecuperacaoDeSenha = (): boolean => recuperandoSenha;
+export function encerrarRecuperacaoDeSenha(): void {
+  recuperandoSenha = false;
+}
 
 export interface AuthResult {
   session: Session | null;
@@ -73,7 +93,7 @@ export class UserRepository {
         role: (data.papel as UserRole) ?? 'student',
         escolaId: data.escola_id,
         turmaId: data.turma_id,
-        deveTrocarSenha: !!data.deve_trocar_senha,
+        deveTrocarSenha: !!data.deve_trocar_senha || recuperandoSenha,
         /* A marca local vale como "ja fez": sem ela, um update barrado
            (RLS) ou uma coluna ausente devolvia o aluno ao wizard a cada
            refresh de token. */
@@ -103,7 +123,7 @@ export class UserRepository {
       role: (d.papel as UserRole) ?? 'student',
       escolaId: d.escola_id,
       turmaId: d.turma_id,
-      deveTrocarSenha: !!d.deve_trocar_senha,
+      deveTrocarSenha: !!d.deve_trocar_senha || recuperandoSenha,
       /*
        * Caminho legado: o banco AINDA NAO TEM as colunas da migration
        * 021, entao o select completo acima falhou. Antes isto era um
@@ -171,7 +191,7 @@ export class UserRepository {
       return { session: null, error: err instanceof Error ? err.message : 'Erro de conexão' };
     }
     if (!session) {
-      return { session: null, error: 'Perfil nao encontrado. Fale com o suporte.' };
+      return { session: null, error: 'Perfil não encontrado. Fale com o suporte.' };
     }
 
     return {
@@ -208,7 +228,7 @@ export class UserRepository {
       const jaExiste = /already|registered|exists/i.test(error.message);
       return {
         session: null,
-        error: jaExiste ? 'E-mail ja cadastrado.' : error.message,
+        error: jaExiste ? 'E-mail já cadastrado.' : error.message,
       };
     }
 
@@ -219,9 +239,31 @@ export class UserRepository {
 
     try {
       const session = await this.carregarPerfil(data.user!.id, email);
-      return { session, error: session ? undefined : 'Perfil nao criado. Tente entrar novamente.' };
+      return { session, error: session ? undefined : 'Perfil não criado. Tente entrar novamente.' };
     } catch (err) {
       return { session: null, error: err instanceof Error ? err.message : 'Erro de conexão' };
+    }
+  }
+
+  /**
+   * Envia o link de redefinição de senha.
+   *
+   * Devolve sucesso mesmo quando o e-mail não existe, de propósito:
+   * responder "e-mail não cadastrado" entrega a lista de contas válidas
+   * a quem testa endereços. `false` só para falha de rede ou de banco.
+   */
+  async pedirRecuperacaoDeSenha(email: string): Promise<boolean> {
+    const sb = getSupabase();
+    if (!sb) return false;
+    try {
+      await comTimeout(
+        sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin }),
+        TIMEOUT_AUTH_MS,
+        'Recuperar senha',
+      );
+      return true;
+    } catch {
+      return false;
     }
   }
 

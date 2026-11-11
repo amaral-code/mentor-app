@@ -18,7 +18,7 @@ import { playClick, speak, stopSpeech } from '../../shared/lib/sfx';
 import { buildContextGreeting, ultimaMateria } from '../../shared/lib/contextMemory';
 import { PersonaManager } from '../../shared/ui/PersonaManager';
 import { FocusAnchorOverlay } from './components/FocusAnchorOverlay';
-import { TeamProgressBanner } from './components/TeamProgressBanner';
+import { detectarRiscoDeCrise, MENSAGEM_ACOLHIMENTO, AVISO_IA_FORA_DO_AR } from '../../shared/lib/riscoCrise';
 import { ConsciousPauseModal } from './components/ConsciousPauseModal';
 import { extrairFrustracao, heuristicaFrustracao } from '../../shared/lib/frustration';
 import { OcrUploader } from './components/OcrUploader';
@@ -58,7 +58,7 @@ function getBotReply(userMessage: string, mood: string, persona: ChatPersona | n
       Física: ' Mecânica, termologia e ondas são tópicos principais. Foco em interpretação de gráficos.',
       Química: ' Estequiometria, soluções e oxirredução são recorrentes. Pratique cálculos.',
       Filosofia: ' Conheça os principais filósofos e suas ideias centrais (Sócrates, Descartes, Nietzsche).',
-      Inglês: '🇬🇧 Foco em interpretação de texto e vocabulário. Palavras cognatas ajudam muito.',
+      Inglês: ' Foco em interpretação de texto e vocabulário. Palavras cognatas ajudam muito.',
       Sociologia: ' Trabalho, cultura, cidadania e movimentos sociais são temas frequentes.',
     };
     const prefix = getEmpathicPrefix(mood as any);
@@ -510,12 +510,27 @@ export function ChatPage() {
       if (requisicaoId !== requisicaoIdRef.current) return;
       setStreamingText(null);
       setToast(motivo, 'error');
-      const fallback = getBotReply(textoOriginal, moodAtual, useAppStore.getState().personas.find(p => p.id === useAppStore.getState().activePersonaId) || null);
+      const local = getBotReply(textoOriginal, moodAtual, useAppStore.getState().personas.find(p => p.id === useAppStore.getState().activePersonaId) || null);
+      // O aviso vai DENTRO da resposta: o toast some em segundos, e sem
+      // ele o trecho da base local parecia o Mentor respondendo.
+      const fallback = `${AVISO_IA_FORA_DO_AR}\n\n${local}`;
       finalizar({
         id: generateId(), role: 'assistant', text: fallback, timestamp: Date.now(),
         mood: moodAtual as ChatMessage['mood'], modoResposta,
       }, false);
     };
+    /*
+     * Mensagem de risco: resposta FIXA, antes de qualquer outra coisa e
+     * sem passar pela IA. Ver `riscoCrise.ts`.
+     */
+    if (detectarRiscoDeCrise(text)) {
+      setIsGenerating(true);
+      finalizar({
+        id: generateId(), role: 'assistant', text: MENSAGEM_ACOLHIMENTO, timestamp: Date.now(),
+        mood: 'sadness', modoResposta,
+      }, false);
+      return;
+    }
     const mood = await detectAndSetMood(text);
 
     if (aiAvailable(apiKey)) {
@@ -768,7 +783,6 @@ export function ChatPage() {
         />
 
         {/* Efeito Cardume (edital): faixa coletiva fixa no topo do chat. */}
-        <TeamProgressBanner />
 
         {personaCustomizada && (
           <p className="relative z-10 text-[11px] text-slate-500 px-4 pt-1.5 shrink-0">

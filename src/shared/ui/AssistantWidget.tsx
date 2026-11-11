@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { detectarRiscoDeCrise, MENSAGEM_ACOLHIMENTO } from '../lib/riscoCrise';
 import { SendHorizontal, X } from 'lucide-react';
 import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '../lib/kbSearch';
 import { getEmpathicPrefix } from '../lib/emotionEngine';
@@ -17,6 +18,8 @@ function generateId() {
 }
 
 function getReply(raw: string): string {
+  // Mesma regra do Mentor: mensagem de risco recebe a resposta fixa.
+  if (detectarRiscoDeCrise(raw)) return MENSAGEM_ACOLHIMENTO;
   const lower = raw.trim().toLowerCase();
   for (const [key, response] of Object.entries(SPECIAL_RESPONSES)) {
     if (lower === key || lower.startsWith(key)) {
@@ -40,7 +43,7 @@ function getReply(raw: string): string {
       Física: ' Mecânica, termologia e ondas são tópicos principais. Foco em interpretação de gráficos.',
       Química: ' Estequiometria, soluções e oxirredução são recorrentes. Pratique cálculos.',
       Filosofia: ' Conheça os principais filósofos e suas ideias centrais (Sócrates, Descartes, Nietzsche).',
-      Inglês: '🇬🇧 Foco em interpretação de texto e vocabulário. Palavras cognatas ajudam muito.',
+      Inglês: ' Foco em interpretação de texto e vocabulário. Palavras cognatas ajudam muito.',
       Sociologia: ' Trabalho, cultura, cidadania e movimentos sociais são temas frequentes.',
     };
     const prefix = getEmpathicPrefix('neutral');

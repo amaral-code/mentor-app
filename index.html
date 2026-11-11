@@ -39,6 +39,11 @@
       Se voce configurar VITE_AI_BASE_URL, acrescente o dominio do worker
       em connect-src.
 
+      media-src libera `data:` e `blob:` porque a voz neural das Pilulas de
+      Audio chega como data URL. Sem a linha, o audio caia no default-src
+      'self' e o proprio app bloqueava o som que o servidor acabara de
+      sintetizar (e cobrar).
+
       frame-ancestors NAO entra aqui: o navegador ignora essa diretiva
       quando ela vem por <meta> (so vale como cabecalho HTTP) e ainda
       registra um erro no console. Configure no servidor que publica o
@@ -52,6 +57,7 @@
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src 'self' data: blob: https://*.supabase.co;
         font-src 'self' data: https://fonts.gstatic.com;
+        media-src 'self' data: blob:;
         connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com;
         base-uri 'self';
         form-action 'self';

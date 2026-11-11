@@ -236,7 +236,7 @@ export function AudioPlayer({
       {usandoVozNativa && (
         <p className="text-[11px] text-amber-600 text-center leading-snug">
           Voz feminina do próprio aparelho (automática): funciona sem internet, mas para se a tela apagar.
-          Com o servidor de audio configurado, a pilula vira mp3 e continua no bolso.
+          Com o servidor de áudio configurado, a pílula vira mp3 e continua no bolso.
         </p>
       )}
     </div>

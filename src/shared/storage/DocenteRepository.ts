@@ -74,7 +74,7 @@ export class DocenteRepository {
   }
 
   async atribuir(professorId: string, turmaId: string): Promise<void> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { error } = await sb.rpc('atribuir_professor_turma', {
       p_professor: professorId,
@@ -84,7 +84,7 @@ export class DocenteRepository {
   }
 
   async remover(professorId: string, turmaId: string): Promise<void> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { error } = await sb.rpc('remover_professor_turma', {
       p_professor: professorId,

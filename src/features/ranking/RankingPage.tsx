@@ -85,7 +85,7 @@ const EntryRow = memo(function EntryRow({ entry, isCurrentUser }: { entry: Ranki
 
       {/* XP */}
       <div className="text-right shrink-0">
-        <p className="text-sm font-black tabular-nums text-tinta-900">{entry.xp.toLocaleString()} XP</p>
+        <p className="text-sm font-black tabular-nums text-tinta-900">{entry.xp.toLocaleString('pt-BR')} XP</p>
         <div className="flex items-center justify-end gap-1">
           <p className="text-[10px] text-slate-500 tabular-nums">Nv.{entry.level}</p>
           {entry.variacao !== 0 && entry.variacao !== undefined && (
@@ -116,7 +116,7 @@ function Podio({ entradas }: { entradas: RankingEntry[] }) {
             {inicialDoApelido(e.nome)}
           </div>
           <p className="mt-1.5 text-sm font-extrabold text-tinta-900 truncate max-w-full">{e.nome}</p>
-          <p className="text-xs font-bold text-slate-500 tabular-nums">{e.xp.toLocaleString()} XP</p>
+          <p className="text-xs font-bold text-slate-500 tabular-nums">{e.xp.toLocaleString('pt-BR')} XP</p>
           <div className={`mt-2 w-full ${altura[i]} ${cor[i]} rounded-t-2xl flex items-start justify-center pt-2`}>
             <span className="text-2xl font-black text-white tabular-nums">{e.posicao}</span>
           </div>
@@ -269,7 +269,7 @@ export function RankingPage() {
           </div>
           <div className="cartao px-4 py-3 text-center">
             <p className="text-xl font-black text-tinta-900 tabular-nums">
-              {gamification.xp.toLocaleString()}
+              {gamification.xp.toLocaleString('pt-BR')}
             </p>
             <p className="text-xs font-bold text-slate-500 mt-0.5">Seu XP</p>
           </div>
@@ -284,6 +284,16 @@ export function RankingPage() {
       {/* Pódio: os três primeiros em destaque, como nas ligas do Duolingo.
           A lista completa continua logo abaixo, com as mesmas linhas. */}
       {!loading && !erroRanking && entradas.length >= 3 && <Podio entradas={entradas.slice(0, 3)} />}
+
+      {/* Sozinho na lista: a tela diz isso, em vez de inventar colegas. */}
+      {!loading && !erroRanking && entradas.length === 1 && (
+        <div className="cartao p-5 text-center" role="status">
+          <p className="text-sm font-bold text-tinta-900">Por enquanto só você aparece aqui</p>
+          <p className="text-sm text-slate-600 mt-1">
+            Os colegas entram no ranking assim que ganharem XP. Chame a turma para estudar junto.
+          </p>
+        </div>
+      )}
 
       {/* Ranking list */}
       <div className="cartao overflow-hidden">

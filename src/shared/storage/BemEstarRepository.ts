@@ -1,3 +1,4 @@
+import { acionarFilaDeAvisos } from '../lib/backendAuth';
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
 import type {
   ClasseBurnout,
@@ -97,6 +98,9 @@ export class BemEstarRepository {
 
     if (error) exigir('registrar_burnout', error);
     const row: any = Array.isArray(data) ? data[0] : data;
+    // Nasceu um alerta: o e-mail aos responsáveis sai agora, sem esperar
+    // o cron. Sem `await`: o aluno não fica aguardando envio de e-mail.
+    if (row?.alerta_id) void acionarFilaDeAvisos();
     return { alertaId: row?.alerta_id ?? null };
   }
 

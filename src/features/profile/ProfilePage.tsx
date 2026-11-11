@@ -162,7 +162,7 @@ export function ProfilePage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Ofensiva', value: `${gamification.streak}d`, Icone: Flame, cor: 'bg-amber-500 border-amber-500', texto: 'text-amber-600' },
-          { label: 'XP total', value: gamification.xp.toLocaleString(), Icone: Zap, cor: 'bg-ceu-500 border-ceu-500', texto: 'text-ceu-600' },
+          { label: 'XP total', value: gamification.xp.toLocaleString('pt-BR'), Icone: Zap, cor: 'bg-ceu-500 border-ceu-500', texto: 'text-ceu-600' },
           { label: 'Nível', value: nivel, Icone: Star, cor: 'bg-azul-600 border-azul-600', texto: 'text-azul-600' },
         ].map(({ label, value, Icone, cor, texto }) => (
           <div key={label} className={`rounded-2xl border-2 overflow-hidden text-center ${cor}`}>
@@ -471,8 +471,8 @@ export function ProfilePage() {
         </div>
         <div className="text-sm text-slate-600 leading-relaxed space-y-2">
           <p><Brain size={16} className="inline-block align-[-0.15em] text-violet-600" /> Assistente de estudos inteligente para o ENEM.</p>
-          <p><Lock size={16} className="inline-block align-[-0.15em] text-slate-500" /> <strong className="text-slate-700">Privacidade total:</strong> dados salvos apenas no navegador.</p>
-          <p><Zap size={16} className="inline-block align-[-0.15em] text-amber-600" /> Modo offline: motor local baseado em regras. Com chave API, usa IA generativa.</p>
+          <p><Lock size={16} className="inline-block align-[-0.15em] text-slate-500" /> <strong className="text-slate-700">Seus dados:</strong> ficam guardados na sua conta, protegidos por login. Só você decide quem acompanha, em Responsáveis e Psicólogo.</p>
+          <p><Zap size={16} className="inline-block align-[-0.15em] text-amber-600" /> Sem internet ou com a IA fora do ar, o Mentor responde pela base local, que é mais limitada.</p>
         </div>
       </div>
 

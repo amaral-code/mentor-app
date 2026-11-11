@@ -326,6 +326,30 @@ export function AuthPage() {
     }
   }, [isLogin, selectedRole, setSession, setShowTutorial, setTutorialStep]);
 
+  /*
+   * "Esqueci minha senha". Não existia: quem esquecia a senha ficava de
+   * fora para sempre. O e-mail vem do próprio campo do formulário, para
+   * não abrir uma segunda tela só para digitá-lo de novo.
+   */
+  const [enviandoLink, setEnviandoLink] = useState(false);
+  const recuperarSenha = useCallback(async () => {
+    const email = (document.getElementById('campo-email') as HTMLInputElement | null)?.value.trim() ?? '';
+    setError('');
+    setAviso('');
+    if (!EMAIL_REGEX.test(email)) {
+      setError('Digite o seu e-mail no campo acima e toque de novo em "Esqueci minha senha".');
+      return;
+    }
+    setEnviandoLink(true);
+    const ok = await userRepository.pedirRecuperacaoDeSenha(email);
+    setEnviandoLink(false);
+    if (!ok) {
+      setError('Não foi possível enviar o link agora. Tente de novo em instantes.');
+      return;
+    }
+    setAviso('Se este e-mail tiver conta, o link para criar uma nova senha chega em alguns minutos. Confira também a caixa de spam.');
+  }, []);
+
   const alternarModo = useCallback(() => {
     setIsLogin((v) => !v);
     setError('');
@@ -426,7 +450,20 @@ export function AuthPage() {
                 onSubmit={handleAutenticar}
               />
 
-              <div className="mt-5 text-center">
+              {isLogin && (
+                <div className="mt-3 text-center">
+                  <button
+                    type="button"
+                    onClick={recuperarSenha}
+                    disabled={enviandoLink}
+                    className="text-sm font-extrabold text-ceu-600 min-h-[44px] px-2 disabled:opacity-50"
+                  >
+                    {enviandoLink ? 'Enviando o link...' : 'Esqueci minha senha'}
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-2 text-center">
                 <button
                   onClick={alternarModo}
                   className="text-sm font-semibold text-slate-500 min-h-[44px] px-2"

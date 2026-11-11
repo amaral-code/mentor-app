@@ -25,10 +25,7 @@ const TAXA = Number(process.argv[3] || 4);
 const REPS = 5;
 
 const SUPA = 'https://bxidxlcismcvryznpomh.supabase.co';
-const SVC =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4aWR4bGNpc21j' +
-  'dnJ5em5wb21oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjU4NjQyNywiZXhwIjoyMTAyMTYyNDI3fQ.' +
-  'VF_8MvW9moLMiNirJqt4nMl9_BAUFFl_cFOTEJRsazU';
+const SVC = process.env.SUPABASE_SERVICE_KEY ?? '';
 const EMAIL = 'ab@exemplo-descartavel.com';
 const SENHA = 'Ab!2026abcdef';
 

@@ -66,9 +66,15 @@ export async function tratarRequisicao(request, env) {
     // `duplex: 'half'` e exigido pelo Node/undici para repassar um corpo
     // em streaming; sem ele o clone de um POST estoura em tempo de
     // execucao. Navegadores ignoram a chave.
+    /* O worker nao sabe que a rota chegou com `/api`. Quem precisa
+       montar um endereco de volta para este servidor (o aviso do Mercado
+       Pago) le o prefixo daqui; sem isso o endereco saia sem `/api` e
+       caia no index.html da Vercel. */
+    const headers = new Headers(request.headers);
+    headers.set('x-rota-prefixo', '/api');
     requisicao = new Request(url, {
       method: request.method,
-      headers: request.headers,
+      headers,
       body: request.method === 'GET' || request.method === 'HEAD' ? undefined : request.body,
       duplex: 'half',
     });

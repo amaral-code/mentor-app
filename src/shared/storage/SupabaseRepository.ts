@@ -1,5 +1,7 @@
+import { cabecalhosBackend } from '../lib/backendAuth';
+import { dividirEmLotes, juntarRelatorios } from '../lib/importacaoLotes';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
-import { aiProxyToken, temBackendIA, urlBackendIA } from '../lib/runtimeConfig';
+import { temBackendIA, urlBackendIA } from '../lib/runtimeConfig';
 import { hashEnunciado } from '../lib/quizHistory';
 import type {
   ChallengeResult,
@@ -831,14 +833,14 @@ export class SupabaseRepository {
    * Devolve a gamificacao ja debitada, ou uma mensagem de erro.
    */
   async comprarItem(itemId: string): Promise<{ gamificacao?: GamificationState; erro?: string }> {
-    if (!this.ativo()) return { erro: 'Sem conexao com o banco.' };
+    if (!this.ativo()) return { erro: 'Sem conexão com o banco.' };
     const sb = getSupabase()!;
 
     const { data, error } = await sb.rpc('comprar_item', { p_item_id: itemId });
     if (error) {
       falhou('comprar_item', error);
       return {
-        erro: /saldo insuficiente/i.test(error.message) ? 'XP insuficiente.' : 'Nao foi possivel comprar.',
+        erro: /saldo insuficiente/i.test(error.message) ? 'XP insuficiente.' : 'Não foi possível comprar.',
       };
     }
     const row = Array.isArray(data) ? data[0] : data;
@@ -931,7 +933,7 @@ export class SupabaseRepository {
    * servidor, depois de conferir o codigo.
    */
   async entrarNaTurma(codigo: string): Promise<{ ok: boolean; erro?: string }> {
-    if (!this.ativo()) return { ok: false, erro: 'Sem conexao com o banco.' };
+    if (!this.ativo()) return { ok: false, erro: 'Sem conexão com o banco.' };
     const sb = getSupabase()!;
     const { error } = await sb.rpc('entrar_na_turma', { p_codigo: codigo });
     if (error) {
@@ -953,7 +955,7 @@ export class SupabaseRepository {
    * confere e associa; o app nunca grava escola direto.
    */
   async vincularInstituicao(codigo: string): Promise<{ ok: boolean; erro?: string }> {
-    if (!this.ativo()) return { ok: false, erro: 'Sem conexao com o banco.' };
+    if (!this.ativo()) return { ok: false, erro: 'Sem conexão com o banco.' };
     const sb = getSupabase()!;
     const { error } = await sb.rpc('vincular_instituicao', { p_codigo: codigo });
     if (error) {
@@ -983,7 +985,7 @@ export class SupabaseRepository {
    * O servidor confere se a turma e da sua escola.
    */
   async regenerarCodigoTurma(turmaId: string): Promise<string> {
-    if (!this.ativo()) throw new Error('Sem conexao com o banco.');
+    if (!this.ativo()) throw new Error('Sem conexão com o banco.');
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('regenerar_codigo_turma', { p_turma_id: turmaId });
     if (error || !data) {
@@ -995,7 +997,7 @@ export class SupabaseRepository {
 
   /** Secretaria: invalida o codigo da instituicao e gera outro. */
   async regenerarCodigoInstituicao(escolaId: string): Promise<string> {
-    if (!this.ativo()) throw new Error('Sem conexao com o banco.');
+    if (!this.ativo()) throw new Error('Sem conexão com o banco.');
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('regenerar_codigo_instituicao', { p_escola_id: escolaId });
     if (error || !data) {
@@ -1039,27 +1041,53 @@ export class SupabaseRepository {
         erro: 'Importação automática indisponível: o back-end não respondeu. Confira as Environment Variables do projeto (SUPABASE_SERVICE_KEY e RESEND_API_KEY).',
       };
     }
-    if (!this.ativo()) return { ok: false, erro: 'Sem conexao com o banco.' };
-    const sb = getSupabase()!;
-    const { data: sessao } = await sb.auth.getSession();
+    if (!this.ativo()) return { ok: false, erro: 'Sem conexão com o banco.' };
+    const headers = await cabecalhosBackend();
 
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = aiProxyToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    if (sessao?.session?.access_token) headers['X-Supabase-Auth'] = sessao.session.access_token;
-
-    try {
-      const resposta = await fetch(urlBackendIA('/api/turmas/import'), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ alunos }),
-      });
-      const dados = await resposta.json();
-      if (!resposta.ok) return { ok: false, erro: dados?.message || dados?.error || `Falha na importação (${resposta.status}).` };
-      return { ok: true, ...dados };
-    } catch (e: any) {
-      return { ok: false, erro: e?.message || 'Falha de rede na importação.' };
+    /*
+     * Um pedido por lote (ver importacaoLotes.ts). Se um lote falhar, o
+     * que ja foi criado volta no relatorio parcial, com o motivo: reenviar
+     * a planilha nao duplica ninguem, porque o servidor reconhece quem ja
+     * esta cadastrado.
+     */
+    type Lote = Awaited<ReturnType<SupabaseRepository['importarTurma']>>;
+    const prontos: Lote[] = [];
+    for (const lote of dividirEmLotes(alunos)) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const resposta = await fetch(urlBackendIA('/api/turmas/import'), {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ alunos: lote }),
+          signal: AbortSignal.timeout(70000),
+        });
+        // eslint-disable-next-line no-await-in-loop
+        const dados = await resposta.json().catch(() => null);
+        if (!resposta.ok || !dados) {
+          const motivo = dados?.message || dados?.error || `o servidor respondeu ${resposta.status}`;
+          return this.importacaoInterrompida(prontos, alunos.length, motivo);
+        }
+        prontos.push(dados as Lote);
+      } catch {
+        return this.importacaoInterrompida(prontos, alunos.length, 'a conexão caiu ou o servidor demorou demais');
+      }
     }
+    const junto = juntarRelatorios(prontos);
+    return junto ? { ...junto, ok: true } : { ok: false, erro: 'Nenhum aluno para importar.' };
+  }
+
+  /** Relatório do que deu tempo de fazer, com o motivo da parada. */
+  private importacaoInterrompida(
+    prontos: Awaited<ReturnType<SupabaseRepository['importarTurma']>>[],
+    total: number,
+    motivo: string,
+  ): Awaited<ReturnType<SupabaseRepository['importarTurma']>> {
+    const feitos = prontos.reduce((n, l) => n + (l.resultados?.length ?? 0), 0);
+    if (feitos === 0) return { ok: false, erro: `Falha na importação: ${motivo}. Nenhuma conta foi criada.` };
+    return {
+      ok: false,
+      erro: `A importação parou depois de ${feitos} de ${total} linhas: ${motivo}. Envie a planilha de novo: quem já foi cadastrado não é duplicado.`,
+    };
   }
 
   // ===================================================================

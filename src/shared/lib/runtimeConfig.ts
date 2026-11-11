@@ -83,7 +83,7 @@ export const aiProvider = (): ProvedorIA =>
 export const aiModel = (): string => preferir(doServidor?.aiModel, doBuild('VITE_AI_MODEL'));
 
 export const aiVisionModel = (): string =>
-  preferir(doServidor?.aiVisionModel, doBuild('VITE_AI_VISION_MODEL')) || 'gemini-1.5-flash';
+  preferir(doServidor?.aiVisionModel, doBuild('VITE_AI_VISION_MODEL')) || 'gemini-flash-latest';
 
 export const deepseekBaseUrl = (): string =>
   (doBuild('VITE_DEEPSEEK_BASE_URL') || 'https://api.deepseek.com').replace(/\/+$/, '');

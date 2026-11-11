@@ -216,7 +216,7 @@ export function WeeklyReportModal() {
     <Modal
       open={showWeeklyReport}
       onClose={() => setShowWeeklyReport(false)}
-      title="Relatorio de descompressao"
+      title="Relatório de descompressão"
     >
       <LimiteDeErro>
         <Conteudo />

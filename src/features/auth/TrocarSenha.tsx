@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyRound, Moon } from 'lucide-react';
 import { getSupabase } from '../../shared/lib/supabase';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { userRepository } from '../../shared/storage/UserRepository';
+import { userRepository, emRecuperacaoDeSenha, encerrarRecuperacaoDeSenha } from '../../shared/storage/UserRepository';
 import { useAppStore } from '../../stores/appStore';
 
 /**
@@ -20,6 +20,9 @@ export function TrocarSenha() {
   const [confirma, setConfirma] = useState('');
   const [trocando, setTrocando] = useState(false);
   const [erro, setErro] = useState('');
+  // Quem chegou pelo link de "esqueci minha senha" lê outro texto: não
+  // há senha temporária nenhuma nesse caminho.
+  const [recuperando] = useState(() => emRecuperacaoDeSenha());
 
   async function handleTrocar() {
     setErro('');
@@ -38,9 +41,10 @@ export function TrocarSenha() {
       const { error } = await sb.auth.updateUser({ password: nova });
       if (error) throw new Error('Não foi possível trocar. Tente de novo.');
       await supabaseRepository.limparTrocaSenha();
+      encerrarRecuperacaoDeSenha();
       const novaSessao = await userRepository.getSession();
       if (novaSessao) setSession(novaSessao);
-      setToast('Senha atualizada! Boas-vindas ao Midnight Mentor.', 'success');
+      setToast(recuperando ? 'Senha atualizada.' : 'Senha atualizada! Boas-vindas ao Midnight Mentor.', 'success');
     } catch (e: any) {
       setErro(e?.message || 'Não foi possível trocar a senha.');
     } finally {
@@ -54,9 +58,11 @@ export function TrocarSenha() {
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mx-auto mb-4">
           <Moon size={22} className="text-gray-900" />
         </div>
-        <h1 className="text-lg font-bold text-tinta-900">Quase lá, crie sua senha</h1>
+        <h1 className="text-lg font-bold text-tinta-900">{recuperando ? 'Crie uma nova senha' : 'Quase lá, crie sua senha'}</h1>
         <p className="text-sm text-slate-500 mt-1 mb-5">
-          Sua conta chegou por email com uma senha temporária. Defina agora a sua senha definitiva e secreta.
+          {recuperando
+            ? 'Você pediu para redefinir a senha. Escolha uma nova para voltar a entrar.'
+            : 'Sua conta chegou por email com uma senha temporária. Defina agora a sua senha definitiva e secreta.'}
         </p>
         <div className="space-y-3 text-left">
           <label className="block">

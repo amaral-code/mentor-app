@@ -46,8 +46,8 @@ export function GET() {
     supabaseUrl: ler('SUPABASE_URL', 'VITE_SUPABASE_URL').replace(/\/+$/, ''),
     supabaseAnonKey: ler('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY'),
     aiProvider: provedor,
-    aiModel: ler('AI_MODEL', 'VITE_AI_MODEL') || (provedor === 'deepseek' ? 'deepseek-v4-flash' : 'gemini-2.0-flash'),
-    aiVisionModel: ler('AI_VISION_MODEL', 'VITE_AI_VISION_MODEL') || 'gemini-1.5-flash',
+    aiModel: ler('AI_MODEL', 'VITE_AI_MODEL') || (provedor === 'deepseek' ? 'deepseek-v4-flash' : 'gemini-flash-latest'),
+    aiVisionModel: ler('AI_VISION_MODEL', 'VITE_AI_VISION_MODEL') || 'gemini-flash-latest',
     /*
      * Vazio = back-end na MESMA ORIGEM (`/api`), que e o caso desta
      * implantacao. So preencha AI_BASE_URL para apontar de volta a um

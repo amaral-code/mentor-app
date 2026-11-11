@@ -29,9 +29,11 @@ import {
   toChatCompletionsMessages,
   wrapAsGeminiResponse,
 } from './aiProvider';
-import { aiProxyToken, destinoBackendIA, temBackendIA, urlBackendIA } from './runtimeConfig';
+import { destinoBackendIA, temBackendIA, urlBackendIA } from './runtimeConfig';
+import { cabecalhosBackend } from './backendAuth';
+import { ehErroDeConfiguracao, explicarErroIA } from './erroIA';
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 const MAX_RETRIES = 3;
 
 /* ============================================================
@@ -98,8 +100,11 @@ async function fetchGemini(url: string, init: RequestInit, signal?: AbortSignal)
       }
       // Erros 5xx e 429 (rate limit) são transitórios -> tenta de novo
       if (res.status === 429 || res.status >= 500) {
-        if (attempt === MAX_RETRIES - 1) {
-          const err = await res.text();
+        const err = await res.text();
+        // Chave ausente no servidor responde 500, mas não é transitório:
+        // repetir só multiplicava as chamadas (um quiz chegava a seis).
+        if (attempt === MAX_RETRIES - 1 || ehErroDeConfiguracao(err)) {
+          console.warn('[ia] falha do servidor:', res.status, err.slice(0, 200));
           return { ok: false, status: res.status, data: null, error: err };
         }
         await sleep(600 * (attempt + 1));
@@ -181,9 +186,7 @@ async function sendToAI(
 ): Promise<RetryResult> {
   const body = comRegraDeEscrita(bodyOriginal);
   if (hasProxy()) {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = aiProxyToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const headers = await cabecalhosBackend();
     return fetchViaWorker(
       urlBackendIA('/generate'),
       {
@@ -238,9 +241,7 @@ async function sendToDeepSeekViaBackend(
   const backend = backendDeepSeekAtual(hasProxy());
 
   if (backend === 'worker') {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = aiProxyToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const headers = await cabecalhosBackend();
     return fetchViaWorker(
       urlBackendIA('/generate'),
       {
@@ -375,7 +376,7 @@ export async function askGemini(
 
   if (!res.ok) {
     if (hasProxy()) {
-      throw new Error(`Erro na IA: ${res.error || 'falha do servidor'}`);
+      throw new Error(`Erro na IA: ${explicarErroIA(res.status, res.error)}`);
     }
     if (res.status === 403 || res.status === 400 || res.status === 401) {
       throw new Error(mensagemChaveInvalida());
@@ -383,7 +384,7 @@ export async function askGemini(
     if (res.status === 429) {
       throw new Error('Limite de requisições excedido. Aguarde um momento e tente novamente.');
     }
-    throw new Error(`Erro na API: ${res.error}`);
+    throw new Error(`Erro na API: ${explicarErroIA(res.status, res.error)}`);
   }
 
   const text = extractGeminiText(res.data) || 'Desculpe, não consegui gerar uma resposta.';
@@ -412,8 +413,8 @@ export async function generateQuizQuestions(
   );
 
   if (!res.ok) {
-    if (hasProxy()) throw new Error(`Erro ao gerar questões: ${res.error || 'falha do servidor'}`);
-    throw new Error(`Erro ao gerar questões: ${res.error}`);
+    if (hasProxy()) throw new Error(`Erro ao gerar questões: ${explicarErroIA(res.status, res.error)}`);
+    throw new Error(`Erro ao gerar questões: ${explicarErroIA(res.status, res.error)}`);
   }
 
   return extractGeminiText(res.data) || 'Erro ao gerar questões.';
@@ -626,8 +627,8 @@ async function gerarLoteQuiz(
   );
 
   if (!res.ok) {
-    if (hasProxy()) throw new Error(`Erro ao gerar questões: ${res.error || 'falha do servidor'}`);
-    throw new Error(`Erro ao gerar questões: ${res.error}`);
+    if (hasProxy()) throw new Error(`Erro ao gerar questões: ${explicarErroIA(res.status, res.error)}`);
+    throw new Error(`Erro ao gerar questões: ${explicarErroIA(res.status, res.error)}`);
   }
 
   const raw = extractGeminiText(res.data) || '';
@@ -835,7 +836,7 @@ export async function gerarMapaMental(
     apiKey,
   );
 
-  if (!res.ok) throw new Error(`Erro ao gerar mapa mental: ${res.error || 'falha do servidor'}`);
+  if (!res.ok) throw new Error(`Erro ao gerar mapa mental: ${explicarErroIA(res.status, res.error)}`);
   return parseMapaMental(extractGeminiText(res.data) || '');
 }
 
@@ -918,8 +919,8 @@ export async function explicarErroComTutor(
   );
 
   if (!res.ok) {
-    if (hasProxy()) throw new Error(`Erro no tutor: ${res.error || 'falha do servidor'}`);
-    throw new Error(`Erro no tutor: ${res.error}`);
+    if (hasProxy()) throw new Error(`Erro no tutor: ${explicarErroIA(res.status, res.error)}`);
+    throw new Error(`Erro no tutor: ${explicarErroIA(res.status, res.error)}`);
   }
   return extractGeminiText(res.data) || 'Não consegui explicar agora. Releia a explicação do gabarito com calma.';
 }
@@ -967,8 +968,8 @@ ${text}`;
   );
 
   if (!res.ok) {
-    if (hasProxy()) throw new Error(`Erro na correção: ${res.error || 'falha do servidor'}`);
-    throw new Error(`Erro na correção: ${res.error}`);
+    if (hasProxy()) throw new Error(`Erro na correção: ${explicarErroIA(res.status, res.error)}`);
+    throw new Error(`Erro na correção: ${explicarErroIA(res.status, res.error)}`);
   }
 
   return extractGeminiText(res.data);
@@ -1003,8 +1004,8 @@ ${text}`;
   );
 
   if (!res.ok) {
-    if (hasProxy()) throw new Error(`Erro na análise de humor: ${res.error || 'falha do servidor'}`);
-    throw new Error(`Erro na análise de humor: ${res.error}`);
+    if (hasProxy()) throw new Error(`Erro na análise de humor: ${explicarErroIA(res.status, res.error)}`);
+    throw new Error(`Erro na análise de humor: ${explicarErroIA(res.status, res.error)}`);
   }
 
   return extractGeminiText(res.data);
@@ -1186,14 +1187,14 @@ export async function sendMessageToGemini(
   );
 
   if (!res.ok) {
-    if (hasProxy()) throw new Error(`Erro na IA: ${res.error || 'falha do servidor'}`);
+    if (hasProxy()) throw new Error(`Erro na IA: ${explicarErroIA(res.status, res.error)}`);
     if (res.status === 403 || res.status === 400 || res.status === 401) {
       throw new Error(mensagemChaveInvalida());
     }
     if (res.status === 429) {
       throw new Error('Limite de requisições excedido. Aguarde um momento e tente novamente.');
     }
-    throw new Error(`Erro na API: ${res.error}`);
+    throw new Error(`Erro na API: ${explicarErroIA(res.status, res.error)}`);
   }
 
   const text = extractGeminiText(res.data);
@@ -1308,14 +1309,14 @@ export async function analyzeStudentData(
   );
 
   if (!res.ok) {
-    if (hasProxy()) throw new Error(`Erro na IA: ${res.error || 'falha do servidor'}`);
+    if (hasProxy()) throw new Error(`Erro na IA: ${explicarErroIA(res.status, res.error)}`);
     if (res.status === 403 || res.status === 400 || res.status === 401) {
       throw new Error(mensagemChaveInvalida());
     }
     if (res.status === 429) {
       throw new Error('Limite de requisições excedido. Aguarde um momento e tente novamente.');
     }
-    throw new Error(`Erro na API: ${res.error}`);
+    throw new Error(`Erro na API: ${explicarErroIA(res.status, res.error)}`);
   }
 
   const raw = extractGeminiText(res.data) || '';
@@ -1370,7 +1371,7 @@ export async function gerarRoteiroAudio(
     signal,
   );
 
-  if (!res.ok) throw new Error(`Erro ao gerar o roteiro: ${res.error || 'falha do servidor'}`);
+  if (!res.ok) throw new Error(`Erro ao gerar o roteiro: ${explicarErroIA(res.status, res.error)}`);
   return extractGeminiText(res.data).replace(/[*#_`]/g, '').trim();
 }
 
@@ -1398,9 +1399,7 @@ export async function sintetizarAudio(
     );
   }
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = aiProxyToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const headers = await cabecalhosBackend();
 
   const resposta = await fetch(urlBackendIA('/tts'), {
     method: 'POST',
@@ -1471,7 +1470,7 @@ export async function gerarIntervencaoDoomscroll(
     signal,
   );
 
-  if (!res.ok) throw new Error(`Erro na intervencao: ${res.error || 'falha do servidor'}`);
+  if (!res.ok) throw new Error(`Erro na intervencao: ${explicarErroIA(res.status, res.error)}`);
 
   const bruto = extractGeminiText(res.data);
   const dados = JSON.parse(extractJson(bruto));
@@ -1509,7 +1508,7 @@ export async function gerarRelatorioDescompressao(
     signal,
   );
 
-  if (!res.ok) throw new Error(`Erro no relatorio: ${res.error || 'falha do servidor'}`);
+  if (!res.ok) throw new Error(`Erro no relatorio: ${explicarErroIA(res.status, res.error)}`);
   const paragrafo = extractGeminiText(res.data).replace(/[*#`]/g, '').trim();
   return primeiroNome ? `${primeiroNome}, ${paragrafo.charAt(0).toLowerCase()}${paragrafo.slice(1)}` : paragrafo;
 }
@@ -1556,6 +1555,6 @@ export async function gerarAlertaParaResponsavel(
     signal,
   );
 
-  if (!res.ok) throw new Error(`Erro ao redigir o alerta: ${res.error || 'falha do servidor'}`);
+  if (!res.ok) throw new Error(`Erro ao redigir o alerta: ${explicarErroIA(res.status, res.error)}`);
   return extractGeminiText(res.data).replace(/[*#`]/g, '').trim();
 }

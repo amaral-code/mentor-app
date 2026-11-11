@@ -36,7 +36,7 @@ export const provedorAtual = (): AIProvider => aiProvider();
 
 /** Modelo efetivo do provedor atual. */
 export const modeloAtual = (): string =>
-  aiModel() || (provedorAtual() === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : 'gemini-2.0-flash');
+  aiModel() || (provedorAtual() === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : 'gemini-flash-latest');
 
 /** Base da API DeepSeek (padrao oficial, compativel OpenAI). */
 export const baseDeepSeek = (): string => deepseekBaseUrl();

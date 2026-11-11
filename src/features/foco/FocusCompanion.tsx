@@ -1,3 +1,4 @@
+import { Eye, EyeOff, Timer } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useStoreStore } from '../../stores/storeStore';
@@ -210,11 +211,11 @@ export function FocusCompanion() {
           <button
             onClick={alternarTransparente}
             onClickCapture={cliqueSeNaoArrastou}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-xl glass border border-slate-200 text-slate-600 hover:text-tinta-900 transition-all"
+            className={`shrink-0 w-8 h-8 items-center justify-center rounded-xl glass border border-slate-200 text-slate-600 hover:text-tinta-900 transition-all ${phase === 'idle' ? 'hidden sm:flex' : 'flex'}`}
             aria-label={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
             title={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
           >
-            {transparente ? '👁' : '👁‍🗨'}
+            {transparente ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
           </button>
           <button
             onClick={() => setOpen(true)}
@@ -235,7 +236,11 @@ export function FocusCompanion() {
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-200" />
             )}
           </span>
-          <span className="text-left">
+          {/* No celular, parado, sobra só o sagui: com o rótulo o cartão
+              tinha 180px e cobria o seletor de modo do Mentor, os botões
+              de foto da redação e o cartão da trilha. Com um ciclo
+              rodando o tempo volta a aparecer, porque aí ele informa. */}
+          <span className={`text-left ${phase === 'idle' ? 'hidden sm:block' : ''}`}>
             <span className="block text-xs font-semibold text-tinta-900">
               {phase === 'focus' ? 'Estudando com você' : phase === 'rest' ? 'Hora de descansar' : 'Companhia de Foco'}
             </span>
@@ -252,7 +257,7 @@ export function FocusCompanion() {
             onPointerDown={(e) => aoIniciarArraste(e, ancoraRef.current)}
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm">⏱</span>
+              <Timer size={16} className="text-tinta-700" aria-hidden="true" />
               <p className="text-sm font-bold text-tinta-900">Companhia de Foco</p>
             </div>
             <div className="flex items-center gap-1">
@@ -263,7 +268,7 @@ export function FocusCompanion() {
                 aria-label={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
                 title={transparente ? 'Voltar ao normal' : 'Deixar transparente'}
               >
-                {transparente ? '👁' : '👁‍🗨'}
+                {transparente ? <Eye size={14} aria-hidden="true" /> : <EyeOff size={14} aria-hidden="true" />}
               </button>
               <button
                 onClick={() => setMini(true)}

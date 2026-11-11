@@ -22,7 +22,7 @@ import { generatePlan, XP_PER_TASK } from '../shared/lib/plannerEngine';
 import { userRepository } from '../shared/storage/UserRepository';
 import { supabaseRepository } from '../shared/storage/SupabaseRepository';
 import { safeSet } from '../shared/lib/safeStorage';
-import { calcLevel, getToday } from '../shared/lib/utils';
+import { calcLevel, diaDeBrasilia, getToday } from '../shared/lib/utils';
 
 interface AppState {
   session: Session | null;
@@ -220,7 +220,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   cansaco: 4,
   sscScore: 20,
 
-  gamification: { xp: 0, level: 1, streak: 1, lastAccessDate: getToday() },
+  gamification: { xp: 0, level: 1, streak: 1, lastAccessDate: diaDeBrasilia() },
 
   chatMessages: [],
   isMuted: false,
@@ -288,7 +288,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       dailyPlan: null,
       conversas: [],
       conversaAtivaId: null,
-      gamification: { xp: 0, level: 1, streak: 1, lastAccessDate: getToday() },
+      gamification: { xp: 0, level: 1, streak: 1, lastAccessDate: diaDeBrasilia() },
     });
   },
 
@@ -491,7 +491,7 @@ export const useAppStore = create<AppState>((set, get) => ({
            de quem nao rodou a 008). */
         if (g) get().updateGamification(g);
       }),
-      { mensagem: 'Este XP nao foi registrado. Ele nao vai contar no seu total.' },
+      { mensagem: 'Este XP não foi registrado. Ele não vai contar no seu total.' },
     );
   },
 
@@ -555,7 +555,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const dailyPlan: DailyPlan = { date: getToday(), ...generatePlan(get().currentMood) };
     set({ dailyPlan });
     persistir(supabaseRepository.savePlano(dailyPlan), {
-      mensagem: 'O plano de hoje nao foi salvo. Ele pode mudar ao recarregar.',
+      mensagem: 'O plano de hoje não foi salvo. Ele pode mudar ao recarregar.',
     });
   },
 
@@ -585,7 +585,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
     persistir(supabaseRepository.deletePersona(id), {
       aoFalhar: () => set({ personas: anterior, activePersonaId: personaAtivaAntes }),
-      mensagem: 'Nao foi possivel apagar o professor. Ele continua na sua lista.',
+      mensagem: 'Não foi possível apagar o professor. Ele continua na sua lista.',
     });
   },
   setActivePersonaId: (id) => {
@@ -621,7 +621,7 @@ export const useAppStore = create<AppState>((set, get) => ({
      * o proprio caminho no servidor; o que se perde aqui e o historico.
      */
     persistir(supabaseRepository.saveQuizResult(r), {
-      mensagem: 'O resultado do quiz nao entrou no seu historico.',
+      mensagem: 'O resultado do quiz não entrou no seu histórico.',
     });
   },
   setNotas: (notas) => set({ notas }),
@@ -641,7 +641,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }),
       {
         aoFalhar: () => set((s) => ({ notas: s.notas.filter((n) => n.id !== nota.id) })),
-        mensagem: 'A anotacao nao foi salva. Copie o texto e tente de novo.',
+        mensagem: 'A anotação não foi salva. Copie o texto e tente de novo.',
       },
     );
   },
@@ -660,7 +660,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   addChallengeResult: (r) => {
     set((s) => ({ challengeResults: [r, ...s.challengeResults].slice(0, 20) }));
     persistir(supabaseRepository.saveDesafio(r), {
-      mensagem: 'A correcao nao entrou no seu historico de redacoes.',
+      mensagem: 'A correção não entrou no seu histórico de redações.',
     });
     get().addLog({
       timestamp: r.timestamp,

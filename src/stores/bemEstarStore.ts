@@ -330,7 +330,7 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
     } catch {
       useAppStore
         .getState()
-        .setToast('A sessao terminou, mas as moedas nao foram creditadas. Tente de novo.', 'error');
+        .setToast('A sessão terminou, mas as moedas não foram creditadas. Tente de novo.', 'error');
       return null;
     }
   },
@@ -355,7 +355,7 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
       return true;
     } catch {
       set({ carteira: anterior });
-      useAppStore.getState().setToast('Nao foi possivel usar as moedas agora.', 'error');
+      useAppStore.getState().setToast('Não foi possível usar as moedas agora.', 'error');
       return false;
     }
   },
@@ -376,7 +376,7 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
     } catch {
       useAppStore
         .getState()
-        .setToast('A revisao deste topico nao entrou no calendario.', 'error');
+        .setToast('A revisão deste tópico não entrou no calendário.', 'error');
     }
   },
 
@@ -420,7 +420,7 @@ if (typeof document !== 'undefined') {
       const store = useBemEstarStore.getState();
       if (store.bufferTelemetria.length > 0) {
         persistir(store.descarregarTelemetria(), {
-          mensagem: 'Parte do seu historico de estudo desta sessao nao foi salvo.',
+          mensagem: 'Parte do seu histórico de estudo desta sessão não foi salvo.',
         });
       }
     }

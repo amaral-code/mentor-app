@@ -241,18 +241,28 @@ export function SecaoResponsaveis() {
         responsável para falar com um psicólogo pelo app (LGPD).
         {menor && ' Sem data informada, o app pede essa autorização por segurança.'}
       </p>
+      {/* A data decide quem autoriza o psicólogo. Se o aluno pudesse
+          trocá-la quando quisesse, um menor mudava o ano e se autorizava
+          sozinho. O banco recusa a troca (migration 030); a tela avisa
+          antes, para o aluno não descobrir pelo erro. */}
+      <p className="text-xs text-slate-500 mb-2 leading-relaxed">
+        {session?.dataNascimento
+          ? 'A data já foi informada e não pode ser trocada pelo app. Se estiver errada, peça a correção à secretaria da escola ou ao suporte.'
+          : 'Confira antes de salvar: depois de gravada, a data não pode ser trocada pelo app.'}
+      </p>
       <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="date"
           aria-label="Data de nascimento"
           value={nascimento}
+          disabled={!!session?.dataNascimento}
           onChange={(e) => setNascimento(e.target.value)}
           className="flex-1 px-3 py-2.5 rounded-xl glass-light border border-slate-200 text-sm text-tinta-900 outline-none focus:border-amber-400/40 min-h-[44px]"
         />
         <button
           type="button"
           onClick={salvarNascimento}
-          disabled={salvandoData || !nascimento || nascimento === (session?.dataNascimento ?? '')}
+          disabled={salvandoData || !nascimento || !!session?.dataNascimento}
           className="px-5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-tinta-700 hover:border-amber-400/40 transition-all min-h-[44px] disabled:opacity-40"
         >
           {salvandoData ? 'Salvando…' : 'Salvar'}

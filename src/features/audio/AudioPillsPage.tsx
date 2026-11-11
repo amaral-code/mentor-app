@@ -137,10 +137,10 @@ export function AudioPillsPage() {
     addLog({
       timestamp: Date.now(),
       type: 'atividade',
-      description: `Pilula de audio ouvida: ${modulo.titulo}`,
+      description: `Pílula de áudio ouvida: ${modulo.titulo}`,
       xp: 15,
     });
-    setToast('Pilula concluida. +15 XP', 'success');
+    setToast('Pílula concluída. +15 XP', 'success');
   }
 
   return (
@@ -163,7 +163,7 @@ export function AudioPillsPage() {
           {gerando ? (
             <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600">
               <Loader2 size={16} className="animate-spin" />
-              Preparando o audio desta pílula...
+              Preparando o áudio desta pílula...
             </div>
           ) : (
             <>
@@ -215,8 +215,8 @@ export function AudioPillsPage() {
         <div className="glass rounded-2xl p-5">
           <EmptyState
             pose="estudando"
-            titulo="Nenhuma pílula disponivel"
-            descricao="Rode a migração 011 no Supabase para carregar o catálogo inicial de áudios."
+            titulo="Nenhuma pílula disponível"
+            descricao="O catálogo de áudios ainda não foi publicado. Volte em breve."
           />
         </div>
       )}

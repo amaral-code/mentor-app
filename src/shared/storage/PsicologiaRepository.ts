@@ -122,7 +122,7 @@ export class PsicologiaRepository {
   }
 
   async conceder(alunoId: string, psicologoId: string, escopo: EscopoConsentimento[], dias: number): Promise<void> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { error } = await sb.rpc('conceder_consentimento', {
       p_aluno: alunoId,
@@ -134,7 +134,7 @@ export class PsicologiaRepository {
   }
 
   async revogar(consentimentoId: string): Promise<void> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { error } = await sb.rpc('revogar_consentimento', { p_id: consentimentoId });
     if (error) exigir('revogar_consentimento', error);
@@ -193,7 +193,7 @@ export class PsicologiaRepository {
 
   /** Só acrescenta. Corrigir é `retificaId` apontando para a original. */
   async anotar(psicologoId: string, alunoId: string, texto: string, retificaId?: string): Promise<void> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { error } = await sb.from('prontuario_notas').insert({
       psicologo_id: psicologoId,
@@ -266,7 +266,7 @@ export class PsicologiaRepository {
   }
 
   async enviar(psicologoId: string, participanteId: string, texto: string): Promise<void> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { error } = await sb.rpc('enviar_mensagem_apoio', {
       p_psicologo: psicologoId,
@@ -300,7 +300,7 @@ export class PsicologiaRepository {
   }
 
   async avaliar(agendamentoId: string, nota: number, comentario?: string): Promise<void> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { error } = await sb.rpc('avaliar_consulta', {
       p_agendamento: agendamentoId,

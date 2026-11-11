@@ -54,25 +54,29 @@ function mundo({ agendamento = {}, usuario = { id: USUARIO }, pagamento } = {}) 
     ['texttospeech', () => json({ audioContent: 'QUJD' })],
     ['api.mercadopago.com/checkout/preferences', () => json({ init_point: 'https://mp/checkout/xyz', id: 'pref-1' })],
     ['api.mercadopago.com/v1/payments', () =>
-      json(pagamento ?? { status: 'approved', external_reference: AGENDAMENTO, id: 'pay-9' })],
+      json(pagamento ?? { status: 'approved', external_reference: AGENDAMENTO, id: 'pay-9', transaction_amount: 150 })],
     ['api.resend.com', () => json({ id: 'email-1' })],
   ];
 }
 
-async function chamar(caminho, { metodo = 'POST', corpo, cabecalhos = {}, env = ENV, respostas } = {}) {
+async function chamar(caminho, { metodo = 'POST', corpo, cabecalhos = {}, env = ENV, respostas, semSessao = false } = {}) {
   saidas = [];
   const rotas = respostas ?? mundo();
   vi.stubGlobal('fetch', async (url, init = {}) => {
     const u = String(url);
     saidas.push({ url: u, method: init.method || 'GET', body: init.body ? JSON.parse(init.body) : null });
     for (const [padrao, resposta] of rotas) if (u.includes(padrao)) return resposta();
+    // Sessao valida por padrao: as rotas de IA passaram a exigir login,
+    // e a maioria dos testes prova outra coisa. Quem testa "sem sessao"
+    // manda `semSessao: true` ou um mundo com `usuario: null`.
+    if (u.includes('/auth/v1/user')) return json({ id: USUARIO });
     return json({});
   });
 
   const resposta = await worker.fetch(
     new Request('https://worker.dev' + caminho, {
       method: metodo,
-      headers: { 'Content-Type': 'application/json', ...cabecalhos },
+      headers: { 'Content-Type': 'application/json', ...(semSessao ? {} : { 'X-Supabase-Auth': 'jwt' }), ...cabecalhos },
       body: corpo === undefined ? undefined : JSON.stringify(corpo),
     }),
     env,
@@ -120,13 +124,34 @@ describe('/generate', () => {
 
   it('nao deixa o cliente escolher um modelo fora da lista', async () => {
     const r = await chamar('/generate', { corpo: { model: 'gemini-1.5-pro-caro', contents: [] } });
-    expect(saidaPara(r, 'generativelanguage').url).toContain('gemini-2.0-flash');
+    expect(saidaPara(r, 'generativelanguage').url).toContain('gemini-flash-latest');
   });
 
   it('sem GEMINI_API_KEY responde 500 em vez de chamar o Google', async () => {
     const r = await chamar('/generate', { corpo: {}, env: { ...ENV, GEMINI_API_KEY: '' } });
     expect(r.status).toBe(500);
     expect(saidaPara(r, 'generativelanguage')).toBeUndefined();
+  });
+
+  it('sem sessao nao gasta a cota de IA', async () => {
+    const r = await chamar('/generate', { corpo: { contents: [] }, semSessao: true });
+    expect(r.status).toBe(401);
+    expect(saidaPara(r, 'generativelanguage')).toBeUndefined();
+
+    const chat = await chamar('/api/chat/completions', { corpo: { mensagens: [{ role: 'user', text: 'oi' }] }, semSessao: true });
+    expect(chat.status).toBe(401);
+    const tts = await chamar('/tts', { corpo: { texto: 'ola' }, semSessao: true, env: { ...ENV, GOOGLE_TTS_KEY: 'k' } });
+    expect(tts.status).toBe(401);
+  });
+
+  it('sem banco configurado (dev local) a rota segue aberta', async () => {
+    const r = await chamar('/generate', { corpo: { contents: [] }, semSessao: true, env: { ...ENV, SUPABASE_URL: '' } });
+    expect(r.status).toBe(200);
+  });
+
+  it('aceita o modelo do ambiente mesmo fora da lista fixa', async () => {
+    const r = await chamar('/generate', { corpo: { contents: [] }, env: { ...ENV, AI_MODEL: 'gemini-9.9-flash' } });
+    expect(saidaPara(r, 'generativelanguage').url).toContain('gemini-9.9-flash');
   });
 
   it('respeita o API_TOKEN quando configurado', async () => {
@@ -224,6 +249,24 @@ describe('/pagamento', () => {
     expect(pref.items[0].unit_price).toBe(150); // centavos -> reais
     expect(pref.notification_url).toMatch(/\/webhook\/pagamento$/);
   });
+
+  it('o preco vem do banco: o valor mandado pelo navegador e ignorado', async () => {
+    const r = await chamar('/pagamento', {
+      corpo: { agendamentoId: AGENDAMENTO, valorCentavos: 1 },
+      cabecalhos: comSessao, env: { ...ENV, MP_ACCESS_TOKEN: 'mp-token' },
+    });
+    expect(saidaPara(r, 'preferences').body.items[0].unit_price).toBe(150);
+  });
+
+  it('o endereco do aviso leva o /api da Vercel e o segredo', async () => {
+    const r = await chamar('/pagamento', {
+      corpo: { agendamentoId: AGENDAMENTO },
+      cabecalhos: { ...comSessao, 'x-rota-prefixo': '/api' },
+      env: { ...ENV, MP_ACCESS_TOKEN: 'mp-token', MP_WEBHOOK_SECRET: 's e' },
+    });
+    expect(saidaPara(r, 'preferences').body.notification_url)
+      .toBe('https://worker.dev/api/webhook/pagamento?secret=s%20e');
+  });
 });
 
 describe('/webhook/pagamento', () => {
@@ -244,6 +287,16 @@ describe('/webhook/pagamento', () => {
     expect(rpc.body.p_ref).toBe('pay-9');
   });
 
+  it('pagamento de valor menor que o preco nao libera a sala', async () => {
+    const r = await chamar('/webhook/pagamento?secret=sh', {
+      corpo: { data: { id: 'pay-9' } }, env,
+      respostas: mundo({ pagamento: { status: 'approved', external_reference: AGENDAMENTO, id: 'pay-9', transaction_amount: 0.01 } }),
+    });
+    expect(r.status).toBe(200);
+    expect(r.dados.motivo).toBe('valor_divergente');
+    expect(saidaPara(r, 'confirmar_pagamento_consulta')).toBeUndefined();
+  });
+
   it('pagamento pendente nao libera a sala', async () => {
     const r = await chamar('/webhook/pagamento?secret=sh', {
       corpo: { data: { id: 'pay-9' } }, env,
@@ -262,6 +315,17 @@ describe('/notify/drain', () => {
     expect(r.dados.enviadas).toBe(1);
     expect(saidaPara(r, 'resend').body.to).toEqual(['mae@test.br']);
     expect(saidaPara(r, 'notificacoes?id=eq.n1').method).toBe('PATCH');
+  });
+
+  it('sem sessao e sem segredo ninguem aciona a fila', async () => {
+    expect((await chamar('/notify/drain', { semSessao: true })).status).toBe(401);
+  });
+
+  it('o cron da Vercel entra por GET com o CRON_SECRET', async () => {
+    const env = { ...ENV, CRON_SECRET: 'cron' };
+    const r = await chamar('/notify/drain', { metodo: 'GET', env, semSessao: true, cabecalhos: { Authorization: 'Bearer cron' } });
+    expect(r.status).toBe(200);
+    expect((await chamar('/notify/drain', { metodo: 'GET', env, semSessao: true, cabecalhos: { Authorization: 'Bearer errado' } })).status).toBe(401);
   });
 
   it('sem provedor de e-mail nao quebra a fila', async () => {
@@ -326,6 +390,7 @@ describe('/api/chat/completions', () => {
   it('usa a ferramenta de busca certa para cada familia de modelo', async () => {
     const r15 = await chamar('/api/chat/completions', {
       corpo: { mensagens: [{ role: 'user', text: 'oi' }] },
+      env: { ...ENV, GEMINI_MODEL_CHAT: 'gemini-1.5-flash' },
       respostas: mundoChat(),
     });
     expect(saidaPara(r15, 'generativelanguage').body.tools[0]).toHaveProperty('google_search_retrieval');
@@ -549,8 +614,11 @@ describe('/api/turmas/import', () => {
   const TURMA = '33333333-4444-5555-6666-777777777777';
   const EDUCADOR = '44444444-5555-6666-7777-888888888888';
 
-  const mundoImport = (papel = 'educator') => [
+  const mundoImport = (papel = 'educator', jaCadastrados = []) => [
     ['/auth/v1/user', () => json({ id: EDUCADOR })],
+    // Consulta de duplicidade (nome + e-mail do responsavel). Vem ANTES
+    // da regra generica de perfis, que responde a qualquer consulta.
+    ['email_responsaveis=eq', () => json(jaCadastrados)],
     ['/rest/v1/perfis', () => json([{ papel, escola_id: ESCOLA }])],
     ['/rest/v1/escolas', () => json([{ id: ESCOLA, nome: 'Escola Sol', codigo_instituicao: 'SOL2026A' }])],
     ['/rest/v1/turmas', () => json([{ id: TURMA, nome: '3A', codigo: 'ABC123' }])],
@@ -567,7 +635,17 @@ describe('/api/turmas/import', () => {
   const envImport = { ...ENV, RESEND_API_KEY: 'chave-resend' };
 
   it('exige sessao', async () => {
-    expect((await chamar('/api/turmas/import', { corpo, respostas: mundoImport() })).status).toBe(401);
+    expect((await chamar('/api/turmas/import', { corpo, respostas: mundoImport(), semSessao: true })).status).toBe(401);
+  });
+
+  it('reenviar a mesma planilha nao duplica o aluno', async () => {
+    const r = await chamar('/api/turmas/import', {
+      corpo, cabecalhos, env: envImport, respostas: mundoImport('educator', [{ id: 'ja-existe' }]),
+    });
+    expect(r.status).toBe(200);
+    expect(r.dados.criados).toBe(0);
+    expect(r.dados.resultados[0].jaExistia).toBe(true);
+    expect(saidaPara(r, '/auth/v1/admin/users')).toBeUndefined();
   });
 
   it('barra quem nao e secretaria', async () => {

@@ -109,7 +109,7 @@ function ChipsDeStatus({ compacto }: { compacto?: boolean }) {
         <span className={`text-base font-black tabular-nums ${acesa ? 'text-amber-600' : 'text-slate-400'}`}>
           <AnimatedNumber value={gamification.streak} />
         </span>
-        <span className="sr-only">dias de ofensiva</span>
+        <span className="sr-only">{gamification.streak === 1 ? 'dia de ofensiva' : 'dias de ofensiva'}</span>
       </span>
       <span className="flex items-center gap-1.5 px-2 py-1 rounded-xl" title={`${gamification.xp} XP no total`}>
         <Zap size={22} className="text-ceu-500" fill="currentColor" aria-hidden="true" />
@@ -120,8 +120,8 @@ function ChipsDeStatus({ compacto }: { compacto?: boolean }) {
       </span>
       <span className="flex items-center gap-1.5 px-2 py-1 rounded-xl" title={`Nível ${level}`}>
         <Star size={22} className="text-azul-600" fill="currentColor" aria-hidden="true" />
+        <span className="sr-only">nível</span>
         <span className="text-base font-black tabular-nums text-azul-600">{level}</span>
-        <span className="sr-only">de nível</span>
       </span>
     </div>
   );

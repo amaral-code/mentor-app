@@ -599,8 +599,10 @@ function ActivitySummary({ logs }: { logs: { type: string; timestamp: number }[]
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1 capitalize">
-        <span>{hojeRef}</span>
+      {/* `first-letter`, e não `capitalize`: este último escrevia
+          "Terça-Feira, 10 De Novembro". */}
+      <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+        <span className="first-letter:uppercase">{hojeRef}</span>
         <span className="text-tinta-900 font-extrabold tabular-nums normal-case">{totalHoje} atividade{totalHoje !== 1 ? 's' : ''}</span>
       </div>
       <div className="grid grid-cols-7 gap-1.5">

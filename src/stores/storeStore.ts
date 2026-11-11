@@ -44,7 +44,7 @@ export const useStoreStore = create<StoreState>((set, get) => ({
 
     const { gamificacao, erro } = await supabaseRepository.comprarItem(itemId);
     if (erro || !gamificacao) {
-      setToast(erro ?? 'Nao foi possivel comprar.', 'error');
+      setToast(erro ?? 'Não foi possível comprar.', 'error');
       return false;
     }
 

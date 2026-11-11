@@ -1,7 +1,7 @@
 {
-  "name": "Mentor Noturno",
+  "name": "Midnight Mentor",
   "short_name": "Mentor",
-  "description": "Mentor de estudos para o ENEM e vestibulares - ensino medio noturno.",
+  "description": "Mentor de estudos para o ENEM e vestibulares.",
   "display": "standalone",
   "dir": "ltr",
   "lang": "pt-BR",

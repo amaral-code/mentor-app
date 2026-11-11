@@ -88,7 +88,7 @@ export class FocoOfflineRepository {
   }
 
   async gastar(quantidade: number, motivo: string): Promise<number> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('gastar_moedas_foco', {
       p_quantidade: quantidade,

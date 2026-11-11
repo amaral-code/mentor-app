@@ -159,7 +159,7 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
               <ShieldCheck size={13} className="text-emerald-600" /> {politica.texto}
             </p>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              O link da sala de video e criado automaticamente quando o pagamento e confirmado e aparece
+              O link da sala de vídeo é criado automaticamente quando o pagamento é confirmado e aparece
               na agenda do estudante e do profissional.
             </p>
           </div>

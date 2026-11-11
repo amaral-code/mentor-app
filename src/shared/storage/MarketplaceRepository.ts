@@ -159,7 +159,7 @@ export class MarketplaceRepository {
   // =================================================================
 
   async agendar(psicologoId: string, alunoId: string, inicioISO: string, alertaId?: string | null): Promise<Agendamento> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
 
     const { data, error } = await sb.rpc('agendar_consulta', {
@@ -212,7 +212,7 @@ export class MarketplaceRepository {
     });
 
     if (!resposta.ok) {
-      throw new Error(`Nao foi possivel abrir o pagamento (${resposta.status}).`);
+      throw new Error(`Não foi possível abrir o pagamento (${resposta.status}).`);
     }
     return resposta.json();
   }
@@ -306,7 +306,7 @@ export class MarketplaceRepository {
   // =================================================================
 
   async solicitarVinculo(emailAluno: string, parentesco = 'responsavel'): Promise<VinculoResponsavel> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('solicitar_vinculo', {
       p_email_aluno: emailAluno,
@@ -392,7 +392,7 @@ export class MarketplaceRepository {
 
   /** Invalida o codigo vazado. Nao expulsa quem ja esta vinculado. */
   async regenerarCodigoVinculo(): Promise<string> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('regenerar_codigo_vinculo');
     if (error) exigir('regenerar_codigo_vinculo', error);
@@ -401,7 +401,7 @@ export class MarketplaceRepository {
 
   /** Chamada pelo RESPONSAVEL, com o codigo que o aluno entregou. */
   async vincularPorCodigo(codigo: string, parentesco = 'responsavel'): Promise<VinculoResponsavel> {
-    if (!clienteAtivo()) throw new Error('Supabase nao configurado');
+    if (!clienteAtivo()) throw new Error('Banco de dados não configurado');
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('vincular_por_codigo', {
       p_codigo: normalizarCodigo(codigo),

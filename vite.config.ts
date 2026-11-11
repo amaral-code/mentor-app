@@ -60,6 +60,13 @@ export default defineConfig(({ mode }) => {
         manifest: false,
         workbox: {
           globPatterns: ['**/*.{js,css,html,woff,woff2,ttf,png,svg}'],
+          /*
+           * `public/mascot/` e os `mascot*.png` da raiz NAO sao usados por
+           * nenhuma tela (o app so referencia `/assets/*.png`). Eram 29 MB
+           * dos 35 MB que o service worker baixava no primeiro acesso de
+           * cada aluno, em rede movel.
+           */
+          globIgnores: ['mascot/**', 'mascot*.png', 'mascot-*.png'],
           // Mascotes do shell passam de 2 MiB (limite padrao do workbox):
           // sem este teto eles ficariam fora do precache e o offline
           // quebraria imagens da UI. Continua so App Shell, sem rede.

@@ -49,7 +49,9 @@ import {
   sinalComTimeout,
   toChatCompletionsMessages,
 } from './aiProvider';
-import { aiProxyToken, temBackendIA, urlBackendIA } from './runtimeConfig';
+import { temBackendIA, urlBackendIA } from './runtimeConfig';
+import { cabecalhosBackend } from './backendAuth';
+import { explicarErroIA } from './erroIA';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -95,9 +97,7 @@ function textoDaResposta(dados: any): string {
 
 /** Caminho 1: o worker, com busca e chave do servidor. */
 async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = aiProxyToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const headers = await cabecalhosBackend();
 
   // Timeout de 30s como nos demais caminhos: sem isso, rede que engole
   // pacote deixava "Sagui está digitando" para sempre.
@@ -119,7 +119,8 @@ async function pelaApi(ctx: ContextoChat): Promise<RespostaChat> {
 
   if (!resposta.ok) {
     const detalhe = await resposta.text();
-    throw new Error(`Erro no mentor (${resposta.status}): ${detalhe.slice(0, 180)}`);
+    console.warn('[mentor] falha do servidor:', resposta.status, detalhe.slice(0, 200));
+    throw new Error(`O Mentor não respondeu: ${explicarErroIA(resposta.status, detalhe)}`);
   }
 
   const dados = await resposta.json();

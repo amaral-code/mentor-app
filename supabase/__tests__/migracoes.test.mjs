@@ -55,6 +55,7 @@ const ARQUIVOS = [
   '027_psicologo_consentimento_prontuario.sql',
   '028_conta_demonstracao.sql',
   '029_corrige_insights_escala.sql',
+  '030_ofensiva_brasilia_teto_xp_trava_nascimento.sql',
 ];
 
 let db;
@@ -1783,5 +1784,67 @@ describe('insights da turma: escala e regra (029)', () => {
     const [r] = await linhas(prof, `select * from public.insights_turma_24h(24)`);
     expect(r.alunos_com_dificuldade).toBe(2);
     expect(r.total_alunos).toBe(2);
+  });
+});
+
+describe('ofensiva em Brasilia, teto de XP e data de nascimento (030)', () => {
+  let novato;
+
+  beforeAll(async () => {
+    const r = await db.query(
+      `insert into auth.users (email, raw_user_meta_data) values ('novato030@test.br', '{"nome":"Novato"}') returning id`,
+    );
+    novato = r.rows[0].id;
+  });
+
+  it('o dia do produto e o de Brasilia, nao o de UTC', async () => {
+    const r = await db.query(
+      `select public.dia_de_brasilia() as dia, (now() at time zone 'America/Sao_Paulo')::date as esperado`,
+    );
+    expect(String(r.rows[0].dia)).toBe(String(r.rows[0].esperado));
+  });
+
+  it('o XP do dia para no teto, por mais chamadas que venham', async () => {
+    let ultimo;
+    for (let i = 0; i < 8; i++) {
+      ultimo = await primeira(novato, `select * from public.registrar_xp('quiz', 'laco pelo console', 500)`);
+    }
+    expect(ultimo.xp).toBe(3000);
+    // A tentativa acima do teto fica no historico, com 0 XP.
+    const log = await db.query(`select count(*)::int as n, sum(xp)::int as total from public.logs where user_id = $1`, [novato]);
+    expect(log.rows[0].n).toBe(8);
+    expect(log.rows[0].total).toBe(3000);
+  });
+
+  it('estudar duas vezes no mesmo dia conta um dia de ofensiva', async () => {
+    const r = await primeira(novato, `select * from public.registrar_xp('quiz', 'de novo', 10)`);
+    expect(r.streak).toBe(1);
+  });
+
+  it('quem estudou ontem (dia de Brasilia) sobe a ofensiva', async () => {
+    await db.query(`update public.gamificacao set ultimo_acesso = public.dia_de_brasilia() - 1, streak = 5 where user_id = $1`, [novato]);
+    const r = await primeira(novato, `select * from public.registrar_xp('quiz', 'hoje', 0)`);
+    expect(r.streak).toBe(6);
+  });
+
+  it('data gravada a frente (banco antigo em UTC) nao zera a ofensiva', async () => {
+    await db.query(`update public.gamificacao set ultimo_acesso = public.dia_de_brasilia() + 1, streak = 9 where user_id = $1`, [novato]);
+    const r = await primeira(novato, `select * from public.registrar_xp('quiz', 'virada', 0)`);
+    expect(r.streak).toBe(9);
+  });
+
+  it('o aluno grava a data de nascimento uma vez e nao troca mais', async () => {
+    await comoUsuario(novato, `update public.perfis set data_nascimento = '2012-05-10' where id = $1`, [novato]);
+    await expect(
+      comoUsuario(novato, `update public.perfis set data_nascimento = '2000-05-10' where id = $1`, [novato]),
+    ).rejects.toThrow(/data de nascimento/);
+    const r = await db.query(`select data_nascimento::text as d from public.perfis where id = $1`, [novato]);
+    expect(r.rows[0].d).toBe('2012-05-10');
+  });
+
+  it('a correcao administrativa (SQL Editor) continua possivel', async () => {
+    await db.query(`update public.perfis set data_nascimento = '2011-01-01' where id = $1`, [novato]);
+    const r = await db.query(`select data_nascimento::text as d from public.perfis where id = $1`, [novato]);
+    expect(r.rows[0].d).toBe('2011-01-01');
   });
 });

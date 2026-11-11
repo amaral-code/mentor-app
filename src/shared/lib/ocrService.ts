@@ -2,7 +2,7 @@ import { getSupabase } from './supabase';
 import { sinalComTimeout, DEEPSEEK_TIMEOUT_MS } from './aiProvider';
 import { aiProxyToken, temBackendIA, urlBackendIA } from './runtimeConfig';
 const GEMINI_VISION_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
 export interface ResultadoOcr {
   transcricao: string;
