@@ -49,14 +49,14 @@ export function CalendarioPage() {
     // para agendarRevisao e recalcula a data.
     (window as any).__revisaoAtiva = { topicoId: r.topicoId, topicoNome: r.topicoNome, materia: r.materia };
     setActiveTab('quiz');
-    setToast(`Revisao de ${r.topicoNome}. O resultado reagenda a próxima data.`, 'info');
+    setToast(`Revisão de ${r.topicoNome}. O resultado reagenda a próxima data.`, 'info');
   }
 
   async function adiar(r: RevisaoEspacada) {
     // Adiar = tratar como revisao mediana: nao sobe de nivel, mas sai da
     // fila de hoje. Melhor que deixar o item vermelho para sempre.
     await agendarRevisao(r.topicoId, r.topicoNome, r.materia, 70);
-    setToast('Topico reagendado.', 'info');
+    setToast('Tópico reagendado.', 'info');
   }
 
   return (
@@ -82,7 +82,7 @@ export function CalendarioPage() {
             pose="aprovacao"
             compacto
             titulo="Nada vencendo hoje"
-            descricao="Faca um quiz de qualquer materia: o topico entra no calendario automaticamente."
+            descricao="Faça um quiz de qualquer matéria: o tópico entra no calendário automaticamente."
             acao={
               <button onClick={() => setActiveTab('quiz')} className="btn-primary text-sm">
                 Ir para o quiz
@@ -128,7 +128,7 @@ export function CalendarioPage() {
             {hoje.adiadas.length > 0 && (
               <p className="text-[11px] text-slate-500 pt-2 flex items-center gap-1.5">
                 <CircleAlert size={13} className="text-amber-600" />
-                {hoje.adiadas.length} topico(s) alem do teto de {TETO_DIARIO} por dia entram na fila de amanha.
+                {hoje.adiadas.length} tópico(s) além do teto de {TETO_DIARIO} por dia entram na fila de amanhã.
               </p>
             )}
           </div>
@@ -138,7 +138,7 @@ export function CalendarioPage() {
       {/* Linha do tempo */}
       <div className="glass rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-slate-700">Proximos dias</h2>
+          <h2 className="text-sm font-semibold text-slate-700">Próximos dias</h2>
           <div className="flex gap-1">
             {[7, 14, 30].map((d) => (
               <button
@@ -180,7 +180,7 @@ export function CalendarioPage() {
       {/* Todos os topicos */}
       {revisoes.length > 0 && (
         <div className="glass rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">Todos os topicos ({revisoes.length})</h2>
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Todos os tópicos ({revisoes.length})</h2>
           <div className="space-y-1.5">
             {revisoes.map((r) => (
               <div key={r.topicoId} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-slate-50">
@@ -204,11 +204,11 @@ export function CalendarioPage() {
 
       <div className="glass-light rounded-xl px-4 py-3 text-xs text-slate-500 leading-relaxed">
         <p className="flex items-center gap-1.5 text-slate-600 font-medium mb-1">
-          <Plus size={13} /> Como as datas sao escolhidas
+          <Plus size={13} /> Como as datas são escolhidas
         </p>
         Nota 80 ou mais sobe um nível (1, 3, 7, 21, 45 e 90 dias). Entre 60 e 79 mantém o nível com o
-        intervalo ajustado pelo seu histórico no topico. Abaixo de 60 o topico volta para amanha.
-        Exemplo com a sua ultima nota: {' '}
+        intervalo ajustado pelo seu histórico no tópico. Abaixo de 60 o tópico volta para amanhã.
+        Exemplo com a sua última nota: {' '}
         <span className="text-slate-700">
           {(() => {
             const exemplo = proximaRevisao({ nivelMemoria: 1, facilidade: 2.5, intervaloDias: 3 }, 85);

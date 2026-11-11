@@ -135,7 +135,7 @@ export function EscudoPage() {
       });
       setToast(`+${r.moedas} moedas de foco por ${r.minutos} min offline.`, 'success');
     } else {
-      setToast(`Sessão de ${r.minutos} min registrada. A partir de 5 min ja rende moedas.`, 'info');
+      setToast(`Sessão de ${r.minutos} min registrada. A partir de 5 min já rende moedas.`, 'info');
     }
   }
 

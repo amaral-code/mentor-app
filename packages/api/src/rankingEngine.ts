@@ -284,6 +284,36 @@ async function gerarRankingSupabase(
   return filtrado.map((e, i) => ({ ...e, posicao: i + 1 }));
 }
 
+/**
+ * Garante a linha do proprio aluno na lista.
+ *
+ * A consulta descarta quem tem 0 XP, entao o aluno novo sumia do proprio
+ * ranking. Ele entra com o XP local e a posicao e recalculada.
+ */
+export function comProprioAluno(
+  entries: RankingEntry[],
+  perfil: UserProfile,
+  xp: number,
+  streak: number,
+): RankingEntry[] {
+  if (entries.some((e) => e.destaque)) return entries;
+  const eu: RankingEntry = {
+    posicao: 0,
+    nome: perfil.nome || 'Você',
+    turma: 'sem turma',
+    turmaId: perfil.turmaId || '',
+    escola: 'sem escola',
+    escolaId: perfil.escolaId || '',
+    xp,
+    level: 1,
+    streak,
+    avatarInicial: perfil.nome?.charAt(0)?.toUpperCase() || 'V',
+    destaque: true,
+    variacao: 0,
+  };
+  return [...entries, eu].sort((a, b) => b.xp - a.xp).map((e, i) => ({ ...e, posicao: i + 1 }));
+}
+
 export async function getRankingData(
   filter: RankingFilter,
   uid: string,
@@ -295,11 +325,16 @@ export async function getRankingData(
   let entries: RankingEntry[];
 
   if (isSupabaseConfigured()) {
-    entries = await gerarRankingSupabase(filter, profile);
-    // If empty (no other users registered), fallback to mock
-    if (entries.length <= 1) {
-      entries = gerarRankingMock(filter, profile, userXp, userStreak);
-    }
+    /*
+     * Com banco configurado, o ranking e SO o que o banco devolve.
+     *
+     * Antes, com um aluno real ou nenhum, a tela era preenchida com 48
+     * colegas inventados ("LinceDedicado67", do "Colegio Ampli"), sem
+     * nenhum aviso. O aluno competia contra numeros gerados por formula.
+     * E o mesmo defeito do painel dos pais antes da migration 025: dado
+     * ficticio com cara de dado real.
+     */
+    entries = comProprioAluno(await gerarRankingSupabase(filter, profile), profile, userXp, userStreak);
   } else {
     entries = gerarRankingMock(filter, profile, userXp, userStreak);
   }

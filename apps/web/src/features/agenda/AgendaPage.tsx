@@ -380,7 +380,7 @@ export function AgendaPage() {
         </div>
 
         <footer className="mt-16 text-center text-xs text-slate-500 max-w-4xl mx-auto space-y-1.5" data-purpose="page-footer">
-          <p>Midnight Mentor © 2025 • Acolhimento e Orientação Emocional para Estudantes Pré-Vestibular.</p>
+          <p>Midnight Mentor © {new Date().getFullYear()} • Acolhimento e Orientação Emocional para Estudantes Pré-Vestibular.</p>
           <p className="text-[11px] text-slate-400">
             Todas as sessões são conduzidas por profissionais devidamente registrados e habilitados no Conselho Regional de Psicologia (CRP). Em caso de urgência emocional, ligue 188 (CVV).
           </p>

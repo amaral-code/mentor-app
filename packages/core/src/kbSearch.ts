@@ -189,6 +189,20 @@ export function buildKBFromQuiz(questions: QuizQuestion[]): KBEntry[] {
   }));
 }
 
+/**
+ * Duas palavras "casam" quando são iguais ou quando uma é o começo da
+ * outra E a menor tem 5 letras ou mais (plural, flexão).
+ *
+ * A regra antiga era "uma contém a outra", sem piso de tamanho. Com isso
+ * "mitose" casava com "mito", e a pergunta de biologia recebia como
+ * resposta a alegoria da caverna, de Platão.
+ */
+function palavrasCasam(a: string, b: string): boolean {
+  if (a === b) return true;
+  const [menor, maior] = a.length <= b.length ? [a, b] : [b, a];
+  return menor.length >= 5 && maior.startsWith(menor);
+}
+
 export function searchKB(message: string, kb: KBEntry[]): { entry: KBEntry; score: number } | null {
   const tokens = tokenize(message);
   if (tokens.length === 0) return null;
@@ -200,7 +214,7 @@ export function searchKB(message: string, kb: KBEntry[]): { entry: KBEntry; scor
     let score = 0;
     for (const token of tokens) {
       for (const kw of entry.keywords) {
-        if (kw.includes(token) || token.includes(kw)) {
+        if (palavrasCasam(kw, token)) {
           score++;
         }
       }

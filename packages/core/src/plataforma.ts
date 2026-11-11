@@ -42,6 +42,22 @@ export interface Plataforma {
    * Web: `visibilitychange`. Mobile: `AppState`.
    */
   aoIrParaSegundoPlano(aoSair: () => void): () => void;
+  /**
+   * Endereço com que o app foi aberto (link do e-mail, convite de liga,
+   * código de turma). Web: `location.href` no boot. Mobile: a URL do deep
+   * link (`Linking.getInitialURL`). String vazia quando não há.
+   */
+  urlInicial(): string;
+  /**
+   * Origem pública do app, para montar links de volta (redefinição de
+   * senha, convites). Web: `location.origin`. Mobile: o domínio do site.
+   */
+  origem(): string;
+  /**
+   * Avisa quando a conexão cai ou volta. Devolve a função que desfaz o
+   * registro. Web: eventos `online`/`offline`. Mobile: NetInfo.
+   */
+  aoMudarConexao(aoMudar: (online: boolean) => void): () => void;
 }
 
 const PADRAO: Plataforma = {
@@ -53,6 +69,9 @@ const PADRAO: Plataforma = {
     throw new Error('abrirUrl sem plataforma instalada: chame configurarPlataforma no boot do app.');
   },
   aoIrParaSegundoPlano: () => () => {},
+  urlInicial: () => '',
+  origem: () => '',
+  aoMudarConexao: () => () => {},
 };
 
 /*

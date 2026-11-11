@@ -199,5 +199,5 @@ tela usa e o contrato original não previa.
 - `migracoes.test.mjs` — a 013 aplicada em Postgres real, colunas novas e
   `check` de `origem`.
 
-Modelo padrão: `gemini-1.5-flash` nas duas rotas, trocável por
+Modelo padrão: `gemini-flash-latest` nas duas rotas, trocável por
 `GEMINI_MODEL_CHAT` / `GEMINI_MODEL_VISION` sem deploy.

@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient, type SupportedStorage } from '@supabase/supabase-js';
 import { supabaseUrl, supabaseAnonKey } from '@mentor/core/runtimeConfig';
+import { registrarLeitorDeSessao } from '@mentor/core/backendAuth';
 
 /*
  * URL e chave vem de `runtimeConfig` (Environment Variables lidas em
@@ -61,3 +62,11 @@ export function getSupabase(): SupabaseClient | null {
 export function isSupabaseConfigured(): boolean {
   return !!(supabaseUrl() && supabaseAnonKey());
 }
+
+/* O núcleo monta os cabeçalhos do back-end, mas só este pacote sabe ler
+   a sessão. Registrar ao carregar o módulo garante que toda chamada de
+   IA saia autenticada assim que existir cliente. */
+registrarLeitorDeSessao(async () => {
+  const { data } = (await getSupabase()?.auth.getSession()) ?? { data: { session: null } };
+  return data.session?.access_token ?? null;
+});

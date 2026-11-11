@@ -124,7 +124,7 @@ export function EssayPage() {
     try {
       await runCorrection(text, tema, false);
     } catch (e) {
-      setToast('Erro na correção: ' + (e instanceof Error ? e.message : 'erro desconhecido'), 'error');
+      setToast(e instanceof Error && e.message ? e.message : 'Erro na correção. Tente de novo.', 'error');
     } finally {
       setIsCorrecting(false);
     }
@@ -247,7 +247,7 @@ export function EssayPage() {
       const correction = await runCorrection(challengeText, theme?.tema, true);
       setChallengeCorrection(correction);
     } catch (e) {
-      setToast('Erro na correção: ' + (e instanceof Error ? e.message : 'erro desconhecido'), 'error');
+      setToast(e instanceof Error && e.message ? e.message : 'Erro na correção. Tente de novo.', 'error');
     } finally {
       setChallengeIsCorrecting(false);
     }

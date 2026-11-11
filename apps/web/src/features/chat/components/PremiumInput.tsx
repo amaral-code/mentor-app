@@ -164,7 +164,7 @@ export const PremiumInput = memo(function PremiumInput({
                 <kbd className="font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-700 font-semibold">Ctrl + Enter</kbd>
                 {' '}para enviar
               </span>
-              <span className="hidden md:inline font-medium text-slate-500">Midnight Mentor IA © 2025</span>
+              <span className="hidden md:inline font-medium text-slate-500">Midnight Mentor IA © {new Date().getFullYear()}</span>
             </div>
           </div>
         </div>

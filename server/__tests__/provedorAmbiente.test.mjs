@@ -73,7 +73,7 @@ describe('provedor e modelo lidos do ambiente', () => {
   it('respeita gemini quando pedido de propria vontade', async () => {
     const d = await saude({ AI_PROVIDER: 'gemini' });
     expect(d.provider).toBe('gemini');
-    expect(d.model).toBe('gemini-2.0-flash');
+    expect(d.model).toBe('gemini-flash-latest');
   });
 
   it('respeita gemini mesmo sujo', async () => {

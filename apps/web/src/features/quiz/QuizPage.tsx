@@ -27,7 +27,7 @@ type Stage = 'select' | 'topics' | 'playing' | 'result';
 
 const MAT_ICONS: Record<string, string> = {
   Matemática: '', Português: '', Biologia: '', Física: '', Química: '',
-  História: '', Geografia: '', Filosofia: '', Inglês: '🇬🇧', Redação: '',
+  História: '', Geografia: '', Filosofia: '', Inglês: '', Redação: '',
 };
 
 const MATERIAS = ['Matemática', 'Português', 'Biologia', 'Física', 'Química', 'História', 'Geografia', 'Filosofia', 'Inglês', 'Redação'];
@@ -942,6 +942,14 @@ export function QuizPage() {
             </div>
           </div>
 
+          {/* Botão desabilitado sem explicação parecia defeito: o aluno
+              escolhia a matéria, via o botão apagado e não sabia o que
+              faltava. */}
+          {selectedTopics.length === 0 && !generating && (
+            <p className="text-sm font-semibold text-slate-500 pt-1" role="status">
+              Escolha pelo menos um tópico acima para liberar o quiz.
+            </p>
+          )}
           <div className="flex gap-2 pt-2">
             <button onClick={() => startQuiz()} disabled={selectedTopics.length === 0 || generating} className="btn-primary flex-1">
               {generating ? (

@@ -164,7 +164,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
       );
       return atualizado;
     } catch (e: any) {
-      app.setToast(e?.message || 'Nao foi possivel concluir o agendamento.', 'error');
+      app.setToast(e?.message || 'Não foi possível concluir o agendamento.', 'error');
       return null;
     } finally {
       set({ processandoPagamento: false });
@@ -179,7 +179,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
       useAppStore.getState().setToast('Consulta cancelada.', 'info');
     } catch {
       set({ agendamentos: anterior });
-      useAppStore.getState().setToast('Nao foi possivel cancelar. Tente de novo.', 'error');
+      useAppStore.getState().setToast('Não foi possível cancelar. Tente de novo.', 'error');
     }
   },
 
@@ -202,7 +202,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
         .setToast('Pedido enviado. O estudante precisa aprovar no app dele.', 'success');
       return true;
     } catch (e: any) {
-      useAppStore.getState().setToast(e?.message || 'Nao foi possivel enviar o pedido.', 'error');
+      useAppStore.getState().setToast(e?.message || 'Não foi possível enviar o pedido.', 'error');
       return false;
     }
   },
@@ -216,7 +216,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
       await marketplaceRepository.responderVinculo(id, aceitar);
     } catch {
       set({ vinculos: anterior });
-      useAppStore.getState().setToast('Nao foi possivel responder ao pedido.', 'error');
+      useAppStore.getState().setToast('Não foi possível responder ao pedido.', 'error');
     }
   },
 

@@ -47,6 +47,50 @@ export function proximoStreak(ultimoAcesso: string, streakAtual: number, agora: 
   return ultimoAcesso === paraDiaLocal(ontem) ? streakAtual + 1 : 1;
 }
 
+/**
+ * Dia corrente no fuso de BRASÍLIA, como `AAAA-MM-DD`.
+ *
+ * É o relógio da ofensiva. O servidor (`dia_de_brasilia()`, migration
+ * 030) conta o dia assim, e a tela precisa contar igual: quando um
+ * contava em UTC e o outro em horário local, quem estudava depois das
+ * 21h via a ofensiva voltar para 1 a cada XP ganho.
+ */
+export function diaDeBrasilia(agora: Date = new Date()): string {
+  // en-CA formata como AAAA-MM-DD; o fuso faz a conversão sem depender
+  // do relógio do aparelho.
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(agora);
+}
+
+/** `AAAA-MM-DD` menos um dia, sem passar por fuso nenhum. */
+function diaAnterior(dia: string): string {
+  const [a, m, d] = dia.split('-').map(Number);
+  return new Date(Date.UTC(a, m - 1, d - 1)).toISOString().slice(0, 10);
+}
+
+/**
+ * O que fazer com a ofensiva quando o app abre.
+ *
+ * `null` quer dizer "não mexa": o último acesso já é hoje, ou está à
+ * frente (o servidor acabou de gravar). Antes, uma data à frente caía no
+ * "qualquer buraco recomeça" e zerava a sequência de quem estava em dia.
+ */
+export function ofensivaAoAbrir(
+  ultimoAcesso: string,
+  streakAtual: number,
+  hoje: string = diaDeBrasilia(),
+): { lastAccessDate: string; streak: number } | null {
+  if (ultimoAcesso && ultimoAcesso >= hoje) return null;
+  return {
+    lastAccessDate: hoje,
+    streak: ultimoAcesso === diaAnterior(hoje) ? streakAtual + 1 : 1,
+  };
+}
+
 export const MOOD_LABEL: Record<string, string> = {
   stress: 'Estressado', anxiety: 'Ansioso', sadness: 'Triste', tired: 'Cansado',
   demotivated: 'Desmotivado', focused: 'Focado', motivated: 'Motivado',
