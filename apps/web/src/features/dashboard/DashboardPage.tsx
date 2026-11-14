@@ -1,8 +1,9 @@
+import { EstrelaCadente } from '../../shared/ui/IconesMentor';
 import { Fragment, useEffect, useMemo, useState, useSyncExternalStore, memo, useRef, useCallback } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { listContainer, listItem } from '../../shared/lib/motionPresets';
 import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
-import { BarChart3, BookOpen, Camera, Check, Frown, Moon, Target, Timer, Trophy, X, Zap } from 'lucide-react';
+import { BarChart3, BookOpen, Camera, Check, Frown, Moon, Target, Timer, Trophy, X } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { FADIGA_ZERADA } from '@mentor/core/burnoutModel';
@@ -495,7 +496,7 @@ function TrilhaDoDia({
               <li className="relative z-10 w-full max-w-md my-3 rounded-[20px] border-2 border-ceu-500 bg-azul-50 shadow-lip-ceu p-4 space-y-3">
                 <p className="text-sm font-semibold text-slate-600 leading-relaxed">{tarefaAtual.descricao}</p>
                 <p className="flex items-center gap-1 text-sm font-extrabold text-amber-600">
-                  <Zap size={16} fill="currentColor" /> +20 XP
+                  <EstrelaCadente size={16} /> +20 XP
                 </p>
                 <button type="button" onClick={() => onTocar(tarefaAtual)} className="btn-ambar w-full h-12 uppercase">
                   Comprovar e concluir

@@ -207,9 +207,9 @@ export function textoLocalDescompressao(m: MetricasDescompressao, primeiroNome?:
 export function destaquesDaSemana(m: MetricasDescompressao): { rotulo: string; valor: string; nota: string }[] {
   return [
     {
-      rotulo: 'Dias que voce apareceu',
+      rotulo: 'Dias que você apareceu',
       valor: `${m.diasAtivos}/7`,
-      nota: m.diasAtivos >= 4 ? 'constancia acima da media' : 'cada dia conta',
+      nota: m.diasAtivos >= 4 ? 'constância acima da média' : 'cada dia conta',
     },
     {
       rotulo: 'Tempo longe da tela',
@@ -217,13 +217,13 @@ export function destaquesDaSemana(m: MetricasDescompressao): { rotulo: string; v
       nota: 'modo foco offline',
     },
     {
-      rotulo: 'Sono medio',
+      rotulo: 'Sono médio',
       valor: m.horasSonoMedia ? `${m.horasSonoMedia}h` : 'sem registro',
-      nota: m.horasSonoMedia >= 7 ? 'faixa saudavel' : 'da para melhorar sem culpa',
+      nota: m.horasSonoMedia >= 7 ? 'faixa saudável' : 'dá para melhorar sem culpa',
     },
     {
-      rotulo: 'Sequencia',
-      valor: `${m.streak} dias`,
+      rotulo: 'Sequência',
+      valor: m.streak === 1 ? '1 dia' : `${m.streak} dias`,
       nota: m.sessoesMadrugada > 0 ? `${m.sessoesMadrugada} noite(s) de madrugada` : 'nenhuma virada',
     },
   ];

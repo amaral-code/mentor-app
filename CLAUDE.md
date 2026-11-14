@@ -307,6 +307,76 @@ compatível com esse padrão.
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
 
+### 2026-11-16 (2) — Revisão de código
+- **Migration 030 — rodar no Supabase.** O teto diário de moedas do foco
+  virava o dia às 21h de Brasília (o `::date::timestamptz` da 011 volta a
+  data no fuso UTC) e somava pelo início da sessão: estudar à noite
+  furava as 500 moedas. Agora soma por `criado_em` (hora do pagamento) a
+  partir da meia-noite real de Brasília. Teste novo prova a virada.
+- Lint zerado (23 avisos). Dependências de `useEffect`: ações de store
+  entram no array; os que omitem de propósito (AudioPlayer, relatório
+  semanal) têm exceção com o motivo. `PainelCuidado` assinava a store do
+  marketplace inteira e re-renderizava a cada mudança: agora usa seletores.
+- DOMPurify 3.4.13 → 3.4.18 (vulnerabilidade crítica de XSS, via Mermaid).
+- Mais 11 consultas dos repositórios tipadas com os tipos gerados.
+
+### 2026-11-16 — M1: monorepo e núcleo compartilhado
+- **Monorepo** (npm workspaces + Turborepo). O app Vite foi para
+  `apps/web`; `api/`, `server/` e `supabase/` ficaram na raiz porque a
+  Vercel publica as funções de lá. `vercel.json` builda o workspace e
+  publica `apps/web/dist`. O `.env` continua na raiz (`envDir`).
+- **`@mentor/core`**: 36 módulos sem DOM (tipos, SRS, quiz, burnout,
+  ligas, IA, `runtimeConfig`...). `@mentor/core/plataforma` esconde
+  armazenamento, env do build, online, dev, `abrirUrl` e
+  `aoIrParaSegundoPlano`; fica em `globalThis` para sobreviver a
+  `vi.resetModules()`. `carregarConfigRuntime(origem)` aceita a URL do
+  site (o celular não tem "mesma origem").
+- **`@mentor/api`**: cliente Supabase (`configurarSupabase` para o storage
+  da sessão no celular), 12 repositórios e os serviços que falam com o
+  banco. **Tipos do banco gerados das migrations** (`gen:types`), com o
+  mesmo PGlite dos testes (`supabase/bancoLocal.mjs`); o CI falha se
+  estiverem velhos.
+- **`@mentor/state`**: as cinco stores. O `visibilitychange` da
+  telemetria saiu do topo do módulo: `registrarDescargaAoSair()` é
+  chamado em `main.tsx`. `activeTab` continua (o web depende dela).
+- `regraPontuacao` e `rotasVercel` passaram a varrer `packages/`.
+
+### 2026-11-15 — M0: fundação e segurança do repositório
+- **18 scripts em `tools/` tinham a chave `service_role` e senhas no
+  código.** Agora leem `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` do ambiente
+  (`tools/_ambiente.mjs`) e geram senha aleatória para o usuário
+  descartável. A chave continua no histórico: **precisa ser girada** (#18).
+- `scripts/verificar-segredos.mjs` decodifica cada JWT e falha se o papel
+  não for `anon`/`authenticated` (procurar o texto em base64 não serve:
+  muda conforme o alinhamento). Roda no CI.
+- Removidos `SESSAO-RESUMO.md` e os `.zip`; ID do projeto Supabase virou
+  placeholder nos docs.
+- CI no GitHub Actions: segredos, lint, tipos, testes e build.
+- `CONTRIBUTING.md`, `SECURITY.md`, templates de issue/PR, `CODEOWNERS`,
+  `scripts/proteger-main.sh`.
+- Ambientes: dev, Preview (Vercel, aponta para o Supabase de staging) e
+  Production. `wrangler.toml` ganhou `[env.staging]`/`[env.production]`;
+  `wrangler deploy` sem `--env` não atinge mais produção.
+  `scripts/migrar.sh` aplica migrations por ambiente.
+- ADR 001 (`docs/adr/`): app mobile em Expo/React Native, proposto.
+
+### 2026-11-14 — Ícones próprios (identidade)
+- Pedido do dono: o app não pode ser confundido com outro app de estudo.
+  O estilo de adesivo e as cores ficam; mudam os símbolos, que agora
+  saem do tema do produto, a noite de estudo.
+- `shared/ui/IconesMentor.tsx`: **ofensiva é uma lua que acende**
+  (`LuaOfensiva`, era a chama), **XP é uma estrela cadente**
+  (`EstrelaCadente`, era o raio) e **nível é um brasão com divisas**
+  (`BrasaoNivel`, era a estrela). Mesma assinatura dos ícones da lucide
+  e cor por `currentColor`.
+- **Não volte a usar `Flame`, `Zap` ou `Star` para ofensiva, XP e
+  nível.** Estrela de avaliação do psicólogo e raio de "energia" seguem
+  sendo os da biblioteca: o significado é outro.
+- Desenho aprovado no Figma, página "Fundamentos", componentes
+  `Ícone/…` (14 ícones). Só os três acima entraram no código; flâmula
+  das ligas, pedra da trilha, moeda e os demais ainda são só desenho.
+- Rótulos do relatório semanal acentuados ("Sono médio", "Sequência").
+
 ### 2026-11-10 — Revisão geral: o que estava quebrado
 - Revisão completa do app, a pedido do dono. Só correção: nenhuma
   funcionalidade nova além de "esqueci minha senha".
@@ -366,59 +436,6 @@ principal, regra de permissão. Mais recente no topo.
   "De Novembro"; o Perfil não diz mais "dados salvos apenas no navegador".
 - A chave `service_role` saiu dos **18** scripts de `tools/` (não era só
   um). Eles leem `SUPABASE_SERVICE_KEY` do ambiente.
-
-### 2026-11-16 (2) — Revisão de código
-- **Migration 030 — rodar no Supabase.** O teto diário de moedas do foco
-  virava o dia às 21h de Brasília (o `::date::timestamptz` da 011 volta a
-  data no fuso UTC) e somava pelo início da sessão: estudar à noite
-  furava as 500 moedas. Agora soma por `criado_em` (hora do pagamento) a
-  partir da meia-noite real de Brasília. Teste novo prova a virada.
-- Lint zerado (23 avisos). Dependências de `useEffect`: ações de store
-  entram no array; os que omitem de propósito (AudioPlayer, relatório
-  semanal) têm exceção com o motivo. `PainelCuidado` assinava a store do
-  marketplace inteira e re-renderizava a cada mudança: agora usa seletores.
-- DOMPurify 3.4.13 → 3.4.18 (vulnerabilidade crítica de XSS, via Mermaid).
-- Mais 11 consultas dos repositórios tipadas com os tipos gerados.
-
-### 2026-11-16 — M1: monorepo e núcleo compartilhado
-- **Monorepo** (npm workspaces + Turborepo). O app Vite foi para
-  `apps/web`; `api/`, `server/` e `supabase/` ficaram na raiz porque a
-  Vercel publica as funções de lá. `vercel.json` builda o workspace e
-  publica `apps/web/dist`. O `.env` continua na raiz (`envDir`).
-- **`@mentor/core`**: 36 módulos sem DOM (tipos, SRS, quiz, burnout,
-  ligas, IA, `runtimeConfig`...). `@mentor/core/plataforma` esconde
-  armazenamento, env do build, online, dev, `abrirUrl` e
-  `aoIrParaSegundoPlano`; fica em `globalThis` para sobreviver a
-  `vi.resetModules()`. `carregarConfigRuntime(origem)` aceita a URL do
-  site (o celular não tem "mesma origem").
-- **`@mentor/api`**: cliente Supabase (`configurarSupabase` para o storage
-  da sessão no celular), 12 repositórios e os serviços que falam com o
-  banco. **Tipos do banco gerados das migrations** (`gen:types`), com o
-  mesmo PGlite dos testes (`supabase/bancoLocal.mjs`); o CI falha se
-  estiverem velhos.
-- **`@mentor/state`**: as cinco stores. O `visibilitychange` da
-  telemetria saiu do topo do módulo: `registrarDescargaAoSair()` é
-  chamado em `main.tsx`. `activeTab` continua (o web depende dela).
-- `regraPontuacao` e `rotasVercel` passaram a varrer `packages/`.
-
-### 2026-11-15 — M0: fundação e segurança do repositório
-- **18 scripts em `tools/` tinham a chave `service_role` e senhas no
-  código.** Agora leem `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` do ambiente
-  (`tools/_ambiente.mjs`) e geram senha aleatória para o usuário
-  descartável. A chave continua no histórico: **precisa ser girada** (#18).
-- `scripts/verificar-segredos.mjs` decodifica cada JWT e falha se o papel
-  não for `anon`/`authenticated` (procurar o texto em base64 não serve:
-  muda conforme o alinhamento). Roda no CI.
-- Removidos `SESSAO-RESUMO.md` e os `.zip`; ID do projeto Supabase virou
-  placeholder nos docs.
-- CI no GitHub Actions: segredos, lint, tipos, testes e build.
-- `CONTRIBUTING.md`, `SECURITY.md`, templates de issue/PR, `CODEOWNERS`,
-  `scripts/proteger-main.sh`.
-- Ambientes: dev, Preview (Vercel, aponta para o Supabase de staging) e
-  Production. `wrangler.toml` ganhou `[env.staging]`/`[env.production]`;
-  `wrangler deploy` sem `--env` não atinge mais produção.
-  `scripts/migrar.sh` aplica migrations por ambiente.
-- ADR 001 (`docs/adr/`): app mobile em Expo/React Native, proposto.
 
 ### 2026-11-05 (2) — Mais vida no computador
 - Pedido do dono: no PC as telas pareciam vazias. Só interface, celular
