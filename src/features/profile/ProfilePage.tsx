@@ -1,5 +1,6 @@
+import { BrasaoNivel, EstrelaCadente, LuaOfensiva } from '../../shared/ui/IconesMentor';
 import { useState, useEffect } from 'react';
-import { Brain, Check, CheckCircle2, ClipboardList, Eye, EyeOff, Flame, Lightbulb, Lock, Moon, Star, XCircle, Zap } from 'lucide-react';
+import { Brain, Check, CheckCircle2, ClipboardList, Eye, EyeOff, Lightbulb, Lock, Moon, XCircle, Zap } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
@@ -140,7 +141,7 @@ export function ProfilePage() {
         <h1 className="mt-3 text-2xl md:text-3xl font-black text-tinta-900">{session?.nome || 'Usuário'}</h1>
         <p className="text-sm font-semibold text-slate-500">{session?.email || ''}</p>
         <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-extrabold text-azul-600 bg-azul-100 px-3 py-1 rounded-full">
-          <Star size={14} fill="currentColor" /> Nível {nivel} · Aspirante
+          <BrasaoNivel size={14} /> Nível {nivel} · Aspirante
         </span>
       </div>
 
@@ -161,9 +162,9 @@ export function ProfilePage() {
           no formato "Cartão de número" do Figma. */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Ofensiva', value: `${gamification.streak}d`, Icone: Flame, cor: 'bg-amber-500 border-amber-500', texto: 'text-amber-600' },
-          { label: 'XP total', value: gamification.xp.toLocaleString('pt-BR'), Icone: Zap, cor: 'bg-ceu-500 border-ceu-500', texto: 'text-ceu-600' },
-          { label: 'Nível', value: nivel, Icone: Star, cor: 'bg-azul-600 border-azul-600', texto: 'text-azul-600' },
+          { label: 'Ofensiva', value: `${gamification.streak}d`, Icone: LuaOfensiva, cor: 'bg-amber-500 border-amber-500', texto: 'text-amber-600' },
+          { label: 'XP total', value: gamification.xp.toLocaleString('pt-BR'), Icone: EstrelaCadente, cor: 'bg-ceu-500 border-ceu-500', texto: 'text-ceu-600' },
+          { label: 'Nível', value: nivel, Icone: BrasaoNivel, cor: 'bg-azul-600 border-azul-600', texto: 'text-azul-600' },
         ].map(({ label, value, Icone, cor, texto }) => (
           <div key={label} className={`rounded-2xl border-2 overflow-hidden text-center ${cor}`}>
             <p className="text-[11px] font-extrabold uppercase tracking-wider text-white py-1.5">{label}</p>

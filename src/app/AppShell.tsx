@@ -1,6 +1,7 @@
+import { BrasaoNivel, EstrelaCadente, LuaOfensiva } from '../shared/ui/IconesMentor';
 import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
-import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, ChevronRight, Flame, Headphones, House, LayoutGrid, LogOut, NotebookPen, PenLine, ShieldCheck, ShoppingBag, Star, Target, Timer, Trophy, User, Users, UsersRound, X, Zap } from 'lucide-react';
+import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, ChevronRight, Headphones, House, LayoutGrid, LogOut, NotebookPen, PenLine, ShieldCheck, ShoppingBag, Target, Timer, Trophy, User, Users, UsersRound, X } from 'lucide-react';
 import { MoonLogo } from '../shared/ui/MoonLogo';
 import { PainelLateral } from './PainelLateral';
 import { useAppStore } from '../stores/appStore';
@@ -100,7 +101,7 @@ function ChipsDeStatus({ compacto }: { compacto?: boolean }) {
   return (
     <div className={`flex items-center ${compacto ? 'gap-3' : 'justify-between w-full'}`}>
       <span className="flex items-center gap-1.5 px-2 py-1 rounded-xl" title={`${gamification.streak} dias seguidos de estudo`}>
-        <Flame
+        <LuaOfensiva
           size={22}
           className={acesa ? 'text-amber-500 motion-safe:animate-flame' : 'text-slate-300'}
           fill="currentColor"
@@ -112,14 +113,14 @@ function ChipsDeStatus({ compacto }: { compacto?: boolean }) {
         <span className="sr-only">{gamification.streak === 1 ? 'dia de ofensiva' : 'dias de ofensiva'}</span>
       </span>
       <span className="flex items-center gap-1.5 px-2 py-1 rounded-xl" title={`${gamification.xp} XP no total`}>
-        <Zap size={22} className="text-ceu-500" fill="currentColor" aria-hidden="true" />
+        <EstrelaCadente size={22} className="text-ceu-500" aria-hidden="true" />
         <span className="text-base font-black tabular-nums text-ceu-600">
           <AnimatedNumber value={gamification.xp} />
         </span>
         <span className="sr-only">XP</span>
       </span>
       <span className="flex items-center gap-1.5 px-2 py-1 rounded-xl" title={`Nível ${level}`}>
-        <Star size={22} className="text-azul-600" fill="currentColor" aria-hidden="true" />
+        <BrasaoNivel size={22} className="text-azul-600" aria-hidden="true" />
         <span className="sr-only">nível</span>
         <span className="text-base font-black tabular-nums text-azul-600">{level}</span>
       </span>

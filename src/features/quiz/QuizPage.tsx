@@ -1,8 +1,9 @@
+import { EstrelaCadente } from '../../shared/ui/IconesMentor';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem, avancar, springTap } from '../../shared/lib/motionPresets';
 import { BarraProgresso } from '../../shared/ui/AnimatedNumber';
-import { BarChart3, BookOpen, Check, Lightbulb, Target, TriangleAlert, Volume2, X, Zap } from 'lucide-react';
+import { BarChart3, BookOpen, Check, Lightbulb, Target, TriangleAlert, Volume2, X } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { Dificuldade, QuizQuestion, QuizResult } from '../../shared/types';
 import { generateQuizStructured, aiAvailable, NivelQuiz, explicarErroComTutor } from '../../shared/lib/aiService';
@@ -983,7 +984,7 @@ export function QuizPage() {
 
           <div className="grid grid-cols-3 gap-3 mt-6">
             {[
-              { titulo: 'XP ganhos', valor: `+${result.xpGanho}`, cor: 'bg-amber-500 border-amber-500 text-amber-600', Icone: Zap },
+              { titulo: 'XP ganhos', valor: `+${result.xpGanho}`, cor: 'bg-amber-500 border-amber-500 text-amber-600', Icone: EstrelaCadente },
               { titulo: 'Acertos', valor: `${result.acertos}/${result.total}`, cor: 'bg-emerald-500 border-emerald-500 text-emerald-600', Icone: Check },
               { titulo: 'Precisão', valor: `${pct}%`, cor: 'bg-ceu-500 border-ceu-500 text-ceu-600', Icone: Target },
             ].map(({ titulo, valor, cor, Icone }) => (

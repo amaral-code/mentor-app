@@ -1,5 +1,6 @@
+import { LuaOfensiva } from '../../shared/ui/IconesMentor';
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Flame, Loader2, Moon, ShieldCheck, Sparkles } from 'lucide-react';
+import { Loader2, Moon, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
 import { Modal } from '../../shared/ui/Modal';
@@ -193,7 +194,7 @@ function Conteudo() {
           <p className="text-[10px] text-slate-500">noites de madrugada</p>
         </div>
         <div className="glass-light rounded-xl py-3">
-          <Flame size={16} className="text-amber-600 mx-auto" />
+          <LuaOfensiva size={16} className="text-amber-600 mx-auto" />
           <p className="text-sm font-bold text-tinta-900 tabular-nums mt-1">{metricas.streak}</p>
           <p className="text-[10px] text-slate-500">dias seguidos</p>
         </div>

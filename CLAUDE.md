@@ -283,6 +283,23 @@ compatível com esse padrão.
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
 
+### 2026-11-14 — Ícones próprios (identidade)
+- Pedido do dono: o app não pode ser confundido com outro app de estudo.
+  O estilo de adesivo e as cores ficam; mudam os símbolos, que agora
+  saem do tema do produto, a noite de estudo.
+- `shared/ui/IconesMentor.tsx`: **ofensiva é uma lua que acende**
+  (`LuaOfensiva`, era a chama), **XP é uma estrela cadente**
+  (`EstrelaCadente`, era o raio) e **nível é um brasão com divisas**
+  (`BrasaoNivel`, era a estrela). Mesma assinatura dos ícones da lucide
+  e cor por `currentColor`.
+- **Não volte a usar `Flame`, `Zap` ou `Star` para ofensiva, XP e
+  nível.** Estrela de avaliação do psicólogo e raio de "energia" seguem
+  sendo os da biblioteca: o significado é outro.
+- Desenho aprovado no Figma, página "Fundamentos", componentes
+  `Ícone/…` (14 ícones). Só os três acima entraram no código; flâmula
+  das ligas, pedra da trilha, moeda e os demais ainda são só desenho.
+- Rótulos do relatório semanal acentuados ("Sono médio", "Sequência").
+
 ### 2026-11-10 — Revisão geral: o que estava quebrado
 - Revisão completa do app, a pedido do dono. Só correção: nenhuma
   funcionalidade nova além de "esqueci minha senha".

@@ -1,5 +1,6 @@
+import { LuaOfensiva } from '../shared/ui/IconesMentor';
 import { useMemo } from 'react';
-import { ChevronRight, Flame, Target, Trophy, Users } from 'lucide-react';
+import { ChevronRight, Target, Trophy, Users } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { TabId } from '../shared/types';
 
@@ -49,7 +50,7 @@ export function CartaoOfensiva() {
   return (
     <section className="cartao p-5" aria-label="Ofensiva">
       <div className="flex items-center gap-3">
-        <Flame size={44} className={acesa ? 'text-amber-500' : 'text-slate-300'} fill="currentColor" aria-hidden="true" />
+        <LuaOfensiva size={44} className={acesa ? 'text-amber-500' : 'text-slate-300'} fill="currentColor" aria-hidden="true" />
         <div>
           <p className="text-3xl font-black text-tinta-900 leading-none tabular-nums">{streak}</p>
           <p className="text-sm font-extrabold text-slate-500">{streak === 1 ? 'dia de ofensiva' : 'dias de ofensiva'}</p>
@@ -59,7 +60,7 @@ export function CartaoOfensiva() {
         {semana.map((d, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
             <span className={`w-8 h-8 rounded-full flex items-center justify-center ${d.ativo ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-300'}`}>
-              <Flame size={16} fill="currentColor" aria-hidden="true" />
+              <LuaOfensiva size={18} aria-hidden="true" />
             </span>
             <span className="text-[11px] font-extrabold text-slate-400">{d.rotulo}</span>
           </div>

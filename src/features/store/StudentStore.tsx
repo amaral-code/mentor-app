@@ -1,8 +1,9 @@
+import { EstrelaCadente, LuaOfensiva } from '../../shared/ui/IconesMentor';
 import { useMemo, useState } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';
 import { useAppStore } from '../../stores/appStore';
-import { Flame, Gift, Lightbulb, Lock, Target, Zap } from 'lucide-react';
+import { Gift, Lightbulb, Lock, Target } from 'lucide-react';
 import { useStoreStore } from '../../stores/storeStore';
 import { SHOP_ITEMS } from '../../shared/lib/storeCatalog';
 import { calcLevel } from '../../shared/lib/utils';
@@ -169,7 +170,7 @@ export function StudentStore() {
 
       {/* Como ganhar XP */}
       <div className="glass rounded-2xl p-5 border border-amber-500/10 bg-gradient-to-br from-amber-500/5 to-transparent">
-        <h3 className="text-sm font-bold text-tinta-900 mb-3 flex items-center gap-2"><Zap size={16} className="inline-block align-[-0.15em] text-amber-600" /> Como ganhar mais XP?</h3>
+        <h3 className="text-sm font-bold text-tinta-900 mb-3 flex items-center gap-2"><EstrelaCadente size={16} className="inline-block align-[-0.15em] text-amber-600" /> Como ganhar mais XP?</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600">
           <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center gap-2.5">
             <span className="text-lg">⏱</span> Complete ciclos de <b className="text-tinta-700">foco</b> na Companhia do Sagui
@@ -178,7 +179,7 @@ export function StudentStore() {
             <span className="text-lg"><Target size={16} className="inline-block align-[-0.15em] text-emerald-600" /></span> Acerte questões no <b className="text-tinta-700">Quiz</b> e nos desafios
           </div>
           <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center gap-2.5">
-            <span className="text-lg"><Flame size={16} className="inline-block align-[-0.15em] text-amber-600" /></span> Mantenha sua <b className="text-tinta-700">sequência</b> diária de estudos
+            <span className="text-lg"><LuaOfensiva size={16} className="inline-block align-[-0.15em] text-amber-600" /></span> Mantenha sua <b className="text-tinta-700">sequência</b> diária de estudos
           </div>
         </div>
       </div>
