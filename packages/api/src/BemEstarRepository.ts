@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
+import type { LinhaRpc } from './tiposBanco';
 import type {
   ClasseBurnout,
   EventoTelemetria,
@@ -96,7 +97,7 @@ export class BemEstarRepository {
     });
 
     if (error) exigir('registrar_burnout', error);
-    const row: any = Array.isArray(data) ? data[0] : data;
+    const row: LinhaRpc<'registrar_burnout'> | undefined = Array.isArray(data) ? data[0] : data;
     return { alertaId: row?.alerta_id ?? null };
   }
 

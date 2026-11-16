@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase } from './supabaseHelpers';
+import type { LinhaRpc } from './tiposBanco';
 import type { CarteiraFoco, ModoEscudo, SessaoOffline } from '@mentor/core/types';
 
 /**
@@ -79,7 +80,7 @@ export class FocoOfflineRepository {
     });
 
     if (error) exigir('creditar_moedas_foco', error);
-    const row: any = Array.isArray(data) ? data[0] : data;
+    const row: LinhaRpc<'creditar_moedas_foco'> | undefined = Array.isArray(data) ? data[0] : data;
     return {
       saldo: row?.saldo ?? 0,
       moedas: row?.moedas_creditadas ?? 0,

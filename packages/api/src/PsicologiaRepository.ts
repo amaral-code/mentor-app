@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase } from './supabaseHelpers';
+import type { LinhaRpc, Tables } from './tiposBanco';
 import type { EscopoConsentimento } from '@mentor/core/consentimento';
 
 /**
@@ -90,7 +91,7 @@ export class PsicologiaRepository {
       falhou('meus_consentimentos', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'meus_consentimentos'>) => ({
       id: r.id,
       alunoId: r.aluno_id,
       alunoNome: r.aluno_nome,
@@ -150,7 +151,7 @@ export class PsicologiaRepository {
       falhou('pacientes', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'pacientes'>) => ({
       alunoId: r.aluno_id,
       nome: r.nome,
       menorDe16: !!r.menor_de_16,
@@ -166,7 +167,7 @@ export class PsicologiaRepository {
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('bem_estar_paciente', { p_aluno: alunoId, p_dias: dias });
     if (error) exigir('bem_estar_paciente', error);
-    return (data ?? []).map((r: any) => ({ data: r.data, score: Number(r.score) || 0, classe: r.classe }));
+    return (data ?? []).map((r: LinhaRpc<'bem_estar_paciente'>) => ({ data: r.data, score: Number(r.score) || 0, classe: r.classe }));
   }
 
   async notas(alunoId: string): Promise<NotaProntuario[]> {
@@ -213,7 +214,7 @@ export class PsicologiaRepository {
       falhou('avaliacoes_recebidas', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'avaliacoes_recebidas'>) => ({
       nota: Number(r.nota) || 0,
       comentario: r.comentario ?? null,
       criadoEm: r.criado_em,
@@ -230,7 +231,7 @@ export class PsicologiaRepository {
       falhou('minhas_conversas', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'minhas_conversas'>) => ({
       psicologoId: r.psicologo_id,
       participanteId: r.participante_id,
       outroNome: r.outro_nome ?? '',
@@ -254,7 +255,7 @@ export class PsicologiaRepository {
       falhou('mensagens_apoio', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: Tables<'mensagens_apoio'>) => ({
       id: r.id,
       psicologoId: r.psicologo_id,
       participanteId: r.participante_id,

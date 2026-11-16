@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
+import type { LinhaRpc } from './tiposBanco';
 import { aiProxyToken, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
 import { normalizarCodigo } from '@mentor/core/vinculoCodigo';
 import type {
@@ -151,7 +152,7 @@ export class MarketplaceRepository {
       falhou('slots_livres', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({ inicio: r.inicio, fim: r.fim }));
+    return (data ?? []).map((r: LinhaRpc<'slots_livres'>) => ({ inicio: r.inicio, fim: r.fim }));
   }
 
   // =================================================================
@@ -431,7 +432,7 @@ export class MarketplaceRepository {
       falhou('meus_responsaveis', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'meus_responsaveis'>) => ({
       id: r.id,
       nome: r.responsavel ?? 'Responsável',
       email: r.email ?? '',

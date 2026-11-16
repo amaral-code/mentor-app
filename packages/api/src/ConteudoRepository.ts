@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
+import type { LinhaRpc } from './tiposBanco';
 import type { ModuloAudio, ProgressoAudio, RevisaoEspacada } from '@mentor/core/types';
 
 /**
@@ -143,7 +144,7 @@ export class ConteudoRepository {
     });
 
     if (error) exigir('registrar_revisao', error);
-    const r: any = Array.isArray(data) ? data[0] : data;
+    const r: LinhaRpc<'registrar_revisao'> | undefined = Array.isArray(data) ? data[0] : data;
     if (!r) return null;
 
     return {
