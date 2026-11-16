@@ -80,6 +80,9 @@ export function AudioPlayer({
     setPosicao(posicaoInicial);
     ultimoSalvo.current = posicaoInicial;
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    // So na troca de pilula. Com posicaoInicial, cada progresso salvo pelo
+    // pai (que atualiza essa prop) voltaria o audio para tras.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [src, textoFallback]);
 
   // Progresso estimado no modo voz nativa.
@@ -95,6 +98,10 @@ export function AudioPlayer({
       }
     }, 1000);
     return () => window.clearInterval(id);
+    // O relogio parte da posicao no instante do play. Com posicao nas
+    // dependencias, o intervalo seria recriado a cada segundo e o
+    // inicio recalculado; onFim/reportar mudam a cada render do pai.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [tocando, usandoVozNativa, duracao]);
 
   function alternar() {

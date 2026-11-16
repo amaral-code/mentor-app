@@ -1,17 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, FAQS } from '../kbSearch';
-import { QuizQuestion } from '../types';
-
-const mockQuestions: QuizQuestion[] = [
-  {
-    id: 'q1',
-    materia: 'Matemática',
-    enunciado: 'Qual é a fórmula da área do círculo?',
-    alternativas: ['πr²', '2πr', 'πd', 'r²'],
-    correta: 0,
-    explicacao: 'A área do círculo é π vezes o raio ao quadrado.',
-  },
-];
 
 describe('searchKB', () => {
   it('returns null for empty input', () => {

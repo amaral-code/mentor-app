@@ -239,7 +239,8 @@ export default function App() {
       }
     });
     return cancelar;
-  }, []);
+    // Setters da store: referencia estavel, o efeito continua rodando uma vez.
+  }, [setSession, setPersonas, setLogs, setNotas, setChatMessages, setActivePersonaId, setConversas, updateGamification]);
 
   /**
    * Chave da IA: unico dado que continua no localStorage de proposito.
@@ -257,7 +258,7 @@ export default function App() {
     const envApiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
     if (savedApiKey) setApiKey(savedApiKey);
     else if (envApiKey) setApiKey(envApiKey);
-  }, []);
+  }, [setApiKey]);
 
   /*
    * Streak diário (só aluno).

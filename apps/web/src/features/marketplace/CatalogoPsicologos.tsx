@@ -31,8 +31,10 @@ export function CatalogoPsicologos({ aluno, alertaId, tetoInicial }: CatalogoPro
   const [escolhido, setEscolhido] = useState<Psicologo | null>(null);
 
   useEffect(() => {
-    if (psicologos.length === 0) void carregarCatalogo();
-  }, []);
+    // Le o catalogo na hora (getState), e nao pela lista assinada acima:
+    // a intencao e carregar so na primeira abertura, nao a cada mudanca.
+    if (useMarketplaceStore.getState().psicologos.length === 0) void carregarCatalogo();
+  }, [carregarCatalogo]);
 
   const lista = useMemo(() => {
     const termo = busca.trim().toLowerCase();

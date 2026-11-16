@@ -47,7 +47,7 @@ export function CuidadoPage() {
   useEffect(() => {
     void carregarVinculos();
     void carregarNotificacoes();
-  }, []);
+  }, [carregarVinculos, carregarNotificacoes]);
 
   const pendentes = vinculos.filter((v) => v.status === 'pendente' && v.alunoId === session?.uid);
   const ativos = vinculos.filter((v) => v.status === 'ativo' && v.alunoId === session?.uid);

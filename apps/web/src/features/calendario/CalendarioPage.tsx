@@ -39,7 +39,7 @@ export function CalendarioPage() {
 
   useEffect(() => {
     if (!carregado) void carregarTudo();
-  }, [carregado]);
+  }, [carregado, carregarTudo]);
 
   const hoje = useMemo(() => limitarCargaDiaria(revisoes, TETO_DIARIO), [revisoes]);
   const agenda = useMemo(() => montarAgenda(revisoes, dias), [revisoes, dias]);

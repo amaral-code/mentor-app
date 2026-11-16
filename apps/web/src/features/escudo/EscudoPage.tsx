@@ -64,7 +64,7 @@ export function EscudoPage() {
 
   useEffect(() => {
     if (!carregado) void carregarTudo();
-  }, [carregado]);
+  }, [carregado, carregarTudo]);
 
   // Cronometro por diferenca de timestamp (ver comentario do topo).
   useEffect(() => {
@@ -73,7 +73,7 @@ export function EscudoPage() {
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, [escudo.ativo, escudo.inicio]);
+  }, [escudo.ativo, escudo.inicio, atualizarCronometro]);
 
   /**
    * Conta interrupcao quando a aba VOLTA a ficar visivel durante uma
@@ -98,7 +98,7 @@ export function EscudoPage() {
 
     document.addEventListener('visibilitychange', aoMudar);
     return () => document.removeEventListener('visibilitychange', aoMudar);
-  }, [escudo.ativo]);
+  }, [escudo.ativo, registrarInterrupcao, setToast]);
 
   const minutos = Math.floor(escudo.minutosDecorridos);
   const segundos = Math.floor((escudo.minutosDecorridos - minutos) * 60);

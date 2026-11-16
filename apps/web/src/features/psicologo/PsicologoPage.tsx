@@ -42,10 +42,11 @@ export function PsicologoPage() {
   // Quem e estudante entre os interlocutores: o resto e responsavel.
   const idsPacientes = useMemo(() => new Set(agendamentos.map((a) => a.alunoId)), [agendamentos]);
 
+  const uid = session?.uid;
   useEffect(() => {
-    if (!session) return;
-    void marketplaceRepository.carregarDisponibilidade(session.uid).then(setJanelas);
-  }, [session?.uid]);
+    if (!uid) return;
+    void marketplaceRepository.carregarDisponibilidade(uid).then(setJanelas);
+  }, [uid]);
 
   async function adicionar() {
     const sb = getSupabase();

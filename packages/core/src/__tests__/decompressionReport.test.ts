@@ -10,7 +10,6 @@ import {
 } from '../decompressionReport';
 import type { LogEntry, QuizResult, SessaoOffline } from '../types';
 
-const DIA = 86_400_000;
 const SEXTA = new Date('2026-03-13T18:00:00'); // sexta-feira
 
 function log(parcial: Partial<LogEntry>): LogEntry {

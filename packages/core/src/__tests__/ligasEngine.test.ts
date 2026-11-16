@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { joinLeague, postLeagueMessage, createStudyLeague, toggleGoalCompletion } from '../ligasEngine';
+import { joinLeague, createStudyLeague, toggleGoalCompletion } from '../ligasEngine';
 
 describe('ligasEngine', () => {
   it('inscreve o aluno na liga sem torná-la obrigatória', () => {

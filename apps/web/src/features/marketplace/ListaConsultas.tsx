@@ -34,7 +34,7 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
   useEffect(() => {
     void carregarConsultas();
     void psicologiaRepository.consultasAvaliadas().then(setAvaliadas);
-  }, []);
+  }, [carregarConsultas]);
 
   /* Quem avalia e quem foi atendido. O profissional nao se avalia, e
      consulta de falta nao diz nada sobre ele. */

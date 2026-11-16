@@ -42,7 +42,12 @@ interface Props {
 }
 
 export function PainelCuidado({ aluno }: Props) {
-  const { alertas, carregarAlertas, marcarAlertaVisto } = useMarketplaceStore();
+  // Seletores, e nao useMarketplaceStore() inteiro: sem eles o painel
+  // re-renderizava a cada mudanca de qualquer campo da store (agenda,
+  // catalogo, pagamento), nao so dos alertas.
+  const alertas = useMarketplaceStore((s) => s.alertas);
+  const carregarAlertas = useMarketplaceStore((s) => s.carregarAlertas);
+  const marcarAlertaVisto = useMarketplaceStore((s) => s.marcarAlertaVisto);
 
   const [burnout, setBurnout] = useState<IndiceBurnout[]>([]);
   const [offline, setOffline] = useState<SessaoOffline[]>([]);
@@ -59,7 +64,7 @@ export function PainelCuidado({ aluno }: Props) {
     );
     void focoOfflineRepository.listarSessoes(30, aluno.id).then(setOffline);
     void bemEstarRepository.listarRelatorios(3, aluno.id).then(setRelatorios);
-  }, [aluno.id]);
+  }, [aluno.id, carregarAlertas]);
 
   const atual = burnout.at(-1);
   const abertos = alertas.filter((a) => a.status === 'aberto' || a.status === 'visto');

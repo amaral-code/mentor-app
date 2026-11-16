@@ -150,6 +150,10 @@ function Conteudo() {
     return () => {
       cancelado = true;
     };
+    // Gera UMA vez por semana: `semanaProcessada` guarda a semana ja feita.
+    // Com relatorios/adicionarRelatorio/nome nas dependencias, salvar o
+    // relatorio reexecutaria o efeito e pediria outro texto a IA.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [metricas, apiKey]);
 
   const destaques = destaquesDaSemana(metricas);

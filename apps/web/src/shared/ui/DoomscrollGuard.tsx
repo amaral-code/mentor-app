@@ -76,7 +76,7 @@ export function DoomscrollGuard() {
     });
 
     return () => rastreador.parar();
-  }, [apiKey, quizResults, currentMood]);
+  }, [apiKey, quizResults, currentMood, mostrarIntervencao]);
 
   if (!intervencao) return null;
 

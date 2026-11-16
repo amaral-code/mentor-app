@@ -175,7 +175,7 @@ export function DashboardPage() {
         else regeneratePlan();
       })
       .catch(() => regeneratePlan());
-  }, []);
+  }, [recalcSSC, regeneratePlan]);
 
   /* Nível e progresso SEMPRE via calcLevel (fonte única): o campo level do
      servidor pode vir da fórmula plana antiga de quem não rodou a 008. */

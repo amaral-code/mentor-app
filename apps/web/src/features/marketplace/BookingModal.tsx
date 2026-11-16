@@ -41,13 +41,16 @@ export function BookingModal({ psicologo, aluno, alertaId, onClose }: BookingMod
   const [slotSelecionado, setSlotSelecionado] = useState<SlotAgenda | null>(null);
   const [carregandoAgenda, setCarregandoAgenda] = useState(false);
 
+  // So o id importa: o objeto do psicologo e recriado a cada render do
+  // catalogo, e recarregar a agenda por isso zeraria o dia escolhido.
+  const psicologoId = psicologo?.id;
   useEffect(() => {
-    if (!psicologo) return;
+    if (!psicologoId) return;
     setDiaSelecionado(null);
     setSlotSelecionado(null);
     setCarregandoAgenda(true);
-    void carregarAgenda(psicologo.id).finally(() => setCarregandoAgenda(false));
-  }, [psicologo?.id]);
+    void carregarAgenda(psicologoId).finally(() => setCarregandoAgenda(false));
+  }, [psicologoId, carregarAgenda]);
 
   const dias = useMemo(() => {
     if (!psicologo) return [];
