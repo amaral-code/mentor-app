@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore, persistir } from '@mentor/state/appStore';
-import { carregarDadosDoUsuario } from '@mentor/state/carregarDados';
 import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { userRepository } from '@mentor/api/UserRepository';
 import { hidratarCache } from '@mentor/api/rankingEngine';
-import { comTimeout, TIMEOUT_BOOT_MS } from '@mentor/core/comTimeout';
 import { getToday, proximoStreak } from '@mentor/core/utils';
 import { deveGerarRelatorio } from '@mentor/core/decompressionReport';
+import { iniciarCarga } from './carga';
 
 const AVISO_LENTO = 'Conexão lenta: mostrando o que já carregou. Puxe a tela para completar.';
 
@@ -31,7 +30,7 @@ export function useSessaoDoApp(): boolean {
       if (s) {
         uidCarregado.current = s.uid;
         setSession(s);
-        persistir(comTimeout(carregarDadosDoUsuario(), TIMEOUT_BOOT_MS, 'Carregar dados'), { mensagem: AVISO_LENTO });
+        persistir(iniciarCarga(), { mensagem: AVISO_LENTO });
       }
       setSessaoLida(true);
     });
@@ -43,7 +42,7 @@ export function useSessaoDoApp(): boolean {
       setSession(s);
       if (s) {
         hidratarCache({ perfil: { uid: s.uid, nome: s.nome, email: s.email, escolaId: s.escolaId ?? undefined, turmaId: s.turmaId ?? undefined } });
-        persistir(comTimeout(carregarDadosDoUsuario(), TIMEOUT_BOOT_MS, 'Carregar dados'), { mensagem: AVISO_LENTO });
+        persistir(iniciarCarga(), { mensagem: AVISO_LENTO });
       }
     });
   }, []);

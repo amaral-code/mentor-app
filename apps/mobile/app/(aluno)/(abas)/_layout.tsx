@@ -31,7 +31,9 @@ export default function LayoutAbas() {
         tabBarActiveTintColor: cor.ceu600,
         tabBarInactiveTintColor: cor.tinta500,
         tabBarLabelStyle: { fontWeight: '800', fontSize: 12 },
-        tabBarStyle: { borderTopWidth: 2, borderTopColor: cor.cinza200, minHeight: 60 },
+        tabBarStyle: largo
+          ? { width: 220, borderRightWidth: 2, borderRightColor: cor.cinza200 }
+          : { borderTopWidth: 2, borderTopColor: cor.cinza200, minHeight: 60 },
         sceneStyle: { backgroundColor: cor.branco },
       }}
     >
