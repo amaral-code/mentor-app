@@ -11,7 +11,7 @@ Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
 ```bash
 npm run dev      # app web na porta 5180 (já inclui o back-end /api)
 npm run build    # turbo: tsc -b && vite build do @mentor/web
-npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 781 testes
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 886 testes
 npm run lint     # oxlint (barra APIs de navegador em packages/*)
 npm run typecheck       # turbo: tsc em todos os workspaces
 npm run gen:types       # regera os tipos do banco a partir das migrations
@@ -28,6 +28,9 @@ precisam passar. O projeto tem baseline limpo — qualquer erro novo é seu.
 ## Arquitetura
 
 ```
+apps/mobile/              app Expo (@mentor/mobile): área do aluno no Android, iOS e web (M3)
+  app/                    rotas do Expo Router; portas por papel em app/_layout.tsx
+  modules/focus-shield/   Escudo de Dopamina nativo (Expo Module, Kotlin + Swift)
 apps/web/                 app Vite (@mentor/web)
   src/app/AppShell.tsx    sidebar (md+) + barra inferior e folha "Mais" (mobile), lazy import por aba
   src/App.tsx             gating: login -> troca de senha -> onboarding -> papel
@@ -56,7 +59,12 @@ funções**. Os testes do web instalam o adaptador web pelo
 `apps/web/vitest.config.ts`, então `vi.stubEnv` continua valendo.
 
 Navegação é **por estado** (`activeTab` no `appStore`), não por rota. Não há
-router: tudo vive em `/`.
+router: tudo vive em `/`. **No app mobile é o contrário**: Expo Router, uma
+rota por tela, e o papel decide quais rotas existem (`Stack.Protected`).
+
+No mobile, `plataforma().origemBackend()` é a URL do site
+(`EXPO_PUBLIC_SITE_URL`): sem ela `urlBackendIA('/generate')` vira um
+`fetch('/api/generate')` sem destino. No web é vazia (mesma origem).
 
 Papéis: `student`, `parent`, `teacher`, `educator`, `psychologist`, `admin`.
 Cada um cai numa árvore diferente em `App.tsx`.
@@ -292,6 +300,43 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-11-16 (2) — M3: funcionalidades do aluno no app nativo
+- **`apps/mobile`** (Expo SDK 58, Expo Router), com o mínimo do M2 que o
+  M3 precisava: plataforma mobile, sessão do Supabase no cofre do sistema
+  (expo-secure-store, em pedaços), login, troca de senha, primeiro acesso
+  compacto, abas do aluno e kit de UI com os tokens do visual lúdico.
+  Design system (NativeWind, #30), auth social (#32), onboarding completo
+  (#33) e EAS (#36) continuam no M2. README em `apps/mobile/README.md`.
+- Telas: Central (#37), Mentor (#38), Redação por foto (#39), Quiz e
+  Flashcards (#40), Revisões e agenda (#41), Modo Foco e FocusShield
+  (#42), Pílulas de áudio (#43), Caderno e Studio (#44), Ligas, mural e
+  ranking (#45), Bem-estar e crise (#46), Loja do Sagui (#47).
+- **Streaming do Mentor**: `/api/chat/completions` aceita `stream: true`
+  e devolve SSE (`server/chatStream.js`). O bloco ```frustracao``` nunca
+  sai num pedaço. O web continua no JSON inteiro até ganhar o leitor.
+- **Migration 031 — rodar no Supabase DEPOIS de publicar o app.** Sessão
+  de foco no relógio do servidor (`iniciar_sessao_foco`,
+  `encerrar_sessao_foco`); `creditar_moedas_foco` perde o EXECUTE para
+  quem está logado (um RPC com "now() menos 4 horas" pagava o teto do
+  dia). App velho em cache não credita moedas depois dela.
+- **Migration 032 — rodar no Supabase depois da 031.** `mensagens_liga`
+  no Realtime (as mensagens moravam em `ligas.dados` e uma apagava a
+  outra), `entrar_na_liga_por_codigo` (liga privada não tinha por onde
+  entrar), moderação no servidor nos dois chats e `denuncias_mensagem`
+  (3 denúncias de pessoas diferentes escondem a mensagem).
+- **Moderação corrigida**: `includes` fazia "cu" bloquear "cálculo",
+  "cubo", "curso", "cultura" e "escuta"; "vai estudar" e "some os
+  valores" eram bullying; "crente" estava na lista de palavrões.
+- Lógica nova nos pacotes, usada pelos dois apps: `carregarDados`,
+  `chatStream`, `textoFormatado`, `mentorLocal`, `painelAluno`,
+  `sessaoQuiz`, `flashcards`, `calendarioRevisoes`, `pomodoro`,
+  `roteiroPilula`, `mapaMental`, `estudioCaderno`, `ociosidade`,
+  `marcosXp`, `relatorioSemanal`, `ChatLigaRepository`, ranking paginado.
+- `regraPontuacao` passou a varrer `apps/mobile`. 886 testes.
+- **Não verificado em aparelho**: Kotlin/Swift do FocusShield, áudio com
+  a tela bloqueada, câmera e desempenho. As telas foram abertas no export
+  web do Expo com Supabase simulado. Precisa de development build (#36).
 
 ### 2026-11-16 — M1: monorepo e núcleo compartilhado
 - **Monorepo** (npm workspaces + Turborepo). O app Vite foi para
@@ -573,6 +618,13 @@ principal, regra de permissão. Mais recente no topo.
   revividas; safe-area no notch; zoom por pinça liberado.
 
 ## Pendências conhecidas
+
+- **App nativo nunca rodou num aparelho**: o FocusShield (Kotlin/Swift),
+  o áudio em segundo plano e a câmera precisam de um development build
+  (EAS, #36). Roteiro em `apps/mobile/modules/focus-shield/README.md`.
+- Texto do overlay de crise do app nativo precisa de revisão de psicólogo
+  antes das lojas (#46). Revisão das denúncias de chat é do painel da
+  escola (M6): hoje a mensagem só some com 3 denúncias.
 
 - A chave **`service_role` do Supabase** que estava em 18 scripts de `tools/`
   saiu do código (2026-11-15), mas continua no histórico do git, válida até
