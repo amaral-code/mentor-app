@@ -17,6 +17,7 @@ import {
   RascunhoSimulado,
 } from '@mentor/core/quizHistory';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
+import { MATERIAS_QUIZ, TOPICOS_POR_MATERIA } from '@mentor/core/sessaoQuiz';
 import { playCorrect, playError, playLevelUp } from '../../shared/lib/sfx';
 import { mascotStore } from '@mentor/state/mascotStore';
 import { XpMilestone } from '../../shared/ui/XpMilestone';
@@ -30,20 +31,9 @@ const MAT_ICONS: Record<string, string> = {
   História: '', Geografia: '', Filosofia: '', Inglês: '🇬🇧', Redação: '',
 };
 
-const MATERIAS = ['Matemática', 'Português', 'Biologia', 'Física', 'Química', 'História', 'Geografia', 'Filosofia', 'Inglês', 'Redação'];
-
-const TOPIC_MAP: Record<string, string[]> = {
-  'Matemática': ['Trigonometria', 'Funções', 'Geometria Plana', 'Geometria Espacial', 'Probabilidade', 'Estatística', 'Análise Combinatória', 'Matrizes', 'Logaritmos', 'Progressões'],
-  'Português': ['Crase', 'Concordância', 'Regência', 'Figuras de Linguagem', 'Interpretação Textual', 'Literatura Brasileira', 'Funções da Linguagem', 'Ortografia', 'Morfologia', 'Colocação Pronominal'],
-  'Biologia': ['Citologia', 'Genética', 'Ecologia', 'Fisiologia Humana', 'Botânica', 'Zoologia', 'Evolução', 'Microbiologia', 'Bioquímica', 'Imunologia'],
-  'Física': ['Mecânica', 'Termodinâmica', 'Óptica', 'Eletromagnetismo', 'Ondulatória', 'Hidrostática', 'Física Moderna', 'Cinemática', 'Dinâmica', 'Eletrodinâmica'],
-  'Química': ['Química Orgânica', 'Estequiometria', 'Soluções', 'Termoquímica', 'Eletroquímica', 'Cinética Química', 'Equilíbrio Químico', 'Atomística', 'Ligações Químicas', 'Funções Inorgânicas'],
-  'História': ['Brasil Colônia', 'Brasil Império', 'Era Vargas', 'Ditadura Militar', 'Revolução Francesa', 'Guerras Mundiais', 'Grécia Antiga', 'Roma Antiga', 'Independência do Brasil', 'República Velha'],
-  'Geografia': ['Geopolítica', 'Climatologia', 'Geomorfologia', 'Urbanização', 'População', 'Cartografia', 'Meio Ambiente', 'Hidrografia', 'Agricultura', 'Globalização'],
-  'Filosofia': ['Filosofia Antiga', 'Filosofia Medieval', 'Racionalismo', 'Empirismo', 'Ética', 'Política', 'Filosofia Contemporânea', 'Lógica', 'Estética', 'Existencialismo'],
-  'Inglês': ['Interpretação Textual', 'Verbos Irregulares', 'Tempos Verbais', 'Conjunções', 'Preposições', 'Voz Passiva', 'Condicionais', 'Pronomes', 'Cognatos', 'Vocabulário ENEM'],
-  'Redação': ['Estrutura Dissertativa', 'Repertório Sociocultural', 'Argumentação', 'Coesão Textual', 'Proposta de Intervenção', 'Introdução', 'Desenvolvimento', 'Conclusão', 'Temas ENEM', 'Citação'],
-};
+/* Matérias e tópicos vivem no @mentor/core: o app nativo oferece os mesmos. */
+const MATERIAS = MATERIAS_QUIZ;
+const TOPIC_MAP = TOPICOS_POR_MATERIA;
 
 /** Materias do bloco misto do simulado oficial (nucleo ENEM). */
 const MATERIAS_SIMULADO = ['Matemática', 'Português', 'Biologia', 'Física', 'Química', 'História', 'Geografia'];
