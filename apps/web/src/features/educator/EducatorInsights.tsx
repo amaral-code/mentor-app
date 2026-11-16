@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BarChart3, RefreshCw } from 'lucide-react';
-import { supabaseRepository, type InsightTurma } from '../../shared/storage/SupabaseRepository';
+import { supabaseRepository, type InsightTurma } from '@mentor/api/SupabaseRepository';
 import { ClassInsightCard } from './ClassInsightCard';
 
 const JANELAS = [12, 24, 48] as const;

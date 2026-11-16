@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, Fragment, memo } from 'react';
 import { Eye, EyeOff, GraduationCap, HeartHandshake, Lock, Mail, Presentation, School, User } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { userRepository } from '../../shared/storage/UserRepository';
-import { isSupabaseConfigured } from '../../shared/lib/supabase';
+import { userRepository } from '@mentor/api/UserRepository';
+import { isSupabaseConfigured } from '@mentor/api/supabase';
 import { UserRole } from '@mentor/core/types';
 import { ColorBlindnessToggle } from '../../shared/ui/ColorBlindnessToggle';
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LifeBuoy, Lock, Send } from 'lucide-react';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
-import type { MensagemApoio } from '../../shared/storage/PsicologiaRepository';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
+import type { MensagemApoio } from '@mentor/api/PsicologiaRepository';
 
 /**
  * UMA CONVERSA, DUAS PONTAS.

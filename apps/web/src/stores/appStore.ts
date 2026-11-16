@@ -19,8 +19,8 @@ import { calculateSSC } from '@mentor/core/sscCalculator';
 import { detectEmotion, getMoodColor } from '@mentor/core/emotionEngine';
 import { analyzeMoodWithAI } from '@mentor/core/aiService';
 import { generatePlan, XP_PER_TASK } from '@mentor/core/plannerEngine';
-import { userRepository } from '../shared/storage/UserRepository';
-import { supabaseRepository } from '../shared/storage/SupabaseRepository';
+import { userRepository } from '@mentor/api/UserRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { safeSet } from '@mentor/core/safeStorage';
 import { calcLevel, getToday } from '@mentor/core/utils';
 
@@ -271,7 +271,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Inventario vive em outro store. Sem limpar, o proximo aluno a entrar
     // no MESMO dispositivo (laboratorio da escola) via os itens do anterior.
     void import('./storeStore').then((m) => m.useStoreStore.getState().limpar()).catch(() => {});
-    void import('../shared/lib/rankingEngine').then((m) => m.limparCache?.()).catch(() => {});
+    void import('@mentor/api/rankingEngine').then((m) => m.limparCache?.()).catch(() => {});
     set({
       session: null,
       isAuthenticated: false,

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Crosshair, Play } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { supabaseRepository, DesempenhoTopico } from '../../shared/storage/SupabaseRepository';
-import { calcularEstatisticas } from '../../shared/lib/quizStats';
+import { supabaseRepository, DesempenhoTopico } from '@mentor/api/SupabaseRepository';
+import { calcularEstatisticas } from '@mentor/api/quizStats';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /**

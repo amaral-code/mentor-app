@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookOpenCheck, KeyRound, LogOut, Moon, Thermometer } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { docenteRepository } from '../../shared/storage/DocenteRepository';
+import { docenteRepository } from '@mentor/api/DocenteRepository';
 import { EducatorInsights } from './EducatorInsights';
 import { TermometroCognitivo } from './TermometroCognitivo';
 import { CodigosEscola } from './CodigosEscola';

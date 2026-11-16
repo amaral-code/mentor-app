@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, KeyRound, RefreshCw } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { docenteRepository } from '../../shared/storage/DocenteRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
+import { docenteRepository } from '@mentor/api/DocenteRepository';
 
 /**
  * CÓDIGOS DE ENTRADA: instituição e turmas.

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { salaFocoRepository } from '../../shared/storage/SalaFocoRepository';
+import { salaFocoRepository } from '@mentor/api/SalaFocoRepository';
 import { PING_INTERVALO_MS, minutosDeFoco, type PresencaSala } from '@mentor/core/salaFoco';
 
 /** De quanto em quanto tempo a lista de colegas e relida (20s). */

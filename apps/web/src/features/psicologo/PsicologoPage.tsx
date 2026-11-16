@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, LogOut, Moon, Plus, Stethoscope, Trash2 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
-import { getSupabase } from '../../shared/lib/supabase';
+import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
+import { getSupabase } from '@mentor/api/supabase';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
 import type { JanelaDisponibilidade } from '@mentor/core/types';
 import { PainelPacientes } from './PainelPacientes';

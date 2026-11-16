@@ -9,7 +9,7 @@ import { FADIGA_ZERADA } from '@mentor/core/burnoutModel';
 import { getSSCColor, getSSCLabel } from '@mentor/core/sscCalculator';
 import { MicroTask, QuizResult } from '@mentor/core/types';
 import { calcLevel, getToday, MOOD_LABEL, MOOD_COLOR } from '@mentor/core/utils';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { safeSet } from '@mentor/core/safeStorage';
 import { AppIcon, MoodIcon } from '../../shared/ui/AppIcon';
 import { BurnoutCard } from './BurnoutCard';

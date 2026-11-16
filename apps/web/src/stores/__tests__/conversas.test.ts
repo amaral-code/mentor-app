@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../appStore';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 
 /**
  * Threads do Mentor (migration 016).

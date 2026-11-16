@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mentor/api": "*",
     "@mentor/core": "*",
     "@supabase/supabase-js": "^2.110.8",
     "browser-image-compression": "^2.0.2",

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EyeOff, RefreshCw, Thermometer } from 'lucide-react';
-import { termometroRepository } from '../../shared/storage/TermometroRepository';
+import { termometroRepository } from '@mentor/api/TermometroRepository';
 import {
   AMOSTRA_MINIMA,
   ROTULO_CALOR,

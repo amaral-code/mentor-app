@@ -9,9 +9,9 @@ import type {
   RevisaoEspacada,
   SessaoOffline,
 } from '@mentor/core/types';
-import { bemEstarRepository } from '../shared/storage/BemEstarRepository';
-import { focoOfflineRepository } from '../shared/storage/FocoOfflineRepository';
-import { conteudoRepository } from '../shared/storage/ConteudoRepository';
+import { bemEstarRepository } from '@mentor/api/BemEstarRepository';
+import { focoOfflineRepository } from '@mentor/api/FocoOfflineRepository';
+import { conteudoRepository } from '@mentor/api/ConteudoRepository';
 import {
   extrairFeatures,
   preverBurnout,

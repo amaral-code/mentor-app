@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Brain, Check, CheckCircle2, ClipboardList, Eye, EyeOff, Flame, Lightbulb, Lock, Moon, Star, XCircle, Zap } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { userRepository } from '../../shared/storage/UserRepository';
-import { getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { userRepository } from '@mentor/api/UserRepository';
+import { getEscolasCadastradas, getTurmasCadastradas } from '@mentor/api/rankingEngine';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { calcLevel } from '@mentor/core/utils';
 import { AcessibilidadePanel } from '../../shared/ui/AcessibilidadePanel';
 import { SecaoResponsaveis } from './SecaoResponsaveis';

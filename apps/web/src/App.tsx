@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { LazyMotion } from 'motion/react';
 import { useAppStore, persistir } from './stores/appStore';
-import { userRepository } from './shared/storage/UserRepository';
-import { supabaseRepository } from './shared/storage/SupabaseRepository';
+import { userRepository } from '@mentor/api/UserRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { comTimeout, TIMEOUT_BOOT_MS } from '@mentor/core/comTimeout';
 import { safeGet } from '@mentor/core/safeStorage';
 import { AuthPage } from './features/auth/AuthPage';
@@ -53,7 +53,7 @@ import { getToday, proximoStreak } from '@mentor/core/utils';
  */
 const featuresAnimacao = () => import('motion/react').then((mod) => mod.domMax);
 import { useStoreStore } from './stores/storeStore';
-import { hidratarCache } from './shared/lib/rankingEngine';
+import { hidratarCache } from '@mentor/api/rankingEngine';
 import { useBemEstarStore } from './stores/bemEstarStore';
 import { deveGerarRelatorio } from '@mentor/core/decompressionReport';
 

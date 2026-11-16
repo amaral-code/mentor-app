@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EyeOff, ShieldCheck, UserRoundCheck } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
-import type { Consentimento } from '../../shared/storage/PsicologiaRepository';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
+import type { Consentimento } from '@mentor/api/PsicologiaRepository';
 import {
   DIAS_PADRAO,
   DURACOES,

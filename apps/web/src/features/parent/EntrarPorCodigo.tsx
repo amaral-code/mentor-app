@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
-import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
+import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
 import { CODIGO_TAMANHO, codigoValido, normalizarCodigo, soHexadecimal } from '@mentor/core/vinculoCodigo';
 
 /**

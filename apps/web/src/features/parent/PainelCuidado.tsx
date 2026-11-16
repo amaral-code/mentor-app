@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, BellRing, HeartPulse, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
-import { bemEstarRepository } from '../../shared/storage/BemEstarRepository';
-import { focoOfflineRepository } from '../../shared/storage/FocoOfflineRepository';
+import { bemEstarRepository } from '@mentor/api/BemEstarRepository';
+import { focoOfflineRepository } from '@mentor/api/FocoOfflineRepository';
 import { COR_CLASSE, ROTULO_CLASSE, FADIGA_ZERADA } from '@mentor/core/burnoutModel';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
 import { ListaConsultas } from '../marketplace/ListaConsultas';

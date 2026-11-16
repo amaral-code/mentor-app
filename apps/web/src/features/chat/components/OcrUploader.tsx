@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { ScanLine } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
-import { transcreverManuscrito } from '../../../shared/lib/ocrService';
+import { transcreverManuscrito } from '@mentor/api/ocrService';
 
 interface Props {
   apiKey: string;

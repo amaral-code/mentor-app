@@ -1,4 +1,4 @@
-import { getSupabase } from './supabase';
+import { getSupabase } from '@mentor/api/supabase';
 import { isDeepSeekProvider } from '@mentor/core/aiProvider';
 import { aiProxyToken, aiVisionModel, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
 import {

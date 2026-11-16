@@ -16,7 +16,7 @@ import {
   MINUTOS_POR_QUESTAO_SIMULADO,
   RascunhoSimulado,
 } from '@mentor/core/quizHistory';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { playCorrect, playError, playLevelUp } from '../../shared/lib/sfx';
 import { mascotStore } from '../../stores/mascotStore';
 import { XpMilestone } from '../../shared/ui/XpMilestone';

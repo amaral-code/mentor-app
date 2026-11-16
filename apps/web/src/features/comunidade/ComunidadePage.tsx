@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Check, Sparkles, User } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
-import { getProfile, getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
+import { getProfile, getEscolasCadastradas, getTurmasCadastradas } from '@mentor/api/rankingEngine';
 import type { CommunityMessage, Escola, Turma } from '@mentor/core/types';
 import { createStudyLeague, joinLeague, normalizeStudyLeague, canJoinMoreLeagues, type StudyLeague } from '@mentor/core/ligasEngine';
 import { LeagueDetail } from './LeagueDetail';
 import { EmptyState } from '../../shared/ui/EmptyState';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 /*

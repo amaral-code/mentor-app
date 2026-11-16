@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../appStore';
-import { userRepository } from '../../shared/storage/UserRepository';
+import { userRepository } from '@mentor/api/UserRepository';
 
 /**
  * Botao Sair (rodape da sidebar, ao lado do XP).

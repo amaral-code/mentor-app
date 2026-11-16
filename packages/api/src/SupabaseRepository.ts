@@ -1,4 +1,4 @@
-import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from './supabase';
 import { aiProxyToken, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
 import { hashEnunciado } from '@mentor/core/quizHistory';
 import type {

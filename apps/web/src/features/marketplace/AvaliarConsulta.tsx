@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
 
 /**
  * Avaliação de uma consulta que já aconteceu. O banco confere de novo

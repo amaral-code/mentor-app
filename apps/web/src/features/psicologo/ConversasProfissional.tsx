@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
-import type { Conversa as ConversaInfo } from '../../shared/storage/PsicologiaRepository';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
+import type { Conversa as ConversaInfo } from '@mentor/api/PsicologiaRepository';
 import { Conversa } from '../psicologia/Conversa';
 
 /**

@@ -1,4 +1,4 @@
-import type { DesempenhoTopico } from '../storage/SupabaseRepository';
+import type { DesempenhoTopico } from './SupabaseRepository';
 
 /**
  * ANALYTICS DO QUIZ - agregacao pura do placar por topico.

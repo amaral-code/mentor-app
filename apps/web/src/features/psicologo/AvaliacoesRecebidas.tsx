@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
-import type { AvaliacaoRecebida } from '../../shared/storage/PsicologiaRepository';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
+import type { AvaliacaoRecebida } from '@mentor/api/PsicologiaRepository';
 
 /**
  * O que os atendidos disseram. Sem nome, de propósito: o banco nem

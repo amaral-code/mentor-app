@@ -1,4 +1,4 @@
-import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSupabase, isSupabaseConfigured } from './supabase';
 
 /**
  * Mesmas garantias do SupabaseRepository, extraidas para os repositorios

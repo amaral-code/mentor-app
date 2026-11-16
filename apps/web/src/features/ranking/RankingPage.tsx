@@ -4,7 +4,7 @@ import { atrasoDoItem, MAX_STAGGER } from '../../shared/lib/motionPresets';
 import { Medal, TrendingUp, Trophy, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { ListSkeleton } from '../../shared/ui/Skeleton';
-import { getRankingData } from '../../shared/lib/rankingEngine';
+import { getRankingData } from '@mentor/api/rankingEngine';
 import { calcLevel } from '@mentor/core/utils';
 import type { RankingFilter, RankingData, RankingEntry } from '@mentor/core/types';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';

@@ -1,5 +1,5 @@
 import { Flame } from 'lucide-react';
-import type { InsightTurma } from '../../shared/storage/SupabaseRepository';
+import type { InsightTurma } from '@mentor/api/SupabaseRepository';
 
 interface Props {
   insight: InsightTurma;

@@ -8,7 +8,7 @@ import type {
   SlotAgenda,
   VinculoResponsavel,
 } from '@mentor/core/types';
-import { marketplaceRepository } from '../shared/storage/MarketplaceRepository';
+import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
 import { useAppStore } from './appStore';
 
 /**

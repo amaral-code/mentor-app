@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { KeyRound, Moon } from 'lucide-react';
-import { getSupabase } from '../../shared/lib/supabase';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { userRepository } from '../../shared/storage/UserRepository';
+import { getSupabase } from '@mentor/api/supabase';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
+import { userRepository } from '@mentor/api/UserRepository';
 import { useAppStore } from '../../stores/appStore';
 
 /**

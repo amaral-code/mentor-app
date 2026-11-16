@@ -1,4 +1,4 @@
-import type { ResumoMensal, ResumoSemanal } from '../storage/AcompanhamentoRepository';
+import type { ResumoMensal, ResumoSemanal } from './AcompanhamentoRepository';
 import type { StudentMonthlyRecord } from '@mentor/core/dropoutRisk';
 
 /**

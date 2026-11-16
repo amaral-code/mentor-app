@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { GraduationCap, Plus, Trash2, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { docenteRepository } from '../../shared/storage/DocenteRepository';
-import type { DocenteDaEscola, TurmaDoDocente } from '../../shared/storage/DocenteRepository';
+import { docenteRepository } from '@mentor/api/DocenteRepository';
+import type { DocenteDaEscola, TurmaDoDocente } from '@mentor/api/DocenteRepository';
 
 /**
  * QUEM LECIONA CADA TURMA (secretaria).

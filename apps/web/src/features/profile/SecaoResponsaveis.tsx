@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, RefreshCw, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
-import { userRepository } from '../../shared/storage/UserRepository';
+import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
+import { userRepository } from '@mentor/api/UserRepository';
 import { ehMenorDe16, formatarCodigo, validarDataNascimento } from '@mentor/core/vinculoCodigo';
 import type { ResponsavelVinculado } from '@mentor/core/types';
 

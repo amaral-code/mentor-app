@@ -11,7 +11,7 @@ import {
 } from '@mentor/core/bookingEngine';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { useAppStore } from '../../stores/appStore';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
 import { AvaliarConsulta } from './AvaliarConsulta';
 
 /**

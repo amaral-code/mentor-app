@@ -10,7 +10,7 @@ import {
   semAtividade,
   totaisDoPeriodo,
 } from '../acompanhamentoAluno';
-import type { ResumoMensal } from '../../storage/AcompanhamentoRepository';
+import type { ResumoMensal } from '../AcompanhamentoRepository';
 import { calculateDropoutRisk } from '@mentor/core/dropoutRisk';
 
 const mes = (iso: string, questoes: number, acertos: number, minutos = 60, dias = 5): ResumoMensal => ({

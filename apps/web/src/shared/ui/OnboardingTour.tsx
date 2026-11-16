@@ -3,7 +3,7 @@ import { useAppStore } from '../../stores/appStore';
 import { TabId } from '@mentor/core/types';
 import { Mascot } from './Mascot';
 import { AppIcon } from './AppIcon';
-import { supabaseRepository } from '../storage/SupabaseRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { safeSet } from '@mentor/core/safeStorage';
 
 interface Step {

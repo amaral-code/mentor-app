@@ -21,8 +21,8 @@ import type { DropoutProjection } from '@mentor/core/dropoutRisk';
 import { analyzeStudentData, aiAvailable } from '@mentor/core/aiService';
 import type { StudentRiskAnalysis } from '@mentor/core/aiService';
 import { useAppStore } from '../../stores/appStore';
-import { acompanhamentoRepository } from '../../shared/storage/AcompanhamentoRepository';
-import type { FichaAluno, MateriaResumo, ResumoMensal, ResumoSemanal } from '../../shared/storage/AcompanhamentoRepository';
+import { acompanhamentoRepository } from '@mentor/api/AcompanhamentoRepository';
+import type { FichaAluno, MateriaResumo, ResumoMensal, ResumoSemanal } from '@mentor/api/AcompanhamentoRepository';
 import {
   dadosSuficientes,
   faltaParaTendencia,
@@ -31,7 +31,7 @@ import {
   rotuloMes,
   semAtividade,
   totaisDoPeriodo,
-} from '../../shared/lib/acompanhamentoAluno';
+} from '@mentor/api/acompanhamentoAluno';
 
 type PeriodKey = 3 | 6 | 12;
 

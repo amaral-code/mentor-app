@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calcularEstatisticas } from '../quizStats';
-import type { DesempenhoTopico } from '../../storage/SupabaseRepository';
+import type { DesempenhoTopico } from '../SupabaseRepository';
 
 /**
  * Analytics do quiz.

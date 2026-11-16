@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
 
 /**
  * "VOCÊ TEM MENSAGEM" — a porta de entrada do aluno para a conversa.

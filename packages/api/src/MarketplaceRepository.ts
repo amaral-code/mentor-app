@@ -492,8 +492,11 @@ export class MarketplaceRepository {
    * A chave publica VAPID e publica por definicao (o nome nao mente); a
    * privada fica no worker. Sem ela configurada, o app simplesmente nao
    * oferece push e continua com e-mail e in-app.
+   *
+   * `userAgent` vem de quem chama (no web, `navigator.userAgent`): este
+   * pacote tambem roda no celular, onde `navigator` nao existe.
    */
-  async registrarPush(subscription: PushSubscription): Promise<void> {
+  async registrarPush(subscription: PushSubscription, userAgent = ''): Promise<void> {
     if (!clienteAtivo()) return;
     const sb = getSupabase()!;
     const uid = await uidAtual();
@@ -508,7 +511,7 @@ export class MarketplaceRepository {
         endpoint: json.endpoint,
         p256dh: json.keys.p256dh,
         auth: json.keys.auth,
-        user_agent: navigator.userAgent.slice(0, 200),
+        user_agent: userAgent.slice(0, 200),
       },
       { onConflict: 'endpoint' },
     );

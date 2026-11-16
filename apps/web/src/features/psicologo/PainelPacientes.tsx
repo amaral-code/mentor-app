@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FileLock2, HeartPulse, Lock, NotebookPen, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';
-import type { NotaProntuario, Paciente, PontoBemEstar } from '../../shared/storage/PsicologiaRepository';
-import { acompanhamentoRepository } from '../../shared/storage/AcompanhamentoRepository';
-import { totaisDoPeriodo } from '../../shared/lib/acompanhamentoAluno';
+import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
+import type { NotaProntuario, Paciente, PontoBemEstar } from '@mentor/api/PsicologiaRepository';
+import { acompanhamentoRepository } from '@mentor/api/AcompanhamentoRepository';
+import { totaisDoPeriodo } from '@mentor/api/acompanhamentoAluno';
 import { diasRestantes, rotuloEscopo } from '@mentor/core/consentimento';
 import { COR_CLASSE } from '@mentor/core/burnoutModel';
 import { formatarDataHora } from '@mentor/core/bookingEngine';

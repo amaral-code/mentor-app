@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppStore, persistir } from '../../stores/appStore';
 import { Nota } from '@mentor/core/types';
 import { playClick } from '../../shared/lib/sfx';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { Pencil, Sparkles, Trash2, X } from 'lucide-react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';

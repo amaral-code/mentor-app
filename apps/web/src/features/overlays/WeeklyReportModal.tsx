@@ -10,8 +10,8 @@ import {
   textoLocalDescompressao,
 } from '@mentor/core/decompressionReport';
 import { aiAvailable, gerarRelatorioDescompressao } from '@mentor/core/aiService';
-import { bemEstarRepository } from '../../shared/storage/BemEstarRepository';
-import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
+import { bemEstarRepository } from '@mentor/api/BemEstarRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import type { MetricasDescompressao } from '@mentor/core/types';
 
 /**

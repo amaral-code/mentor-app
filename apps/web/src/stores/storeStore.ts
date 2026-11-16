@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { useAppStore } from './appStore';
 import { SHOP_ITEMS } from '@mentor/core/storeCatalog';
 import { applyEquip, Inventory } from '@mentor/core/storeEngine';
-import { supabaseRepository } from '../shared/storage/SupabaseRepository';
+import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 
 /**
  * Inventario da Loja do Sagui.
