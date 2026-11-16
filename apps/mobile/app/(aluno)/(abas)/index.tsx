@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
+import { userRepository } from '@mentor/api/UserRepository';
+import { diasAteAProva } from '@mentor/core/primeiroAcesso';
 import { acertoPorMateria, atividadeDaSemana, mediaDeAcerto, progressoDeNivel } from '@mentor/core/painelAluno';
 import { getToday, MOOD_LABEL } from '@mentor/core/utils';
 import { useAppStore } from '@mentor/state/appStore';
@@ -39,6 +41,8 @@ export default function Central() {
   const carga = useEstadoCarga();
   const [planoCarregando, setPlanoCarregando] = useState(!plano);
   const [atualizando, setAtualizando] = useState(false);
+  const [dataProva, setDataProva] = useState<string | null>(null);
+  const faltam = diasAteAProva(dataProva);
   const { width } = useWindowDimensions();
   const duasColunas = width >= LARGURA_NOTEBOOK;
 
@@ -60,6 +64,8 @@ export default function Central() {
   useEffect(() => {
     void carregarPlano();
     if (!useBemEstarStore.getState().carregado) void useBemEstarStore.getState().carregarTudo();
+    // Data da prova do primeiro acesso (033): banco sem a coluna devolve null.
+    void userRepository.carregarDataProva().then(setDataProva);
   }, [carregarPlano]);
 
   async function atualizar() {
@@ -166,7 +172,12 @@ export default function Central() {
 
   return (
     <Tela
-      cabecalho={{ titulo: `Olá, ${nome}!`, subtitulo: 'Bora manter a ofensiva hoje?', cor: 'ceu', pose: 'acenando' }}
+      cabecalho={{
+        titulo: `Olá, ${nome}!`,
+        subtitulo: faltam !== null && faltam >= 0 ? (faltam === 0 ? 'É hoje! Respira e confia no que você estudou.' : `Faltam ${faltam} ${faltam === 1 ? 'dia' : 'dias'} para a prova.`) : 'Bora manter a ofensiva hoje?',
+        cor: 'ceu',
+        pose: 'acenando',
+      }}
       aoAtualizar={() => void atualizar()}
       atualizando={atualizando}
     >

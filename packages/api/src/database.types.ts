@@ -969,6 +969,9 @@ export type Database = {
           turno_estudo: string | null
           data_nascimento: string | null
           codigo_vinculo: string | null
+          curso_desejado: string | null
+          universidade_desejada: string | null
+          data_prova: string | null
         }
         Insert: {
           id: string
@@ -990,6 +993,9 @@ export type Database = {
           turno_estudo?: string | null
           data_nascimento?: string | null
           codigo_vinculo?: string | null
+          curso_desejado?: string | null
+          universidade_desejada?: string | null
+          data_prova?: string | null
         }
         Update: {
           id?: string
@@ -1011,6 +1017,9 @@ export type Database = {
           turno_estudo?: string | null
           data_nascimento?: string | null
           codigo_vinculo?: string | null
+          curso_desejado?: string | null
+          universidade_desejada?: string | null
+          data_prova?: string | null
         }
         Relationships: []
       }

@@ -279,6 +279,37 @@ export class UserRepository {
    * Usada pelo Perfil, para quem pulou a pergunta no onboarding ou
    * digitou errado. `false` quando o banco recusou (offline, RLS).
    */
+  /**
+   * Objetivo do primeiro acesso (migration 033): curso, universidade e
+   * data da prova. Banco sem a 033 devolve false e o app segue: o
+   * objetivo é opcional e ninguém fica preso no primeiro acesso por isso.
+   */
+  async salvarObjetivo(dados: { curso?: string; universidade?: string; dataProva?: string | null }): Promise<boolean> {
+    const sb = getSupabase();
+    if (!sb) return false;
+    const { data: auth } = await sb.auth.getUser();
+    if (!auth.user) return false;
+    const { error } = await sb
+      .from('perfis')
+      .update({
+        curso_desejado: dados.curso?.trim() || null,
+        universidade_desejada: dados.universidade?.trim() || null,
+        data_prova: dados.dataProva || null,
+      })
+      .eq('id', auth.user.id);
+    return !error;
+  }
+
+  /** Data da prova guardada (033), ou null. */
+  async carregarDataProva(): Promise<string | null> {
+    const sb = getSupabase();
+    if (!sb) return null;
+    const { data: auth } = await sb.auth.getUser();
+    if (!auth.user) return null;
+    const { data, error } = await sb.from('perfis').select('data_prova').eq('id', auth.user.id).maybeSingle();
+    return error ? null : (data?.data_prova ?? null);
+  }
+
   async salvarDataNascimento(iso: string): Promise<boolean> {
     const sb = getSupabase();
     if (!sb) return false;

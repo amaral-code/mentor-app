@@ -50,6 +50,7 @@ export const MIGRACOES = [
   '029_corrige_insights_escala.sql',
   '031_sessao_foco_relogio_servidor.sql',
   '032_chat_liga_tempo_real.sql',
+  '033_objetivo_do_aluno.sql',
 ];
 
 /** Cria o banco e aplica as migrations. Devolve a instancia do PGlite. */

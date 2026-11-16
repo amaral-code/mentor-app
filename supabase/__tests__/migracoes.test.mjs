@@ -435,6 +435,22 @@ describe('marketplace', () => {
   });
 });
 
+describe('objetivo do aluno (033)', () => {
+  it('o dono grava curso, universidade e data da prova; outro aluno nao', async () => {
+    await comoUsuario(aluno, `update public.perfis set curso_desejado = 'Medicina', universidade_desejada = 'UFMG', data_prova = current_date + 200 where id = $1`, [aluno]);
+    const r = await primeira(aluno, `select curso_desejado, universidade_desejada from public.perfis where id = $1`, [aluno]);
+    expect(r).toEqual({ curso_desejado: 'Medicina', universidade_desejada: 'UFMG' });
+    await comoUsuario(estranho, `update public.perfis set curso_desejado = 'Nada' where id = $1`, [aluno]);
+    expect((await primeira(aluno, `select curso_desejado from public.perfis where id = $1`, [aluno])).curso_desejado).toBe('Medicina');
+  });
+
+  it('data da prova com ano digitado errado e recusada', async () => {
+    await expect(
+      comoUsuario(aluno, `update public.perfis set data_prova = current_date + interval '20 years' where id = $1`, [aluno]),
+    ).rejects.toThrow(/fora do intervalo/);
+  });
+});
+
 describe('chat da liga, codigo e denuncia (032)', () => {
   let liga;
   const mandar = (uid, texto) =>
