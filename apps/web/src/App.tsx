@@ -1,3 +1,4 @@
+import { useFlagsStore } from '@mentor/state/flagsStore';
 import { rastrear } from './shared/lib/observabilidade';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { LazyMotion } from 'motion/react';
@@ -145,6 +146,8 @@ export default function App() {
       // depende deles - o dashboard mostra o indice de fadiga quando
       // chegarem.
       void useBemEstarStore.getState().carregarTudo();
+      // Feature flags (#69): a lista de funcionalidades ligadas para esta conta.
+      void useFlagsStore.getState().carregar();
       hidratarCache({ escolas, turmas });
 
       if (gam) updateGamification(gam);

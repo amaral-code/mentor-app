@@ -444,6 +444,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          chave: string
+          descricao: string
+          ativa: boolean
+          porcentagem: number
+          escolas: string[]
+          atualizado_em: string
+        }
+        Insert: {
+          chave: string
+          descricao?: string
+          ativa?: boolean
+          porcentagem?: number
+          escolas?: string[]
+          atualizado_em?: string
+        }
+        Update: {
+          chave?: string
+          descricao?: string
+          ativa?: boolean
+          porcentagem?: number
+          escolas?: string[]
+          atualizado_em?: string
+        }
+        Relationships: []
+      }
       focus_metrics: {
         Row: {
           id: string
@@ -1851,6 +1878,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      balde_da_flag: {
+        Args: {
+          p_user: string
+          p_chave: string
+        }
+        Returns: number
+      }
       bem_estar_paciente: {
         Args: {
           p_aluno: string
@@ -2148,6 +2182,10 @@ export type Database = {
           nao_lidas: number
           ativa: boolean
         }[]
+      }
+      minhas_flags: {
+        Args: Record<PropertyKey, never>
+        Returns: (string)[]
       }
       minhas_turmas: {
         Args: Record<PropertyKey, never>

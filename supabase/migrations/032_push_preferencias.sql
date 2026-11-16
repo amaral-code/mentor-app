@@ -60,6 +60,20 @@ create table if not exists public.push_inscricoes (
 );
 create index if not exists push_inscricoes_user_idx on public.push_inscricoes (user_id);
 
+-- A 010 criou `push_assinaturas` com o mesmo papel, mas nenhuma tela
+-- gravava nela. O que houver é copiado para cá, e ela fica marcada como
+-- substituída (não é apagada: apagar tabela não se desfaz).
+insert into public.push_inscricoes (user_id, endpoint, p256dh, auth, user_agent)
+select a.user_id, a.endpoint, a.p256dh, a.auth, a.user_agent
+  from public.push_assinaturas a
+ where a.endpoint ~ '^https://'
+   and length(a.p256dh) between 80 and 100
+   and length(a.auth) between 20 and 30
+on conflict (endpoint) do nothing;
+
+comment on table public.push_assinaturas is
+  'SUBSTITUÍDA por push_inscricoes (migration 032). Não usar; pode ser apagada depois de conferir que está vazia.';
+
 alter table public.push_inscricoes enable row level security;
 
 -- Ler e apagar a própria. Gravar só pela função: o endpoint é único, e

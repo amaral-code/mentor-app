@@ -487,37 +487,10 @@ export class MarketplaceRepository {
     if (error) exigir('marcarNotificacaoLida', error);
   }
 
-  /**
-   * Registra o navegador para receber push.
-   *
-   * A chave publica VAPID e publica por definicao (o nome nao mente); a
-   * privada fica no worker. Sem ela configurada, o app simplesmente nao
-   * oferece push e continua com e-mail e in-app.
-   *
-   * `userAgent` vem de quem chama (no web, `navigator.userAgent`): este
-   * pacote tambem roda no celular, onde `navigator` nao existe.
-   */
-  async registrarPush(subscription: PushSubscription, userAgent = ''): Promise<void> {
-    if (!clienteAtivo()) return;
-    const sb = getSupabase()!;
-    const uid = await uidAtual();
-    if (!uid) return;
+  /* registrarPush (tabela push_assinaturas) saiu: nenhuma tela chamava, e a
+     inscrição de push agora é `NotificacoesRepository.salvarInscricao`
+     (tabela push_inscricoes, migration 032). */
 
-    const json = subscription.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
-    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
-
-    const { error } = await sb.from('push_assinaturas').upsert(
-      {
-        user_id: uid,
-        endpoint: json.endpoint,
-        p256dh: json.keys.p256dh,
-        auth: json.keys.auth,
-        user_agent: userAgent.slice(0, 200),
-      },
-      { onConflict: 'endpoint' },
-    );
-    if (error) falhou('registrarPush', error);
-  }
 }
 
 export const marketplaceRepository = new MarketplaceRepository();
