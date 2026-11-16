@@ -1,0 +1,70 @@
+# Build interno e atualização OTA do app nativo (apps/mobile), a cada
+# merge na main que mexa no app ou nos pacotes que ele usa.
+#
+# Precisa de dois segredos no GitHub (Settings > Secrets > Actions):
+#   EXPO_TOKEN      token de robô da conta Expo da organização
+#   EAS_PROJECT_ID  id do projeto (sai do primeiro `npx eas init`)
+# Sem eles o job para no primeiro passo, com a mensagem dizendo o que falta.
+name: EAS (app nativo)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - 'server/chatStream.js'
+      - 'package-lock.json'
+  workflow_dispatch:
+    inputs:
+      perfil:
+        description: 'Perfil do eas.json'
+        default: preview
+        type: choice
+        options: [preview, production, development]
+
+concurrency:
+  group: eas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+      PERFIL: ${{ inputs.perfil || 'preview' }}
+    steps:
+      - name: Conferir segredos
+        run: |
+          if [ -z "$EXPO_TOKEN" ] || [ -z "$EAS_PROJECT_ID" ]; then
+            echo "::error::Defina EXPO_TOKEN e EAS_PROJECT_ID nos segredos do repositório (ver apps/mobile/README.md)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      # OTA primeiro: correção de JS chega em minutos a quem já tem o app.
+      - name: EAS Update
+        working-directory: apps/mobile
+        run: npx eas update --channel "$PERFIL" --environment "$PERFIL" --message "${{ github.event.head_commit.message || 'manual' }}" --non-interactive
+        env:
+          APP_VARIANT: ${{ env.PERFIL }}
+      # Build novo só sob pedido (botão "Run workflow" ou "[build]" na
+      # mensagem do commit): o JS já chegou pelo Update acima, e build a
+      # cada merge gastaria a cota do EAS. Quem mexer em código nativo
+      # (módulo, plugin, dependência nativa) põe "[build]" no commit.
+      - name: EAS Build
+        working-directory: apps/mobile
+        run: npx eas build --profile "$PERFIL" --platform all --non-interactive --no-wait
+        if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build]') }}
+        env:
+          APP_VARIANT: ${{ env.PERFIL }}

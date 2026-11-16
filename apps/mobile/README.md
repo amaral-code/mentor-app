@@ -24,6 +24,36 @@ npm run start --workspace @mentor/mobile
 `/api` (config, chat, redação, TTS). Supabase e provedor de IA vêm de
 `/api/config` em tempo de execução, como no web.
 
+## Builds internos e atualização OTA (EAS)
+
+Uma vez, com a conta Expo da organização (não pessoal):
+
+```bash
+cd apps/mobile
+npx eas login
+npx eas init                       # cria o projeto e mostra o projectId
+```
+
+Guarde o `projectId` como `EAS_PROJECT_ID` (variável local e segredo do
+GitHub) junto com um `EXPO_TOKEN` de robô. Daí:
+
+| Perfil | Para quê | Instala como |
+| --- | --- | --- |
+| `development` | quem desenvolve (Expo Dev Client) | "Mentor (dev)", APK / build interno |
+| `preview` | a equipe testar antes da loja | "Mentor (preview)", link de instalação |
+| `production` | lojas | "Midnight Mentor" |
+
+As três variantes convivem no mesmo celular (pacotes diferentes). A
+build preview sai com `npx eas build --profile preview --platform all`
+e cada pessoa da equipe instala pelo link que o EAS devolve (no iOS, o
+aparelho precisa estar cadastrado: `npx eas device:create`).
+
+Correção só de JavaScript chega sem passar pela loja: o workflow
+`.github/workflows/eas.yml` publica um `eas update` no canal `preview`
+a cada merge na `main` que mexa no app. Build novo só com "[build]" na
+mensagem do commit ou pelo botão do workflow: OTA nunca entrega código
+nativo novo (`runtimeVersion` segue a versão do app).
+
 ## Estrutura
 
 ```
