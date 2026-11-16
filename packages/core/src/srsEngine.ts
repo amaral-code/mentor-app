@@ -197,8 +197,8 @@ export function limitarCargaDiaria(
 export const ROTULO_NIVEL = [
   'Primeiro contato',
   'Reconhece',
-  'Lembra com esforco',
-  'Lembra rapido',
+  'Lembra com esforço',
+  'Lembra rápido',
   'Consolidado',
-  'Automatico',
+  'Automático',
 ];

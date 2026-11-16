@@ -32,12 +32,13 @@ export default function Flashcards() {
   const arrasto = useRef(new Animated.ValueXY()).current;
 
   const porId = useMemo(() => new Map(cartoes.map((c) => [c.id, c])), [cartoes]);
-  const atual = baralho.fila[0] ? porId.get(baralho.fila[0]) : undefined;
+  const idAtual = baralho.fila[0];
+  const atual = idAtual ? porId.get(idAtual) : undefined;
 
   useEffect(() => {
     arrasto.setValue({ x: 0, y: 0 });
     setVirado(false);
-  }, [baralho.fila[0], arrasto]);
+  }, [idAtual, arrasto]);
 
   function decidir(sabia: boolean) {
     void vibrar(sabia ? 'acerto' : 'toque');
