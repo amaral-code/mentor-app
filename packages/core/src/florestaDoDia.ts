@@ -104,9 +104,9 @@ export function duracaoDaFase(fase: Fase, reduzido: boolean): number {
   if (reduzido) return 0;
   switch (fase) {
     case 'subindo':
-      return 1100;
+      return 1800; // três ciclos de escalada (animacaoSagui)
     case 'entrando':
-      return 550;
+      return 1100; // DURACAO_DA_ENTRADA
     case 'saindo':
       return 450;
     default:

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
@@ -29,6 +29,7 @@ import {
   type Evento,
   type Fase,
 } from '@mentor/core/florestaDoDia';
+import { DURACAO_DA_ENTRADA, INICIO_DO_ZOOM, MOVIMENTOS, ZOOM_FINAL, trajetoDaEntrada, trajetoDaEscalada } from '@mentor/core/animacaoSagui';
 import { anunciar } from '../../ui/acessibilidade';
 import { Botao } from '../../ui/Botao';
 import { imagemSagui } from '../../ui/sagui';
@@ -62,70 +63,167 @@ function DesenhoArvore({ arvore, largura }: { arvore: Arvore; largura: number })
 
 /* ------------------------------------------------------------------ */
 
+/* Trajeto do core em sequência de withTiming: cada trecho dura a fração
+   de tempo que o core deu a ele. Trecho curtíssimo é a troca de braço
+   (espelho), que tem de ser instantânea. */
+function emSequencia(valores: number[], tempos: number[], totalMs: number, facilidade = Easing.inOut(Easing.quad)) {
+  const passos = valores.slice(1).map((v, i) => withTiming(v, { duration: Math.max(0, (tempos[i + 1] - tempos[i]) * totalMs), easing: facilidade }));
+  return withSequence(withTiming(valores[0], { duration: 0 }), ...passos);
+}
+
 function SaguiNoTronco({ fase, largura, alturaToca, todasFeitas }: { fase: Fase; largura: number; alturaToca: number; todasFeitas: boolean }) {
   const reduzido = useReducedMotion();
   const escala = largura / QUADRO_ARVORE.largura;
   const alturaArvore = QUADRO_ARVORE.altura * escala;
   const tamanho = Math.round(largura * 0.46);
   const toca = centroDaToca(alturaToca);
-  const yPorta = toca.y * escala - tamanho * 0.62;
-  const yChao = alturaArvore - tamanho * 0.95;
+  const tocaPx = { x: toca.x * escala, y: toca.y * escala };
+  const porta = { x: tocaPx.x + 4, y: tocaPx.y - tamanho * 0.62 };
+  const chao = alturaArvore - tamanho * 0.95;
 
-  const y = useSharedValue(yPorta);
+  const x = useSharedValue(porta.x);
+  const y = useSharedValue(porta.y);
+  const ex = useSharedValue(1);
+  const ey = useSharedValue(1);
   const giro = useSharedValue(0);
-  const tam = useSharedValue(1);
   const opac = useSharedValue(1);
 
   useEffect(() => {
-    const ms = (f: Fase) => duracaoDaFase(f, reduzido);
-    cancelAnimation(y);
-    if (todasFeitas) {
-      tam.value = 1;
+    [x, y, ex, ey, giro, opac].forEach((v) => cancelAnimation(v));
+    const parar = () => {
+      x.value = porta.x;
+      y.value = porta.y;
+      ex.value = 1;
+      ey.value = 1;
+      giro.value = 0;
       opac.value = 1;
-      y.value = reduzido ? yPorta : withRepeat(withTiming(yPorta - 10, { duration: 600 }), -1, true);
+    };
+    if (reduzido) {
+      parar();
+      if (fase === 'entrando' || fase === 'dentro') opac.value = 0;
+      return;
+    }
+    if (todasFeitas) {
+      parar();
+      const m = MOVIMENTOS.pular;
+      const tempos = m.quadros.map((qd) => qd.t);
+      y.value = withRepeat(emSequencia(m.quadros.map((qd) => porta.y + qd.y * tamanho), tempos, m.duracaoMs), -1);
+      ey.value = withRepeat(emSequencia(m.quadros.map((qd) => qd.escalaY), tempos, m.duracaoMs), -1);
       return;
     }
     if (fase === 'subindo') {
-      // Três puxadas no tronco, balançando o corpo a cada uma.
-      const passo = (yChao - yPorta) / 3;
-      const t = ms('subindo') / 3;
-      tam.value = 1;
+      const { pontos, duracaoMs } = trajetoDaEscalada(chao, porta.y, porta.x);
+      const tempos = pontos.map((p) => p.t);
+      x.value = porta.x;
       opac.value = 1;
-      y.value = yChao;
-      y.value = withSequence(
-        withTiming(yChao - passo, { duration: t, easing: Easing.out(Easing.quad) }),
-        withTiming(yChao - 2 * passo, { duration: t, easing: Easing.out(Easing.quad) }),
-        withTiming(yPorta, { duration: t, easing: Easing.out(Easing.quad) }),
-      );
-      giro.value = reduzido ? 0 : withSequence(withTiming(-8, { duration: t }), withTiming(8, { duration: t }), withTiming(0, { duration: t }));
-    } else if (fase === 'entrando' || fase === 'dentro') {
-      y.value = withTiming(toca.y * escala - tamanho / 2, { duration: ms('entrando') });
-      tam.value = withTiming(0.12, { duration: ms('entrando'), easing: Easing.in(Easing.quad) });
-      opac.value = withTiming(0, { duration: ms('entrando') });
+      y.value = emSequencia(pontos.map((p) => p.y), tempos, duracaoMs, Easing.out(Easing.quad));
+      ex.value = emSequencia(pontos.map((p) => p.escalaX), tempos, duracaoMs, Easing.linear);
+      ey.value = emSequencia(pontos.map((p) => p.escalaY), tempos, duracaoMs);
+      giro.value = emSequencia(pontos.map((p) => p.giro), tempos, duracaoMs);
+    } else if (fase === 'pronto') {
+      parar();
+      // Acena da porta, com uma pausa entre um aceno e outro.
+      const m = MOVIMENTOS.acenar;
+      giro.value = withRepeat(withSequence(emSequencia(m.quadros.map((qd) => qd.giro), m.quadros.map((qd) => qd.t), m.duracaoMs), withTiming(0, { duration: 1400 })), -1);
+    } else if (fase === 'dentro') {
+      // Já está lá dentro: invisível no buraco. Repetir a entrada aqui, com
+      // a câmera em zoom, fazia um sagui gigante cruzar a tela.
+      x.value = tocaPx.x - tamanho / 2;
+      y.value = tocaPx.y - tamanho / 2;
+      ex.value = 0.05;
+      ey.value = 0.05;
+      opac.value = 0;
+    } else if (fase === 'entrando') {
+      const pontos = trajetoDaEntrada(porta, tocaPx, tamanho);
+      const tempos = pontos.map((p) => p.t);
+      x.value = emSequencia(pontos.map((p) => p.x), tempos, DURACAO_DA_ENTRADA);
+      y.value = emSequencia(pontos.map((p) => p.y), tempos, DURACAO_DA_ENTRADA);
+      ex.value = emSequencia(pontos.map((p) => p.escalaX), tempos, DURACAO_DA_ENTRADA);
+      ey.value = emSequencia(pontos.map((p) => p.escalaY), tempos, DURACAO_DA_ENTRADA);
+      giro.value = emSequencia(pontos.map((p) => p.giro), tempos, DURACAO_DA_ENTRADA);
+      opac.value = emSequencia(pontos.map((p) => p.opacidade), tempos, DURACAO_DA_ENTRADA);
     } else if (fase === 'saindo') {
-      y.value = withTiming(yPorta, { duration: ms('saindo') });
-      tam.value = withTiming(1, { duration: ms('saindo'), easing: Easing.out(Easing.back(1.6)) });
-      opac.value = withTiming(1, { duration: ms('saindo') });
-    } else {
-      y.value = yPorta;
-      tam.value = 1;
-      opac.value = 1;
+      const ms = duracaoDaFase('saindo', false);
+      x.value = tocaPx.x - tamanho / 2;
+      y.value = tocaPx.y - tamanho / 2;
+      ex.value = 0.1;
+      ey.value = 0.1;
+      opac.value = 0;
+      giro.value = 0;
+      x.value = withTiming(porta.x, { duration: ms });
+      y.value = withTiming(porta.y, { duration: ms, easing: Easing.out(Easing.back(1.4)) });
+      ex.value = withTiming(1, { duration: ms });
+      ey.value = withTiming(1, { duration: ms });
+      opac.value = withTiming(1, { duration: ms / 2 });
     }
-  }, [fase, todasFeitas, reduzido, yPorta, yChao, toca.y, escala, tamanho, y, giro, tam, opac]);
+  }, [fase, todasFeitas, reduzido, porta.x, porta.y, chao, tamanho, tocaPx.x, tocaPx.y, x, y, ex, ey, giro, opac]);
 
   const estilo = useAnimatedStyle(() => ({
     opacity: opac.value,
-    transform: [{ translateY: y.value }, { rotate: `${giro.value}deg` }, { scale: tam.value }],
+    transform: [{ translateX: x.value }, { translateY: y.value }, { rotate: `${giro.value}deg` }, { scaleX: ex.value }, { scaleY: ey.value }],
   }));
-  const pose = todasFeitas || fase === 'subindo' ? 'pulando' : 'acenando';
+  const pose = todasFeitas ? 'pose_17' : fase === 'subindo' || fase === 'entrando' || fase === 'dentro' ? 'pulando' : 'pose_15';
   return (
-    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: toca.x * escala + 6 - (fase === 'entrando' || fase === 'dentro' ? tamanho / 2 + 6 : 0), top: 0, width: tamanho, height: tamanho }, estilo]}>
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: tamanho, height: tamanho, zIndex: 2 }, estilo]}>
       <Image source={imagemSagui(pose)} style={{ width: tamanho, height: tamanho, resizeMode: 'contain' }} accessible={false} />
     </Animated.View>
   );
 }
 
+/** Câmera: depois do mergulho, a árvore cresce em volta do buraco; na saída, volta. */
+function ArvoreComZoom({ fase, ativo, origem, children, largura, altura }: { fase: Fase; ativo: boolean; origem: { x: number; y: number }; children: ReactNode; largura: number; altura: number }) {
+  const reduzido = useReducedMotion();
+  const zoom = useSharedValue(1);
+  useEffect(() => {
+    cancelAnimation(zoom);
+    if (!ativo || reduzido) {
+      zoom.value = 1;
+      return;
+    }
+    if (fase === 'entrando') {
+      const espera = DURACAO_DA_ENTRADA * INICIO_DO_ZOOM;
+      zoom.value = withSequence(withTiming(1, { duration: espera }), withTiming(ZOOM_FINAL, { duration: DURACAO_DA_ENTRADA - espera, easing: Easing.in(Easing.quad) }));
+    } else if (fase === 'dentro') {
+      zoom.value = ZOOM_FINAL;
+    } else if (fase === 'saindo') {
+      zoom.value = withTiming(1, { duration: 450, easing: Easing.out(Easing.quad) });
+    } else {
+      zoom.value = 1;
+    }
+  }, [fase, ativo, reduzido, zoom]);
+  const estilo = useAnimatedStyle(() => ({ transform: [{ scale: zoom.value }] }));
+  return (
+    <Animated.View style={[{ width: largura, height: altura, transformOrigin: [origem.x, origem.y, 0], zIndex: ativo && fase !== 'pronto' ? 10 : 0 }, estilo]}>
+      {children}
+    </Animated.View>
+  );
+}
+
 /* ------------------------------------------------------------------ */
+
+/** Na missão, o sagui cai pelo buraco lá de cima e aterrissa de pé. */
+function SaguiAterrissando() {
+  const reduzido = useReducedMotion();
+  const y = useSharedValue(reduzido ? 0 : -260);
+  const ex = useSharedValue(reduzido ? 1 : 0.9);
+  const ey = useSharedValue(reduzido ? 1 : 1.1);
+  useEffect(() => {
+    if (reduzido) return;
+    const queda = 340;
+    y.value = withSequence(withTiming(-260, { duration: 300 }), withTiming(0, { duration: queda, easing: Easing.in(Easing.quad) }));
+    // Achata no impacto, estica de volta e assenta.
+    ex.value = withSequence(withTiming(0.9, { duration: 300 + queda }), withTiming(1.18, { duration: 90 }), withTiming(0.96, { duration: 120 }), withTiming(1, { duration: 140 }));
+    ey.value = withSequence(withTiming(1.1, { duration: 300 + queda }), withTiming(0.78, { duration: 90 }), withTiming(1.06, { duration: 120 }), withTiming(1, { duration: 140 }));
+  }, [reduzido, y, ex, ey]);
+  const estilo = useAnimatedStyle(() => ({
+    transform: [{ translateY: y.value }, { scaleX: ex.value }, { scaleY: ey.value }],
+  }));
+  return (
+    <Animated.View style={[{ alignSelf: 'center', transformOrigin: ['50%', '100%', 0] }, estilo]}>
+      <Image source={imagemSagui('estudando')} style={estilos.saguiDentro} accessible={false} />
+    </Animated.View>
+  );
+}
 
 function DentroDaToca({
   arvore,
@@ -154,7 +252,7 @@ function DentroDaToca({
   useEffect(() => {
     if (reduzido) return;
     abre.value = withTiming(1, { duration: 550, easing: Easing.inOut(Easing.quad) });
-    conteudo.value = withTiming(1, { duration: 700 });
+    conteudo.value = withTiming(1, { duration: 500 });
   }, [reduzido, abre, conteudo]);
   useEffect(() => {
     anunciar(`Dentro da toca: ${arvore.tarefa.titulo}`);
@@ -195,7 +293,7 @@ function DentroDaToca({
             <View style={estilos.topo}>
               <View style={{ flex: 1 }}>
                 <Texto variante="rotulo" cor={cor.ambar100}>
-                  Toca da árvore {arvore.indice + 1} de {total}
+                  Missão · árvore {arvore.indice + 1} de {total}
                 </Texto>
                 <Texto variante="titulo" cor={cor.branco} accessibilityRole="header">
                   {arvore.tarefa.titulo}
@@ -208,7 +306,7 @@ function DentroDaToca({
                 </Texto>
               </Pressable>
             </View>
-            <Image source={imagemSagui('estudando')} style={estilos.saguiDentro} accessible={false} />
+            <SaguiAterrissando />
 
             {passos.map((p, i) => {
               const marcado = marcados.has(p.id) || (p.daXp && feita);
@@ -326,8 +424,8 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
         const comSagui = a.indice === indiceSagui;
         const toca = centroDaToca(a.alturaToca);
         return (
-          <View key={a.tarefa.id} style={[estilos.linha, { flexDirection: a.lado === 'esquerda' ? 'row' : 'row-reverse' }]}>
-            <View style={{ width: largura, height: alturaArvore }}>
+          <View key={a.tarefa.id} style={[estilos.linha, { flexDirection: a.lado === 'esquerda' ? 'row' : 'row-reverse', zIndex: comSagui && fase !== 'pronto' ? 10 : 0 }]}>
+            <ArvoreComZoom fase={fase} ativo={comSagui} origem={{ x: toca.x * escala, y: toca.y * escala }} largura={largura} altura={alturaArvore}>
               <Pressable
                 onPress={() => entrar(a.indice)}
                 disabled={a.estado === 'feita'}
@@ -351,7 +449,7 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
                   <Ionicons name="checkmark" size={18} color={cor.branco} />
                 </View>
               ) : null}
-            </View>
+            </ArvoreComZoom>
             <View style={{ flex: 1, alignItems: a.lado === 'esquerda' ? 'flex-start' : 'flex-end' }}>
               <Texto variante="rotulo">Árvore {a.indice + 1}</Texto>
               <Texto

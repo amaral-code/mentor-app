@@ -18,6 +18,15 @@ import {
   type Fase,
   type Forma,
 } from '@mentor/core/florestaDoDia';
+import {
+  DURACAO_DA_ENTRADA,
+  INICIO_DO_ZOOM,
+  MOVIMENTOS,
+  ZOOM_FINAL,
+  trajetoDaEntrada,
+  trajetoDaEscalada,
+  type Ponto,
+} from '@mentor/core/animacaoSagui';
 
 /*
  * Floresta do dia: no lugar das bolinhas do Duolingo, uma árvore por
@@ -60,65 +69,106 @@ interface SaguiProps {
   todasFeitas: boolean;
 }
 
+/* Trajeto do core (pixels) para os quadros do motion. */
+function quadrosDoMotion(pontos: Ponto[]): { alvo: TargetAndTransition; tempos: number[] } {
+  return {
+    alvo: {
+      x: pontos.map((p) => p.x),
+      y: pontos.map((p) => p.y),
+      scaleX: pontos.map((p) => p.escalaX),
+      scaleY: pontos.map((p) => p.escalaY),
+      rotate: pontos.map((p) => p.giro),
+      opacity: pontos.map((p) => p.opacidade),
+    },
+    tempos: pontos.map((p) => p.t),
+  };
+}
+
+const POSE = (nome: string) => `/mascot/512/${nome}.png`;
+
 /**
  * O sagui no tronco. As posições saem do mesmo quadro do desenho, então
  * ele para exatamente ao lado da toca em qualquer tamanho de árvore.
+ *
+ * Subida: a pose "pulando" (um braço no alto) alternando com o espelho,
+ * braço esquerdo, braço direito. Na porta: a pose que acena. Entrada:
+ * agacha, pula sobre o buraco e mergulha girando. Tudo vem de
+ * @mentor/core/animacaoSagui; o app nativo toca os mesmos números.
  */
 function SaguiNoTronco({ fase, larguraArvore, alturaToca, reduzir, todasFeitas }: SaguiProps) {
   const escala = larguraArvore / QUADRO_ARVORE.largura;
   const alturaArvore = QUADRO_ARVORE.altura * escala;
   const tamanho = Math.round(larguraArvore * 0.46);
   const toca = centroDaToca(alturaToca);
-  const tocaX = toca.x * escala;
-  const tocaY = toca.y * escala;
+  const tocaPx = { x: toca.x * escala, y: toca.y * escala };
 
   // Na porta: ao lado do buraco, pendurado no tronco.
-  const naPorta = { x: tocaX + 6, y: tocaY - tamanho * 0.62, scale: 1, opacity: 1, rotate: 0 };
-  // No chão: pé da árvore, de onde a subida começa.
-  const noChao = { x: tocaX + 6, y: alturaArvore - tamanho * 0.95, scale: 1, opacity: 1, rotate: 0 };
-  // Dentro: encolhe para o centro da toca e some.
-  const dentro = { x: tocaX - tamanho / 2, y: tocaY - tamanho / 2, scale: 0.12, opacity: 0, rotate: 0 };
+  const porta = { x: tocaPx.x + 4, y: tocaPx.y - tamanho * 0.62 };
+  const chao = alturaArvore - tamanho * 0.95;
+  const parado: TargetAndTransition = { x: porta.x, y: porta.y, scaleX: 1, scaleY: 1, rotate: 0, opacity: 1 };
 
-  const segundos = (f: Fase) => duracaoDaFase(f, reduzir) / 1000;
-  let animar: TargetAndTransition = naPorta;
-  let transicao: Transition = { duration: 0 };
+  let pose = 'pose_15';
   let inicial: TargetAndTransition | false = false;
+  let animar: TargetAndTransition = parado;
+  let transicao: Transition = { duration: 0 };
+  let origem = '50% 100%';
 
-  if (todasFeitas) {
-    animar = { ...naPorta, y: [naPorta.y, naPorta.y - 10, naPorta.y] };
-    transicao = reduzir ? { duration: 0 } : { duration: 1.2, repeat: Infinity };
-  } else if (fase === 'subindo') {
-    inicial = noChao;
-    // Três "puxadas" no tronco, com o corpo balançando a cada uma.
-    const passo = (noChao.y - naPorta.y) / 3;
+  if (reduzir) {
+    animar = fase === 'entrando' || fase === 'dentro' ? { ...parado, opacity: 0 } : parado;
+  } else if (todasFeitas) {
+    // Plano fechado: comemora com a bandeira, pulando no lugar.
+    pose = 'pose_17';
+    const m = MOVIMENTOS.pular;
     animar = {
-      ...naPorta,
-      y: [noChao.y, noChao.y - passo, noChao.y - 2 * passo, naPorta.y],
-      rotate: [0, -8, 8, 0],
+      x: porta.x,
+      y: m.quadros.map((qd) => porta.y + qd.y * tamanho),
+      scaleX: m.quadros.map((qd) => qd.escalaX),
+      scaleY: m.quadros.map((qd) => qd.escalaY),
     };
-    transicao = { duration: segundos('subindo'), ease: 'easeOut' };
-  } else if (fase === 'entrando' || fase === 'dentro') {
-    animar = dentro;
-    transicao = { duration: segundos('entrando'), ease: 'easeIn' };
+    transicao = { duration: m.duracaoMs / 1000, times: m.quadros.map((qd) => qd.t), repeat: Infinity, repeatDelay: 0.6 };
+  } else if (fase === 'subindo') {
+    pose = 'pulando';
+    const { pontos, duracaoMs } = trajetoDaEscalada(chao, porta.y, porta.x);
+    const { alvo, tempos } = quadrosDoMotion(pontos);
+    inicial = { x: porta.x, y: chao, scaleX: 1, scaleY: 1, rotate: 0, opacity: 1 };
+    animar = alvo;
+    transicao = { duration: duracaoMs / 1000, times: tempos, ease: 'easeOut' };
+  } else if (fase === 'pronto') {
+    // Acena da porta, com uma pausa entre um aceno e outro.
+    const m = MOVIMENTOS.acenar;
+    animar = { ...parado, rotate: m.quadros.map((qd) => qd.giro) };
+    transicao = { duration: m.duracaoMs / 1000, times: m.quadros.map((qd) => qd.t), repeat: Infinity, repeatDelay: 1.4 };
+  } else if (fase === 'dentro') {
+    // Já está lá dentro: invisível no buraco. Repetir a entrada aqui, com
+    // a câmera em zoom, fazia um sagui gigante cruzar a tela.
+    pose = 'pulando';
+    animar = { x: tocaPx.x - tamanho / 2, y: tocaPx.y - tamanho / 2, scaleX: 0.05, scaleY: 0.05, rotate: 0, opacity: 0 };
+  } else if (fase === 'entrando') {
+    pose = 'pulando';
+    origem = '50% 50%';
+    const { alvo, tempos } = quadrosDoMotion(trajetoDaEntrada(porta, tocaPx, tamanho));
+    animar = alvo;
+    transicao = { duration: DURACAO_DA_ENTRADA / 1000, times: tempos, ease: 'easeInOut' };
   } else if (fase === 'saindo') {
-    inicial = dentro;
-    animar = naPorta;
-    transicao = { duration: segundos('saindo'), ease: 'backOut' };
+    // Sai da toca de um salto e volta para a porta.
+    inicial = { x: tocaPx.x - tamanho / 2, y: tocaPx.y - tamanho / 2, scaleX: 0.1, scaleY: 0.1, rotate: 0, opacity: 0 };
+    animar = parado;
+    transicao = { duration: duracaoDaFase('saindo', false) / 1000, ease: 'backOut' };
+    origem = '50% 50%';
   }
 
-  const pose = todasFeitas ? 'pulando' : fase === 'subindo' ? 'pulando' : 'acenando';
   return (
     <m.img
-      key={`${fase}-${todasFeitas}`}
-      src={`/assets/sagui_${pose}_2.png`}
+      key={`${fase}-${todasFeitas}-${reduzir}`}
+      src={POSE(pose)}
       alt=""
       width={tamanho}
       height={tamanho}
       initial={inicial}
       animate={animar}
       transition={transicao}
-      style={{ width: tamanho, height: tamanho, transformOrigin: '50% 50%' }}
-      className="absolute left-0 top-0 object-contain pointer-events-none select-none drop-shadow-sm"
+      style={{ width: tamanho, height: tamanho, transformOrigin: origem }}
+      className="absolute left-0 top-0 z-10 object-contain pointer-events-none select-none drop-shadow-sm"
     />
   );
 }
@@ -188,7 +238,7 @@ function DentroDaToca({ arvore, total, origem, reduzir, onComprovar, onSair }: T
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-extrabold uppercase tracking-widest text-amber-300">
-              Toca da árvore {arvore.indice + 1} de {total}
+              Missão · árvore {arvore.indice + 1} de {total}
             </p>
             <h2 id={idTitulo} ref={titulo} tabIndex={-1} className="text-2xl font-black text-white leading-tight mt-1 outline-none">
               {arvore.tarefa.titulo}
@@ -209,9 +259,16 @@ function DentroDaToca({ arvore, total, origem, reduzir, onComprovar, onSair }: T
           width={120}
           height={120}
           className="w-28 h-28 object-contain mx-auto my-4 drop-shadow-lg"
-          initial={reduzir ? false : { scale: 0.2, opacity: 0, y: -30 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          transition={{ delay: reduzir ? 0 : 0.35, type: 'spring', stiffness: 260, damping: 18 }}
+          /* Cai pelo buraco lá de cima e aterrissa de pé: achata no
+             impacto, estica de volta e assenta para estudar. */
+          initial={reduzir ? false : { y: -260, scaleX: 0.9, scaleY: 1.1, opacity: 0 }}
+          animate={
+            reduzir
+              ? { y: 0, opacity: 1 }
+              : { y: [-260, 0, 0, 0], scaleX: [0.9, 1.18, 0.96, 1], scaleY: [1.1, 0.78, 1.06, 1], opacity: [0, 1, 1, 1] }
+          }
+          transition={reduzir ? { duration: 0 } : { delay: 0.3, duration: 0.75, times: [0, 0.45, 0.72, 1], ease: 'easeIn' }}
+          style={{ transformOrigin: '50% 100%' }}
         />
 
         <ol className="space-y-3">
@@ -223,7 +280,7 @@ function DentroDaToca({ arvore, total, origem, reduzir, onComprovar, onSair }: T
                 key={p.id}
                 initial={reduzir ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduzir ? 0 : 0.45 + i * 0.12 }}
+                transition={{ delay: reduzir ? 0 : 0.9 + i * 0.14 }}
                 className={`rounded-[20px] border-2 p-4 ${
                   marcado ? 'bg-emerald-50 border-emerald-600' : liberado ? 'bg-amber-50 border-amber-200' : 'bg-amber-50/70 border-amber-200/60'
                 }`}
@@ -370,7 +427,27 @@ export function FlorestaDoDia({
           const escala = largura / QUADRO_ARVORE.largura;
           return (
             <li key={a.tarefa.id} className={`relative flex items-center gap-3 ${esquerda ? 'flex-row' : 'flex-row-reverse'}`}>
-              <div className="relative shrink-0" style={{ width: largura, height: alturaArvore }}>
+              <m.div
+                className={`relative shrink-0 ${comSagui && (fase === 'entrando' || fase === 'dentro' || fase === 'saindo') ? 'z-30' : ''}`}
+                style={{ width: largura, height: alturaArvore, transformOrigin: `${toca.x * escala}px ${toca.y * escala}px` }}
+                /* Câmera: depois do mergulho, a árvore cresce em volta do
+                   buraco até o escuro da toca encher a tela; na saída,
+                   o caminho inverso. */
+                animate={
+                  !comSagui || reduzir
+                    ? { scale: 1 }
+                    : fase === 'entrando'
+                      ? { scale: [1, 1, ZOOM_FINAL] }
+                      : fase === 'dentro'
+                        ? { scale: ZOOM_FINAL }
+                        : { scale: 1 }
+                }
+                transition={
+                  comSagui && fase === 'entrando' && !reduzir
+                    ? { duration: DURACAO_DA_ENTRADA / 1000, times: [0, INICIO_DO_ZOOM, 1], ease: 'easeIn' }
+                    : { duration: comSagui && fase === 'saindo' && !reduzir ? 0.45 : 0, ease: 'easeOut' }
+                }
+              >
                 <button
                   type="button"
                   onClick={() => entrar(a.indice)}
@@ -410,7 +487,7 @@ export function FlorestaDoDia({
                     +{XP_DA_TAREFA} XP
                   </span>
                 )}
-              </div>
+              </m.div>
 
               <div className={`flex-1 min-w-0 ${esquerda ? 'text-left' : 'text-right'}`}>
                 <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Árvore {a.indice + 1}</p>

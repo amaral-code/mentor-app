@@ -11,7 +11,7 @@ Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
 ```bash
 npm run dev      # app web na porta 5180 (já inclui o back-end /api)
 npm run build    # turbo: tsc -b && vite build do @mentor/web
-npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 953 testes
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 964 testes
 npm run lint     # oxlint (barra APIs de navegador em packages/*)
 npm run typecheck       # turbo: tsc em todos os workspaces
 npm run gen:types       # regera os tipos do banco a partir das migrations
@@ -316,6 +316,13 @@ principal, regra de permissão. Mais recente no topo.
   árvore com o aluno lá dentro.
 - Movimento reduzido: sem subida nem círculo, a toca só aparece.
 - Mobile: `TrilhaDoDia.tsx` virou `Comprovacao.tsx` (só o modal ficou).
+- **Animação do sagui** (`@mentor/core/animacaoSagui`): um movimento por
+  pose (26), só com transformação da arte original, sem desenho novo. A
+  escalada alterna "pulando" com o espelho dela (um braço de cada vez);
+  na porta ele acena (pose_15, o arquivo "acenando" na verdade medita);
+  a entrada agacha, pula e mergulha, e a câmera dá zoom no buraco antes
+  da missão abrir, onde ele cai de pé. O mergulho termina ANTES do zoom:
+  depois dele o sagui apareceria nove vezes maior.
 
 ### 2026-11-16 (3) — M2: app base Expo (Android, iOS e notebook)
 - **Design system** (#30): `@mentor/ui-tokens` é a fonte única das cores;
