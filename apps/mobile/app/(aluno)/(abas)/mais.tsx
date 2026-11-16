@@ -21,6 +21,7 @@ const SECOES: { rota: Href; titulo: string; texto: string; icone: NomeIcone; cor
   { rota: '/audio', titulo: 'Pílulas de áudio', texto: 'Três minutos de revisão para ouvir', icone: 'headset', cor: cor.laranja600 },
   { rota: '/ranking', titulo: 'Ranking', texto: 'Sua posição na turma, na escola e no geral', icone: 'podium', cor: cor.ambar600 },
   { rota: '/bem-estar', titulo: 'Bem-estar', texto: 'Índice de cansaço e relatório da semana', icone: 'leaf', cor: cor.esmeralda600 },
+  { rota: '/acessibilidade', titulo: 'Acessibilidade', texto: 'Alto contraste e cores para daltonismo', icone: 'accessibility', cor: cor.azul600 },
   { rota: '/loja', titulo: 'Loja do Sagui', texto: 'Troque moedas de foco por itens', icone: 'storefront', cor: cor.violeta600 },
 ];
 

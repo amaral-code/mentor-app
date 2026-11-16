@@ -11,6 +11,7 @@ import { precisaOnboarding } from '@mentor/core/onboardingLocal';
 import { destinoDaSessao, grupoDoPapel } from '@mentor/core/rotasPorPapel';
 import { useAppStore } from '@mentor/state/appStore';
 import { useSessaoDoApp } from '../src/sessao/useSessaoDoApp';
+import { useSincronizarContrasteDoSistema } from '../src/ui/preferenciasAcessibilidade';
 import { ouvirLinksDeEntrada, renovarSessaoComOApp } from '../src/sessao/entradaSocial';
 import { Toast } from '../src/ui/Basicos';
 import { OverlayCrise } from '../src/features/bemEstar/OverlayCrise';
@@ -26,6 +27,7 @@ import { cor } from '../src/ui/tema';
 export default function Raiz() {
   const [configPronta, setConfigPronta] = useState(false);
   const sessaoLida = useSessaoDoApp();
+  useSincronizarContrasteDoSistema();
   const autenticado = useAppStore((s) => s.isAuthenticated);
   const papel = useAppStore((s) => s.userRole);
   const trocarSenha = useAppStore((s) => !!s.session?.deveTrocarSenha);

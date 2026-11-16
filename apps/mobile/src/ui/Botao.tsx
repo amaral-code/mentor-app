@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type Vi
 import { Ionicons } from '@expo/vector-icons';
 import { Texto } from './Texto';
 import { ALVO_TOQUE, cor, LABIO, raio } from './tema';
+import { useAltoContraste } from './preferenciasAcessibilidade';
 
 export type VarianteBotao = 'primario' | 'secundario' | 'ambar' | 'sucesso' | 'ceu' | 'perigo' | 'fantasma';
 
@@ -49,7 +50,10 @@ export function Botao({
   compacto,
   estilo,
 }: Props) {
-  const v = VARIANTES[variante];
+  const alto = useAltoContraste();
+  const base = VARIANTES[variante];
+  // Alto contraste: o botão branco ganha borda escura (a cinza some em tela ao sol).
+  const v = alto && variante === 'secundario' ? { ...base, borda: cor.azul600, labio: cor.azul700 } : base;
   const inativo = desabilitado || carregando;
   return (
     <Pressable

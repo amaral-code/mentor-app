@@ -18,9 +18,11 @@ import { GraficoBarras } from '../../../src/ui/Graficos';
 import { Tela } from '../../../src/ui/Tela';
 import { Texto } from '../../../src/ui/Texto';
 import { cor, LARGURA_NOTEBOOK } from '../../../src/ui/tema';
+import { useCoresSinal } from '../../../src/ui/preferenciasAcessibilidade';
+import type { CoresSinal } from '@mentor/core/acessibilidadeCores';
 
-function corDoAcerto(pct: number): string {
-  return pct >= 70 ? cor.esmeralda500 : pct >= 40 ? cor.ambar500 : cor.vermelho500;
+function corDoAcerto(pct: number, sinal: CoresSinal): string {
+  return pct >= 70 ? sinal.acerto : pct >= 40 ? sinal.aviso : sinal.erro;
 }
 
 /**
@@ -39,6 +41,7 @@ export default function Central() {
   const logs = useAppStore((s) => s.logs);
   const quizzes = useAppStore((s) => s.quizResults);
   const carga = useEstadoCarga();
+  const sinal = useCoresSinal();
   const [planoCarregando, setPlanoCarregando] = useState(!plano);
   const [atualizando, setAtualizando] = useState(false);
   const [dataProva, setDataProva] = useState<string | null>(null);
@@ -148,7 +151,7 @@ export default function Central() {
         <Cartao estilo={{ gap: 10 }}>
           <View style={estilos.linha}>
             <Texto variante="subtitulo">Acertos por matéria</Texto>
-            {media !== null ? <Selo texto={`${media}% média`} corFundo={`${corDoAcerto(media)}1A`} corTexto={corDoAcerto(media)} /> : null}
+            {media !== null ? <Selo texto={`${media}% média`} corFundo={`${corDoAcerto(media, sinal)}1A`} corTexto={corDoAcerto(media, sinal)} /> : null}
           </View>
           {materias.map((m) => (
             <View key={m.materia} style={{ gap: 4 }} accessible accessibilityLabel={`${m.materia}: ${m.acertos} de ${m.total}, ${m.pct} por cento`}>
@@ -156,11 +159,11 @@ export default function Central() {
                 <Texto negrito numberOfLines={1} style={{ flex: 1 }}>
                   {m.materia}
                 </Texto>
-                <Texto negrito cor={corDoAcerto(m.pct)}>
+                <Texto negrito cor={corDoAcerto(m.pct, sinal)}>
                   {m.pct}%
                 </Texto>
               </View>
-              <Barra valor={m.pct} corBarra={corDoAcerto(m.pct)} altura={10} />
+              <Barra valor={m.pct} corBarra={corDoAcerto(m.pct, sinal)} altura={10} />
             </View>
           ))}
         </Cartao>

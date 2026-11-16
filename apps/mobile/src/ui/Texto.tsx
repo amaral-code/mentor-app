@@ -1,5 +1,6 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 import { cor } from './tema';
+import { useAltoContraste } from './preferenciasAcessibilidade';
 
 type Variante = 'titulo' | 'subtitulo' | 'corpo' | 'legenda' | 'rotulo' | 'numero';
 
@@ -18,12 +19,15 @@ interface Props extends TextProps {
  * uma palavra por linha; abaixo disso, quem precisa de letra grande tem.
  */
 export function Texto({ variante = 'corpo', cor: corTexto, centro, negrito, style, ...resto }: Props) {
+  // Alto contraste: o texto cinza (corpo, legenda, rótulo) vira tinta.
+  const alto = useAltoContraste();
   return (
     <Text
       maxFontSizeMultiplier={2}
       {...resto}
       style={[
         estilos[variante],
+        alto && !corTexto ? { color: cor.tinta900 } : null,
         corTexto ? { color: corTexto } : null,
         centro ? estilos.centro : null,
         negrito ? estilos.negrito : null,

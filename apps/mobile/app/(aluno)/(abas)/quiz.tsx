@@ -12,6 +12,7 @@ import { Cartao } from '../../../src/ui/Cartao';
 import { Tela } from '../../../src/ui/Tela';
 import { Texto } from '../../../src/ui/Texto';
 import { cor, LARGURA_NOTEBOOK, raio } from '../../../src/ui/tema';
+import { useCoresSinal } from '../../../src/ui/preferenciasAcessibilidade';
 
 const QUANTIDADES = [5, 10, 15];
 const NIVEIS: { id: NivelQuiz; rotulo: string }[] = [
@@ -40,6 +41,7 @@ function Chip({ texto, ativo, aoTocar }: { texto: string; ativo: boolean; aoToca
 export default function Quiz() {
   const params = useLocalSearchParams<{ materia?: string; topico?: string; revisao?: string; rapido?: string }>();
   const r = useRodadaQuiz();
+  const sinal = useCoresSinal();
   const { width } = useWindowDimensions();
   const duasColunas = width >= LARGURA_NOTEBOOK;
   const [selecionados, setSelecionados] = useState<string[]>([]);
@@ -156,7 +158,7 @@ export default function Quiz() {
             const certo = r.respostas[i] === q.correta;
             return (
               <View key={q.id} style={estilos.linhaGabarito}>
-                <Ionicons name={certo ? 'checkmark-circle' : 'close-circle'} size={22} color={certo ? cor.esmeralda600 : cor.vermelho600} />
+                <Ionicons name={certo ? 'checkmark-circle' : 'close-circle'} size={22} color={certo ? sinal.acerto : sinal.erro} />
                 <Texto style={{ flex: 1 }} numberOfLines={2}>
                   {i + 1}. {q.enunciado}
                 </Texto>
@@ -197,7 +199,7 @@ export default function Quiz() {
           const marcada = r.escolhida === i;
           const certa = respondida && i === q.correta;
           const errada = marcada && !certa;
-          const borda = certa ? cor.esmeralda500 : errada ? cor.vermelho500 : marcada ? cor.ceu500 : undefined;
+          const borda = certa ? sinal.acerto : errada ? sinal.erro : marcada ? cor.ceu500 : undefined;
           return (
             <Cartao
               key={i}
@@ -205,9 +207,9 @@ export default function Quiz() {
               destaque={borda}
               selecionado={marcada}
               rotuloAcessivel={`Alternativa ${LETRAS[i]}: ${alt}${certa ? ', correta' : errada ? ', marcada, errada' : ''}`}
-              estilo={[estilos.alternativa, certa ? { backgroundColor: cor.esmeralda50 } : errada ? { backgroundColor: cor.vermelho50 } : null]}
+              estilo={[estilos.alternativa, certa ? { backgroundColor: sinal.acertoFundo } : errada ? { backgroundColor: sinal.erroFundo } : null]}
             >
-              <View style={[estilos.letra, certa ? { backgroundColor: cor.esmeralda500 } : errada ? { backgroundColor: cor.vermelho500 } : null]}>
+              <View style={[estilos.letra, certa ? { backgroundColor: sinal.acerto } : errada ? { backgroundColor: sinal.erro } : null]}>
                 <Texto negrito cor={certa || errada ? cor.branco : cor.tinta700}>
                   {LETRAS[i]}
                 </Texto>
@@ -219,8 +221,8 @@ export default function Quiz() {
       </View>
 
       {respondida ? (
-        <Cartao destaque={acertou ? cor.esmeralda500 : cor.vermelho500} estilo={{ gap: 8, backgroundColor: acertou ? cor.esmeralda50 : cor.vermelho50 }}>
-          <Texto variante="subtitulo" cor={acertou ? cor.esmeralda700 : cor.vermelho600} accessibilityLiveRegion="polite">
+        <Cartao destaque={acertou ? sinal.acerto : sinal.erro} estilo={{ gap: 8, backgroundColor: acertou ? sinal.acertoFundo : sinal.erroFundo }}>
+          <Texto variante="subtitulo" cor={acertou ? sinal.acerto : sinal.erro} accessibilityLiveRegion="polite">
             {acertou ? 'Mandou bem!' : 'Quase lá!'}
           </Texto>
           <TextoRico texto={q.explicacao} />

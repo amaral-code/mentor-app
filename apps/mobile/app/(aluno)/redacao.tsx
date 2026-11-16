@@ -12,10 +12,12 @@ import { Cartao } from '../../src/ui/Cartao';
 import { Tela } from '../../src/ui/Tela';
 import { Texto } from '../../src/ui/Texto';
 import { cor, LARGURA_NOTEBOOK, raio } from '../../src/ui/tema';
+import { useCoresSinal } from '../../src/ui/preferenciasAcessibilidade';
+import type { CoresSinal } from '@mentor/core/acessibilidadeCores';
 
-function corNota(nota: number, max: number): string {
+function corNota(nota: number, max: number, sinal: CoresSinal): string {
   const p = nota / max;
-  return p >= 0.7 ? cor.esmeralda600 : p >= 0.4 ? cor.ambar600 : cor.vermelho600;
+  return p >= 0.7 ? sinal.acerto : p >= 0.4 ? sinal.aviso : sinal.erro;
 }
 
 /**
@@ -24,6 +26,7 @@ function corNota(nota: number, max: number): string {
  */
 export default function Redacao() {
   const { width } = useWindowDimensions();
+  const sinal = useCoresSinal();
   const lado = width >= LARGURA_NOTEBOOK;
   const [tema, setTema] = useState('');
   const [cameraAberta, setCameraAberta] = useState(false);
@@ -152,7 +155,7 @@ export default function Redacao() {
         <>
           <Cartao estilo={{ gap: 8, alignItems: 'center' }}>
             <Texto variante="rotulo">Nota final</Texto>
-            <Texto variante="numero" style={{ fontSize: 44 }} cor={corNota(resultado.total, 1000)}>
+            <Texto variante="numero" style={{ fontSize: 44 }} cor={corNota(resultado.total, 1000, sinal)}>
               {resultado.total}
             </Texto>
             <Texto variante="legenda">de 1000</Texto>
@@ -170,9 +173,9 @@ export default function Redacao() {
                   <Texto negrito style={{ flex: 1 }}>
                     {i + 1}. {c.titulo}
                   </Texto>
-                  <Texto negrito cor={corNota(c.nota, 200)}>{c.nota}</Texto>
+                  <Texto negrito cor={corNota(c.nota, 200, sinal)}>{c.nota}</Texto>
                 </View>
-                <Barra valor={(c.nota / 200) * 100} corBarra={corNota(c.nota, 200)} altura={10} />
+                <Barra valor={(c.nota / 200) * 100} corBarra={corNota(c.nota, 200, sinal)} altura={10} />
                 {c.feedback ? <Texto variante="legenda">{c.feedback}</Texto> : null}
               </View>
             ))}

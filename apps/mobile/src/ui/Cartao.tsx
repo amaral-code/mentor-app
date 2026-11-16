@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { cor, LABIO, raio } from './tema';
+import { useAltoContraste } from './preferenciasAcessibilidade';
 
 interface Props {
   children: ReactNode;
@@ -14,8 +15,9 @@ interface Props {
 
 /** Cartão adesivo: fundo branco, borda de 2px e lábio de 4px embaixo. */
 export function Cartao({ children, estilo, destaque, aoTocar, rotuloAcessivel, selecionado }: Props) {
-  const borda = destaque ?? cor.cinza200;
-  const base = [estilos.cartao, { borderColor: borda, borderBottomColor: destaque ?? cor.cinza300 }, estilo];
+  const alto = useAltoContraste();
+  const borda = destaque ?? (alto ? cor.tinta500 : cor.cinza200);
+  const base = [estilos.cartao, { borderColor: borda, borderBottomColor: destaque ?? (alto ? cor.tinta700 : cor.cinza300) }, estilo];
   if (!aoTocar) return <View style={base}>{children}</View>;
   return (
     <Pressable

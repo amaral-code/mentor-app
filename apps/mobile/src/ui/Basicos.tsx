@@ -12,6 +12,7 @@ import {
 import { useAppStore } from '@mentor/state/appStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMovimentoReduzido, anunciar } from './acessibilidade';
+import { useAltoContraste } from './preferenciasAcessibilidade';
 import { imagemSagui, type PoseSagui } from './sagui';
 import { Texto } from './Texto';
 import { cor, raio } from './tema';
@@ -27,6 +28,7 @@ interface CampoProps extends TextInputProps {
 /** Campo com rótulo visível (placeholder não é rótulo: some ao digitar). */
 export function Campo({ rotulo, erro, estilo, ...resto }: CampoProps) {
   const [foco, setFoco] = useState(false);
+  const alto = useAltoContraste();
   return (
     <View style={estilo}>
       <Texto variante="rotulo" style={{ marginBottom: 6 }}>
@@ -46,7 +48,7 @@ export function Campo({ rotulo, erro, estilo, ...resto }: CampoProps) {
         }}
         style={[
           estilos.campo,
-          { borderColor: erro ? cor.vermelho500 : foco ? cor.ceu500 : cor.cinza200 },
+          { borderColor: erro ? cor.vermelho600 : foco ? cor.ceu600 : alto ? cor.tinta500 : cor.cinza200 },
           resto.multiline ? estilos.campoMultilinha : null,
           resto.style,
         ]}
