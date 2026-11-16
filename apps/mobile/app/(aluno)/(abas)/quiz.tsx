@@ -38,7 +38,7 @@ function Chip({ texto, ativo, aoTocar }: { texto: string; ativo: boolean; aoToca
  * tópico daquela revisão.
  */
 export default function Quiz() {
-  const params = useLocalSearchParams<{ materia?: string; topico?: string; revisao?: string }>();
+  const params = useLocalSearchParams<{ materia?: string; topico?: string; revisao?: string; rapido?: string }>();
   const r = useRodadaQuiz();
   const { width } = useWindowDimensions();
   const duasColunas = width >= LARGURA_NOTEBOOK;
@@ -47,13 +47,19 @@ export default function Quiz() {
   const [nivel, setNivel] = useState<NivelQuiz>('media');
   const abertoPorRevisao = useRef<string | null>(null);
 
-  /* Veio do calendário de revisões: já gera o quiz daquele tópico. */
+  /* Veio do calendário de revisões (reagenda o tópico) ou do convite
+     anti doomscroll ("só 3 questões rápidas"): já gera o quiz. */
   useEffect(() => {
-    if (!params.materia || !params.revisao || abertoPorRevisao.current === params.revisao) return;
-    abertoPorRevisao.current = params.revisao;
+    const chave = params.revisao ?? (params.rapido ? `rapido:${params.materia}:${params.rapido}` : null);
+    if (!params.materia || !chave || abertoPorRevisao.current === chave) return;
+    abertoPorRevisao.current = chave;
     const topico = params.topico || params.materia;
-    void r.gerar(params.materia, [topico], 5, 'media', { topicoId: params.revisao, topicoNome: topico, materia: params.materia });
-  }, [params.materia, params.topico, params.revisao, r]);
+    if (params.revisao) {
+      void r.gerar(params.materia, [topico], 5, 'media', { topicoId: params.revisao, topicoNome: topico, materia: params.materia });
+    } else {
+      void r.gerar(params.materia, ['Geral'], Math.min(5, Number(params.rapido) || 3), 'facil');
+    }
+  }, [params.materia, params.topico, params.revisao, params.rapido, r]);
 
   if (r.gerando) {
     return (

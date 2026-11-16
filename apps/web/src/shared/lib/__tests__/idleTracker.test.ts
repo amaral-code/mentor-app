@@ -66,7 +66,7 @@ describe('sugestaoLocal', () => {
   it('propoe uma unica tarefa curta na materia informada', () => {
     const s = sugestaoLocal('Historia');
     expect(s.convite).toContain('Historia');
-    expect(s.convite).toContain('3 questoes');
+    expect(s.convite).toContain('3 questões');
     expect(s.acao.split(' ').length).toBeLessThanOrEqual(5);
   });
 

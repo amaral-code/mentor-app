@@ -23,83 +23,20 @@
  * interrompido duas vezes seguidas e mais irritante que o problema.
  */
 
-export interface ConfigOciosidade {
-  /** Tempo de rolagem sem decisao ate intervir. */
-  limiarMs: number;
-  /** Eventos de rolagem/toque minimos para caracterizar "vagando". */
-  minimoEventos: number;
-  /** Se a pessoa sumiu por mais que isto, ela saiu - nao e doomscroll. */
-  inatividadeMaximaMs: number;
-  /** Intervalo minimo entre duas intervencoes. */
-  cooldownMs: number;
-}
+import {
+  CONFIG_PADRAO,
+  avaliarOciosidade,
+  estadoInicial,
+  type AvaliacaoOciosidade,
+  type ConfigOciosidade,
+  type EstadoOciosidade,
+} from '@mentor/core/ociosidade';
 
-export const CONFIG_PADRAO: ConfigOciosidade = {
-  limiarMs: 120_000, // 2 minutos
-  minimoEventos: 8,
-  inatividadeMaximaMs: 30_000,
-  cooldownMs: 15 * 60_000,
-};
+/* A regra (estado, avaliação, sugestão) mora no @mentor/core: o celular usa
+   a mesma, com toque no lugar de rolagem de janela. Aqui fica só o DOM. */
+export { CONFIG_PADRAO, avaliarOciosidade, estadoInicial, sugestaoLocal } from '@mentor/core/ociosidade';
+export type { AvaliacaoOciosidade, ConfigOciosidade, EstadoOciosidade } from '@mentor/core/ociosidade';
 
-export interface EstadoOciosidade {
-  /** Quando comecou a janela atual (ultima acao de compromisso). */
-  inicioJanela: number;
-  /** Ultimo sinal de vida (rolagem, toque, movimento). */
-  ultimaInteracao: number;
-  /** Rolagens/toques desde o inicio da janela. */
-  eventosNavegacao: number;
-  /** Acoes de compromisso desde o inicio da janela. */
-  acoesDecisivas: number;
-  /** Quando a ultima intervencao foi mostrada. */
-  ultimaIntervencao: number;
-}
-
-export function estadoInicial(agora = Date.now()): EstadoOciosidade {
-  return {
-    inicioJanela: agora,
-    ultimaInteracao: agora,
-    eventosNavegacao: 0,
-    acoesDecisivas: 0,
-    ultimaIntervencao: 0,
-  };
-}
-
-export interface AvaliacaoOciosidade {
-  deveIntervir: boolean;
-  /** Segundos rolando sem decidir - vai no gatilho salvo no banco. */
-  segundosVagando: number;
-  eventos: number;
-  motivo: 'doomscroll' | 'ativo' | 'ausente' | 'cooldown' | 'cedo';
-}
-
-/**
- * Funcao pura: dado o estado acumulado, decide se e hora de intervir.
- * Separada do DOM justamente para poder ser testada sem navegador.
- */
-export function avaliarOciosidade(
-  estado: EstadoOciosidade,
-  agora: number,
-  cfg: ConfigOciosidade = CONFIG_PADRAO,
-): AvaliacaoOciosidade {
-  const decorrido = agora - estado.inicioJanela;
-  const base = {
-    segundosVagando: Math.round(decorrido / 1000),
-    eventos: estado.eventosNavegacao,
-  };
-
-  if (estado.acoesDecisivas > 0) return { ...base, deveIntervir: false, motivo: 'ativo' };
-  if (agora - estado.ultimaInteracao > cfg.inatividadeMaximaMs)
-    return { ...base, deveIntervir: false, motivo: 'ausente' };
-  if (decorrido < cfg.limiarMs) return { ...base, deveIntervir: false, motivo: 'cedo' };
-  if (estado.eventosNavegacao < cfg.minimoEventos)
-    return { ...base, deveIntervir: false, motivo: 'cedo' };
-  if (agora - estado.ultimaIntervencao < cfg.cooldownMs)
-    return { ...base, deveIntervir: false, motivo: 'cooldown' };
-
-  return { ...base, deveIntervir: true, motivo: 'doomscroll' };
-}
-
-/** Um clique so conta como decisao se foi num elemento acionavel. */
 export function ehAcaoDecisiva(alvo: EventTarget | null): boolean {
   if (!(alvo instanceof Element)) return false;
   return !!alvo.closest('button, a, input, select, textarea, [role="button"], [role="tab"], label');
@@ -191,11 +128,3 @@ export function criarRastreadorOciosidade(
  * Precisa ser CURTA e conter uma acao unica. Uma lista de opcoes num
  * momento de paralisia por analise e exatamente o problema outra vez.
  */
-export function sugestaoLocal(materia: string | null): { titulo: string; convite: string; acao: string } {
-  const alvo = materia || 'Biologia';
-  return {
-    titulo: 'Voce parece na duvida.',
-    convite: `Vamos fazer so 3 questoes rapidas de ${alvo} e parar por hoje?`,
-    acao: `Comecar 3 de ${alvo}`,
-  };
-}
