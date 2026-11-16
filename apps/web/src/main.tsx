@@ -2,6 +2,7 @@
 // (localStorage, import.meta.env). Nenhum modulo do core le a plataforma
 // na importacao, mas o boot abaixo ja le config e acessibilidade.
 import './plataforma/web';
+import { iniciarMonitoramento } from './shared/lib/observabilidade';
 import { interpretarLink } from '@mentor/core/deepLinks';
 import { plataforma } from '@mentor/core/plataforma';
 import { useAppStore } from '@mentor/state/appStore';
@@ -31,6 +32,9 @@ registrarDescargaAoSair();
 // Fila offline (#56): envia o que ficou guardado ao abrir, quando a
 // conexão volta e a cada 30 s enquanto houver pendente.
 iniciarSincronizacao();
+
+// Erros soltos e promessas sem dono vão ao Sentry, sem dado pessoal (#65).
+iniciarMonitoramento();
 
 /*
  * Deep links (#57). O endereço de abertura (convite de liga, código de

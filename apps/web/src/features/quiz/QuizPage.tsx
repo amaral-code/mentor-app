@@ -1,3 +1,5 @@
+import { faixaDeAcerto } from '@mentor/core/analytics';
+import { rastrear } from '../../shared/lib/observabilidade';
 import { EstrelaCadente } from '../../shared/ui/IconesMentor';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
@@ -725,6 +727,7 @@ export function QuizPage() {
     const xpGanho = acertos * 30;
     const res: QuizResult = { materia, acertos, total: questions.length, xpGanho, timestamp: Date.now() };
     setResult(res); addQuizResult(res); addXP(xpGanho);
+    rastrear('quiz_concluido', { materia, questoes: questions.length, faixa_acerto: faixaDeAcerto(acertos, questions.length), offline: plataforma().online() === false ? 'sim' : 'nao' });
     addLog({ timestamp: Date.now(), type: 'quiz', description: `Quiz de ${materia}: ${acertos}/${questions.length}`, xp: xpGanho });
     if (!isMuted && xpGanho > 0) playLevelUp();
     mascotStore.getState().setState('success', ` Quiz concluído! +${xpGanho} XP de bônus, meta cumprida!`);

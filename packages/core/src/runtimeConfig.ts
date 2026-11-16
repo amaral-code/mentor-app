@@ -57,6 +57,10 @@ export interface ConfigPublica {
   recursos: RecursosBackend;
   /** Chave pública do Web Push. Vazia sem push configurado. */
   vapidPublicKey: string;
+  sentryDsn: string;
+  ambiente: string;
+  posthogKey: string;
+  posthogHost: string;
 }
 
 /** Resposta de `/api/config`. Null enquanto nao carregou (ou sem back-end). */
@@ -122,6 +126,15 @@ export const backendMesmaOrigem = (): boolean => doServidor?.backendIA === true 
 
 /** Chave pública VAPID para `pushManager.subscribe`. Vazia sem push no servidor. */
 export const vapidPublicKey = (): string => preferir(doServidor?.vapidPublicKey, doBuild('VITE_VAPID_PUBLIC_KEY'));
+
+/** DSN do Sentry (#65). Vazio desliga o monitoramento. */
+export const sentryDsn = (): string => preferir(doServidor?.sentryDsn, doBuild('VITE_SENTRY_DSN'));
+/** production, preview ou development (VERCEL_ENV). */
+export const ambienteDoApp = (): string => preferir(doServidor?.ambiente, '') || 'development';
+/** Chave de projeto do PostHog (#66) e o servidor dele. */
+export const posthogKey = (): string => preferir(doServidor?.posthogKey, doBuild('VITE_POSTHOG_KEY'));
+export const posthogHost = (): string =>
+  (preferir(doServidor?.posthogHost, doBuild('VITE_POSTHOG_HOST')) || 'https://eu.i.posthog.com').replace(/\/+$/, '');
 
 export const recursosBackend = (): RecursosBackend =>
   doServidor?.recursos ?? { deepseek: false, gemini: false, tts: false, email: false, pagamento: 'simulado' };

@@ -1,3 +1,4 @@
+import { rastrear } from '../../shared/lib/observabilidade';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BookMarked, Lightbulb, PenLine, Trophy } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
@@ -139,6 +140,7 @@ export function EssayPage() {
       correction = correctEssay(body, themeText || undefined);
     }
     setLastCorrection(correction);
+    rastrear('redacao_corrigida', { origem: 'digitada' });
     const xpGain = correction.notaFinal >= 600 ? 100 : 50;
     addXP(xpGain);
     // No desafio o addLog (que persiste o XP no servidor) acontece uma única

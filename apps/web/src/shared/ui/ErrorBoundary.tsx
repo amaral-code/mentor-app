@@ -1,3 +1,4 @@
+import { reportar } from '../lib/observabilidade';
 import { Component, type ReactNode } from 'react';
 
 interface ErrorBoundaryProps {
@@ -32,6 +33,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(erro: Error, info: { componentStack?: string }): void {
     console.error(`[boundary:${this.props.nome}]`, erro, info.componentStack);
+    // Monitoramento (#65): a mensagem e a pilha vão sem dado pessoal.
+    reportar(erro, `tela:${this.props.nome}`);
   }
 
   private tentarDeNovo = (): void => {

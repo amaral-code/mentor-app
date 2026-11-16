@@ -47,6 +47,7 @@ import {
   MODO_PADRAO,
 } from './chatPrompt.js';
 import { enviarPush, pushConfigurado } from './webPush.js';
+import { reportarErroServidor } from './monitoramento.js';
 import {
   ESQUEMA_CORRECAO,
   promptCorrecaoFoto,
@@ -990,7 +991,29 @@ async function importarLinha(env, escola, turmas, linha) {
 }
 
 export default {
+  /*
+   * Rede de segurança (#65): erro que escapa de qualquer rota vira 500
+   * genérico (sem detalhe interno na resposta) e vai ao Sentry com dado
+   * pessoal removido. Sem isto, a plataforma devolvia a própria página
+   * de erro e ninguém ficava sabendo.
+   */
   async fetch(request, env) {
+    try {
+      return await this.atender(request, env);
+    } catch (err) {
+      console.error('erro nao tratado:', err && err.message);
+      let rota = '';
+      try {
+        rota = new URL(request.url).pathname;
+      } catch {
+        /* url invalida */
+      }
+      await reportarErroServidor(env, err, rota);
+      return json({ error: 'erro_interno', message: 'Algo deu errado no servidor. Tente de novo.' }, 500, cors(env));
+    }
+  },
+
+  async atender(request, env) {
     const url = new URL(request.url);
     const corsHeaders = cors(env);
 

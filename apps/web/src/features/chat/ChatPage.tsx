@@ -1,3 +1,4 @@
+import { rastrear } from '../../shared/lib/observabilidade';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PanelRightOpen } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
@@ -531,6 +532,8 @@ export function ChatPage() {
       }, false);
       return;
     }
+    // Analytics (#66): só o fato de ter perguntado e o modo. O texto nunca.
+    rastrear('mentor_pergunta', { modo: modoResposta === 'comunicativo' ? 'comunicativo' : 'explicativo' });
     const mood = await detectAndSetMood(text);
 
     if (aiAvailable(apiKey)) {

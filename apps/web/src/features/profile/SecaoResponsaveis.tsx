@@ -1,3 +1,4 @@
+import { rastrear } from '../../shared/lib/observabilidade';
 import { compartilharLink } from '../../shared/lib/compartilhar';
 import { plataforma } from '@mentor/core/plataforma';
 import { montarLink } from '@mentor/core/deepLinks';
@@ -157,6 +158,7 @@ export function SecaoResponsaveis() {
               type="button"
               onClick={async () => {
                 const r = await compartilharLink('Acompanhe meus estudos', montarLink(plataforma().origem(), { tipo: 'vinculo', codigo }));
+                if (r !== 'falhou') rastrear('convite_compartilhado', { tipo: 'vinculo' });
                 if (r === 'copiado') setToast('Link copiado. Mande só para quem você quer que acompanhe.', 'success');
                 if (r === 'falhou') setToast('Não foi possível copiar o link agora.', 'error');
               }}

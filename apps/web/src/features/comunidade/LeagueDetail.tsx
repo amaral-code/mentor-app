@@ -1,3 +1,4 @@
+import { rastrear } from '../../shared/lib/observabilidade';
 import { compartilharLink } from '../../shared/lib/compartilhar';
 import { plataforma } from '@mentor/core/plataforma';
 import { montarLink } from '@mentor/core/deepLinks';
@@ -153,6 +154,7 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
               type="button"
               onClick={async () => {
                 const r = await compartilharLink(`Liga ${league.title}`, montarLink(plataforma().origem(), { tipo: 'liga', id: league.id }));
+                if (r !== 'falhou') rastrear('convite_compartilhado', { tipo: 'liga' });
                 if (r === 'copiado') setToast('Link do convite copiado. Mande para quem você quer na liga.', 'success');
                 if (r === 'falhou') setToast('Não foi possível copiar o link agora.', 'error');
               }}

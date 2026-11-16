@@ -39,6 +39,9 @@
       Se voce configurar VITE_AI_BASE_URL, acrescente o dominio do worker
       em connect-src.
 
+      connect-src inclui o Sentry (erros, #65) e o PostHog (dados de uso,
+      #66). Usando outro servidor deles, acrescente o endereço aqui.
+
       media-src libera `data:` e `blob:` porque a voz neural das Pilulas de
       Audio chega como data URL. Sem a linha, o audio caia no default-src
       'self' e o proprio app bloqueava o som que o servidor acabara de
@@ -58,7 +61,7 @@
         img-src 'self' data: blob: https://*.supabase.co;
         font-src 'self' data: https://fonts.gstatic.com;
         media-src 'self' data: blob:;
-        connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com;
+        connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io https://eu.i.posthog.com https://us.i.posthog.com;
         base-uri 'self';
         form-action 'self';
         object-src 'none'

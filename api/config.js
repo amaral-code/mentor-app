@@ -60,6 +60,13 @@ export function GET() {
     /* Chave PÚBLICA do Web Push: o navegador precisa dela para se
        inscrever. A privada (VAPID_PRIVATE_KEY) nunca sai do servidor. */
     vapidPublicKey: ler('VAPID_PUBLIC_KEY'),
+    /* Monitoramento (#65) e analytics (#66). O DSN do Sentry e a chave de
+       projeto do PostHog são PÚBLICOS por desenho: só permitem ENVIAR
+       eventos, não ler nada. */
+    sentryDsn: ler('SENTRY_DSN', 'VITE_SENTRY_DSN'),
+    ambiente: ler('VERCEL_ENV') || 'development',
+    posthogKey: ler('POSTHOG_KEY', 'VITE_POSTHOG_KEY'),
+    posthogHost: ler('POSTHOG_HOST', 'VITE_POSTHOG_HOST') || 'https://eu.i.posthog.com',
     recursos: {
       deepseek: !!ler('DEEPSEEK_API_KEY'),
       gemini: !!ler('GEMINI_API_KEY'),

@@ -1,3 +1,4 @@
+import { rastrear } from '../../shared/lib/observabilidade';
 import { useState } from 'react';
 import { ArrowLeft, ArrowRight, Cake, Check, Clock, MoonStar, Rocket, Sunrise, Sunset, Target } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
@@ -86,6 +87,7 @@ export function OnboardingFlow() {
         dataNascimento: nascimento.trim() || null,
       });
       concluirLocal({ metas, tempoDiario: tempo, turno });
+      rastrear('onboarding_concluido', { pulou_data: nascimento.trim() ? 'nao' : 'sim' });
       /* Marca DURAVEL, nao so em memoria: a volta para a aba recarrega o
          perfil do banco e sobrescreve a memoria. Sem isto, banco que nao
          consegue guardar a flag = wizard a cada troca de aba. */

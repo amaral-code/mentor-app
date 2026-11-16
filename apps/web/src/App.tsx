@@ -1,3 +1,4 @@
+import { rastrear } from './shared/lib/observabilidade';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { LazyMotion } from 'motion/react';
 import { useAppStore, persistir } from '@mentor/state/appStore';
@@ -191,6 +192,7 @@ export default function App() {
     userRepository.getSession().then((s) => {
       if (s) {
         uidCarregadoRef.current = s.uid;
+        rastrear('app_aberto');
         setSession(s);
         /*
          * Se a carga inicial falhar, o app abre com anotacoes, XP e
