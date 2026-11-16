@@ -1,0 +1,56 @@
+name: 🐞 Bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por reportar! **Não coloque senhas, chaves ou dados reais de alunos aqui.**
+        Falha de segurança? Use Security → Report a vulnerability, não esta issue.
+  - type: textarea
+    id: descricao
+    attributes:
+      label: O que aconteceu
+      description: Descreva o problema e o que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: passos
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Entrar como aluno
+        2. Abrir o Quiz
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: plataforma
+    attributes:
+      label: Plataforma
+      multiple: true
+      options:
+        - Android
+        - iOS
+        - Notebook / navegador
+    validations:
+      required: true
+  - type: dropdown
+    id: perfil
+    attributes:
+      label: Perfil do usuário
+      multiple: true
+      options:
+        - Aluno
+        - Educador
+        - Pais / responsáveis
+        - Psicólogo
+  - type: input
+    id: versao
+    attributes:
+      label: Versão / navegador / aparelho
+      placeholder: "ex.: Chrome 131, Galaxy A15, build preview 0.3.0"
+  - type: textarea
+    id: extra
+    attributes:
+      label: Prints, vídeos ou logs

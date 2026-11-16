@@ -13,13 +13,14 @@
 import { chromium } from 'playwright';
 import { PNG } from 'pngjs';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
 
 const URL_APP = process.argv[2] || 'http://localhost:4184';
 
-const SUPA = 'https://bxidxlcismcvryznpomh.supabase.co';
-const SVC = process.env.SUPABASE_SERVICE_KEY ?? '';
+
+
 const EMAIL = 'diff@exemplo-descartavel.com';
-const SENHA = 'Diff!2026abcd';
+const SENHA = senhaDescartavel();
 
 const api = (m, p, b, tok) =>
   fetch(SUPA + p, {

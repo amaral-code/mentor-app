@@ -1,11 +1,12 @@
 /** Depura o login: captura o estado exato depois do submit. */
 import { chromium } from 'playwright';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
 
 const URL_APP = process.argv[2] || 'http://localhost:5178';
-const SUPA = 'https://bxidxlcismcvryznpomh.supabase.co';
-const SVC = process.env.SUPABASE_SERVICE_KEY ?? '';
+
+
 const EMAIL = 'debug-login@exemplo-descartavel.com';
-const SENHA = 'DebugLogin!2026';
+const SENHA = senhaDescartavel();
 
 const api = (m, p, b) =>
   fetch(SUPA + p, {

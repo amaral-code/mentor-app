@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "buildCommand": "npm run build --workspace @mentor/web",
+  "outputDirectory": "apps/web/dist",
   "rewrites": [
     {
       "source": "/((?!api/).*)",
@@ -47,8 +47,12 @@
   ],
   "crons": [
     {
-      "path": "/api/notify/drain",
+      "path": "/api/notify/drain?lembretes=revisao",
       "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/notify/drain?lembretes=ofensiva",
+      "schedule": "0 22 * * *"
     }
   ]
 }

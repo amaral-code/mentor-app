@@ -1,0 +1,24 @@
+# Quem é marcado para revisar cada área.
+# Substitua os usuários quando a equipe dividir as áreas (ex.: @fulano).
+# A última regra que casar com o arquivo vence.
+
+*                         @amaral-code
+
+# Segurança, CI e infraestrutura
+/.github/                 @amaral-code
+/scripts/                 @amaral-code
+/wrangler.toml            @amaral-code
+/.env.example             @amaral-code
+
+# Banco de dados e RLS
+/supabase/                @amaral-code
+
+# Worker de IA
+/server/                  @amaral-code
+
+# Código nativo (React Native / Expo)
+/mobile/                  @amaral-code
+
+# Monorepo: pacotes compartilhados entre web e mobile
+/packages/                @amaral-code
+/apps/web/                @amaral-code

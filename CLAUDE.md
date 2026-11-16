@@ -6,30 +6,54 @@ Publicada na **Vercel**. Todo o texto do produto e dos comentários é em
 
 ## Comandos
 
+Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
+
 ```bash
-npm run dev      # dev server na porta 5180 (já inclui o back-end /api)
-npm run build    # tsc -b && vite build
-npm test         # vitest run  (818 testes)
-npm run lint     # oxlint
+npm run dev      # app web na porta 5180 (já inclui o back-end /api)
+npm run build    # turbo: tsc -b && vite build do @mentor/web
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 818 testes
+npm run lint     # oxlint (barra APIs de navegador em packages/*)
+npm run typecheck       # turbo: tsc em todos os workspaces
+npm run gen:types       # regera os tipos do banco a partir das migrations
+npm run check:types     # falha se os tipos do banco estiverem velhos
+npm run check:secrets   # falha se houver chave service_role/API em arquivo versionado
 ```
 
-Antes de dizer que terminou: `npx tsc -b`, `npm test` e `npm run build`
+O CI (`.github/workflows/ci.yml`) roda tudo isso em cada PR. Fluxo de
+branch, commits e PR: `CONTRIBUTING.md`. Ambientes: `docs/ambientes.md`.
+
+Antes de dizer que terminou: `npm run typecheck`, `npm test` e `npm run build`
 precisam passar. O projeto tem baseline limpo — qualquer erro novo é seu.
 
 ## Arquitetura
 
 ```
-src/
-  app/AppShell.tsx        sidebar (md+) + barra inferior e folha "Mais" (mobile), lazy import por aba
-  App.tsx                 gating: login -> troca de senha -> onboarding -> papel
-  features/<dominio>/     uma pasta por tela
-  shared/lib/             lógica pura, testável (é onde ficam os testes)
-  shared/storage/         repositórios Supabase
-  shared/ui/              componentes compartilhados
-  stores/                 Zustand (appStore é o principal)
+apps/web/                 app Vite (@mentor/web)
+  src/app/AppShell.tsx    sidebar (md+) + barra inferior e folha "Mais" (mobile), lazy import por aba
+  src/App.tsx             gating: login -> troca de senha -> onboarding -> papel
+  src/features/<dominio>/ uma pasta por tela
+  src/shared/lib/         só o que depende do navegador (acessibilidade, sfx, imagePrep, chatGrounding...)
+  src/shared/ui/          componentes compartilhados
+  src/plataforma/web.ts   adaptadores web do core (PRIMEIRO import de main.tsx)
+packages/core/            @mentor/core: tipos e engines sem DOM (é onde fica a lógica e os testes)
+packages/api/             @mentor/api: cliente Supabase, repositórios, tipos do banco gerados
+packages/state/           @mentor/state: stores Zustand (appStore é o principal)
 server/worker.js          BACK-END ÚNICO (ver abaixo)
 api/                      Vercel Functions
+supabase/                 migrations + bancoLocal.mjs (PGlite para testes e tipos)
 ```
+
+Import é por *subpath*: `@mentor/core/srsEngine`, `@mentor/api/supabase`,
+`@mentor/state/appStore`. **Lógica nova vai para `packages/`**, não para a
+tela: o app mobile (M2) usa os mesmos pacotes.
+
+Nos pacotes é proibido `window`, `document`, `localStorage`, `navigator`,
+`location` e `import.meta.env` (o lint barra os globais; o Metro do Expo
+não entende `import.meta`). O que muda entre plataformas passa por
+`@mentor/core/plataforma` (armazenamento, env do build, online, dev,
+abrirUrl, aoIrParaSegundoPlano). A plataforma é lida **só dentro de
+funções**. Os testes do web instalam o adaptador web pelo
+`apps/web/vitest.config.ts`, então `vi.stubEnv` continua valendo.
 
 Navegação é **por estado** (`activeTab` no `appStore`), não por rota. Não há
 router: tudo vive em `/`.
@@ -57,7 +81,7 @@ já nascem com `/api/` passam diretas.
 existir nos três ambientes de graça. Se a rota for na raiz, acrescente-a ao
 `ROTAS_RAIZ` do adapter.
 
-O front chama sempre `urlBackendIA('/rota-do-worker')` (`shared/lib/runtimeConfig.ts`),
+O front chama sempre `urlBackendIA('/rota-do-worker')` (`@mentor/core/runtimeConfig`),
 que resolve para `/api/...` na mesma origem ou para o worker externo.
 
 ### Toda rota de IA exige login
@@ -127,7 +151,7 @@ quem mantém o repositório, não para quem usa o app.
 
 Quem garante isso não é boa vontade:
 
-- `src/shared/lib/__tests__/regraPontuacao.test.ts` lê `src/` pela
+- `apps/web/src/shared/lib/__tests__/regraPontuacao.test.ts` lê `apps/web/src/` e `packages/*/src/` pela
   **árvore sintática do TypeScript** e olha só o que vira texto (`JsxText`,
   string, parte literal de template). Por isso distingue
   `partes.length - 1` (código) de `'Excelente - nota'` (tela), e `${ano}-${mes}`
@@ -136,7 +160,7 @@ Quem garante isso não é boa vontade:
   Exceções ficam numa lista com o motivo de cada uma: a linha que ensina
   a regra à IA, o parser de gabarito, `(1 - taxa)`, `calc(` e conta
   aritmética entre números.
-- `comRegraDeEscrita` (em `aiService.ts`) injeta a regra no
+- `comRegraDeEscrita` (em `@mentor/core/aiService`) injeta a regra no
   `systemInstruction` de **toda** chamada de IA. Fica no ponto único de
   envio de propósito: são mais de dez chamadas, e a próxima nasceria sem
   a linha.
@@ -271,7 +295,7 @@ escola fictícia. Roteiro e comando prontos em
 
 ## Testes
 
-Vitest. A lógica pura de `shared/lib/` é o que tem cobertura — mantenha a
+Vitest. A lógica pura de `packages/core` é o que tem cobertura — mantenha a
 lógica nova lá em vez de dentro do componente. Testes que mexem em env usam
 `vi.resetModules()` + `vi.stubEnv()` + import dinâmico; leitura por função é
 compatível com esse padrão.
@@ -282,6 +306,59 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-11-16 (2) — Revisão de código
+- **Migration 030 — rodar no Supabase.** O teto diário de moedas do foco
+  virava o dia às 21h de Brasília (o `::date::timestamptz` da 011 volta a
+  data no fuso UTC) e somava pelo início da sessão: estudar à noite
+  furava as 500 moedas. Agora soma por `criado_em` (hora do pagamento) a
+  partir da meia-noite real de Brasília. Teste novo prova a virada.
+- Lint zerado (23 avisos). Dependências de `useEffect`: ações de store
+  entram no array; os que omitem de propósito (AudioPlayer, relatório
+  semanal) têm exceção com o motivo. `PainelCuidado` assinava a store do
+  marketplace inteira e re-renderizava a cada mudança: agora usa seletores.
+- DOMPurify 3.4.13 → 3.4.18 (vulnerabilidade crítica de XSS, via Mermaid).
+- Mais 11 consultas dos repositórios tipadas com os tipos gerados.
+
+### 2026-11-16 — M1: monorepo e núcleo compartilhado
+- **Monorepo** (npm workspaces + Turborepo). O app Vite foi para
+  `apps/web`; `api/`, `server/` e `supabase/` ficaram na raiz porque a
+  Vercel publica as funções de lá. `vercel.json` builda o workspace e
+  publica `apps/web/dist`. O `.env` continua na raiz (`envDir`).
+- **`@mentor/core`**: 36 módulos sem DOM (tipos, SRS, quiz, burnout,
+  ligas, IA, `runtimeConfig`...). `@mentor/core/plataforma` esconde
+  armazenamento, env do build, online, dev, `abrirUrl` e
+  `aoIrParaSegundoPlano`; fica em `globalThis` para sobreviver a
+  `vi.resetModules()`. `carregarConfigRuntime(origem)` aceita a URL do
+  site (o celular não tem "mesma origem").
+- **`@mentor/api`**: cliente Supabase (`configurarSupabase` para o storage
+  da sessão no celular), 12 repositórios e os serviços que falam com o
+  banco. **Tipos do banco gerados das migrations** (`gen:types`), com o
+  mesmo PGlite dos testes (`supabase/bancoLocal.mjs`); o CI falha se
+  estiverem velhos.
+- **`@mentor/state`**: as cinco stores. O `visibilitychange` da
+  telemetria saiu do topo do módulo: `registrarDescargaAoSair()` é
+  chamado em `main.tsx`. `activeTab` continua (o web depende dela).
+- `regraPontuacao` e `rotasVercel` passaram a varrer `packages/`.
+
+### 2026-11-15 — M0: fundação e segurança do repositório
+- **18 scripts em `tools/` tinham a chave `service_role` e senhas no
+  código.** Agora leem `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` do ambiente
+  (`tools/_ambiente.mjs`) e geram senha aleatória para o usuário
+  descartável. A chave continua no histórico: **precisa ser girada** (#18).
+- `scripts/verificar-segredos.mjs` decodifica cada JWT e falha se o papel
+  não for `anon`/`authenticated` (procurar o texto em base64 não serve:
+  muda conforme o alinhamento). Roda no CI.
+- Removidos `SESSAO-RESUMO.md` e os `.zip`; ID do projeto Supabase virou
+  placeholder nos docs.
+- CI no GitHub Actions: segredos, lint, tipos, testes e build.
+- `CONTRIBUTING.md`, `SECURITY.md`, templates de issue/PR, `CODEOWNERS`,
+  `scripts/proteger-main.sh`.
+- Ambientes: dev, Preview (Vercel, aponta para o Supabase de staging) e
+  Production. `wrangler.toml` ganhou `[env.staging]`/`[env.production]`;
+  `wrangler deploy` sem `--env` não atinge mais produção.
+  `scripts/migrar.sh` aplica migrations por ambiente.
+- ADR 001 (`docs/adr/`): app mobile em Expo/React Native, proposto.
 
 ### 2026-11-14 — Ícones próprios (identidade)
 - Pedido do dono: o app não pode ser confundido com outro app de estudo.
@@ -303,7 +380,7 @@ principal, regra de permissão. Mais recente no topo.
 ### 2026-11-10 — Revisão geral: o que estava quebrado
 - Revisão completa do app, a pedido do dono. Só correção: nenhuma
   funcionalidade nova além de "esqueci minha senha".
-- **Migration 030 — rodar no Supabase.** Três coisas:
+- **Migration 031 — rodar no Supabase.** Três coisas:
   - `registrar_xp` conta o dia em **Brasília** (`dia_de_brasilia()`), não
     em UTC. Quem estudava depois das 21h via a ofensiva voltar para 1: o
     servidor gravava a data "de amanhã" e a tela, em horário local,
@@ -601,10 +678,17 @@ principal, regra de permissão. Mais recente no topo.
 
 ## Pendências conhecidas
 
-- **Rotacionar a `service_role` do Supabase.** Ela ficou gravada em 18
-  scripts de `tools/` e continua no histórico do git, válida até 2036.
-  Já saiu dos arquivos, mas só a troca no painel a invalida.
-- XP por evento ainda é dito pelo cliente (há teto diário, migration 030).
+- A chave **`service_role` do Supabase** que estava em 18 scripts de `tools/`
+  saiu do código (2026-11-15), mas continua no histórico do git, válida até
+  2036. Precisa ser **rotacionada no painel do Supabase** (issue #18).
+- **KaTeX com vulnerabilidade baixa** (GHSA-238p-pmpm-9mq7), dependência do
+  Mermaid 11. A correção só vem com o Mermaid 12 (versão maior). Atualizar
+  junto com uma revisão dos mapas mentais do Caderno.
+- 9 consultas em `packages/api` ainda tipam a linha com `any` porque o
+  formato não bate com a linha crua (select com `perfis(nome)` embutido, ou
+  linha única tratada à parte). Ex.: `vincular_por_codigo` devolve
+  `parentesco` nulo, mas `VinculoResponsavel.parentesco` é `string`.
+- XP por evento ainda é dito pelo cliente (há teto diário, migration 031).
   O certo é o servidor calcular o XP do quiz a partir das respostas.
 - Sem política de privacidade, termos de uso, exclusão de conta e
   exportação de dados. Com dado de menor e de saúde mental, é pendência
@@ -612,9 +696,3 @@ principal, regra de permissão. Mais recente no topo.
 - A sala de consulta é um Jitsi público. Para atendimento de menor,
   vale uma sala com controle de entrada.
 - O quiz gera 4 alternativas; o ENEM tem 5.
-- Sem CI rodando `tsc`, testes e build a cada push.
-- Muitos warnings de `react-hooks/exhaustive-deps` (`npm run lint`). Alguns são
-  intencionais, outros causam estado velho — avaliar caso a caso.
-- `SESSAO-RESUMO.md` e os `.zip` na raiz são de sessões antigas e descrevem um
-  arranjo (worker externo + proxy) que **não vale mais** desde a migração para
-  `/api`. Não siga aquele arquivo.

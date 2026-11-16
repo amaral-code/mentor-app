@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancela execuções antigas do mesmo PR quando chega um push novo.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  segredos:
+    name: Segredos
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node scripts/verificar-segredos.mjs
+
+  qualidade:
+    name: Lint, tipos e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Lint (oxlint)
+        run: npm run lint
+      # Cache do Turborepo entre execucoes: pacote que nao mudou nao
+      # recompila nem retesta.
+      - uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+      # Migration nova sem `npm run gen:types` deixa os tipos do banco velhos.
+      - name: Tipos do banco em dia com as migrations
+        run: npm run check:types
+      - name: Tipos (tsc, todos os workspaces)
+        run: npm run typecheck -- --cache-dir=.turbo/cache
+      # turbo roda o vitest de cada workspace; depois a raiz roda os testes
+      # do worker (server/__tests__) e das migrations com PGlite (supabase/__tests__).
+      - name: Testes (vitest)
+        run: npx turbo run test --cache-dir=.turbo/cache && npm run test:raiz
+      - name: Build
+        run: npm run build -- --cache-dir=.turbo/cache

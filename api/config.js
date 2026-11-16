@@ -57,11 +57,15 @@ export function GET() {
     n8nWebhookUrl: ler('N8N_WEBHOOK_URL', 'VITE_N8N_WEBHOOK_URL'),
     /* Esta resposta so existe onde `/api/*` existe. */
     backendIA: true,
+    /* Chave PÚBLICA do Web Push: o navegador precisa dela para se
+       inscrever. A privada (VAPID_PRIVATE_KEY) nunca sai do servidor. */
+    vapidPublicKey: ler('VAPID_PUBLIC_KEY'),
     recursos: {
       deepseek: !!ler('DEEPSEEK_API_KEY'),
       gemini: !!ler('GEMINI_API_KEY'),
       tts: !!ler('GOOGLE_TTS_KEY'),
       email: !!ler('RESEND_API_KEY'),
+      push: !!(ler('VAPID_PUBLIC_KEY') && ler('VAPID_PRIVATE_KEY')),
       pagamento: ler('MP_ACCESS_TOKEN') ? 'mercadopago' : 'simulado',
     },
   };

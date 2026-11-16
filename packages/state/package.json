@@ -1,0 +1,19 @@
+{
+  "name": "@mentor/state",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stores Zustand do Midnight Mentor (sessão, bem-estar, marketplace, loja, mascote), compartilhadas entre web e mobile.",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mentor/api": "*",
+    "@mentor/core": "*",
+    "zustand": "^5.0.14"
+  }
+}

@@ -1,0 +1,20 @@
+# Segredos do worker para `npx wrangler dev` (dev local).
+# Copie para .dev.vars (gitignored) e preencha com chaves de DEV/STAGING,
+# nunca as de produção. Valores no cofre de senhas da equipe.
+
+# Supabase de dev (local: `npx supabase start` mostra a URL e a service_role)
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_SERVICE_KEY=
+
+# Senha que o app manda no header para usar o worker (igual a VITE_AI_PROXY_TOKEN)
+API_TOKEN=
+
+# Provedores de IA
+DEEPSEEK_API_KEY=
+GEMINI_API_KEY=
+
+# Opcionais: e-mail, voz e pagamento (use as chaves de teste/sandbox)
+RESEND_API_KEY=
+GOOGLE_TTS_KEY=
+MP_ACCESS_TOKEN=
+MP_WEBHOOK_SECRET=

@@ -10,12 +10,13 @@
  * Uso: node tools/teste_falha_silenciosa.mjs http://localhost:4184
  */
 import { chromium } from 'playwright';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
 
 const URL_APP = process.argv[2] || 'http://localhost:4184';
-const SUPA = 'https://bxidxlcismcvryznpomh.supabase.co';
-const SVC = process.env.SUPABASE_SERVICE_KEY ?? '';
+
+
 const EMAIL = 'falha@exemplo-descartavel.com';
-const SENHA = 'Falha!2026abc';
+const SENHA = senhaDescartavel();
 
 const api = (m, p, b, tok) =>
   fetch(SUPA + p, {

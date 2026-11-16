@@ -9,15 +9,16 @@
  * Uso: node tools/medir_fps.mjs http://localhost:5180 [taxa]
  */
 import { chromium } from 'playwright';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
 
 const URL_APP = process.argv[2] || 'http://localhost:5180';
 const TAXA = Number(process.argv[3] || 4);
 const META_FPS = 50;
 
-const SUPA = 'https://bxidxlcismcvryznpomh.supabase.co';
-const SVC = process.env.SUPABASE_SERVICE_KEY ?? '';
+
+
 const EMAIL = 'fps@exemplo-descartavel.com';
-const SENHA = 'Fps!2026abcd';
+const SENHA = senhaDescartavel();
 
 const api = (m, p, b, tok) =>
   fetch(SUPA + p, {

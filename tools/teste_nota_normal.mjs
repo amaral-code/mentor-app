@@ -7,9 +7,10 @@
  * erro. Este script isola: sessao limpa, rede normal, uma anotacao.
  */
 import { chromium } from 'playwright';
-const SUPA='https://bxidxlcismcvryznpomh.supabase.co';
-const SVC= process.env.SUPABASE_SERVICE_KEY ?? '';
-const EMAIL='ok@exemplo-descartavel.com', SENHA='Ok!2026abcdef';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
+
+
+const EMAIL='ok@exemplo-descartavel.com', SENHA = senhaDescartavel();
 const api=(m,p,b,t)=>fetch(SUPA+p,{method:m,headers:{apikey:SVC,Authorization:'Bearer '+(t||SVC),'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(async r=>({s:r.status,t:await r.text()}));
 let uid=null;
 const nav=await chromium.launch({args:['--use-gl=swiftshader']});

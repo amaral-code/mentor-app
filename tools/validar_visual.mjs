@@ -13,15 +13,16 @@
  */
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
 
 const URL_APP = process.argv[2] || 'http://localhost:5178';
 const SAIDA = 'tools/capturas';
 
-const SUPA = 'https://bxidxlcismcvryznpomh.supabase.co';
-const SVC = process.env.SUPABASE_SERVICE_KEY ?? '';
+
+
 
 const EMAIL = 'validacao-visual@exemplo-descartavel.com';
-const SENHA = 'ValidaVisual!2026';
+const SENHA = senhaDescartavel();
 
 const LARGURAS = [
   { nome: 'mobile', w: 375, h: 812 },

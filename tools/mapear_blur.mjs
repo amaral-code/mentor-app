@@ -10,14 +10,15 @@
  * Uso: node tools/mapear_blur.mjs http://localhost:4184 [taxa]
  */
 import { chromium } from 'playwright';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
 
 const URL_APP = process.argv[2] || 'http://localhost:4184';
 const TAXA = Number(process.argv[3] || 4);
 
-const SUPA = 'https://bxidxlcismcvryznpomh.supabase.co';
-const SVC = process.env.SUPABASE_SERVICE_KEY ?? '';
+
+
 const EMAIL = 'mapa@exemplo-descartavel.com';
-const SENHA = 'Mapa!2026abcd';
+const SENHA = senhaDescartavel();
 
 const api = (m, p, b, tok) =>
   fetch(SUPA + p, {

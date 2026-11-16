@@ -101,20 +101,27 @@ src/
 │   ├── quiz/                   # Quiz adaptativo IA
 │   ├── ranking/                # Ranking gamificado
 │   └── store/                  # Loja do Sagui
+├── plataforma/web.ts           # Adaptadores web do @mentor/core (1º import do main.tsx)
 ├── shared/
-│   ├── lib/                    # Engines (SSC, emoção, KB, planner, etc.)
-│   ├── storage/                # Repositories (Supabase)
-│   ├── ui/                     # Componentes reutilizáveis (Modal, Toast, GlassCard)
-│   └── types.ts                # Tipos compartilhados
-├── stores/
-│   ├── appStore.ts             # Store global (sessão, chat, XP)
-│   ├── bemEstarStore.ts        # Telemetria, foco offline, burnout
-│   ├── marketplaceStore.ts     # Consultas e catálogo
-│   ├── mascotStore.ts          # Estados do mascote Sagui
-│   └── storeStore.ts           # Inventário da loja
+│   ├── lib/                    # Só o que depende do navegador (acessibilidade, sfx, imagePrep...)
+│   └── ui/                     # Componentes reutilizáveis (Modal, Toast, GlassCard)
 └── styles/
     └── index.css               # Tailwind + estilos globais
 ```
+
+A pasta acima é `apps/web/src/`. O projeto é um **monorepo** (npm workspaces + Turborepo). A lógica que o app mobile também vai usar fica em pacotes:
+
+```
+apps/web/          @mentor/web    app Vite (React 19 + Tailwind)
+packages/core/     @mentor/core   tipos e engines sem DOM (SRS, quiz, burnout, IA, config...)
+packages/api/      @mentor/api    cliente Supabase, repositórios, tipos do banco gerados
+packages/state/    @mentor/state  stores Zustand (sessão, bem-estar, marketplace, loja, mascote)
+api/                              Vercel Functions (chamam server/worker.js)
+server/                           back-end único: dev (Vite), Vercel e Cloudflare
+supabase/                         migrations + banco local (PGlite) para testes e tipos
+```
+
+Import por subpath: `@mentor/core/srsEngine`, `@mentor/api/supabase`, `@mentor/state/appStore`. Cada pacote tem um README com as regras dele. A decisão de arquitetura está em [docs/adr/001-expo-react-native.md](docs/adr/001-expo-react-native.md).
 
 ### Roteamento
 
@@ -264,9 +271,9 @@ Só é necessário se você quiser o back-end **fora** da Vercel:
 
 ```bash
 npx wrangler login
-npx wrangler deploy server/worker.js --name midnight-mentor-ia
-npx wrangler secret put DEEPSEEK_API_KEY  # chave do servidor
-npx wrangler secret put API_TOKEN         # senha anti-abuso (vai no AI_PROXY_TOKEN)
+npm run deploy:worker:prod   # usa [env.production] do wrangler.toml
+npx wrangler secret put DEEPSEEK_API_KEY --env production  # chave do servidor
+npx wrangler secret put API_TOKEN --env production         # senha anti-abuso (vai no AI_PROXY_TOKEN)
 ```
 
 Depois aponte o app para ele com `AI_BASE_URL=https://seu-worker.workers.dev`

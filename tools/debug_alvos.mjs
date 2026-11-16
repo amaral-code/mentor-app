@@ -1,7 +1,8 @@
 import { chromium } from 'playwright';
-const SUPA='https://bxidxlcismcvryznpomh.supabase.co';
-const SVC= process.env.SUPABASE_SERVICE_KEY ?? '';
-const EMAIL='alvo@exemplo-descartavel.com', SENHA='Alvo!2026abc';
+import { SUPA, SVC, senhaDescartavel } from './_ambiente.mjs';
+
+
+const EMAIL='alvo@exemplo-descartavel.com', SENHA = senhaDescartavel();
 const api=(m,p,b)=>fetch(SUPA+p,{method:m,headers:{apikey:SVC,Authorization:'Bearer '+SVC,'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(async r=>({s:r.status,t:await r.text()}));
 let uid=null; const nav=await chromium.launch();
 try{
