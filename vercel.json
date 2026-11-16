@@ -5,6 +5,18 @@
   "outputDirectory": "apps/web/dist",
   "rewrites": [
     {
+      "source": "/conheca",
+      "destination": "/conheca/index.html"
+    },
+    {
+      "source": "/privacidade",
+      "destination": "/legal/privacidade.html"
+    },
+    {
+      "source": "/termos",
+      "destination": "/legal/termos.html"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

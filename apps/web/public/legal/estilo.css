@@ -1,0 +1,28 @@
+/* Estilo das páginas públicas (privacidade, termos, landing). Sem
+   dependência do bundle do app: abrem rápido e funcionam sem JavaScript. */
+:root {
+  --azul: #2a3b63;
+  --ceu: #4c8df6;
+  --ambar: #f59e0b;
+  --tinta: #1f2937;
+  --suave: #64748b;
+  --fundo: #ffffff;
+  --superficie: #f4f7fb;
+  --borda: #e2e8f0;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --tinta: #e5e7eb; --suave: #a3adbd; --fundo: #0b0f19; --superficie: #121826; --borda: #1e2538; --azul: #a9bdf0; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fundo); color: var(--tinta); font-family: Nunito, system-ui, -apple-system, 'Segoe UI', sans-serif; line-height: 1.6; }
+main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { color: var(--azul); font-size: 1.9rem; line-height: 1.2; margin: 0 0 8px; }
+h2 { color: var(--azul); font-size: 1.2rem; margin: 32px 0 8px; }
+a { color: var(--ceu); font-weight: 700; }
+.topo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--azul); font-weight: 900; margin-bottom: 24px; }
+.aviso { background: #fff7e6; color: #7a4a00; border: 2px solid #f5c26b; border-radius: 14px; padding: 12px 14px; font-size: .95rem; }
+@media (prefers-color-scheme: dark) { .aviso { background: #2a1f08; color: #f5d08b; border-color: #7a5410; } }
+.suave { color: var(--suave); font-size: .9rem; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+li { margin: 4px 0; }

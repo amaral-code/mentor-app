@@ -1,4 +1,5 @@
 import { RelatorioTurma } from './RelatorioTurma';
+import { ContaNoRodape } from '../../shared/ui/ContaNoRodape';
 import { useEffect, useState, useRef } from 'react';
 import { ClipboardList, Download, Info, LogOut, Moon, PenLine, Plus, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
@@ -890,6 +891,7 @@ export function EducatorPage() {
         </>
         )}
       </main>
+      <ContaNoRodape />
     </div>
   );
 }

@@ -85,8 +85,10 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           navigateFallback: 'index.html',
           /* `/api/*` e back-end, nao rota de SPA: sem esta exclusao o
-             fallback de navegacao devolveria index.html para elas. */
-          navigateFallbackDenylist: [/^\/api\//],
+             fallback de navegacao devolveria index.html para elas. As
+             paginas publicas (landing, privacidade, termos) sao HTML
+             proprio e tambem nao podem virar o app. */
+          navigateFallbackDenylist: [/^\/api\//, /^\/(legal|conheca)(\/|$)/, /^\/(privacidade|termos)$/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,

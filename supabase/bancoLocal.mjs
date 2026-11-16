@@ -55,6 +55,7 @@ export const MIGRACOES = [
   '034_relatorio_turma_planos_consulta.sql',
   '035_feature_flags.sql',
   '036_indices_escala.sql',
+  '037_lgpd_exclusao_exportacao_feedback.sql',
 ];
 
 /** Cria o banco e aplica as migrations. Devolve a instancia do PGlite. */

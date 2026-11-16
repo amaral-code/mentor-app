@@ -782,3 +782,56 @@ describe('/api/turmas/import', () => {
     expect(saidaPara(r, '/auth/v1/admin/users')).toBeUndefined();
   });
 });
+
+describe('/api/conta/excluir (LGPD)', () => {
+  const mundoExclusao = (arquivos = ['a.jpg', 'b.jpg']) => {
+    let listou = false;
+    return [
+      ['/rest/v1/rpc/preparar_exclusao_conta', () => json({ papel: 'student', notas_preservadas: 0 })],
+      // Primeira listagem traz as fotos; depois da remoção a pasta está vazia.
+      ['/storage/v1/object/list/essay_scans', () => {
+        const r = listou ? [] : arquivos.map((name) => ({ name }));
+        listou = true;
+        return json(r);
+      }],
+      ['/storage/v1/object/essay_scans', () => json([])],
+      ['/auth/v1/admin/users/', () => json({})],
+    ];
+  };
+
+  it('exige sessão', async () => {
+    const r = await chamar('/api/conta/excluir', { corpo: { confirmacao: 'EXCLUIR' }, respostas: mundoExclusao(), semSessao: true });
+    expect(r.status).toBe(401);
+    expect(saidaPara(r, '/auth/v1/admin/users/')).toBeUndefined();
+  });
+
+  it('sem a palavra de confirmação, não apaga nada', async () => {
+    const r = await chamar('/api/conta/excluir', { corpo: { confirmacao: 'sim' }, respostas: mundoExclusao() });
+    expect(r.status).toBe(400);
+    expect(saidaPara(r, 'preparar_exclusao_conta')).toBeUndefined();
+    expect(saidaPara(r, '/auth/v1/admin/users/')).toBeUndefined();
+  });
+
+  it('prepara (prontuário), apaga as fotos e depois a conta do próprio titular', async () => {
+    const r = await chamar('/api/conta/excluir', { corpo: { confirmacao: 'EXCLUIR' }, respostas: mundoExclusao() });
+    expect(r.status).toBe(200);
+    expect(r.dados).toMatchObject({ ok: true, arquivos: 2 });
+    const urls = r.saidas.map((s) => s.url);
+    const iPreparo = urls.findIndex((u) => u.includes('preparar_exclusao_conta'));
+    const iAuth = urls.findIndex((u) => u.includes('/auth/v1/admin/users/'));
+    expect(iPreparo).toBeGreaterThan(-1);
+    expect(iAuth).toBeGreaterThan(iPreparo);
+    expect(saidaPara(r, 'preparar_exclusao_conta').body).toEqual({ p_user: USUARIO });
+    expect(urls[iAuth]).toContain(USUARIO);
+    expect(saidaPara(r, '/storage/v1/object/essay_scans').body.prefixes).toEqual([`${USUARIO}/a.jpg`, `${USUARIO}/b.jpg`]);
+  });
+
+  it('se o preparo falha, a conta NÃO é apagada (o prontuário iria junto)', async () => {
+    const r = await chamar('/api/conta/excluir', {
+      corpo: { confirmacao: 'EXCLUIR' },
+      respostas: [['/rest/v1/rpc/preparar_exclusao_conta', () => new Response('erro', { status: 500 })], ...mundoExclusao()],
+    });
+    expect(r.status).toBe(502);
+    expect(saidaPara(r, '/auth/v1/admin/users/')).toBeUndefined();
+  });
+});

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midnight Mentor · Estude para o ENEM com um tutor que acompanha você</title>
+<meta name="description" content="App de estudos para o ENEM: quiz por matéria, correção de redação nas 5 competências, revisão espaçada, tutor com IA e cuidado com o cansaço. Para alunos, famílias e escolas.">
+<meta name="keywords" content="ENEM, vestibular, redação ENEM, simulado, quiz ENEM, revisão espaçada, estudar para o ENEM, app de estudos">
+<meta property="og:title" content="Midnight Mentor · Estude para o ENEM">
+<meta property="og:description" content="Quiz, redação corrigida, revisão e um tutor com IA. Para alunos, famílias e escolas.">
+<meta property="og:image" content="/icons/icon-512.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#2A3B63">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/legal/estilo.css">
+<style>
+  main { max-width: 1040px; }
+  .heroi { display: grid; gap: 24px; align-items: center; padding: 16px 0 8px; }
+  @media (min-width: 760px) { .heroi { grid-template-columns: 1.3fr 1fr; } }
+  .heroi h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 900; }
+  .heroi p { font-size: 1.15rem; color: var(--suave); }
+  .heroi img { width: 100%; max-width: 320px; justify-self: center; }
+  .botoes { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+  .botao { display: inline-block; padding: 14px 22px; border-radius: 16px; font-weight: 900; text-decoration: none; border: 2px solid transparent; }
+  .botao.principal { background: var(--azul); color: #fff; box-shadow: 0 4px 0 #1b2742; }
+  @media (prefers-color-scheme: dark) { .botao.principal { background: #4c8df6; box-shadow: 0 4px 0 #2f6fdb; } }
+  .botao.secundario { border-color: var(--borda); color: var(--tinta); box-shadow: 0 4px 0 var(--borda); }
+  .grade { display: grid; gap: 16px; margin-top: 16px; }
+  @media (min-width: 760px) { .grade { grid-template-columns: repeat(3, 1fr); } }
+  .cartao { background: var(--superficie); border: 2px solid var(--borda); border-radius: 18px; padding: 18px; }
+  .cartao h3 { margin: 0 0 6px; color: var(--azul); }
+  .cartao p, .cartao li { color: var(--suave); margin: 0; }
+  .cartao ul { padding-left: 18px; margin: 0; }
+  .lojas { color: var(--suave); font-size: .95rem; margin-top: 10px; }
+  footer { border-top: 1px solid var(--borda); margin-top: 48px; padding-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="topo" href="/conheca/">🌙 Midnight Mentor</a>
+
+  <section class="heroi">
+    <div>
+      <h1>Estude para o ENEM com um tutor que acompanha você até de madrugada</h1>
+      <p>Quiz por matéria, redação corrigida nas 5 competências, revisão na hora certa e um mentor com IA que explica do seu jeito. E um cuidado de verdade com o cansaço.</p>
+      <div class="botoes">
+        <a class="botao principal" href="/">Começar agora, é grátis</a>
+        <a class="botao secundario" href="#escolas">Sou de uma escola</a>
+      </div>
+      <p class="lojas">Funciona no navegador do celular e do computador, e pode ser instalado como app. Versões para Android e iPhone chegam em breve.</p>
+    </div>
+    <img src="/assets/sagui_estudando_2.webp" width="320" height="320" alt="O sagui, mascote do app, estudando com um livro">
+  </section>
+
+  <h2>Para quem estuda</h2>
+  <div class="grade">
+    <div class="cartao"><h3>Quiz que se adapta</h3><p>Questões no estilo ENEM por matéria e tópico. O app guarda onde você erra e traz de volta na revisão.</p></div>
+    <div class="cartao"><h3>Redação corrigida</h3><p>Digite ou fotografe a folha. A correção sai pelas 5 competências do ENEM, com o que melhorar.</p></div>
+    <div class="cartao"><h3>Funciona sem internet</h3><p>Sem sinal no ônibus? O quiz continua, e o progresso sobe quando a conexão volta.</p></div>
+  </div>
+
+  <h2>Para as famílias</h2>
+  <div class="grade">
+    <div class="cartao"><h3>Quem decide é o aluno</h3><p>O estudante entrega um código ao responsável. Dá para desfazer quando quiser.</p></div>
+    <div class="cartao"><h3>Números, não vigilância</h3><p>Tempo de estudo, acerto e dias ativos. Conversas e caderno do estudante ficam só com ele.</p></div>
+    <div class="cartao"><h3>Alerta de cansaço</h3><p>Se o ritmo indicar sobrecarga, o responsável recebe um aviso no celular, e o app sugere pausa.</p></div>
+  </div>
+
+  <h2 id="escolas">Para as escolas</h2>
+  <div class="grade">
+    <div class="cartao"><h3>Turma inteira em minutos</h3><p>Matrícula por planilha. Cada família recebe o acesso por e-mail.</p></div>
+    <div class="cartao"><h3>O que revisar amanhã</h3><p>O professor vê os tópicos em que a turma mais erra e exporta o relatório em CSV ou PDF.</p></div>
+    <div class="cartao"><h3>Privacidade por padrão</h3><p>Professor vê só as próprias turmas, sempre em agregado. Regras aplicadas pelo banco de dados.</p></div>
+  </div>
+  <p>Quer levar para a sua escola? Escreva para [E-MAIL COMERCIAL]. Escola pública tem condição especial.</p>
+
+  <footer class="suave">
+    <a href="/legal/privacidade.html">Política de privacidade</a> · <a href="/legal/termos.html">Termos de uso</a> · <a href="/">Abrir o app</a>
+    <p>Em sofrimento intenso, ligue para o CVV no 188 (24 horas, gratuito).</p>
+  </footer>
+</main>
+</body>
+</html>

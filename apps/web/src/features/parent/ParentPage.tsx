@@ -1,4 +1,5 @@
 import { PreferenciasNotificacoes } from '../../shared/ui/PreferenciasNotificacoes';
+import { ContaNoRodape } from '../../shared/ui/ContaNoRodape';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '@mentor/state/appStore';
 import { BellRing, GraduationCap, HeartHandshake, LogOut, Moon, UserPlus } from 'lucide-react';
@@ -212,6 +213,7 @@ export function ParentPage() {
           )}
         </>
       )}
+      <ContaNoRodape />
     </div>
   );
 }

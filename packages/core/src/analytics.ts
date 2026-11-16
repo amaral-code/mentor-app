@@ -27,6 +27,7 @@ export const PLANO_DE_EVENTOS = {
   revisao_feita: {},
   notificacoes_ligadas: {},
   convite_compartilhado: { tipo: ['liga', 'turma', 'vinculo'] },
+  feedback_enviado: { tipo: ['ideia', 'problema', 'elogio'] },
 } as const;
 
 export type NomeEvento = keyof typeof PLANO_DE_EVENTOS;

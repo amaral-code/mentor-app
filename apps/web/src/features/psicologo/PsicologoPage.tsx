@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ContaNoRodape } from '../../shared/ui/ContaNoRodape';
 import { CalendarClock, LogOut, Moon, Plus, Stethoscope, Trash2 } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
@@ -222,6 +223,7 @@ export function PsicologoPage() {
           </span>
         </div>
       </section>
+      <ContaNoRodape />
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import { ConsentimentoAnalytics } from '../../shared/ui/ConsentimentoAnalytics';
+import { FeedbackBeta } from '../../shared/ui/FeedbackBeta';
+import { MinhaConta } from '../../shared/ui/MinhaConta';
 import { BrasaoNivel, EstrelaCadente, LuaOfensiva } from '../../shared/ui/IconesMentor';
 import { useState, useEffect } from 'react';
 import { Brain, Check, CheckCircle2, ClipboardList, Eye, EyeOff, Lightbulb, Lock, Moon, XCircle, Zap } from 'lucide-react';
@@ -293,6 +295,8 @@ export function ProfilePage() {
 
       <PreferenciasNotificacoes perfil="aluno" />
       <ConsentimentoAnalytics />
+      <FeedbackBeta />
+      <MinhaConta />
 
       {/* Acessibilidade: fonte, contraste, movimento, daltonismo */}
       <AcessibilidadePanel />

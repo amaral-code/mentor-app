@@ -1,4 +1,5 @@
 import { RelatorioTurma } from './RelatorioTurma';
+import { ContaNoRodape } from '../../shared/ui/ContaNoRodape';
 import { useEffect, useState } from 'react';
 import { BookOpenCheck, KeyRound, LogOut, Moon, Thermometer, FileText } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
@@ -143,6 +144,7 @@ export function ProfessorPage() {
           <CodigosEscola modo="professor" />
         )}
       </main>
+      <ContaNoRodape />
     </div>
   );
 }

@@ -41,6 +41,7 @@ Regras em `packages/core/src/analytics.ts`:
 | `redacao_corrigida` | correção digitada pronta | `origem` |
 | `mentor_pergunta` | pergunta enviada ao Mentor | `modo` |
 | `convite_compartilhado` | link de liga ou de vínculo enviado | `tipo` |
+| `feedback_enviado` | mensagem do beta enviada pelo Perfil | `tipo` (nunca o texto) |
 | `foco_concluido`, `revisao_feita`, `notificacoes_ligadas` | previstos no plano, ainda sem chamada | |
 
 ### Funis e retenção (para montar no PostHog)

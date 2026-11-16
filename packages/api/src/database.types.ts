@@ -420,6 +420,24 @@ export type Database = {
         }
         Relationships: []
       }
+      exclusoes_conta: {
+        Row: {
+          id: number
+          papel: string
+          excluida_em: string
+        }
+        Insert: {
+          id?: number
+          papel: string
+          excluida_em?: string
+        }
+        Update: {
+          id?: number
+          papel?: string
+          excluida_em?: string
+        }
+        Relationships: []
+      }
       extrato_foco: {
         Row: {
           id: number
@@ -468,6 +486,39 @@ export type Database = {
           porcentagem?: number
           escolas?: string[]
           atualizado_em?: string
+        }
+        Relationships: []
+      }
+      feedback_beta: {
+        Row: {
+          id: string
+          user_id: string
+          tipo: string
+          nota: number | null
+          texto: string
+          tela: string | null
+          versao: string | null
+          criado_em: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tipo: string
+          nota?: number | null
+          texto: string
+          tela?: string | null
+          versao?: string | null
+          criado_em?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tipo?: string
+          nota?: number | null
+          texto?: string
+          tela?: string | null
+          versao?: string | null
+          criado_em?: string
         }
         Relationships: []
       }
@@ -1165,32 +1216,35 @@ export type Database = {
         Row: {
           id: string
           psicologo_id: string
-          aluno_id: string
+          aluno_id: string | null
           agendamento_id: string | null
           tipo: string
           retifica_id: string | null
           texto: string
           criado_em: string
+          paciente_excluido: string | null
         }
         Insert: {
           id?: string
           psicologo_id: string
-          aluno_id: string
+          aluno_id?: string | null
           agendamento_id?: string | null
           tipo?: string
           retifica_id?: string | null
           texto: string
           criado_em?: string
+          paciente_excluido?: string | null
         }
         Update: {
           id?: string
           psicologo_id?: string
-          aluno_id?: string
+          aluno_id?: string | null
           agendamento_id?: string | null
           tipo?: string
           retifica_id?: string | null
           texto?: string
           criado_em?: string
+          paciente_excluido?: string | null
         }
         Relationships: []
       }
@@ -2019,6 +2073,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      enviar_feedback: {
+        Args: {
+          p_tipo: string
+          p_texto: string
+          p_nota?: number
+          p_tela?: string
+          p_versao?: string
+        }
+        Returns: string
+      }
       enviar_mensagem_apoio: {
         Args: {
           p_psicologo: string
@@ -2038,6 +2102,10 @@ export type Database = {
           p_escola_id: string
         }
         Returns: boolean
+      }
+      exportar_meus_dados: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       ficha_aluno: {
         Args: {
@@ -2262,6 +2330,12 @@ export type Database = {
           p_psicologo: string
         }
         Returns: string
+      }
+      preparar_exclusao_conta: {
+        Args: {
+          p_user: string
+        }
+        Returns: Json
       }
       professores_da_turma: {
         Args: {

@@ -483,6 +483,55 @@ async function usuarioDoToken(env, request) {
 }
 
 /* ===================================================================
+   Exclusão de conta (LGPD, issue #70)
+   -------------------------------------------------------------------
+   Exigência das lojas e direito do titular (LGPD art. 18, VI). Apagar
+   `auth.users` pela API de admin leva `perfis` e, em cascata, todas as
+   tabelas do usuário. Antes, `preparar_exclusao_conta` (migration 037)
+   preserva o prontuário de quem foi paciente, que o psicólogo é obrigado
+   a guardar. As fotos de redação moram no Storage, fora da cascata do
+   banco: saem aqui, uma a uma.
+   =================================================================== */
+async function apagarArquivosDoUsuario(env, uid) {
+  const cab = {
+    apikey: env.SUPABASE_SERVICE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+  let apagados = 0;
+  // Lotes de 100 até a pasta esvaziar (teto de 50 voltas contra laço).
+  for (let volta = 0; volta < 50; volta++) {
+    const lista = await fetch(`${env.SUPABASE_URL}/storage/v1/object/list/${BUCKET_REDACOES}`, {
+      method: 'POST',
+      headers: cab,
+      body: JSON.stringify({ prefix: `${uid}/`, limit: 100, offset: 0 }),
+    });
+    if (!lista.ok) throw new Error(`storage list: ${lista.status}`);
+    const itens = (await lista.json()).filter((i) => i?.name);
+    if (itens.length === 0) break;
+    const remocao = await fetch(`${env.SUPABASE_URL}/storage/v1/object/${BUCKET_REDACOES}`, {
+      method: 'DELETE',
+      headers: cab,
+      body: JSON.stringify({ prefixes: itens.map((i) => `${uid}/${i.name}`) }),
+    });
+    if (!remocao.ok) throw new Error(`storage delete: ${remocao.status}`);
+    apagados += itens.length;
+  }
+  return apagados;
+}
+
+async function excluirConta(env, uid) {
+  await supabaseRpc(env, 'preparar_exclusao_conta', { p_user: uid });
+  const arquivos = await apagarArquivosDoUsuario(env, uid);
+  const resposta = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(uid)}`, {
+    method: 'DELETE',
+    headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` },
+  });
+  if (!resposta.ok) throw new Error(`auth delete: ${resposta.status}`);
+  return { arquivos };
+}
+
+/* ===================================================================
    Porteiro das rotas de IA
    -------------------------------------------------------------------
    `/generate`, `/tts` e `/api/chat/completions` eram abertas: sem
@@ -1735,6 +1784,39 @@ export default {
     // do cliente). Senhas temporarias morrem no primeiro login
     // (deve_trocar_senha) e nunca aparecem em tela — so no email.
     // =============================================================
+    if (url.pathname === '/api/conta/excluir' && request.method === 'POST') {
+      if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+        return json({ error: 'misconfigured', message: 'Defina SUPABASE_URL e SUPABASE_SERVICE_KEY.' }, 500, corsHeaders);
+      }
+      const titular = await usuarioDoToken(env, request);
+      if (!titular) return json({ error: 'sem_sessao', message: 'Faça login novamente.' }, 401, corsHeaders);
+
+      let corpo = {};
+      try {
+        corpo = await request.json();
+      } catch {
+        /* corpo vazio cai na recusa abaixo */
+      }
+      // A palavra digitada é a trava contra o toque sem querer: não há volta.
+      if (corpo?.confirmacao !== 'EXCLUIR') {
+        return json({ error: 'sem_confirmacao', message: 'Digite EXCLUIR para confirmar.' }, 400, corsHeaders);
+      }
+      if (!dentroDoLimite(`excluir:${titular.id}`, 3)) {
+        return json({ error: 'muitas_chamadas', message: 'Espere um minuto e tente de novo.' }, 429, corsHeaders);
+      }
+      try {
+        const feito = await excluirConta(env, titular.id);
+        return json({ ok: true, ...feito }, 200, corsHeaders);
+      } catch (erro) {
+        console.error('[conta/excluir] falhou:', erro?.message);
+        return json(
+          { error: 'falhou', message: 'Não deu para excluir agora. Tente de novo; se continuar, escreva para o contato da política de privacidade.' },
+          502,
+          corsHeaders,
+        );
+      }
+    }
+
     if (url.pathname === '/api/turmas/import' && request.method === 'POST') {
       if (!tokenValido(request, env)) return json({ error: 'Unauthorized' }, 401, corsHeaders);
       if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
