@@ -2,12 +2,13 @@ import '../src/boot';
 import '../global.css';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { carregarConfigRuntime } from '@mentor/core/runtimeConfig';
 import { precisaOnboarding } from '@mentor/core/onboardingLocal';
+import { destinoDaSessao, grupoDoPapel } from '@mentor/core/rotasPorPapel';
 import { useAppStore } from '@mentor/state/appStore';
 import { useSessaoDoApp } from '../src/sessao/useSessaoDoApp';
 import { Toast } from '../src/ui/Basicos';
@@ -36,6 +37,18 @@ export default function Raiz() {
   }, []);
 
   const aluno = autenticado && papel === 'student' && !trocarSenha && !primeiroAcesso;
+  const liberado = autenticado && !trocarSenha && !primeiroAcesso;
+  const grupo = grupoDoPapel(papel);
+  const caminho = usePathname();
+
+  /* Cada papel entra pela PRÓPRIA rota. Sem isto, o responsável que abre
+     o app cai em "/", que é a Central do aluno e não existe para ele. */
+  useEffect(() => {
+    if (!configPronta || !sessaoLida || !liberado) return;
+    const destino = destinoDaSessao(useAppStore.getState().session);
+    if (destino.tipo === 'grupo' && destino.grupo !== 'aluno' && caminho === '/') router.replace(destino.rota);
+    if (destino.tipo === 'sem-tela' && caminho !== '/sem-painel') router.replace('/sem-painel');
+  }, [configPronta, sessaoLida, liberado, caminho]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -59,8 +72,20 @@ export default function Raiz() {
             <Stack.Protected guard={aluno}>
               <Stack.Screen name="(aluno)" />
             </Stack.Protected>
-            <Stack.Protected guard={autenticado && papel !== 'student' && !trocarSenha}>
-              <Stack.Screen name="outro-perfil" />
+            <Stack.Protected guard={liberado && grupo === 'familia'}>
+              <Stack.Screen name="(familia)" />
+            </Stack.Protected>
+            <Stack.Protected guard={liberado && grupo === 'professor'}>
+              <Stack.Screen name="(professor)" />
+            </Stack.Protected>
+            <Stack.Protected guard={liberado && grupo === 'secretaria'}>
+              <Stack.Screen name="(secretaria)" />
+            </Stack.Protected>
+            <Stack.Protected guard={liberado && grupo === 'psicologo'}>
+              <Stack.Screen name="(psicologo)" />
+            </Stack.Protected>
+            <Stack.Protected guard={liberado && grupo === null}>
+              <Stack.Screen name="sem-painel" />
             </Stack.Protected>
           </Stack>
         )}

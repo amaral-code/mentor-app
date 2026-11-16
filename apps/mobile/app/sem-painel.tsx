@@ -3,6 +3,7 @@ import { userRepository } from '@mentor/api/UserRepository';
 import { plataforma } from '@mentor/core/plataforma';
 import { useAppStore } from '@mentor/state/appStore';
 import { SITE_URL } from '../src/plataforma';
+import { sairDaConta } from '../src/sessao/sair';
 import { Botao } from '../src/ui/Botao';
 import { imagemSagui } from '../src/ui/sagui';
 import { Texto } from '../src/ui/Texto';
@@ -22,7 +23,7 @@ const NOME_PAPEL: Record<string, string> = {
  * o papel não pode usar), a conta é mandada para o site, onde o painel
  * dela existe.
  */
-export default function OutroPerfil() {
+export default function SemPainel() {
   const papel = useAppStore((s) => s.userRole);
   return (
     <View style={estilos.centro}>
@@ -35,7 +36,7 @@ export default function OutroPerfil() {
         painel completo no navegador.
       </Texto>
       {SITE_URL ? <Botao titulo="Abrir o painel" icone="open-outline" aoTocar={() => plataforma().abrirUrl(SITE_URL)} /> : null}
-      <Botao titulo="Sair" variante="secundario" aoTocar={() => void userRepository.logout()} />
+      <Botao titulo="Sair" variante="secundario" aoTocar={() => void sairDaConta(() => userRepository.logout())} />
     </View>
   );
 }

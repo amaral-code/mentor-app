@@ -9,10 +9,12 @@ import type { ArmazenamentoChaveValor } from '@mentor/core/plataforma';
  * escolhe pelo sufixo, e assim o SQLite em WebAssembly nem entra no
  * bundle do navegador.
  */
-export function criarArmazenamento(): ArmazenamentoChaveValor | null {
+export function criarArmazenamento(): (ArmazenamentoChaveValor & { getAllKeys(): string[] }) | null {
   return {
     getItem: (k) => Storage.getItemSync(k),
     setItem: (k, v) => Storage.setItemSync(k, v),
     removeItem: (k) => void Storage.removeItemSync(k),
+    // Para o "sair" apagar o que é desta conta (ver sessao/sair.ts).
+    getAllKeys: () => Storage.getAllKeysSync(),
   };
 }

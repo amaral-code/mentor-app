@@ -4,6 +4,7 @@ import { getSupabase } from '@mentor/api/supabase';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { userRepository } from '@mentor/api/UserRepository';
 import { useAppStore } from '@mentor/state/appStore';
+import { sairDaConta } from '../src/sessao/sair';
 import { Botao } from '../src/ui/Botao';
 import { Campo } from '../src/ui/Basicos';
 import { Cartao } from '../src/ui/Cartao';
@@ -57,7 +58,7 @@ export default function TrocarSenha() {
           <Campo rotulo="Nova senha" value={nova} onChangeText={setNova} secureTextEntry autoComplete="new-password" placeholder="Mínimo 6 caracteres" />
           <Campo rotulo="Repita a senha" value={confirma} onChangeText={setConfirma} secureTextEntry erro={erro || undefined} onSubmitEditing={() => void trocar()} />
           <Botao titulo="Salvar senha" aoTocar={() => void trocar()} carregando={trocando} />
-          <Botao titulo="Sair" variante="fantasma" aoTocar={() => void userRepository.logout()} />
+          <Botao titulo="Sair" variante="fantasma" aoTocar={() => void sairDaConta(() => userRepository.logout())} />
         </Cartao>
       </View>
     </ScrollView>

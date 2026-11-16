@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { userRepository } from '@mentor/api/UserRepository';
+import { sairDaConta } from '../../../src/sessao/sair';
 import { useAppStore } from '@mentor/state/appStore';
 import { Botao } from '../../../src/ui/Botao';
 import { Cartao } from '../../../src/ui/Cartao';
@@ -47,10 +48,9 @@ export default function Mais() {
   );
 }
 
-/** Sair limpa a sessão do cofre (Supabase) e o estado em memória. */
-async function sair() {
-  await userRepository.logout();
-  useAppStore.getState().logout();
+/** Sair limpa a sessão do cofre, as stores e o que o app guardou desta conta. */
+function sair() {
+  return sairDaConta(() => userRepository.logout());
 }
 
 const estilos = StyleSheet.create({
