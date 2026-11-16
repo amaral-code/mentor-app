@@ -11,7 +11,9 @@ Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
 ```bash
 npm run dev      # app web na porta 5180 (já inclui o back-end /api)
 npm run build    # turbo: tsc -b && vite build do @mentor/web
-npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 818 testes
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 936 testes
+npm run test:e2e        # Playwright: build + vite preview, computador e celular (28 testes)
+npm run check:bundle    # teto do JS/CSS da abertura e das imagens (roda no CI)
 npm run lint     # oxlint (barra APIs de navegador em packages/*)
 npm run typecheck       # turbo: tsc em todos os workspaces
 npm run gen:types       # regera os tipos do banco a partir das migrations
@@ -39,6 +41,10 @@ packages/core/            @mentor/core: tipos e engines sem DOM (é onde fica a 
 packages/api/             @mentor/api: cliente Supabase, repositórios, tipos do banco gerados
 packages/state/           @mentor/state: stores Zustand (appStore é o principal)
 server/worker.js          BACK-END ÚNICO (ver abaixo)
+server/webPush.js         Web Push (VAPID + aes128gcm) só com WebCrypto
+e2e/                      testes Playwright; Supabase e IA simulados por rota
+apps/web/public/legal/    política de privacidade e termos (HTML estático)
+apps/web/public/conheca/  landing (HTML estático)
 api/                      Vercel Functions
 supabase/                 migrations + bancoLocal.mjs (PGlite para testes e tipos)
 ```
@@ -306,6 +312,47 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-11-16 (3) — M5 a M8: versão web primeiro
+- Pedido do dono: "todas as milestones a partir da 5", **na versão web**
+  (PWA). O app nativo (M2) não existe ainda; a lógica nova foi para
+  `packages/` para ele reaproveitar. Widgets, Maestro, EAS, Hermes, AAB e
+  publicação nas lojas ficam para depois do M2 (`docs/lancamento.md`).
+- **Migrations 032 a 037 — rodar no Supabase, em ordem.** Antes delas, a
+  031 da revisão geral (ofensiva em Brasília) foi renumerada de 030 para
+  031 ao portar para o monorepo.
+- **Push (#55, 032)**: Web Push sem biblioteca (`server/webPush.js`),
+  `push_inscricoes` por aparelho, preferências por tipo, horário de
+  silêncio e teto diário em `pushes_para_enviar`. Lembretes de revisão e
+  de ofensiva por cron da Vercel (`?lembretes=`, só com `CRON_SECRET`).
+  Precisa de `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT`
+  (`node scripts/gerar-vapid.mjs`). A chave pública vai pelo `/api/config`.
+- **Offline (#56, 033)**: fila no aparelho (`@mentor/core/filaOffline`) e
+  `aplicar_operacao` com chave única: reenviar não credita duas vezes.
+  XP conta no dia em que CHEGA ao servidor (o relógio do aparelho não
+  decide). Quiz sem rede usa o banco local de questões.
+- **Deep links (#57/#58)**: `/liga/<id>`, `/turma/<código>`,
+  `/vinculo/<código>`, `/?aba=` (`@mentor/core/deepLinks`), atalhos do
+  manifesto e botões de compartilhar. Ver `docs/deep-links.md`.
+- **M6 (034)**: relatório da turma com piso de 3 alunos por tópico, CSV e
+  impressão em PDF; `escolas.limite_alunos`; `cancelar_consulta` grava o
+  reembolso devido; CRP com formato validado.
+- **M7**: erros no Sentry sem SDK (`monitoramento.ts`, `server/monitoramento.js`,
+  sem PII), PostHog só com consentimento e nunca para menor de 16
+  (`analytics.ts`, plano de eventos fechado), feature flags com balde
+  determinístico (035), índices de escala (036), roteiro k6, E2E com
+  Playwright contra o build de produção (o `/api` passou a existir no
+  `vite preview`), sagui em WebP (1,8 MB viraram 300 KB) e orçamento da
+  abertura no CI. Docs: `observabilidade.md`, `escala.md`, `performance.md`.
+- **M8 (037)**: `exportar_meus_dados` e `/api/conta/excluir` (Perfil e fim
+  dos outros painéis). **A exclusão preserva o prontuário de quem foi
+  paciente** (guarda legal de 5 anos do psicólogo): a nota perde o
+  vínculo com a conta e fica com o nome. Feedback do beta com NPS e
+  `verificacao/metricas_beta.sql`. Landing em `/conheca/`, política e
+  termos em `/legal/` como **rascunho para revisão jurídica**. Docs:
+  `lgpd.md`, `beta.md`, `lancamento.md`.
+- Variáveis novas na Vercel: `VAPID_*`, `SENTRY_DSN`, `POSTHOG_KEY`,
+  `POSTHOG_HOST` (todas opcionais: sem elas o recurso fica desligado).
 
 ### 2026-11-16 (2) — Revisão de código
 - **Migration 030 — rodar no Supabase.** O teto diário de moedas do foco
@@ -690,9 +737,9 @@ principal, regra de permissão. Mais recente no topo.
   `parentesco` nulo, mas `VinculoResponsavel.parentesco` é `string`.
 - XP por evento ainda é dito pelo cliente (há teto diário, migration 031).
   O certo é o servidor calcular o XP do quiz a partir das respostas.
-- Sem política de privacidade, termos de uso, exclusão de conta e
-  exportação de dados. Com dado de menor e de saúde mental, é pendência
-  de LGPD, e depende de decisão do dono.
+- Política de privacidade e termos são **rascunhos**: falta revisão
+  jurídica, nomear o encarregado (DPO) e decidir o consentimento para
+  menores de 12 (`docs/lgpd.md`). Exclusão e exportação já existem.
 - A sala de consulta é um Jitsi público. Para atendimento de menor,
   vale uma sala com controle de entrada.
 - O quiz gera 4 alternativas; o ENEM tem 5.
