@@ -11,6 +11,7 @@ import { precisaOnboarding } from '@mentor/core/onboardingLocal';
 import { destinoDaSessao, grupoDoPapel } from '@mentor/core/rotasPorPapel';
 import { useAppStore } from '@mentor/state/appStore';
 import { useSessaoDoApp } from '../src/sessao/useSessaoDoApp';
+import { ouvirLinksDeEntrada, renovarSessaoComOApp } from '../src/sessao/entradaSocial';
 import { Toast } from '../src/ui/Basicos';
 import { OverlayCrise } from '../src/features/bemEstar/OverlayCrise';
 import { cor } from '../src/ui/tema';
@@ -29,6 +30,17 @@ export default function Raiz() {
   const papel = useAppStore((s) => s.userRole);
   const trocarSenha = useAppStore((s) => !!s.session?.deveTrocarSenha);
   const primeiroAcesso = useAppStore((s) => precisaOnboarding(s.session));
+
+  // Link de entrada (e-mail, Google, Apple) e renovação do token no ciclo do app.
+  useEffect(() => {
+    if (!configPronta) return;
+    const pararLinks = ouvirLinksDeEntrada((m) => useAppStore.getState().setToast(m, 'error'));
+    const pararRenovacao = renovarSessaoComOApp();
+    return () => {
+      pararLinks();
+      pararRenovacao();
+    };
+  }, [configPronta]);
 
   /* /api/config antes do primeiro render que dependa do Supabase: nunca
      rejeita e tem teto de 6s, então o pior caso é usar o valor do build. */

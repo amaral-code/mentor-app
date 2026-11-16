@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { userRepository } from '@mentor/api/UserRepository';
 import { isSupabaseConfigured } from '@mentor/api/supabase';
 import { useAppStore } from '@mentor/state/appStore';
@@ -9,19 +10,43 @@ import { Cartao } from '../src/ui/Cartao';
 import { imagemSagui } from '../src/ui/sagui';
 import { Texto } from '../src/ui/Texto';
 import { cor } from '../src/ui/tema';
+import { entrarComProvedor, pedirLinkNoEmail } from '../src/sessao/entradaSocial';
+import { appleDisponivelNativo, entrarComApple } from '../src/sessao/entradaApple';
 
 /**
  * Entrada por e-mail e senha.
  *
  * Sem seletor de papel: o papel vem do perfil no banco (JWT + `perfis`),
- * e a conta cai na área dela. Link mágico, Google e Apple são da issue de
- * autenticação nativa do M2 (#32).
+ * e a conta cai na área dela. Também por link no e-mail, Google e Apple
+ * (#32); a Apple aparece sempre que há login social, como a App Store exige.
  */
 export default function Entrar() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [erro, setErro] = useState('');
+  const [modo, setModo] = useState<'senha' | 'link'>('senha');
+  const [linkEnviado, setLinkEnviado] = useState(false);
+  const [appleNativo, setAppleNativo] = useState(false);
+
+  useEffect(() => {
+    void appleDisponivelNativo().then(setAppleNativo);
+  }, []);
+
+  async function enviarLink() {
+    setErro('');
+    setEntrando(true);
+    const e = await pedirLinkNoEmail(email);
+    setEntrando(false);
+    if (e) setErro(e);
+    else setLinkEnviado(true);
+  }
+
+  async function social(qual: 'google' | 'apple') {
+    setErro('');
+    const e = qual === 'apple' ? await entrarComApple() : await entrarComProvedor('google');
+    if (e) setErro(e);
+  }
 
   async function entrar() {
     if (!email.trim() || !senha) {
@@ -72,18 +97,61 @@ export default function Entrar() {
               textContentType="emailAddress"
               placeholder="voce@escola.com.br"
             />
-            <Campo
-              rotulo="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-              onSubmitEditing={() => void entrar()}
-              returnKeyType="go"
-              erro={erro || undefined}
-            />
-            <Botao titulo="Entrar" aoTocar={() => void entrar()} carregando={entrando} />
+            {modo === 'senha' ? (
+              <>
+                <Campo
+                  rotulo="Senha"
+                  value={senha}
+                  onChangeText={setSenha}
+                  secureTextEntry
+                  autoComplete="password"
+                  textContentType="password"
+                  onSubmitEditing={() => void entrar()}
+                  returnKeyType="go"
+                  erro={erro || undefined}
+                />
+                <Botao titulo="Entrar" aoTocar={() => void entrar()} carregando={entrando} />
+              </>
+            ) : linkEnviado ? (
+              <Texto accessibilityLiveRegion="polite">
+                Se este e-mail tem conta, o link chegou. Abra no celular: ele entra direto no app.
+              </Texto>
+            ) : (
+              <>
+                {erro ? <Texto variante="legenda" cor={cor.vermelho600}>{erro}</Texto> : null}
+                <Botao titulo="Mandar link de entrada" icone="mail-outline" aoTocar={() => void enviarLink()} carregando={entrando} />
+              </>
+            )}
+            <Pressable
+              onPress={() => {
+                setModo(modo === 'senha' ? 'link' : 'senha');
+                setErro('');
+                setLinkEnviado(false);
+              }}
+              accessibilityRole="button"
+              style={{ minHeight: 44, justifyContent: 'center' }}
+            >
+              <Texto negrito centro cor={cor.ceu700}>
+                {modo === 'senha' ? 'Entrar sem senha, com um link no e-mail' : 'Entrar com senha'}
+              </Texto>
+            </Pressable>
+            <View style={estilos.ou}>
+              <View style={estilos.linha} />
+              <Texto variante="legenda">ou</Texto>
+              <View style={estilos.linha} />
+            </View>
+            <Botao titulo="Continuar com Google" variante="secundario" icone="logo-google" aoTocar={() => void social('google')} />
+            {appleNativo ? (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={16}
+                style={{ height: 52 }}
+                onPress={() => void social('apple')}
+              />
+            ) : (
+              <Botao titulo="Continuar com Apple" variante="secundario" icone="logo-apple" aoTocar={() => void social('apple')} />
+            )}
           </Cartao>
         </View>
       </ScrollView>
@@ -95,4 +163,6 @@ const estilos = StyleSheet.create({
   centro: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   coluna: { width: '100%', maxWidth: 420, alignSelf: 'center', gap: 6 },
   sagui: { width: 120, height: 120, alignSelf: 'center', resizeMode: 'contain' },
+  ou: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  linha: { flex: 1, height: 2, backgroundColor: cor.cinza100 },
 });

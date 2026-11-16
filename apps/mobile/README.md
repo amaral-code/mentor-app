@@ -24,6 +24,21 @@ npm run start --workspace @mentor/mobile
 `/api` (config, chat, redação, TTS). Supabase e provedor de IA vêm de
 `/api/config` em tempo de execução, como no web.
 
+## Entrar sem senha (link, Google, Apple)
+
+Configuração no painel do Supabase, uma vez por ambiente:
+
+1. Authentication > URL Configuration > Redirect URLs: acrescente
+   `midnightmentor://entrar`, `midnightmentor://**` (builds) e
+   `exp://**` (Expo Go, só em dev).
+2. Authentication > Providers: ligue Google (client id e secret do Google
+   Cloud) e Apple (Services ID, chave .p8, Team ID). Na Apple, o bundle
+   `br.com.midnightmentor.app` precisa da capacidade Sign in with Apple.
+
+O link do e-mail é só para conta que já existe (`shouldCreateUser:
+false`). O app usa PKCE: o que volta no link é um código de uso único,
+não o token.
+
 ## Builds internos e atualização OTA (EAS)
 
 Uma vez, com a conta Expo da organização (não pessoal):

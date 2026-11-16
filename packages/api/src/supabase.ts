@@ -24,6 +24,12 @@ export interface OpcoesClienteSupabase {
   storage?: SupportedStorage;
   /** Ler o token da URL apos o link magico. Padrao: true (web). */
   detectSessionInUrl?: boolean;
+  /**
+   * 'pkce' no celular: o link do e-mail e o retorno do Google/Apple trazem
+   * um codigo de uso unico, e nao os tokens na URL (que ficariam no
+   * historico do navegador do sistema). Omitido: o padrao do supabase-js.
+   */
+  flowType?: 'pkce' | 'implicit';
 }
 
 let client: SupabaseClient | null = null;
@@ -53,6 +59,7 @@ export function getSupabase(): SupabaseClient | null {
       autoRefreshToken: true,
       ...(opcoes.storage ? { storage: opcoes.storage } : {}),
       ...(opcoes.detectSessionInUrl === undefined ? {} : { detectSessionInUrl: opcoes.detectSessionInUrl }),
+      ...(opcoes.flowType ? { flowType: opcoes.flowType } : {}),
     },
   });
   return client;

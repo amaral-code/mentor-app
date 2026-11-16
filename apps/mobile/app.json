@@ -17,7 +17,8 @@
         ],
         "NSCameraUsageDescription": "A câmera fotografa a folha da redação e a questão que você quer tirar dúvida.",
         "NSPhotoLibraryUsageDescription": "A galeria serve para escolher a foto da redação ou da questão."
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "br.com.midnightmentor.app",
@@ -55,7 +56,9 @@
         {
           "enableBackgroundPlayback": true
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": false

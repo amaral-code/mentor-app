@@ -18,6 +18,8 @@ configurarSupabase({
      pelo deep link e é tratado na tela de entrada. No web (Expo Web),
      o comportamento padrão do supabase-js continua valendo. */
   detectSessionInUrl: Platform.OS === 'web',
+  // Link do e-mail e retorno do Google/Apple trazem código de uso único (PKCE).
+  flowType: 'pkce',
 });
 
 // Telemetria que ainda está no buffer é gravada quando o app vai para o
