@@ -1,0 +1,358 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Coins, Lock, Smartphone, TriangleAlert } from 'lucide-react';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
+import { useAppStore } from '@mentor/state/appStore';
+import {
+  META_MINUTOS_MODO,
+  MULTIPLICADOR_MODO,
+  RECOMPENSAS,
+  TETO_DIARIO_MOEDAS,
+  calcularMoedas,
+  faixaDe,
+  moedasDeHoje,
+  proximaFaixa,
+  resumirSessoes,
+} from '@mentor/core/focusShield';
+import type { ModoEscudo } from '@mentor/core/types';
+import { EmptyState } from '../../shared/ui/EmptyState';
+import { CabecalhoPagina, SELO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
+
+/**
+ * ESCUDO DE DOPAMINA - tela do aluno.
+ *
+ * O QUE ESTA VERSAO WEB CONSEGUE MEDIR
+ * O navegador nao ve a tela do aparelho; ele ve a ABA. O sinal
+ * disponivel e o Page Visibility API: aba escondida (app em segundo
+ * plano, tela apagada, outro app aberto) vale como "offline". Isso e
+ * suficiente para o caso principal - trancar o celular e ir estudar no
+ * papel - e mede errado um caso: trocar para o Instagram tambem esconde
+ * a aba. Por isso o app pede que o Modo ENEM seja iniciado com o
+ * aparelho de tela para baixo, e o modulo nativo em mobile/ (React
+ * Native) resolve isso de verdade, lendo o estado real da tela.
+ *
+ * O CRONOMETRO NAO CONFIA EM setInterval
+ * Em segundo plano o navegador reduz ou congela timers. Entao o tempo e
+ * calculado por diferenca de timestamps a cada tick; o intervalo so
+ * dispara o recalculo. E o servidor recalcula de novo no fim, porque
+ * relogio de cliente e editavel.
+ */
+
+const MODOS: { id: ModoEscudo; nome: string; descricao: string }[] = [
+  { id: 'leve', nome: 'Leve', descricao: '15 min longe da tela. Para comecar.' },
+  { id: 'enem', nome: 'Modo ENEM', descricao: '25 min de bloco offline, como na prova.' },
+  { id: 'maratona', nome: 'Maratona', descricao: '50 min ou mais. Multiplicador maior.' },
+];
+
+export function EscudoPage() {
+  const escudo = useBemEstarStore((s) => s.escudo);
+  const carteira = useBemEstarStore((s) => s.carteira);
+  const sessoesOffline = useBemEstarStore((s) => s.sessoesOffline);
+  const iniciarEscudo = useBemEstarStore((s) => s.iniciarEscudo);
+  const encerrarEscudo = useBemEstarStore((s) => s.encerrarEscudo);
+  const cancelarEscudo = useBemEstarStore((s) => s.cancelarEscudo);
+  const registrarInterrupcao = useBemEstarStore((s) => s.registrarInterrupcao);
+  const atualizarCronometro = useBemEstarStore((s) => s.atualizarCronometro);
+  const gastarMoedas = useBemEstarStore((s) => s.gastarMoedas);
+  const carregado = useBemEstarStore((s) => s.carregado);
+  const carregarTudo = useBemEstarStore((s) => s.carregarTudo);
+  const setToast = useAppStore((s) => s.setToast);
+  const addLog = useAppStore((s) => s.addLog);
+
+  const [modo, setModo] = useState<ModoEscudo>('enem');
+  const [resultado, setResultado] = useState<{ moedas: number; minutos: number } | null>(null);
+  const alertouSaida = useRef(false);
+
+  useEffect(() => {
+    if (!carregado) void carregarTudo();
+  }, [carregado]);
+
+  // Cronometro por diferenca de timestamp (ver comentario do topo).
+  useEffect(() => {
+    if (!escudo.ativo || !escudo.inicio) return;
+    const tick = () => atualizarCronometro((Date.now() - escudo.inicio!) / 60000);
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [escudo.ativo, escudo.inicio]);
+
+  /**
+   * Conta interrupcao quando a aba VOLTA a ficar visivel durante uma
+   * sessao. Voltar nao encerra: encerrar no primeiro deslize faria o
+   * aluno abandonar o recurso. Ele perde 10% por retorno e segue.
+   */
+  useEffect(() => {
+    if (!escudo.ativo) return;
+    // Ignora o 1º disparo: alguns browsers emitem visibilitychange na
+    // ativação (aba já visible) e contavam interrupção fantasma.
+    let primeiroEvento = true;
+    const aoMudar = () => {
+      if (primeiroEvento) { primeiroEvento = false; return; }
+      if (document.visibilityState === 'visible') {
+        registrarInterrupcao();
+        if (!alertouSaida.current) {
+          alertouSaida.current = true;
+          setToast('Você voltou ao app. A sessão continua, mas cada retorno reduz as moedas.', 'info');
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', aoMudar);
+    return () => document.removeEventListener('visibilitychange', aoMudar);
+  }, [escudo.ativo]);
+
+  const minutos = Math.floor(escudo.minutosDecorridos);
+  const segundos = Math.floor((escudo.minutosDecorridos - minutos) * 60);
+  const jaHoje = moedasDeHoje(sessoesOffline);
+
+  const previa = useMemo(
+    () => calcularMoedas(escudo.minutosDecorridos, escudo.interrupcoes, escudo.modo, jaHoje),
+    [escudo.minutosDecorridos, escudo.interrupcoes, escudo.modo, jaHoje],
+  );
+
+  const resumo = useMemo(() => resumirSessoes(sessoesOffline), [sessoesOffline]);
+  const meta = META_MINUTOS_MODO[escudo.ativo ? escudo.modo : modo];
+  const progressoMeta = Math.min(100, (escudo.minutosDecorridos / meta) * 100);
+  const proxima = proximaFaixa(minutos);
+
+  async function comecar() {
+    setResultado(null);
+    alertouSaida.current = false;
+    iniciarEscudo(modo);
+    setToast('Escudo ativo. Bloqueie a tela e vire o aparelho para baixo.', 'success');
+  }
+
+  async function encerrar() {
+    const r = await encerrarEscudo();
+    if (!r) return;
+    setResultado(r);
+
+    if (r.moedas > 0) {
+      addLog({
+        timestamp: Date.now(),
+        type: 'foco',
+        description: `Escudo de dopamina: ${r.minutos} min offline (+${r.moedas} moedas)`,
+        xp: Math.min(50, Math.round(r.minutos / 2)),
+      });
+      setToast(`+${r.moedas} moedas de foco por ${r.minutos} min offline.`, 'success');
+    } else {
+      setToast(`Sessão de ${r.minutos} min registrada. A partir de 5 min ja rende moedas.`, 'info');
+    }
+  }
+
+  async function resgatar(id: string, custo: number, nome: string) {
+    const ok = await gastarMoedas(custo, `Recompensa: ${nome}`);
+    if (ok) setToast(`${nome} resgatado.`, 'success');
+  }
+
+  return (
+    <div className="space-y-5 animate-fade-up max-w-2xl mx-auto">
+      <CabecalhoPagina
+        titulo="Escudo de Dopamina"
+        subtitulo="Ganhe moedas pelo tempo em que você NÃO olha a tela"
+        cor="violeta"
+        pose="aprovacao"
+        acao={<span className={SELO_NA_FAIXA}><Coins size={16} /> <span className="tabular-nums">{carteira.saldo}</span> moedas</span>}
+      />
+
+      {/* Cronometro / seletor de modo */}
+      <div className="glass rounded-2xl p-6 text-center">
+        {!escudo.ativo ? (
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {MODOS.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setModo(m.id)}
+                  aria-pressed={modo === m.id}
+                  className={`rounded-2xl px-3 py-3 text-left border transition-all ${
+                    modo === m.id
+                      ? 'border-cyan-500/40 bg-cyan-500/10'
+                      : 'border-slate-200 glass-light hover:border-slate-200'
+                  }`}
+                >
+                  <p className={`text-sm font-bold ${modo === m.id ? 'text-cyan-700' : 'text-tinta-900'}`}>{m.nome}</p>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-snug">{m.descricao}</p>
+                  <p className="text-[10px] text-amber-600 mt-1.5 tabular-nums">
+                    x{MULTIPLICADOR_MODO[m.id].toFixed(2)}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <button onClick={comecar} className="btn-primary px-8 py-3 text-base inline-flex items-center gap-2">
+              <Lock size={18} /> Ativar escudo
+            </button>
+
+            <p className="text-xs text-slate-500 mt-4 leading-relaxed max-w-sm mx-auto">
+              Ao ativar, bloqueie a tela e deixe o aparelho de lado. O app conta o tempo em segundo plano
+              e converte em moedas de foco.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="relative w-48 h-48 mx-auto mb-6">
+              <svg className="w-48 h-48 -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#E2E8F0" strokeWidth="6" />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="#22d3ee"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(progressoMeta / 100) * 326.7} 326.7`}
+                  className="transition-all duration-1000 ease-linear"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-5xl font-extrabold tabular-nums text-tinta-900 tracking-tight">
+                  {String(minutos).padStart(2, '0')}:{String(segundos).padStart(2, '0')}
+                </span>
+                <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">offline</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-4 text-sm mb-5">
+              <span className="text-amber-600 font-bold tabular-nums">+{previa.moedas} moedas</span>
+              <span className="w-1 h-1 rounded-full bg-slate-200" />
+              <span className="text-slate-600">faixa: {faixaDe(minutos).rotulo}</span>
+              {escudo.interrupcoes > 0 && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-slate-200" />
+                  <span className="text-red-600 flex items-center gap-1">
+                    <TriangleAlert size={13} /> {escudo.interrupcoes} retorno(s)
+                  </span>
+                </>
+              )}
+            </div>
+
+            {proxima && (
+              <p className="text-xs text-slate-500 mb-4">
+                Faltam {proxima.faltam} min para o multiplicador x{proxima.mult.toFixed(2)}.
+              </p>
+            )}
+
+            <div className="flex items-center justify-center gap-3">
+              <button onClick={encerrar} className="btn-primary px-6">
+                Encerrar e receber
+              </button>
+              <button
+                onClick={() => {
+                  cancelarEscudo();
+                  setToast('Sessão descartada.', 'info');
+                }}
+                className="btn-ghost text-sm text-slate-600 hover:text-red-600"
+              >
+                Descartar
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {resultado && (
+        <div className="glass rounded-2xl p-5 text-center border border-cyan-500/20 animate-fade-up">
+          <p className="text-sm text-slate-700">
+            Você ficou <strong className="text-tinta-900">{resultado.minutos} min</strong> longe da tela e ganhou{' '}
+            <strong className="text-amber-600">{resultado.moedas} moedas</strong>.
+          </p>
+          {jaHoje >= TETO_DIARIO_MOEDAS && (
+            <p className="text-xs text-slate-500 mt-2">
+              Você chegou ao teto de {TETO_DIARIO_MOEDAS} moedas de hoje. As próximas sessões continuam
+              contando no histórico.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Estatisticas */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { valor: resumo.sessoesHoje, rotulo: 'Sessões hoje' },
+          { valor: `${Math.floor(resumo.totalMinutos / 60)}h`, rotulo: 'Total offline' },
+          { valor: `${resumo.melhorSessao}min`, rotulo: 'Melhor sessão' },
+          { valor: carteira.totalGanho, rotulo: 'Moedas ganhas' },
+        ].map((s) => (
+          <div key={s.rotulo} className="glass rounded-xl px-4 py-3 text-center">
+            <p className="text-lg font-bold text-tinta-900 tabular-nums">{s.valor}</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">{s.rotulo}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Loja de recompensas */}
+      <div className="glass rounded-2xl p-5">
+        <h2 className="text-sm font-semibold text-slate-700 mb-1">Trocar moedas de foco</h2>
+        <p className="text-xs text-slate-500 mb-4">
+          Recompensas de descanso: nada aqui é mais conteúdo para estudar.
+        </p>
+        <div className="space-y-2">
+          {RECOMPENSAS.map((r) => {
+            const podeComprar = carteira.saldo >= r.custo;
+            return (
+              <div
+                key={r.id}
+                className="flex items-center gap-3 py-2.5 px-3 rounded-xl glass-light border border-slate-200"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-tinta-900">{r.nome}</p>
+                  <p className="text-[11px] text-slate-500 leading-snug">{r.descricao}</p>
+                </div>
+                <button
+                  onClick={() => resgatar(r.id, r.custo, r.nome)}
+                  disabled={!podeComprar}
+                  className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold tabular-nums ${
+                    podeComprar
+                      ? 'bg-amber-500/15 text-amber-600 hover:bg-amber-500/25'
+                      : 'bg-slate-50 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  {r.custo} moedas
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Historico */}
+      {sessoesOffline.length === 0 ? (
+        <div className="glass rounded-2xl p-5">
+          <EmptyState
+            pose="meditando"
+            compacto
+            titulo="Nenhuma sessão offline ainda"
+            descricao="Ative o escudo, tranque a tela e volte depois. O tempo longe vira moeda."
+          />
+        </div>
+      ) : (
+        <div className="glass rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <Smartphone size={16} className="text-cyan-700" /> Últimas sessões
+          </h2>
+          <div className="space-y-1.5">
+            {sessoesOffline.slice(0, 8).map((s, i) => (
+              <div key={s.id ?? i} className="flex items-center justify-between text-sm py-2 px-3 rounded-xl hover:bg-slate-50">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-cyan-700">·</span>
+                  <span className="text-slate-600 truncate">
+                    {new Date(s.inicio).toLocaleDateString('pt-BR')} · {s.modo}
+                  </span>
+                </div>
+                <span className="text-slate-500 text-xs tabular-nums shrink-0">
+                  {s.minutosOffline} min · +{s.moedasCreditadas}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="text-center text-xs text-slate-400 leading-relaxed px-4 py-3 glass-light rounded-xl">
+        No navegador o escudo mede o tempo com o app em segundo plano. No aplicativo nativo (Android/iOS)
+        ele lê o estado real da tela bloqueada. O código está em mobile/react-native.
+      </p>
+    </div>
+  );
+}
