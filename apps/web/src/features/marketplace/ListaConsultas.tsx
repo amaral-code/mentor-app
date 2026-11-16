@@ -108,6 +108,14 @@ export function ListaConsultas({ compacto = false }: { compacto?: boolean }) {
                 </span>
               </div>
 
+              {/* A política de reembolso (migration 034) era só uma dica ao
+                  passar o mouse, invisível no celular. Quem cancela precisa
+                  saber ANTES do toque se o dinheiro volta. */}
+              {politica.podeCancelar && a.statusPagamento === 'pago' && (
+                <p className="text-[11px] text-slate-500 mt-2">
+                  {papel === 'psychologist' ? 'Se você cancelar, o paciente recebe o valor de volta por inteiro.' : politica.texto}
+                </p>
+              )}
               <div className="flex items-center justify-between gap-2 mt-3">
                 <span className="text-[11px] text-slate-500 tabular-nums">
                   {formatarPreco(a.valorCentavos)}

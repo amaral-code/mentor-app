@@ -29,6 +29,8 @@ export type Database = {
           observacoes: string | null
           criado_em: string
           atualizado_em: string
+          reembolso: string | null
+          cancelado_por: string | null
         }
         Insert: {
           id?: string
@@ -49,6 +51,8 @@ export type Database = {
           observacoes?: string | null
           criado_em?: string
           atualizado_em?: string
+          reembolso?: string | null
+          cancelado_por?: string | null
         }
         Update: {
           id?: string
@@ -69,6 +73,8 @@ export type Database = {
           observacoes?: string | null
           criado_em?: string
           atualizado_em?: string
+          reembolso?: string | null
+          cancelado_por?: string | null
         }
         Relationships: []
       }
@@ -392,6 +398,7 @@ export type Database = {
           cor: string | null
           criado_em: string
           codigo_instituicao: string | null
+          limite_alunos: number | null
         }
         Insert: {
           id?: string
@@ -400,6 +407,7 @@ export type Database = {
           cor?: string | null
           criado_em?: string
           codigo_instituicao?: string | null
+          limite_alunos?: number | null
         }
         Update: {
           id?: string
@@ -408,6 +416,7 @@ export type Database = {
           cor?: string | null
           criado_em?: string
           codigo_instituicao?: string | null
+          limite_alunos?: number | null
         }
         Relationships: []
       }
@@ -1202,6 +1211,7 @@ export type Database = {
           fuso: string
           criado_em: string
           total_avaliacoes: number
+          crp_verificado_em: string | null
         }
         Insert: {
           id: string
@@ -1219,6 +1229,7 @@ export type Database = {
           fuso?: string
           criado_em?: string
           total_avaliacoes?: number
+          crp_verificado_em?: string | null
         }
         Update: {
           id?: string
@@ -1236,6 +1247,7 @@ export type Database = {
           fuso?: string
           criado_em?: string
           total_avaliacoes?: number
+          crp_verificado_em?: string | null
         }
         Relationships: []
       }
@@ -1919,6 +1931,12 @@ export type Database = {
           minutos: number
         }[]
       }
+      crp_valido: {
+        Args: {
+          p_crp: string
+        }
+        Returns: boolean
+      }
       dia_de_brasilia: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2323,6 +2341,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      relatorio_turma: {
+        Args: {
+          p_turma: string
+          p_dias?: number
+        }
+        Returns: {
+          materia: string
+          topico: string
+          alunos_medidos: number
+          alunos_com_dificuldade: number
+          respostas: number
+          taxa_acerto: number
+        }[]
+      }
       remover_professor_turma: {
         Args: {
           p_professor: string
@@ -2367,6 +2399,19 @@ export type Database = {
           semana: string
           minutos: number
           questoes: number
+        }[]
+      }
+      resumo_turma: {
+        Args: {
+          p_turma: string
+          p_dias?: number
+        }
+        Returns: {
+          turma_nome: string
+          total_alunos: number
+          alunos_ativos: number
+          respostas: number
+          taxa_acerto: number
         }[]
       }
       revogar_consentimento: {

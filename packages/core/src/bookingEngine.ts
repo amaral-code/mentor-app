@@ -157,19 +157,19 @@ export function politicaCancelamento(inicio: string, agora: Date = new Date()): 
 } {
   const horas = (new Date(inicio).getTime() - agora.getTime()) / (60 * MS_MINUTO);
   if (horas <= 0) {
-    return { podeCancelar: false, reembolsoIntegral: false, texto: 'A consulta ja comecou ou passou.' };
+    return { podeCancelar: false, reembolsoIntegral: false, texto: 'A consulta já começou ou passou.' };
   }
   if (horas >= HORAS_REEMBOLSO_INTEGRAL) {
     return {
       podeCancelar: true,
       reembolsoIntegral: true,
-      texto: 'Cancelamento gratuito ate 24h antes.',
+      texto: 'Cancelando agora, o valor é devolvido por inteiro (até 24h antes).',
     };
   }
   return {
     podeCancelar: true,
     reembolsoIntegral: false,
-    texto: 'Faltam menos de 24h: o cancelamento nao gera reembolso.',
+    texto: 'Faltam menos de 24h: cancelando agora, o valor não é devolvido.',
   };
 }
 

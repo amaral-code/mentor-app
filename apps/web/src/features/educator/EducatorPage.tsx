@@ -1,3 +1,4 @@
+import { RelatorioTurma } from './RelatorioTurma';
 import { useEffect, useState, useRef } from 'react';
 import { ClipboardList, Download, Info, LogOut, Moon, PenLine, Plus, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
@@ -151,7 +152,7 @@ export function EducatorPage() {
   /* Só a secretaria abre esta tela (o professor tem o ProfessorPage).
      A ordem das abas é a ordem do trabalho: matricular, distribuir os
      códigos, dizer quem dá aula onde, e então acompanhar. */
-  const [aba, setAba] = useState<'matriculas' | 'codigos' | 'docentes' | 'escola'>('matriculas');
+  const [aba, setAba] = useState<'matriculas' | 'codigos' | 'docentes' | 'escola' | 'relatorio'>('matriculas');
   const [modo, setModo] = useState<ModoEntrada>('csv');
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
@@ -474,6 +475,7 @@ export function EducatorPage() {
             ['codigos', 'Turmas e códigos'],
             ['docentes', 'Docentes'],
             ['escola', 'Visão da escola'],
+            ['relatorio', 'Relatórios'],
           ] as const).map(([id, rotulo]) => (
             <button
               key={id}
@@ -489,7 +491,9 @@ export function EducatorPage() {
           ))}
         </div>
 
-        {aba === 'docentes' ? (
+        {aba === 'relatorio' ? (
+          <RelatorioTurma />
+        ) : aba === 'docentes' ? (
           <ProfessoresDaTurma />
         ) : aba === 'codigos' ? (
           <CodigosEscola modo="secretaria" />

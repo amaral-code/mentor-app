@@ -1,5 +1,6 @@
+import { RelatorioTurma } from './RelatorioTurma';
 import { useEffect, useState } from 'react';
-import { BookOpenCheck, KeyRound, LogOut, Moon, Thermometer } from 'lucide-react';
+import { BookOpenCheck, KeyRound, LogOut, Moon, Thermometer, FileText } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import { docenteRepository } from '@mentor/api/DocenteRepository';
 import { EducatorInsights } from './EducatorInsights';
@@ -25,11 +26,12 @@ import { CodigosEscola } from './CodigosEscola';
  * vinculou (026). Nenhum nome de aluno aparece nesta tela.
  */
 
-type Aba = 'turma' | 'revisar' | 'codigos';
+type Aba = 'turma' | 'revisar' | 'relatorio' | 'codigos';
 
 const ABAS: { id: Aba; rotulo: string; icone: typeof Thermometer }[] = [
   { id: 'turma', rotulo: 'Como a turma está', icone: Thermometer },
   { id: 'revisar', rotulo: 'O que revisar', icone: BookOpenCheck },
+  { id: 'relatorio', rotulo: 'Relatório', icone: FileText },
   { id: 'codigos', rotulo: 'Códigos', icone: KeyRound },
 ];
 
@@ -135,6 +137,8 @@ export function ProfessorPage() {
           <TermometroCognitivo escopo="professor" />
         ) : aba === 'revisar' ? (
           <EducatorInsights />
+        ) : aba === 'relatorio' ? (
+          <RelatorioTurma />
         ) : (
           <CodigosEscola modo="professor" />
         )}
