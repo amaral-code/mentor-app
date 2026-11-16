@@ -144,12 +144,17 @@ export function podeComprovar(marcados: ReadonlySet<string>): boolean {
   return marcados.has('entender') && marcados.has('fazer');
 }
 
-/** Rótulo para leitor de tela: a árvore inteira é um botão. */
-export function rotuloDaArvore(a: Arvore, total: number): string {
+/**
+ * Rótulo para leitor de tela. Tocar na árvore só leva o sagui até ela;
+ * entrar na missão é sempre pelo botão "Iniciar missão", nunca pelo
+ * toque na árvore (decisão do dono: entrar por engano ao rolar a tela
+ * tirava o aluno da floresta).
+ */
+export function rotuloDaArvore(a: Arvore, total: number, comSagui = a.estado === 'atual'): string {
   const posicao = `Árvore ${a.indice + 1} de ${total}`;
   if (a.estado === 'feita') return `${posicao}: ${a.tarefa.titulo}. Concluída.`;
-  if (a.estado === 'atual') return `${posicao}: ${a.tarefa.titulo}. O sagui está aqui. Entrar na toca.`;
-  return `${posicao}: ${a.tarefa.titulo}. Entrar na toca.`;
+  if (comSagui) return `${posicao}: ${a.tarefa.titulo}. O sagui está aqui.`;
+  return `${posicao}: ${a.tarefa.titulo}. Levar o sagui até esta árvore.`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -164,23 +169,66 @@ export const QUADRO_ARVORE = { largura: 160, altura: 230 } as const;
 export type Forma =
   | { forma: 'circulo'; cx: number; cy: number; r: number; cor: string }
   | { forma: 'elipse'; cx: number; cy: number; rx: number; ry: number; cor: string }
-  | { forma: 'caminho'; d: string; cor: string };
+  /** Área preenchida; `contorno` desenha a borda (traço arredondado). */
+  | { forma: 'caminho'; d: string; cor: string; contorno?: string; espessura?: number }
+  /** Só traço, sem preenchimento: casca, grama. */
+  | { forma: 'linha'; d: string; cor: string; espessura: number };
 
-/* Cores da floresta. Verde da copa e âmbar da fruta seguem a paleta do
-   produto (esmeralda e âmbar); a árvore que espera fica desbotada para o
-   olho ir direto à atual. */
-const CORES: Record<EstadoArvore, { copa: string; brilho: string; tronco: string; sombraTronco: string }> = {
-  atual: { copa: '#16A34A', brilho: '#4ADE80', tronco: '#8B5A2B', sombraTronco: '#6B4220' },
-  feita: { copa: '#15803D', brilho: '#22C55E', tronco: '#8B5A2B', sombraTronco: '#6B4220' },
-  esperando: { copa: '#A3C9AE', brilho: '#C7DFCD', tronco: '#B8977A', sombraTronco: '#A08064' },
+/* Paleta da floresta. A árvore tem contorno escuro como os botões e
+   cartões "adesivo" do app (borda e lábio), para parecer parte do mesmo
+   jogo. A que espera fica desbotada para o olho ir direto à da vez. */
+interface Paleta {
+  contorno: string;
+  copaSombra: string;
+  copa: string;
+  brilho: string;
+  tronco: string;
+  troncoClaro: string;
+  sombraTronco: string;
+  madeiraToca: string;
+}
+const PALETAS: Record<EstadoArvore, Paleta> = {
+  atual: {
+    contorno: '#14532D',
+    copaSombra: '#15803D',
+    copa: '#22C55E',
+    brilho: '#86EFAC',
+    tronco: '#8B5A2B',
+    troncoClaro: '#A9733D',
+    sombraTronco: '#6B4220',
+    madeiraToca: '#C08A52',
+  },
+  feita: {
+    contorno: '#14532D',
+    copaSombra: '#166534',
+    copa: '#16A34A',
+    brilho: '#4ADE80',
+    tronco: '#8B5A2B',
+    troncoClaro: '#A9733D',
+    sombraTronco: '#6B4220',
+    madeiraToca: '#C08A52',
+  },
+  esperando: {
+    contorno: '#7C9A86',
+    copaSombra: '#9DBDA7',
+    copa: '#B7D3C0',
+    brilho: '#D9EADF',
+    tronco: '#B8977A',
+    troncoClaro: '#C9AD94',
+    sombraTronco: '#A08064',
+    madeiraToca: '#D3BBA4',
+  },
 };
 const FRUTA = '#F59E0B';
 const BRILHO_FRUTA = '#FDE68A';
 const GRAMA = '#BBF7D0';
+const GRAMA_ESCURA = '#4ADE80';
+const SOMBRA_CHAO = '#86EFAC';
 const BORDA_TOCA = '#4A2C17';
 const FUNDO_TOCA = '#24150A';
+const BRILHO_ESTRELA = '#FCD34D';
 
-const TOPO_TRONCO = 88;
+const TOPO_TRONCO = 92;
 const PE_TRONCO = 218;
 
 /** Centro da toca no quadro: onde o sagui entra e de onde a toca abre. */
@@ -188,58 +236,130 @@ export function centroDaToca(alturaToca: number): { x: number; y: number } {
   return { x: 80, y: Math.round(PE_TRONCO - alturaToca * (PE_TRONCO - TOPO_TRONCO)) };
 }
 
-function copa(especie: Especie, c: { copa: string; brilho: string }): Forma[] {
+/* Copa em três camadas: contorno (as mesmas bolas, maiores, na cor da
+   borda, o que dá um contorno só por fora), sombra embaixo e a copa
+   clara um pouco acima, deixando a sombra aparecer como meia-lua. */
+function copaDeBolas(bolas: { cx: number; cy: number; rx: number; ry: number }[], c: Paleta): Forma[] {
+  const formas: Forma[] = [];
+  for (const b of bolas) formas.push({ forma: 'elipse', cx: b.cx, cy: b.cy, rx: b.rx + 3, ry: b.ry + 3, cor: c.contorno });
+  for (const b of bolas) formas.push({ forma: 'elipse', cx: b.cx, cy: b.cy, rx: b.rx, ry: b.ry, cor: c.copaSombra });
+  for (const b of bolas) formas.push({ forma: 'elipse', cx: b.cx - 1, cy: b.cy - 5, rx: b.rx - 3, ry: b.ry - 4, cor: c.copa });
+  for (const b of bolas) formas.push({ forma: 'elipse', cx: b.cx - b.rx * 0.35, cy: b.cy - b.ry * 0.45, rx: b.rx * 0.28, ry: b.ry * 0.2, cor: c.brilho });
+  return formas;
+}
+
+function copa(especie: Especie, c: Paleta): Forma[] {
   if (especie === 'pinheiro') {
-    return [
-      { forma: 'caminho', d: 'M80 58 L142 114 L18 114 Z', cor: c.copa },
-      { forma: 'caminho', d: 'M80 30 L134 90 L26 90 Z', cor: c.copa },
-      { forma: 'caminho', d: 'M80 4 L124 62 L36 62 Z', cor: c.copa },
-      { forma: 'caminho', d: 'M80 12 L96 34 L72 34 Z', cor: c.brilho },
+    // Três andares com contorno: a linha entre um andar e outro é o que
+    // faz parecer pinheiro de desenho, e não um triângulo só.
+    const andares = [
+      { topo: 58, base: 118, meia: 64 },
+      { topo: 30, base: 92, meia: 54 },
+      { topo: 4, base: 64, meia: 42 },
     ];
+    const formas: Forma[] = [];
+    for (const a of andares) {
+      formas.push({
+        forma: 'caminho',
+        d: `M80 ${a.topo} Q${80 + a.meia * 0.5} ${(a.topo + a.base) / 2} ${80 + a.meia} ${a.base} Q80 ${a.base + 8} ${80 - a.meia} ${a.base} Q${80 - a.meia * 0.5} ${(a.topo + a.base) / 2} 80 ${a.topo} Z`,
+        cor: c.copa,
+        contorno: c.contorno,
+        espessura: 3,
+      });
+      formas.push({ forma: 'caminho', d: `M${80 + a.meia - 6} ${a.base - 4} Q80 ${a.base + 4} ${80 - a.meia + 6} ${a.base - 4} Q80 ${a.base - 2} ${80 + a.meia - 6} ${a.base - 4} Z`, cor: c.copaSombra });
+      formas.push({ forma: 'caminho', d: `M78 ${a.topo + 10} Q${80 - a.meia * 0.25} ${a.topo + 22} ${80 - a.meia * 0.45} ${a.topo + 34} Q${80 - a.meia * 0.2} ${a.topo + 26} 78 ${a.topo + 10} Z`, cor: c.brilho });
+    }
+    return formas;
   }
   if (especie === 'nuvem') {
-    return [
-      { forma: 'elipse', cx: 50, cy: 82, rx: 36, ry: 28, cor: c.copa },
-      { forma: 'elipse', cx: 110, cy: 82, rx: 36, ry: 28, cor: c.copa },
-      { forma: 'elipse', cx: 80, cy: 56, rx: 58, ry: 40, cor: c.copa },
-      { forma: 'elipse', cx: 80, cy: 26, rx: 34, ry: 24, cor: c.copa },
-      { forma: 'elipse', cx: 64, cy: 38, rx: 16, ry: 10, cor: c.brilho },
-    ];
+    return copaDeBolas(
+      [
+        { cx: 46, cy: 84, rx: 34, ry: 26 },
+        { cx: 114, cy: 84, rx: 34, ry: 26 },
+        { cx: 80, cy: 58, rx: 56, ry: 38 },
+        { cx: 80, cy: 26, rx: 32, ry: 22 },
+      ],
+      c,
+    );
   }
-  return [
-    { forma: 'circulo', cx: 44, cy: 84, r: 30, cor: c.copa },
-    { forma: 'circulo', cx: 116, cy: 84, r: 30, cor: c.copa },
-    { forma: 'circulo', cx: 80, cy: 62, r: 48, cor: c.copa },
-    { forma: 'circulo', cx: 80, cy: 28, r: 28, cor: c.copa },
-    { forma: 'circulo', cx: 64, cy: 46, r: 14, cor: c.brilho },
-  ];
+  return copaDeBolas(
+    [
+      { cx: 44, cy: 86, rx: 30, ry: 30 },
+      { cx: 116, cy: 86, rx: 30, ry: 30 },
+      { cx: 80, cy: 62, rx: 48, ry: 46 },
+      { cx: 80, cy: 28, rx: 28, ry: 26 },
+    ],
+    c,
+  );
 }
 
 /* Frutas só na árvore feita: o "prêmio" da tarefa fica visível na floresta. */
 const POSICOES_FRUTA: Record<Especie, [number, number][]> = {
-  redonda: [[50, 78], [108, 72], [86, 40], [70, 96]],
-  pinheiro: [[60, 84], [104, 100], [92, 52], [48, 106]],
-  nuvem: [[46, 80], [112, 76], [92, 42], [74, 92]],
+  redonda: [[50, 82], [110, 76], [90, 40], [68, 98]],
+  pinheiro: [[58, 86], [104, 104], [94, 52], [50, 110]],
+  nuvem: [[46, 82], [112, 78], [94, 42], [72, 92]],
 };
 
+/* Estrelinhas em volta da copa da árvore da vez: chamam o olho sem texto. */
+function estrela(x: number, y: number, r: number): Forma {
+  const k = r * 0.28;
+  return {
+    forma: 'caminho',
+    d: `M${x} ${y - r} L${x + k} ${y - k} L${x + r} ${y} L${x + k} ${y + k} L${x} ${y + r} L${x - k} ${y + k} L${x - r} ${y} L${x - k} ${y - k} Z`,
+    cor: BRILHO_ESTRELA,
+  };
+}
+
 export function formasDaArvore(a: Pick<Arvore, 'especie' | 'estado' | 'alturaToca'>): Forma[] {
-  const c = CORES[a.estado];
+  const c = PALETAS[a.estado];
   const toca = centroDaToca(a.alturaToca);
   const formas: Forma[] = [
-    { forma: 'elipse', cx: 80, cy: 222, rx: 60, ry: 8, cor: GRAMA },
-    { forma: 'caminho', d: `M64 ${PE_TRONCO} Q70 150 70 ${TOPO_TRONCO} L90 ${TOPO_TRONCO} Q90 150 96 ${PE_TRONCO} Z`, cor: c.tronco },
-    { forma: 'caminho', d: `M84 ${PE_TRONCO} Q86 150 86 ${TOPO_TRONCO} L90 ${TOPO_TRONCO} Q90 150 96 ${PE_TRONCO} Z`, cor: c.sombraTronco },
-    { forma: 'caminho', d: `M64 ${PE_TRONCO} Q56 ${PE_TRONCO} 52 222 L70 222 Z`, cor: c.tronco },
-    { forma: 'caminho', d: `M96 ${PE_TRONCO} Q104 ${PE_TRONCO} 108 222 L90 222 Z`, cor: c.sombraTronco },
+    // Chão: grama e a sombra da copa.
+    { forma: 'elipse', cx: 80, cy: 222, rx: 64, ry: 8, cor: GRAMA },
+    { forma: 'elipse', cx: 82, cy: 220, rx: 34, ry: 4, cor: SOMBRA_CHAO },
+    { forma: 'linha', d: 'M26 222 l3 -7 l2 7 M36 223 l2 -5 l2 5 M124 222 l3 -7 l2 7 M134 223 l2 -5 l2 5', cor: GRAMA_ESCURA, espessura: 2 },
+    // Raízes.
+    { forma: 'caminho', d: `M60 ${PE_TRONCO} Q50 ${PE_TRONCO + 2} 44 224 L66 224 Z`, cor: c.tronco, contorno: c.contorno, espessura: 2.5 },
+    { forma: 'caminho', d: `M100 ${PE_TRONCO} Q110 ${PE_TRONCO + 2} 116 224 L94 224 Z`, cor: c.sombraTronco, contorno: c.contorno, espessura: 2.5 },
+    // Galhos que entram na copa.
+    { forma: 'caminho', d: 'M72 112 Q58 104 48 88 L54 85 Q63 98 74 104 Z', cor: c.tronco, contorno: c.contorno, espessura: 2.5 },
+    { forma: 'caminho', d: 'M88 106 Q102 98 110 82 L116 85 Q107 104 90 114 Z', cor: c.sombraTronco, contorno: c.contorno, espessura: 2.5 },
+    // Tronco: base mais larga, um lado claro e outro na sombra.
+    {
+      forma: 'caminho',
+      d: `M58 ${PE_TRONCO + 2} C66 212 68 190 69 150 L70 ${TOPO_TRONCO} L90 ${TOPO_TRONCO} L91 150 C92 190 94 212 102 ${PE_TRONCO + 2} Z`,
+      cor: c.tronco,
+      contorno: c.contorno,
+      espessura: 3,
+    },
+    { forma: 'caminho', d: `M84 ${TOPO_TRONCO} L90 ${TOPO_TRONCO} L91 150 C92 190 94 212 101 ${PE_TRONCO + 1} L88 ${PE_TRONCO + 1} C88 200 86 160 84 ${TOPO_TRONCO} Z`, cor: c.sombraTronco },
+    { forma: 'caminho', d: `M72 ${TOPO_TRONCO + 4} L75 ${TOPO_TRONCO + 4} C74 150 73 190 68 ${PE_TRONCO - 4} L65 ${PE_TRONCO - 4} C69 190 71 150 72 ${TOPO_TRONCO + 4} Z`, cor: c.troncoClaro },
+    // Casca.
+    { forma: 'linha', d: 'M76 126 q3 7 0 14 M84 182 q-3 7 0 13 M74 196 q2 5 0 10', cor: c.contorno, espessura: 1.8 },
     ...copa(a.especie, c),
-    { forma: 'elipse', cx: toca.x, cy: toca.y, rx: 13, ry: 15, cor: BORDA_TOCA },
-    { forma: 'elipse', cx: toca.x, cy: toca.y + 1, rx: 9, ry: 11, cor: FUNDO_TOCA },
   ];
+  if (a.estado === 'atual') {
+    formas.push(estrela(20, 40, 7), estrela(142, 30, 6), estrela(136, 118, 5));
+  }
   if (a.estado === 'feita') {
     for (const [cx, cy] of POSICOES_FRUTA[a.especie]) {
-      formas.push({ forma: 'circulo', cx, cy, r: 8, cor: FRUTA });
+      formas.push({ forma: 'circulo', cx, cy, r: 9, cor: c.contorno });
+      formas.push({ forma: 'circulo', cx, cy, r: 7, cor: FRUTA });
       formas.push({ forma: 'circulo', cx: cx - 2.5, cy: cy - 2.5, r: 2.5, cor: BRILHO_FRUTA });
     }
+    // Flores no pé: a árvore feita floresceu.
+    for (const [cx, cy] of [[34, 216], [128, 216], [118, 222]] as [number, number][]) {
+      formas.push({ forma: 'circulo', cx, cy, r: 3.5, cor: '#F472B6' });
+      formas.push({ forma: 'circulo', cx, cy, r: 1.4, cor: '#FEF3C7' });
+    }
   }
+  // Toca por último (o sagui entra por ela): moldura de madeira, borda
+  // escura e o buraco.
+  formas.push(
+    { forma: 'elipse', cx: toca.x, cy: toca.y, rx: 16, ry: 18, cor: c.contorno },
+    { forma: 'elipse', cx: toca.x, cy: toca.y, rx: 14, ry: 16, cor: c.madeiraToca },
+    { forma: 'elipse', cx: toca.x, cy: toca.y + 1, rx: 11, ry: 13, cor: BORDA_TOCA },
+    { forma: 'elipse', cx: toca.x, cy: toca.y + 2, rx: 9, ry: 11, cor: FUNDO_TOCA },
+  );
   return formas;
 }

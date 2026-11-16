@@ -93,6 +93,9 @@ describe('passos da toca', () => {
     const f = montarFloresta([tarefa('a', true), tarefa('b')]);
     expect(rotuloDaArvore(f.arvores[0], 2)).toBe('Árvore 1 de 2: Tarefa a. Concluída.');
     expect(rotuloDaArvore(f.arvores[1], 2)).toContain('O sagui está aqui');
+    // Tocar na árvore nunca entra na missão: o rótulo não promete isso.
+    expect(rotuloDaArvore(f.arvores[1], 2)).not.toMatch(/Entrar|Iniciar/);
+    expect(rotuloDaArvore(f.arvores[1], 2, false)).toContain('Levar o sagui até esta árvore');
   });
 });
 
@@ -101,7 +104,7 @@ describe('formasDaArvore', () => {
     for (const h of [0.35, 0.45, 0.55]) {
       const t = centroDaToca(h);
       expect(t.x).toBe(80);
-      expect(t.y).toBeGreaterThan(88);
+      expect(t.y).toBeGreaterThan(92);
       expect(t.y).toBeLessThan(218);
     }
   });
@@ -114,8 +117,28 @@ describe('formasDaArvore', () => {
     expect(frutas('esperando')).toBe(0);
   });
 
-  it('a toca é desenhada por cima da copa (última forma antes das frutas)', () => {
+  it('só a árvore da vez tem estrelinhas', () => {
+    const estrelas = (estado: 'feita' | 'atual' | 'esperando') =>
+      formasDaArvore({ especie: 'nuvem', estado, alturaToca: 0.4 }).filter((f) => f.cor === '#FCD34D').length;
+    expect(estrelas('atual')).toBe(3);
+    expect(estrelas('feita') + estrelas('esperando')).toBe(0);
+  });
+
+  it('todo desenho cabe no quadro', () => {
+    for (const especie of ['redonda', 'pinheiro', 'nuvem'] as const) {
+      for (const f of formasDaArvore({ especie, estado: 'feita', alturaToca: 0.55 })) {
+        if (f.forma === 'circulo') expect(f.cx - f.r).toBeGreaterThanOrEqual(0);
+        if (f.forma === 'elipse') {
+          expect(f.cx - f.rx).toBeGreaterThanOrEqual(0);
+          expect(f.cx + f.rx).toBeLessThanOrEqual(160);
+          expect(f.cy + f.ry).toBeLessThanOrEqual(230);
+        }
+      }
+    }
+  });
+
+  it('a toca é a última forma (fica por cima de tudo)', () => {
     const formas = formasDaArvore({ especie: 'pinheiro', estado: 'atual', alturaToca: 0.5 });
-    expect(formas[formas.length - 1]).toMatchObject({ forma: 'elipse', cx: 80, cy: centroDaToca(0.5).y + 1 });
+    expect(formas[formas.length - 1]).toMatchObject({ forma: 'elipse', cx: 80, cy: centroDaToca(0.5).y + 2 });
   });
 });

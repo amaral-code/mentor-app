@@ -11,7 +11,7 @@ Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
 ```bash
 npm run dev      # app web na porta 5180 (já inclui o back-end /api)
 npm run build    # turbo: tsc -b && vite build do @mentor/web
-npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 964 testes
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 966 testes
 npm run lint     # oxlint (barra APIs de navegador em packages/*)
 npm run typecheck       # turbo: tsc em todos os workspaces
 npm run gen:types       # regera os tipos do banco a partir das migrations
@@ -323,6 +323,11 @@ principal, regra de permissão. Mais recente no topo.
   a entrada agacha, pula e mergulha, e a câmera dá zoom no buraco antes
   da missão abrir, onde ele cai de pé. O mergulho termina ANTES do zoom:
   depois dele o sagui apareceria nove vezes maior.
+- **Só o botão "Iniciar missão" entra na missão** (pedido do dono). Tocar
+  na árvore só leva o sagui até ela; o rótulo acessível não promete
+  entrada. Árvore redesenhada: contorno escuro no estilo adesivo dos
+  botões, copa com sombra e brilho, tronco com casca e galhos, toca com
+  moldura de madeira, estrelinhas na árvore da vez, frutas e flores na feita.
 
 ### 2026-11-16 (3) — M2: app base Expo (Android, iOS e notebook)
 - **Design system** (#30): `@mentor/ui-tokens` é a fonte única das cores;

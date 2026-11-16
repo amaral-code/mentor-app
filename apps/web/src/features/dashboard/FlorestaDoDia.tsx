@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, m, type TargetAndTransition, type Transition } from 'motion/react';
-import { Check, Lock, LogOut, Trophy, Zap } from 'lucide-react';
+import { Check, Lock, LogOut, Play, Trophy, Zap } from 'lucide-react';
 import type { MicroTask } from '@mentor/core/types';
 import {
   QUADRO_ARVORE,
@@ -56,7 +56,8 @@ function DesenhoArvore({ arvore, largura }: { arvore: Arvore; largura: number })
 function FormaSvg({ f }: { f: Forma }) {
   if (f.forma === 'circulo') return <circle cx={f.cx} cy={f.cy} r={f.r} fill={f.cor} />;
   if (f.forma === 'elipse') return <ellipse cx={f.cx} cy={f.cy} rx={f.rx} ry={f.ry} fill={f.cor} />;
-  return <path d={f.d} fill={f.cor} />;
+  if (f.forma === 'linha') return <path d={f.d} fill="none" stroke={f.cor} strokeWidth={f.espessura} strokeLinecap="round" strokeLinejoin="round" />;
+  return <path d={f.d} fill={f.cor} stroke={f.contorno} strokeWidth={f.contorno ? f.espessura ?? 2 : undefined} strokeLinejoin="round" />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -396,19 +397,22 @@ export function FlorestaDoDia({
     if (fase === 'pronto' && escolhida !== null && floresta.arvores[escolhida]?.tarefa.completed) setEscolhida(null);
   }, [fase, escolhida, floresta]);
 
-  function entrar(indice: number) {
+  /* Tocar na árvore só leva o sagui até ela. Entrar na missão é sempre
+     pelo botão "Iniciar missão": entrar ao tocar na árvore pegava quem só
+     estava rolando a tela. */
+  function levarSaguiAte(indice: number) {
+    if (indice !== indiceSagui) setEscolhida(indice);
+  }
+
+  function iniciarMissao(indice: number) {
     const el = tocaRefs.current[indice];
     if (el) {
       const r = el.getBoundingClientRect();
       setOrigem({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
     }
-    if (indice !== indiceSagui) {
-      setEscolhida(indice);
-      return;
-    }
-    // Prende o sagui nesta árvore enquanto a toca estiver aberta: ao
-    // comprovar, a "primeira tarefa aberta" passa a ser a seguinte, e sem a
-    // trava a toca trocava de árvore com o aluno lá dentro.
+    // Prende o sagui nesta árvore enquanto a missão estiver aberta: ao
+    // comprovar, a "primeira tarefa aberta" passa a ser a seguinte, e sem
+    // a trava a toca trocava de árvore com o aluno lá dentro.
     setEscolhida(indice);
     disparar('tocar');
   }
@@ -450,9 +454,9 @@ export function FlorestaDoDia({
               >
                 <button
                   type="button"
-                  onClick={() => entrar(a.indice)}
+                  onClick={() => levarSaguiAte(a.indice)}
                   disabled={a.estado === 'feita'}
-                  aria-label={rotuloDaArvore(a, total)}
+                  aria-label={rotuloDaArvore(a, total, comSagui)}
                   className="group block rounded-3xl focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ceu-600 disabled:cursor-default"
                 >
                   <span className="block transition-transform duration-200 group-hover:-translate-y-1 group-disabled:translate-y-0">
@@ -495,11 +499,12 @@ export function FlorestaDoDia({
                 {comSagui && a.estado !== 'feita' && (
                   <button
                     type="button"
-                    onClick={() => entrar(a.indice)}
-                    className="btn-ambar mt-2 h-11 px-4 uppercase text-sm motion-safe:animate-float-suave"
-                    aria-label={`Entrar na toca: ${a.tarefa.titulo}`}
+                    onClick={() => iniciarMissao(a.indice)}
+                    disabled={fase === 'entrando' || fase === 'dentro'}
+                    className="btn-ambar mt-2 h-12 px-5 uppercase text-sm inline-flex items-center gap-1.5 motion-safe:animate-float-suave disabled:opacity-60"
+                    aria-label={`Iniciar missão: ${a.tarefa.titulo}`}
                   >
-                    Entrar na toca
+                    <Play size={16} fill="currentColor" /> Iniciar missão
                   </button>
                 )}
               </div>

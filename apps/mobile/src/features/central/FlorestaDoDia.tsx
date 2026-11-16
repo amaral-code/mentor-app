@@ -53,8 +53,10 @@ function DesenhoArvore({ arvore, largura }: { arvore: Arvore; largura: number })
           <Circle key={i} cx={f.cx} cy={f.cy} r={f.r} fill={f.cor} />
         ) : f.forma === 'elipse' ? (
           <Ellipse key={i} cx={f.cx} cy={f.cy} rx={f.rx} ry={f.ry} fill={f.cor} />
+        ) : f.forma === 'linha' ? (
+          <Path key={i} d={f.d} fill="none" stroke={f.cor} strokeWidth={f.espessura} strokeLinecap="round" strokeLinejoin="round" />
         ) : (
-          <Path key={i} d={f.d} fill={f.cor} />
+          <Path key={i} d={f.d} fill={f.cor} stroke={f.contorno} strokeWidth={f.contorno ? f.espessura ?? 2 : undefined} strokeLinejoin="round" />
         ),
       )}
     </Svg>
@@ -403,13 +405,15 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
     if (fase === 'pronto' && escolhida !== null && floresta.arvores[escolhida]?.tarefa.completed) setEscolhida(null);
   }, [fase, escolhida, floresta]);
 
-  function entrar(indice: number) {
+  /* Tocar na árvore só leva o sagui até ela; entrar na missão é sempre
+     pelo botão "Iniciar missão" (ver o web). */
+  function levarSaguiAte(indice: number) {
+    if (indice !== indiceSagui) setEscolhida(indice);
+  }
+
+  function iniciarMissao(indice: number) {
     tocas.current[indice]?.measureInWindow((x, y, w, h) => setOrigem({ x: x + w / 2, y: y + h / 2 }));
-    if (indice !== indiceSagui) {
-      setEscolhida(indice);
-      return;
-    }
-    // Prende o sagui nesta árvore com a toca aberta (ver o web).
+    // Prende o sagui nesta árvore com a missão aberta (ver o web).
     setEscolhida(indice);
     disparar('tocar');
   }
@@ -427,10 +431,10 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
           <View key={a.tarefa.id} style={[estilos.linha, { flexDirection: a.lado === 'esquerda' ? 'row' : 'row-reverse', zIndex: comSagui && fase !== 'pronto' ? 10 : 0 }]}>
             <ArvoreComZoom fase={fase} ativo={comSagui} origem={{ x: toca.x * escala, y: toca.y * escala }} largura={largura} altura={alturaArvore}>
               <Pressable
-                onPress={() => entrar(a.indice)}
+                onPress={() => levarSaguiAte(a.indice)}
                 disabled={a.estado === 'feita'}
                 accessibilityRole="button"
-                accessibilityLabel={rotuloDaArvore(a, total)}
+                accessibilityLabel={rotuloDaArvore(a, total, comSagui)}
                 accessibilityState={{ disabled: a.estado === 'feita' }}
               >
                 <DesenhoArvore arvore={a} largura={largura} />
@@ -460,7 +464,15 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
                 {a.tarefa.titulo}
               </Texto>
               {comSagui && a.estado !== 'feita' ? (
-                <Botao titulo="Entrar na toca" variante="ambar" compacto aoTocar={() => entrar(a.indice)} rotuloAcessivel={`Entrar na toca: ${a.tarefa.titulo}`} estilo={{ marginTop: 8 }} />
+                <Botao
+                  titulo="Iniciar missão"
+                  icone="play"
+                  variante="ambar"
+                  aoTocar={() => iniciarMissao(a.indice)}
+                  desabilitado={fase === 'entrando' || fase === 'dentro'}
+                  rotuloAcessivel={`Iniciar missão: ${a.tarefa.titulo}`}
+                  estilo={{ marginTop: 8 }}
+                />
               ) : null}
             </View>
           </View>
