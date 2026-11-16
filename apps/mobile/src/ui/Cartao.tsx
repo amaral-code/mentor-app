@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { cor, LABIO, raio } from './tema';
 import { useAltoContraste } from './preferenciasAcessibilidade';
+import { ANEL_DE_FOCO, type EstadoInteracao } from './acessibilidade';
 
 interface Props {
   children: ReactNode;
@@ -25,10 +26,15 @@ export function Cartao({ children, estilo, destaque, aoTocar, rotuloAcessivel, s
       accessibilityRole="button"
       accessibilityLabel={rotuloAcessivel}
       accessibilityState={{ selected: !!selecionado }}
-      style={({ pressed }) => [
-        base,
-        pressed ? { transform: [{ translateY: LABIO / 2 }], borderBottomWidth: 2 + LABIO / 2 } : null,
-      ]}
+      style={(estado) => {
+        const { pressed, hovered, focused } = estado as EstadoInteracao;
+        return [
+          base,
+          hovered && !pressed && !destaque ? { borderColor: cor.ceu500, borderBottomColor: cor.ceu600 } : null,
+          pressed ? { transform: [{ translateY: LABIO / 2 }], borderBottomWidth: 2 + LABIO / 2 } : null,
+          focused ? ANEL_DE_FOCO : null,
+        ];
+      }}
     >
       {children}
     </Pressable>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { userRepository } from '@mentor/api/UserRepository';
@@ -17,7 +17,8 @@ import { Cartao } from '../../../src/ui/Cartao';
 import { GraficoBarras } from '../../../src/ui/Graficos';
 import { Tela } from '../../../src/ui/Tela';
 import { Texto } from '../../../src/ui/Texto';
-import { cor, LARGURA_NOTEBOOK } from '../../../src/ui/tema';
+import { cor } from '../../../src/ui/tema';
+import { useLayout } from '../../../src/ui/layout';
 import { useCoresSinal } from '../../../src/ui/preferenciasAcessibilidade';
 import type { CoresSinal } from '@mentor/core/acessibilidadeCores';
 
@@ -46,8 +47,7 @@ export default function Central() {
   const [atualizando, setAtualizando] = useState(false);
   const [dataProva, setDataProva] = useState<string | null>(null);
   const faltam = diasAteAProva(dataProva);
-  const { width } = useWindowDimensions();
-  const duasColunas = width >= LARGURA_NOTEBOOK;
+  const duasColunas = useLayout().duasColunas;
 
   /* Plano de hoje vem do banco; só gera um novo se não existir (como no web). */
   const carregarPlano = useCallback(async () => {

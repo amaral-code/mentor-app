@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { BotaoApoio } from './BotaoApoio';
 import { imagemSagui, type PoseSagui } from './sagui';
 import { Texto } from './Texto';
 import { cor, FAIXA, LABIO, raio, type CorFaixa } from './tema';
+import { COLUNA_MAXIMA } from '@mentor/core/layoutResponsivo';
 
 interface CabecalhoProps {
   titulo: string;
@@ -91,15 +91,13 @@ interface TelaProps {
 /**
  * Moldura de toda tela do aluno: área segura, cabeçalho e rolagem.
  *
- * No notebook a coluna para em 960px e centraliza; esticada até 1920px a
+ * Em tela larga a coluna para em COLUNA_MAXIMA e centraliza; esticada até 1920px a
  * leitura de uma linha de texto vira exercício de pescoço.
  */
 export function Tela({ children, cabecalho, aoAtualizar, atualizando = false, semRolagem, estiloConteudo }: TelaProps) {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const largura = Math.min(width, 960);
   const conteudo = (
-    <View style={[estilos.coluna, { width: largura }, estiloConteudo]}>
+    <View style={[estilos.coluna, estiloConteudo]}>
       {cabecalho ? <Cabecalho {...cabecalho} /> : null}
       {children}
     </View>
@@ -126,7 +124,8 @@ export function Tela({ children, cabecalho, aoAtualizar, atualizando = false, se
 
 const estilos = StyleSheet.create({
   fundo: { flex: 1, backgroundColor: cor.branco },
-  coluna: { alignSelf: 'center', paddingHorizontal: 16, gap: 14, flex: 1 },
+  // Largura pela coluna, não pela janela: a janela não desconta a barra lateral.
+  coluna: { alignSelf: 'center', width: '100%', maxWidth: COLUNA_MAXIMA, paddingHorizontal: 16, gap: 14, flex: 1 },
   faixa: {
     borderRadius: raio.xl,
     borderBottomWidth: LABIO,

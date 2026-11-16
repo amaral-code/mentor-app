@@ -58,3 +58,20 @@ export async function vibrar(tipo: 'acerto' | 'erro' | 'toque'): Promise<void> {
     /* Aparelho sem motor de vibração: o retorno visual já basta. */
   }
 }
+
+/**
+ * Estado do Pressable com o que o react-native-web acrescenta (mouse por
+ * cima e foco do teclado). No celular os dois chegam indefinidos.
+ */
+export interface EstadoInteracao {
+  pressed: boolean;
+  hovered?: boolean;
+  focused?: boolean;
+}
+
+/**
+ * Anel de foco visível para quem navega pelo teclado (Tab). O navegador
+ * desenha o próprio anel só em <button> nativo; o Pressable vira <div>
+ * e ficava sem nenhum, então o Tab "sumia" na tela.
+ */
+export const ANEL_DE_FOCO = { outlineColor: '#2563EB', outlineStyle: 'solid', outlineWidth: 3, outlineOffset: 2 } as const;

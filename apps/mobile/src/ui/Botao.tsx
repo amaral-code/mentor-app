@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Texto } from './Texto';
 import { ALVO_TOQUE, cor, LABIO, raio } from './tema';
 import { useAltoContraste } from './preferenciasAcessibilidade';
+import { ANEL_DE_FOCO, type EstadoInteracao } from './acessibilidade';
 
 export type VarianteBotao = 'primario' | 'secundario' | 'ambar' | 'sucesso' | 'ceu' | 'perigo' | 'fantasma';
 
@@ -63,7 +64,11 @@ export function Botao({
       accessibilityLabel={rotuloAcessivel ?? titulo}
       accessibilityHint={dica}
       accessibilityState={{ disabled: !!inativo, busy: !!carregando }}
-      style={({ pressed }) => [
+      style={(estado) => {
+        const { pressed, hovered, focused } = estado as EstadoInteracao;
+        // Mouse por cima: o botão sobe 1px (o lábio cresce), como quem convida o clique.
+        const subir = hovered && !pressed && !inativo && variante !== 'fantasma';
+        return [
         estilos.base,
         compacto ? estilos.compacto : null,
         {
@@ -71,11 +76,14 @@ export function Botao({
           borderColor: v.borda ?? v.fundo,
           borderBottomColor: pressed ? v.borda ?? v.fundo : v.labio,
           borderBottomWidth: variante === 'fantasma' ? 0 : pressed ? 2 : 2 + LABIO,
-          transform: [{ translateY: pressed && variante !== 'fantasma' ? LABIO : 0 }],
+          transform: [{ translateY: pressed && variante !== 'fantasma' ? LABIO : subir ? -1 : 0 }],
           opacity: inativo ? 0.5 : 1,
         },
+        variante === 'fantasma' && hovered && !inativo ? { backgroundColor: cor.cinza100 } : null,
+        focused ? ANEL_DE_FOCO : null,
         estilo,
-      ]}
+      ];
+      }}
     >
       <View style={estilos.conteudo}>
         {carregando ? (

@@ -76,5 +76,3 @@ export const FAIXA: Record<CorFaixa, { fundo: string; labio: string }> = {
   violeta: { fundo: cor.violeta600, labio: cor.violeta800 },
 };
 
-/** Largura a partir da qual o app usa o layout de notebook. */
-export const LARGURA_NOTEBOOK = 1024;

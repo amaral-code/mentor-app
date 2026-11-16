@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { NivelQuiz } from '@mentor/core/aiService';
@@ -11,7 +11,10 @@ import { Botao } from '../../../src/ui/Botao';
 import { Cartao } from '../../../src/ui/Cartao';
 import { Tela } from '../../../src/ui/Tela';
 import { Texto } from '../../../src/ui/Texto';
-import { cor, LARGURA_NOTEBOOK, raio } from '../../../src/ui/tema';
+import { cor, raio } from '../../../src/ui/tema';
+import { useLayout } from '../../../src/ui/layout';
+import { useTeclado } from '../../../src/ui/teclado';
+import { acaoDaTecla } from '@mentor/core/atalhosQuiz';
 import { useCoresSinal } from '../../../src/ui/preferenciasAcessibilidade';
 
 const QUANTIDADES = [5, 10, 15];
@@ -42,12 +45,21 @@ export default function Quiz() {
   const params = useLocalSearchParams<{ materia?: string; topico?: string; revisao?: string; rapido?: string }>();
   const r = useRodadaQuiz();
   const sinal = useCoresSinal();
-  const { width } = useWindowDimensions();
-  const duasColunas = width >= LARGURA_NOTEBOOK;
+  const duasColunas = useLayout().duasColunas;
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [quantidade, setQuantidade] = useState(10);
   const [nivel, setNivel] = useState<NivelQuiz>('media');
   const abertoPorRevisao = useRef<string | null>(null);
+
+  // Notebook: 1 a 5 ou A a E respondem; Enter ou seta passam para a próxima.
+  useTeclado((e) => {
+    const atual = r.questao;
+    if (r.etapa !== 'jogando' || !atual) return;
+    const acao = acaoDaTecla(e.key, { respondida: r.escolhida !== null, alternativas: atual.alternativas.length }, { ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey });
+    if (acao?.tipo === 'responder') r.responder(acao.indice);
+    else if (acao?.tipo === 'proxima') r.proxima();
+    return acao !== null;
+  });
 
   /* Veio do calendário de revisões (reagenda o tópico) ou do convite
      anti doomscroll ("só 3 questões rápidas"): já gera o quiz. */

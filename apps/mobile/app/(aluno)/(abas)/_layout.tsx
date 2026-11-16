@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
-import { useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { cor, LARGURA_NOTEBOOK } from "../../../src/ui/tema";
+import { cor } from "../../../src/ui/tema";
+import { useLayout } from "../../../src/ui/layout";
 import { TourGuiado } from "../../../src/features/tour/TourGuiado";
 
 type NomeIcone = keyof typeof Ionicons.glyphMap;
@@ -16,12 +16,13 @@ const ABAS: { nome: string; titulo: string; icone: NomeIcone }[] = [
 
 /**
  * As mesmas cinco entradas da barra inferior do web (Central, Mentor,
- * Quiz, Ligas, Mais). A partir de 1024px a barra vai para a lateral: no
- * notebook, barra embaixo desperdiça a altura, que é o que falta.
+ * Quiz, Ligas, Mais). A partir de 820px (tablet) a barra vai para a
+ * lateral: em tela larga, barra embaixo desperdiça a altura, que é o que
+ * falta. Estreita no tablet, com rótulo ao lado a partir de 1024px.
  */
 export default function LayoutAbas() {
-  const { width } = useWindowDimensions();
-  const largo = width >= LARGURA_NOTEBOOK;
+  const layout = useLayout();
+  const largo = layout.barraLateral;
   return (
     <>
       <Tabs
@@ -29,13 +30,13 @@ export default function LayoutAbas() {
           headerShown: false,
           tabBarPosition: largo ? "left" : "bottom",
           tabBarVariant: largo ? "material" : "uikit",
-          tabBarLabelPosition: largo ? "beside-icon" : "below-icon",
+          tabBarLabelPosition: layout.rotuloAoLado ? "beside-icon" : "below-icon",
           tabBarActiveTintColor: cor.ceu600,
           tabBarInactiveTintColor: cor.tinta500,
           tabBarLabelStyle: { fontWeight: "800", fontSize: 12 },
           tabBarStyle: largo
             ? {
-                width: 220,
+                width: layout.larguraBarra,
                 borderRightWidth: 2,
                 borderRightColor: cor.cinza200,
               }

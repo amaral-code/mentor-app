@@ -6,7 +6,8 @@ import { safeSet } from '@mentor/core/safeStorage';
 import { useAppStore } from '@mentor/state/appStore';
 import { Botao } from '../../ui/Botao';
 import { Texto } from '../../ui/Texto';
-import { cor, LARGURA_NOTEBOOK, raio } from '../../ui/tema';
+import { cor, raio } from '../../ui/tema';
+import { useLayout } from '../../ui/layout';
 
 /* Um passo por aba, na ordem da barra. O balão aponta para a aba pelo
    índice: no celular a barra é embaixo; no notebook, na lateral. */
@@ -37,7 +38,8 @@ export function TourGuiado() {
   const passo = useAppStore((s) => s.tutorialStep);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const lateral = width >= LARGURA_NOTEBOOK;
+  const layout = useLayout();
+  const lateral = layout.barraLateral;
   const atual = PASSOS[Math.min(passo, PASSOS.length - 1)];
 
   function proximo() {
@@ -51,13 +53,13 @@ export function TourGuiado() {
   const larguraAba = width / TOTAL_ABAS;
   const setaX = Math.min(width - 40, Math.max(24, larguraAba * atual.aba + larguraAba / 2 - 12));
   const balao = lateral
-    ? { left: 236, top: insets.top + 16 + atual.aba * 56 }
+    ? { left: layout.larguraBarra + 16, top: insets.top + 16 + atual.aba * 56 }
     : { left: 16, right: 16, bottom: insets.bottom + 76 };
 
   return (
     <Modal visible={ativo} transparent animationType="fade" onRequestClose={concluir}>
       <View style={estilos.fundo} pointerEvents="box-none">
-        <View style={[estilos.balao, balao, lateral ? { width: 360 } : null]} accessibilityViewIsModal accessibilityLiveRegion="polite">
+        <View style={[estilos.balao, balao, lateral ? { width: Math.min(360, width - layout.larguraBarra - 32) } : null]} accessibilityViewIsModal accessibilityLiveRegion="polite">
           <Texto variante="rotulo" cor={cor.ceu700}>
             {passo + 1} de {PASSOS.length}
           </Texto>

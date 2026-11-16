@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useAppStore } from '@mentor/state/appStore';
 import { CameraComGuia } from '../../src/features/redacao/CameraComGuia';
 import { corrigirFotoNoServidor, corrigirOffline, type ResultadoRedacao } from '../../src/features/redacao/corrigirFoto';
@@ -11,7 +11,8 @@ import { Botao } from '../../src/ui/Botao';
 import { Cartao } from '../../src/ui/Cartao';
 import { Tela } from '../../src/ui/Tela';
 import { Texto } from '../../src/ui/Texto';
-import { cor, LARGURA_NOTEBOOK, raio } from '../../src/ui/tema';
+import { cor, raio } from '../../src/ui/tema';
+import { useLayout } from '../../src/ui/layout';
 import { useCoresSinal } from '../../src/ui/preferenciasAcessibilidade';
 import type { CoresSinal } from '@mentor/core/acessibilidadeCores';
 
@@ -25,9 +26,8 @@ function corNota(nota: number, max: number, sinal: CoresSinal): string {
  * competências. Sem rede, o corretor offline avalia o texto digitado.
  */
 export default function Redacao() {
-  const { width } = useWindowDimensions();
   const sinal = useCoresSinal();
-  const lado = width >= LARGURA_NOTEBOOK;
+  const lado = useLayout().duasColunas;
   const [tema, setTema] = useState('');
   const [cameraAberta, setCameraAberta] = useState(false);
   const [foto, setFoto] = useState<FotoPronta | null>(null);

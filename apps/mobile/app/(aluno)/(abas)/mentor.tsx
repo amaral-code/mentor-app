@@ -9,7 +9,6 @@ import {
   StyleSheet,
   TextInput,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +25,7 @@ import { BotaoApoio } from '../../../src/ui/BotaoApoio';
 import { Botao } from '../../../src/ui/Botao';
 import { Texto } from '../../../src/ui/Texto';
 import { ALVO_TOQUE, cor, raio } from '../../../src/ui/tema';
+import { useLayout } from '../../../src/ui/layout';
 
 /* As mesmas abas do web: cada uma fixa o modo do servidor e o professor. */
 const ABAS = [
@@ -76,7 +76,8 @@ function Bolha({ msg }: { msg: ChatMessage }) {
  */
 export default function Mentor() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  // Largura útil já sem a barra lateral (tablet e notebook): a da janela passava por baixo dela.
+  const { larguraConteudo } = useLayout();
   const mensagens = useAppStore((s) => s.chatMessages);
   const quizzes = useAppStore((s) => s.quizResults);
   const logs = useAppStore((s) => s.logs);
@@ -151,7 +152,7 @@ export default function Mentor() {
     }
   }
 
-  const largura = Math.min(width, 900);
+  const largura = Math.min(larguraConteudo, 900);
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: cor.branco }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
