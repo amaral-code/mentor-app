@@ -11,12 +11,12 @@ import { cor } from '../../src/ui/tema';
  * cima delas, com o botão voltar do Android funcionando de graça.
  */
 export default function LayoutAluno() {
-  const { nivelNovo, fecharNivel } = useEfeitosDoAluno();
+  const { nivelNovo, marco, fechar } = useEfeitosDoAluno();
   const relatorioAberto = useAppStore((s) => s.showWeeklyReport);
   return (
     <GuardaDoomscroll>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cor.branco } }} />
-      <OverlayNivel nivel={nivelNovo} aoFechar={fecharNivel} />
+      <OverlayNivel nivel={nivelNovo} marco={marco} aoFechar={fechar} />
       {relatorioAberto ? <RelatorioSemanal /> : null}
     </GuardaDoomscroll>
   );

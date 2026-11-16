@@ -136,10 +136,10 @@ export interface RecompensaFoco {
 
 export const RECOMPENSAS: RecompensaFoco[] = [
   { id: 'skin_sagui_noturno', nome: 'Sagui Noturno', descricao: 'Skin exclusiva do mascote para quem estuda no escuro.', custo: 300, icone: 'moon' },
-  { id: 'pausa_sem_streak', nome: 'Escudo de Streak', descricao: 'Um dia de folga sem perder a sequencia.', custo: 450, icone: 'shield' },
-  { id: 'pilula_extra', nome: 'Pilula sob medida', descricao: 'Um audio de 3 min gerado no tema que voce escolher.', custo: 200, icone: 'headphones' },
+  { id: 'pausa_sem_streak', nome: 'Escudo de Streak', descricao: 'Um dia de folga sem perder a sequência.', custo: 450, icone: 'shield' },
+  { id: 'pilula_extra', nome: 'Pílula sob medida', descricao: 'Um áudio de 3 min gerado no tema que você escolher.', custo: 200, icone: 'headphones' },
   { id: 'tema_amanhecer', nome: 'Tema Amanhecer', descricao: 'Paleta clara para os dias em que a tela escura cansa.', custo: 250, icone: 'sun' },
-  { id: 'boost_xp', nome: 'Dobro de XP por 1h', descricao: 'Vale para a proxima hora de estudo no app.', custo: 350, icone: 'zap' },
+  { id: 'boost_xp', nome: 'Dobro de XP por 1h', descricao: 'Vale para a próxima hora de estudo no app.', custo: 350, icone: 'zap' },
 ];
 
 /** Resumo de um periodo de sessoes offline, para o card de estatisticas. */

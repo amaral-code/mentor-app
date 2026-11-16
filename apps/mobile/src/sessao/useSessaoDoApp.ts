@@ -3,9 +3,10 @@ import { useAppStore, persistir } from '@mentor/state/appStore';
 import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { userRepository } from '@mentor/api/UserRepository';
 import { hidratarCache } from '@mentor/api/rankingEngine';
-import { getToday, proximoStreak } from '@mentor/core/utils';
+import { calcLevel, getToday, proximoStreak } from '@mentor/core/utils';
+import { marcoCruzado } from '@mentor/core/marcosXp';
 import { deveGerarRelatorio } from '@mentor/core/decompressionReport';
-import { iniciarCarga } from './carga';
+import { iniciarCarga, useEstadoCarga } from './carga';
 
 const AVISO_LENTO = 'Conexão lenta: mostrando o que já carregou. Puxe a tela para completar.';
 
@@ -52,17 +53,23 @@ export function useSessaoDoApp(): boolean {
 
 /**
  * Efeitos do aluno que o web roda no `App.tsx`: ofensiva diária, nível
- * novo e relatório de sexta. Devolve o nível recém-alcançado (para o
- * overlay de comemoração) e a função que o fecha.
+ * novo, marco de XP e relatório de sexta. Devolve o que comemorar (para
+ * o overlay) e a função que fecha.
+ *
+ * Nível e marco só contam DEPOIS da primeira carga: antes dela o XP é o
+ * padrão (0, nível 1), e a chegada do saldo real do servidor seria lida
+ * como "subiu 5 níveis agora" a cada vez que o app abre.
  */
-export function useEfeitosDoAluno(): { nivelNovo: number | null; fecharNivel: () => void } {
+export function useEfeitosDoAluno(): { nivelNovo: number | null; marco: number | null; fechar: () => void } {
   const ativo = useAppStore((s) => s.isAuthenticated && s.userRole === 'student');
   const ultimoAcesso = useAppStore((s) => s.gamification.lastAccessDate);
   const ofensiva = useAppStore((s) => s.gamification.streak);
-  const nivel = useAppStore((s) => s.gamification.level);
+  const xp = useAppStore((s) => s.gamification.xp);
   const relatoriosCarregados = useBemEstarStore((s) => s.carregado);
-  const nivelAnterior = useRef(nivel);
+  const carga = useEstadoCarga();
+  const base = useRef<{ nivel: number; xp: number } | null>(null);
   const [nivelNovo, setNivelNovo] = useState<number | null>(null);
+  const [marco, setMarco] = useState<number | null>(null);
 
   /* Deps com os campos LIDOS: o valor real chega do servidor depois do
      login, e o efeito precisa rodar de novo para fazer a conta certa
@@ -75,10 +82,19 @@ export function useEfeitosDoAluno(): { nivelNovo: number | null; fecharNivel: ()
   }, [ativo, ultimoAcesso, ofensiva]);
 
   useEffect(() => {
-    if (!ativo) return;
-    if (nivel > nivelAnterior.current) setNivelNovo(nivel);
-    nivelAnterior.current = nivel;
-  }, [ativo, nivel]);
+    if (!ativo || carga !== 'pronta') return;
+    const nivel = calcLevel(xp).level;
+    if (!base.current) {
+      base.current = { nivel, xp };
+      return;
+    }
+    if (nivel > base.current.nivel) setNivelNovo(nivel);
+    else {
+      const m = marcoCruzado(base.current.xp, xp);
+      if (m !== null) setMarco(m);
+    }
+    base.current = { nivel, xp };
+  }, [ativo, carga, xp]);
 
   useEffect(() => {
     if (!ativo || !relatoriosCarregados) return;
@@ -88,5 +104,12 @@ export function useEfeitosDoAluno(): { nivelNovo: number | null; fecharNivel: ()
     }
   }, [ativo, relatoriosCarregados]);
 
-  return { nivelNovo, fecharNivel: () => setNivelNovo(null) };
+  return {
+    nivelNovo,
+    marco,
+    fechar: () => {
+      setNivelNovo(null);
+      setMarco(null);
+    },
+  };
 }
