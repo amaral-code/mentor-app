@@ -4,5 +4,22 @@
   "rules": {
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["packages/core/src/**", "packages/api/src/**", "packages/state/src/**"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          { "name": "window", "message": "Pacotes compartilhados rodam no React Native: use @mentor/core/plataforma." },
+          { "name": "document", "message": "Pacotes compartilhados rodam no React Native: sem DOM." },
+          { "name": "localStorage", "message": "Use safeGet/safeSet de @mentor/core/safeStorage (a plataforma escolhe o armazenamento)." },
+          { "name": "sessionStorage", "message": "Use @mentor/core/plataforma." },
+          { "name": "navigator", "message": "Use plataforma().online() de @mentor/core/plataforma." },
+          { "name": "location", "message": "Sem location no React Native: receba a URL como parâmetro." },
+          { "name": "HTMLElement", "message": "Pacotes compartilhados rodam no React Native: sem DOM." }
+        ]
+      }
+    }
+  ]
 }

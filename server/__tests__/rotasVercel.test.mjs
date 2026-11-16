@@ -25,15 +25,20 @@ import { join } from 'node:path';
  * caminho exato de cada uma.
  */
 
-/** Varre src/ e coleta cada rota passada para urlBackendIA(). */
+/**
+ * Varre o codigo de front do monorepo (apps/* e packages/*) e coleta cada
+ * rota passada para urlBackendIA(). Desde o monorepo, a chamada pode morar
+ * num pacote compartilhado (@mentor/core), nao so em apps/web/src.
+ */
 function rotasChamadasPeloFront() {
-  const arquivos = (function varrer(dir) {
-    return readdirSync(dir).flatMap((nome) => {
+  const varrer = (dir) =>
+    readdirSync(dir).flatMap((nome) => {
+      if (nome === 'node_modules' || nome === 'dist' || nome.startsWith('.')) return [];
       const p = join(dir, nome);
       if (statSync(p).isDirectory()) return varrer(p);
       return /\.(ts|tsx)$/.test(p) && !p.includes('__tests__') ? [p] : [];
     });
-  })('src');
+  const arquivos = ['apps', 'packages'].filter((d) => existsSync(d)).flatMap(varrer);
 
   const rotas = new Set();
   for (const arquivo of arquivos) {

@@ -622,7 +622,7 @@ async function perfilDoImportado(env, uid, patch) {
   return resposta.ok;
 }
 
-function emailBoasVindas({ paraQuem, login, senha, linkMagico, escola, codigoInstituicao, turma, appUrl }) {
+function emailBoasVindas({ login, senha, linkMagico, escola, codigoInstituicao, turma, appUrl }) {
   const linhasTexto = [
     `Olá! Sua conta no Midnight Mentor foi criada pela secretaria (${escola}).`,
     '',
@@ -660,7 +660,6 @@ async function importarLinha(env, escola, turmas, linha) {
 
   // Docente usa o próprio email como login; aluno usa login institucional
   // e o email do responsável só recebe (nunca vira login do aluno).
-  const emailDono = tipo === 'teacher' ? linha.email : null;
   if (tipo === 'teacher' && !EMAIL_OK_IMPORT.test(linha.email)) {
     return { ok: false, erro: 'email do docente inválido', emailEnviado: false };
   }

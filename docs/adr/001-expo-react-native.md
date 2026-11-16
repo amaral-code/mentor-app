@@ -40,8 +40,9 @@ apps/
   mobile/     app Expo: Android, iOS e web
 packages/
   core/       engines puras (SRS, SSC, burnout, quiz, redação, ranking...) sem DOM
-  api/        cliente Supabase + repositories
-  ui-tokens/  cores, tipografia e espaçamento
+  api/        cliente Supabase + repositories + tipos do banco gerados
+  state/      stores Zustand compartilhadas
+  ui-tokens/  cores, tipografia e espaçamento (M2, junto com o design system)
 server/       back-end de IA: Vercel /api/* ou Cloudflare Worker (sem mudança)
 supabase/     migrations (sem mudança)
 ```
@@ -97,6 +98,6 @@ Regra durante a transição: **lógica nova vai para `packages/core`**, nunca di
 
 ## Pontos para a equipe decidir na revisão
 
-- [ ] Gerenciador de pacotes do monorepo: npm workspaces ou pnpm
+- [x] Gerenciador de pacotes do monorepo: **npm workspaces** + Turborepo (M1). O projeto já usava npm, e o Expo suporta workspaces do npm sem configuração extra.
 - [ ] Biblioteca de gráficos nativa
 - [ ] Quem cuida das contas Apple, Google e Expo (de preferência contas de organização, não pessoais)
