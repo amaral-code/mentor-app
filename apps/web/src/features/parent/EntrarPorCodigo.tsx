@@ -40,10 +40,14 @@ interface Props {
   aoVincular: () => void;
   /** `destaque` e a tela de quem ainda nao tem nenhum filho vinculado. */
   variante?: 'destaque' | 'compacto';
+  /** Código vindo de um link de vínculo (#57). */
+  codigoInicial?: string;
 }
 
-export function EntrarPorCodigo({ aoVincular, variante = 'compacto' }: Props) {
-  const [codigo, setCodigo] = useState('');
+export function EntrarPorCodigo({ aoVincular, variante = 'compacto', codigoInicial = '' }: Props) {
+  // Vindo de um link (#57), o código já chega preenchido; vincular
+  // continua sendo o botão, para ninguém se vincular sem querer.
+  const [codigo, setCodigo] = useState(codigoInicial);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState('');
   const [ok, setOk] = useState('');

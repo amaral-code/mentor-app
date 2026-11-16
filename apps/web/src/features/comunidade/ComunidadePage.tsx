@@ -293,6 +293,20 @@ export function ComunidadePage() {
     );
   }
 
+  /* Convite por link (#57): abre a liga do link assim que a lista chega.
+     Entrar continua sendo o botão da liga; o link só mostra qual é. */
+  const linkPendente = useAppStore((s) => s.linkPendente);
+  useEffect(() => {
+    if (linkPendente?.tipo !== 'liga' || ligas.length === 0) return;
+    if (ligas.some(liga => liga.id === linkPendente.id)) {
+      setSelectedLeagueId(linkPendente.id);
+      setViewMode('detail');
+    } else {
+      setToast('Não encontramos a liga deste convite. Ela pode ter sido encerrada.', 'info');
+    }
+    useAppStore.getState().setLinkPendente(null);
+  }, [linkPendente, ligas, setToast]);
+
   const selectedLeague = ligas.find(liga => liga.id === selectedLeagueId) || null;
   const selectedProgress = selectedLeague && selectedLeague.goals.length > 0
     ? Math.round((selectedLeague.goals.filter(goal => (goal.completedBy || []).includes(profile?.uid || '')).length / selectedLeague.goals.length) * 100)

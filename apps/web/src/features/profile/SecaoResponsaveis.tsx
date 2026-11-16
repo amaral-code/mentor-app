@@ -1,5 +1,8 @@
+import { compartilharLink } from '../../shared/lib/compartilhar';
+import { plataforma } from '@mentor/core/plataforma';
+import { montarLink } from '@mentor/core/deepLinks';
 import { useEffect, useState } from 'react';
-import { Check, Copy, RefreshCw, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
+import { Check, Copy, RefreshCw, Share2, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
 import { userRepository } from '@mentor/api/UserRepository';
@@ -147,6 +150,19 @@ export function SecaoResponsaveis() {
             >
               {copiado ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
               {copiado ? 'Copiado' : 'Copiar'}
+            </button>
+            {/* Link pronto (#57): o responsável abre e o código já vem
+                preenchido no painel dele, faltando só confirmar. */}
+            <button
+              type="button"
+              onClick={async () => {
+                const r = await compartilharLink('Acompanhe meus estudos', montarLink(plataforma().origem(), { tipo: 'vinculo', codigo }));
+                if (r === 'copiado') setToast('Link copiado. Mande só para quem você quer que acompanhe.', 'success');
+                if (r === 'falhou') setToast('Não foi possível copiar o link agora.', 'error');
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 hover:border-amber-400/40 hover:text-amber-600 transition-all min-h-[40px]"
+            >
+              <Share2 size={13} /> Enviar link
             </button>
           </div>
         ) : (

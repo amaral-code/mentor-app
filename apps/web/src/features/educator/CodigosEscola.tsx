@@ -1,5 +1,7 @@
+import { plataforma } from '@mentor/core/plataforma';
+import { montarLink } from '@mentor/core/deepLinks';
 import { useEffect, useState } from 'react';
-import { Check, Copy, KeyRound, RefreshCw } from 'lucide-react';
+import { Check, Copy, KeyRound, Link2, RefreshCw } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { docenteRepository } from '@mentor/api/DocenteRepository';
@@ -168,6 +170,18 @@ export function CodigosEscola({ modo }: Props) {
                   >
                     {copiado === t.id ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                   </button>
+                  {/* Link da turma (#57): o aluno toca e o app já abre com o
+                      código preenchido, só falta confirmar. */}
+                  {t.codigo !== 'sem código' && (
+                    <button
+                      onClick={() => void copiar(montarLink(plataforma().origem(), { tipo: 'turma', codigo: t.codigo }), `${t.id}-link`)}
+                      aria-label={`Copiar link de entrada da turma ${t.nome}`}
+                      title="Copiar link de entrada"
+                      className="p-2 rounded-lg text-slate-500 hover:text-tinta-900 hover:bg-slate-100 transition-all"
+                    >
+                      {copiado === `${t.id}-link` ? <Check size={13} className="text-emerald-600" /> : <Link2 size={13} />}
+                    </button>
+                  )}
                   {ehSecretaria && (
                     <button
                       onClick={() => void trocarTurma(t.id)}

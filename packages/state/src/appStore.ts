@@ -1,3 +1,4 @@
+import type { DestinoLink } from '@mentor/core/deepLinks';
 import { create } from 'zustand';
 import {
   MoodType,
@@ -31,6 +32,9 @@ interface AppState {
   userRole: UserRole;
 
   activeTab: TabId;
+  /** Deep link (#57) esperando o login para ser aplicado. */
+  linkPendente: DestinoLink | null;
+  setLinkPendente: (d: DestinoLink | null) => void;
   showCrisisOverlay: boolean;
   showWeeklyReport: boolean;
   showNotebookStudio: boolean;
@@ -131,6 +135,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   userRole: 'student',
 
   activeTab: 'dashboard',
+  linkPendente: null,
+  setLinkPendente: (d) => set({ linkPendente: d }),
   showCrisisOverlay: false,
   showWeeklyReport: false,
   showNotebookStudio: false,

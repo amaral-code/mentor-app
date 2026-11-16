@@ -297,6 +297,31 @@ export default function App() {
     }
   }, [isAuthenticated, userRole, relatoriosCarregados]);
 
+  /*
+   * Deep link (#57) aplicado depois do login. Só ABRE a tela certa: liga,
+   * turma e vínculo pedem confirmação lá dentro. Link que não serve ao
+   * papel da conta (convite de liga para um responsável) é descartado.
+   */
+  const linkPendente = useAppStore((s) => s.linkPendente);
+  useEffect(() => {
+    if (!isAuthenticated || !linkPendente) return;
+    const { setActiveTab, setLinkPendente } = useAppStore.getState();
+    if (userRole === 'student') {
+      if (linkPendente.tipo === 'aba') {
+        setActiveTab(linkPendente.aba);
+        setLinkPendente(null);
+      } else if (linkPendente.tipo === 'liga') {
+        setActiveTab('comunidade');
+      } else if (linkPendente.tipo === 'turma') {
+        setActiveTab('profile');
+      } else {
+        setLinkPendente(null);
+      }
+    } else if (!(userRole === 'parent' && linkPendente.tipo === 'vinculo')) {
+      setLinkPendente(null);
+    }
+  }, [isAuthenticated, userRole, linkPendente]);
+
   // Mascote: comemora subida de nível
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'student') return;

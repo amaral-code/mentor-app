@@ -22,5 +22,40 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Revisões de hoje",
+      "short_name": "Revisões",
+      "url": "/?aba=calendario",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Fazer um quiz",
+      "short_name": "Quiz",
+      "url": "/?aba=quiz",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Perguntar ao Mentor",
+      "short_name": "Mentor",
+      "url": "/?aba=chat",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

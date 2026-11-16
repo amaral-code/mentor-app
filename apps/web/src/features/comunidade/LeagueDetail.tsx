@@ -1,5 +1,8 @@
+import { compartilharLink } from '../../shared/lib/compartilhar';
+import { plataforma } from '@mentor/core/plataforma';
+import { montarLink } from '@mentor/core/deepLinks';
 import { useState, useRef, useEffect } from 'react';
-import { SendHorizontal, Sparkles, Users } from 'lucide-react';
+import { SendHorizontal, Share2, Sparkles, Users } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import type { StudyLeague } from '@mentor/core/ligasEngine';
 import { postLeagueMessage } from '@mentor/core/ligasEngine';
@@ -68,6 +71,7 @@ function generateDailyPrompt(league: StudyLeague): string {
 }
 
 export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailProps) {
+  const setToast = useAppStore((s) => s.setToast);
   const session = useAppStore((s) => s.session);
   const addXP = useAppStore((s) => s.addXP);
   const addLog = useAppStore((s) => s.addLog);
@@ -141,7 +145,24 @@ export function LeagueDetail({ league, onBack, onUpdateLeague }: LeagueDetailPro
             </p>
           </div>
         </div>
-        <span className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium shrink-0">{league?.discipline || ''}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Convite por link (#57). Liga de demonstração (id em texto,
+              sem linha no banco) não tem link: ninguém conseguiria entrar. */}
+          {league && /^[0-9a-f-]{36}$/i.test(league.id) && (
+            <button
+              type="button"
+              onClick={async () => {
+                const r = await compartilharLink(`Liga ${league.title}`, montarLink(plataforma().origem(), { tipo: 'liga', id: league.id }));
+                if (r === 'copiado') setToast('Link do convite copiado. Mande para quem você quer na liga.', 'success');
+                if (r === 'falhou') setToast('Não foi possível copiar o link agora.', 'error');
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-slate-200 text-xs font-bold text-tinta-700 hover:border-ceu-400 min-h-[40px]"
+            >
+              <Share2 size={14} aria-hidden="true" /> Convidar
+            </button>
+          )}
+          <span className="px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">{league?.discipline || ''}</span>
+        </div>
       </div>
 
       {/* Content: Chat + Challenge */}

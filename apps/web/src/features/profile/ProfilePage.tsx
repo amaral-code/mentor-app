@@ -86,6 +86,17 @@ export function ProfilePage() {
     setTurmas(getTurmasCadastradas());
   }, [session]);
 
+  /* Link de turma (#57): preenche o código e leva até a seção. Entrar
+     continua sendo o botão: link aberto sem querer não muda a turma. */
+  const linkPendente = useAppStore((s) => s.linkPendente);
+  useEffect(() => {
+    if (linkPendente?.tipo !== 'turma') return;
+    setCodigoTurma(linkPendente.codigo);
+    useAppStore.getState().setLinkPendente(null);
+    setToast('Código da turma preenchido. Confira e toque em Entrar.', 'info');
+    window.setTimeout(() => document.getElementById('secao-escola')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+  }, [linkPendente, setToast]);
+
   async function handleEntrarNaTurma() {
     if (!codigoTurma.trim()) return;
     setEntrando(true);

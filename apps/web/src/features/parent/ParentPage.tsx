@@ -29,7 +29,9 @@ export function ParentPage() {
      "como meu filho esta indo?" ficava depois de consultas, catalogo,
      autorizacao e mensagens. Abas por pergunta.
      `null` ate os alertas carregarem: a aba inicial depende deles. */
-  const [aba, setAba] = useState<'estudos' | 'cuidado' | 'vincular' | null>(null);
+  /* Link de vínculo (#57): abre a aba de vincular com o código pronto. */
+  const linkVinculo = useAppStore((s) => (s.linkPendente?.tipo === 'vinculo' ? s.linkPendente.codigo : ''));
+  const [aba, setAba] = useState<'estudos' | 'cuidado' | 'vincular' | null>(linkVinculo ? 'vincular' : null);
   const alertas = useMarketplaceStore((s) => s.alertas);
   const carregarAlertas = useMarketplaceStore((s) => s.carregarAlertas);
 
@@ -107,7 +109,7 @@ export function ParentPage() {
       {!aluno ? (
         <section className="max-w-5xl mx-auto px-4 md:px-8 py-6">
           <div className="glass rounded-2xl p-6">
-            <EntrarPorCodigo variante="destaque" aoVincular={() => void carregarVinculos()} />
+            <EntrarPorCodigo variante="destaque" codigoInicial={linkVinculo} aoVincular={() => { useAppStore.getState().setLinkPendente(null); void carregarVinculos(); }} />
           </div>
         </section>
       ) : (
@@ -204,7 +206,7 @@ export function ParentPage() {
               <div className="glass rounded-2xl p-5">
                 {/* O proprio EntrarPorCodigo ja traz o titulo "Vincular
                     outro estudante": um h2 aqui virava titulo em dobro. */}
-                <EntrarPorCodigo aoVincular={() => void carregarVinculos()} />
+                <EntrarPorCodigo codigoInicial={linkVinculo} aoVincular={() => { useAppStore.getState().setLinkPendente(null); void carregarVinculos(); }} />
               </div>
             </section>
           )}
