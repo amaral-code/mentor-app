@@ -135,7 +135,16 @@ export const recursosBackend = (): RecursosBackend =>
 export function urlBackendIA(rota: string): string {
   const base = aiBaseUrl();
   if (base) return `${base}${rota}`;
-  return rota.startsWith('/api/') ? rota : `/api${rota}`;
+  const caminho = rota.startsWith('/api/') ? rota : `/api${rota}`;
+  /* No celular a "mesma origem" é o site publicado: sem o prefixo, o
+     fetch relativo não tem para onde ir. No web a origem é vazia e a
+     URL continua relativa, como sempre foi. */
+  return `${origemDoBackend()}${caminho}`;
+}
+
+/** Origem do site que serve `/api` (vazia no web, a URL do site no celular). */
+export function origemDoBackend(): string {
+  return plataforma().origemBackend().trim().replace(/\/+$/, '');
 }
 
 /** Rotulo do destino para mensagens de erro e diagnostico de rede. */
@@ -151,7 +160,7 @@ export const destinoBackendIA = (): string => aiBaseUrl() || 'o servidor do app 
  * `origem`: vazio no web (mesma origem). No celular nao existe "mesma
  * origem": o app passa a URL do site publicado (ex.: https://app.exemplo.com).
  */
-export function carregarConfigRuntime(origem = ''): Promise<void> {
+export function carregarConfigRuntime(origem = origemDoBackend()): Promise<void> {
   if (emVoo) return emVoo;
 
   emVoo = (async () => {

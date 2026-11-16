@@ -146,3 +146,26 @@ describe('validarDataNascimento', () => {
     expect(r.ok === false && r.erro).toMatch(/Informe/);
   });
 });
+
+describe('dataBrParaIso', () => {
+  it('converte DD/MM/AAAA, com ou sem zero à esquerda', async () => {
+    const { dataBrParaIso } = await import('../vinculoCodigo');
+    expect(dataBrParaIso('31/12/2008')).toBe('2008-12-31');
+    expect(dataBrParaIso('1/2/2009')).toBe('2009-02-01');
+    expect(dataBrParaIso(' 05.06.2010 ')).toBe('2010-06-05');
+  });
+
+  it('recusa o que não tem a forma de data', async () => {
+    const { dataBrParaIso } = await import('../vinculoCodigo');
+    expect(dataBrParaIso('2008-12-31')).toBeNull();
+    expect(dataBrParaIso('31/12/08')).toBeNull();
+    expect(dataBrParaIso('')).toBeNull();
+  });
+
+  it('31/02 vira ISO, e quem barra é a validação de data', async () => {
+    const { dataBrParaIso, validarDataNascimento } = await import('../vinculoCodigo');
+    const iso = dataBrParaIso('31/02/2008');
+    expect(iso).toBe('2008-02-31');
+    expect(validarDataNascimento(iso!, new Date(2026, 10, 16)).ok).toBe(false);
+  });
+});

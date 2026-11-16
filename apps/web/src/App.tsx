@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { LazyMotion } from 'motion/react';
 import { useAppStore, persistir } from '@mentor/state/appStore';
+import { carregarDadosDoUsuario } from '@mentor/state/carregarDados';
 import { userRepository } from '@mentor/api/UserRepository';
-import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { comTimeout, TIMEOUT_BOOT_MS } from '@mentor/core/comTimeout';
 import { safeGet } from '@mentor/core/safeStorage';
 import { AuthPage } from './features/auth/AuthPage';
@@ -52,7 +52,6 @@ import { getToday, proximoStreak } from '@mentor/core/utils';
  * `layout` no ranking, que só existem no conjunto completo.
  */
 const featuresAnimacao = () => import('motion/react').then((mod) => mod.domMax);
-import { useStoreStore } from '@mentor/state/storeStore';
 import { hidratarCache } from '@mentor/api/rankingEngine';
 import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { deveGerarRelatorio } from '@mentor/core/decompressionReport';
@@ -64,12 +63,6 @@ export default function App() {
   const userRole = useAppStore((s) => s.userRole);
   const setSession = useAppStore((s) => s.setSession);
   const updateGamification = useAppStore((s) => s.updateGamification);
-  const setLogs = useAppStore((s) => s.setLogs);
-  const setNotas = useAppStore((s) => s.setNotas);
-  const setChatMessages = useAppStore((s) => s.setChatMessages);
-  const setConversas = useAppStore((s) => s.setConversas);
-  const setPersonas = useAppStore((s) => s.setPersonas);
-  const setActivePersonaId = useAppStore((s) => s.setActivePersonaId);
   const setApiKey = useAppStore((s) => s.setApiKey);
   // Fatia de gamificacao (nao o store): os efeitos de streak/level abaixo
   // precisam dela, e ela so muda em ganho de XP — nao a cada mensagem.
@@ -92,99 +85,9 @@ export default function App() {
    * expirado, logout em outra aba e refresh automatico.
    */
   useEffect(() => {
-    const PADRAO = ['mentor_enem', 'prof_matematica', 'prof_portugues', 'prof_ciencias', 'prof_humanas'];
-
-    async function carregarDados() {
-      // allSettled: se 1 das 11 tabelas falhar, as outras 10 ainda entram na
-      // tela — antes um erro isolado zerava o app com cara de "perdi tudo".
-      const nomes = ['gam', 'logs', 'notas', 'conversas', 'personas', 'desafios', 'prefs', 'escolas', 'turmas', 'quizzes', 'humor'] as const;
-      const resultados = await Promise.allSettled([
-        supabaseRepository.loadGamification(),
-        supabaseRepository.loadLogs(),
-        supabaseRepository.loadNotas(),
-        supabaseRepository.loadConversas(),
-        supabaseRepository.loadPersonas(),
-        supabaseRepository.loadDesafios(),
-        supabaseRepository.loadPreferencias(),
-        supabaseRepository.loadEscolas(),
-        supabaseRepository.loadTurmas(),
-        // Faltavam no boot: sem eles o historico de quiz ficava sempre
-        // vazio, e por isso o Mentor nunca sabia qual materia retomar.
-        supabaseRepository.loadQuizResults(),
-        supabaseRepository.loadHumor(),
-      ]);
-      const valor = <T,>(i: number, padrao: T): T =>
-        resultados[i].status === 'fulfilled' ? (resultados[i] as PromiseFulfilledResult<T>).value : padrao;
-      const falhas = resultados
-        .map((r, i) => (r.status === 'rejected' ? nomes[i] : null))
-        .filter(Boolean);
-      if (falhas.length > 0) {
-        console.warn('[boot] tabelas nao carregadas:', falhas.join(', '));
-        useAppStore.getState().setToast(`Alguns dados nao carregaram (${falhas.join(', ')}). O resto esta normal.`, 'info');
-      }
-      const gam = valor<Awaited<ReturnType<typeof supabaseRepository.loadGamification>>>(0, null);
-      const logs = valor(1, useAppStore.getState().logs);
-      const notas = valor(2, useAppStore.getState().notas);
-      const conversas = valor(3, useAppStore.getState().conversas);
-      const personas = valor(4, [] as Awaited<ReturnType<typeof supabaseRepository.loadPersonas>>);
-      const desafios = valor(5, useAppStore.getState().challengeResults);
-      const prefs = valor<Awaited<ReturnType<typeof supabaseRepository.loadPreferencias>>>(6, null);
-      const escolas = valor(7, [] as Awaited<ReturnType<typeof supabaseRepository.loadEscolas>>);
-      const turmas = valor(8, [] as Awaited<ReturnType<typeof supabaseRepository.loadTurmas>>);
-      const quizzes = valor(9, useAppStore.getState().quizResults);
-      const humor = valor(10, [] as Awaited<ReturnType<typeof supabaseRepository.loadHumor>>);
-
-      // Inventario da loja e cache de escolas/turmas ficavam sem carregar:
-      // as funcoes existiam, mas nada as chamava. Efeito visivel: item ja
-      // comprado voltava a aparecer como disponivel a cada recarga, e o
-      // nome da escola do aluno nunca saia dos dados de demonstracao.
-      void useStoreStore.getState().carregar();
-      // Telemetria, carteira de foco, revisoes e relatorios do modulo de
-      // bem-estar. Fora do Promise.all acima porque nenhuma tela do boot
-      // depende deles - o dashboard mostra o indice de fadiga quando
-      // chegarem.
-      void useBemEstarStore.getState().carregarTudo();
-      hidratarCache({ escolas, turmas });
-
-      if (gam) updateGamification(gam);
-      setLogs(logs);
-      setNotas(notas);
-      /*
-       * Threads do Mentor (016): abre a mais recente; sem nenhuma, cai
-       * no fluxo legado (mensagens sem thread). A saudacao do ChatPage
-       * assume sozinha quando a thread ativa chega vazia.
-       */
-      setConversas(conversas);
-      const ativa = conversas[0]?.id ?? null;
-      setChatMessages(
-        ativa ? await supabaseRepository.loadChat(100, ativa) : await supabaseRepository.loadChat(),
-      );
-      useAppStore.setState({ conversaAtivaId: ativa });
-      if (personas.length > 0) {
-        const embutidas = useAppStore.getState().personas.filter((p) => PADRAO.includes(p.id));
-        setPersonas([...embutidas, ...personas]);
-      }
-      useAppStore.setState({ challengeResults: desafios, quizResults: quizzes });
-      if (humor.length > 0) {
-        useAppStore.setState({ moodHistory: humor, currentMood: humor[humor.length - 1].mood });
-      }
-      if (prefs) {
-        useAppStore.setState({
-          challengeSeenTutorial: !!prefs.desafio_tutorial,
-          isMuted: !!prefs.mudo,
-        });
-        if (prefs.persona_ativa_id) setActivePersonaId(String(prefs.persona_ativa_id));
-      }
-      // Tour do aluno: conta nova (ou que nunca completou) cai direto no
-      // passo a passo na primeira entrada. Só estudantes: educador, pais
-      // e psicólogo têm telas próprias, sem tour. Backup local cobre conta
-      // recém-criada sem linha de preferências (ou offline).
-      const papel = useAppStore.getState().session?.role;
-      const tourVisto = !!prefs?.tutorial_completo || safeGet('mm_tour_visto') === '1';
-      if (papel === 'student' && !tourVisto) {
-        useAppStore.setState({ showTutorial: true, tutorialStep: 0 });
-      }
-    }
+    /* A carga em si vive em @mentor/state/carregarDados: o celular faz
+       a mesma, e duas copias divergiriam na primeira tabela nova. */
+    const carregarDados = carregarDadosDoUsuario;
 
     // Sessao ja existente (F5 na pagina). getSession nunca joga (timeout
     // interno vira null = tela de login), entao este then e seguro.

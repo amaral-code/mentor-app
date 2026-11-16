@@ -42,6 +42,15 @@ export interface Plataforma {
    * Web: `visibilitychange`. Mobile: `AppState`.
    */
   aoIrParaSegundoPlano(aoSair: () => void): () => void;
+  /**
+   * Origem do site que serve `/api/*` (ex.: https://app.exemplo.com.br).
+   *
+   * Web: string vazia, porque o back-end mora no mesmo domínio e a rota
+   * relativa `/api/...` já chega nele. Celular: não existe "mesmo
+   * domínio", e um `fetch('/api/generate')` no React Native falha sem
+   * dizer para onde tentou ir. O app passa a URL do site publicado.
+   */
+  origemBackend(): string;
 }
 
 const PADRAO: Plataforma = {
@@ -53,6 +62,7 @@ const PADRAO: Plataforma = {
     throw new Error('abrirUrl sem plataforma instalada: chame configurarPlataforma no boot do app.');
   },
   aoIrParaSegundoPlano: () => () => {},
+  origemBackend: () => '',
 };
 
 /*

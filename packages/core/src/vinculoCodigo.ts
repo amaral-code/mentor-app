@@ -116,3 +116,17 @@ export function validarDataNascimento(
   if (idade > 120) return { ok: false, erro: 'Confira o ano: a idade ficou muito alta.' };
   return { ok: true };
 }
+
+/**
+ * "31/12/2008" (como o brasileiro digita) para "2008-12-31" (como o
+ * banco guarda). No celular não há o seletor de data do navegador, e o
+ * teclado numérico é mais rápido que rolar três roletas até 2008.
+ * Devolve `null` quando o texto não tem a forma DD/MM/AAAA; a validade
+ * da data em si (31/02, futuro) é com `validarDataNascimento`.
+ */
+export function dataBrParaIso(texto: string): string | null {
+  const m = /^\s*(\d{1,2})[/.](\d{1,2})[/.](\d{4})\s*$/.exec(texto ?? '');
+  if (!m) return null;
+  const [, d, mes, ano] = m;
+  return `${ano}-${mes.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}

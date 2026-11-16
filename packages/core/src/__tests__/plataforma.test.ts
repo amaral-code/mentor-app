@@ -80,3 +80,27 @@ describe('runtimeConfig lê o build pela plataforma', () => {
     expect(aiModel()).toBe('m1');
   });
 });
+
+describe('origem do back-end (celular)', () => {
+  it('web: sem origem, a rota continua relativa', async () => {
+    const { urlBackendIA } = await import('../runtimeConfig');
+    expect(urlBackendIA('/generate')).toBe('/api/generate');
+    expect(urlBackendIA('/api/chat/completions')).toBe('/api/chat/completions');
+  });
+
+  it('celular: prefixa o site publicado e apara a barra final', async () => {
+    configurarPlataforma({ origemBackend: () => ' https://app.exemplo.com.br/ ' });
+    const { urlBackendIA } = await import('../runtimeConfig');
+    expect(urlBackendIA('/generate')).toBe('https://app.exemplo.com.br/api/generate');
+    expect(urlBackendIA('/api/chat/completions')).toBe('https://app.exemplo.com.br/api/chat/completions');
+  });
+
+  it('worker externo vence a origem do site', async () => {
+    configurarPlataforma({
+      origemBackend: () => 'https://app.exemplo.com.br',
+      envBuild: (n) => (n === 'VITE_AI_BASE_URL' ? 'https://worker.exemplo.dev' : ''),
+    });
+    const { urlBackendIA } = await import('../runtimeConfig');
+    expect(urlBackendIA('/generate')).toBe('https://worker.exemplo.dev/generate');
+  });
+});

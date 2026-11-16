@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Midnight Mentor",
+    "slug": "midnight-mentor",
+    "scheme": "midnightmentor",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/icone.png",
+    "ios": {
+      "bundleIdentifier": "br.com.midnightmentor.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "NSCameraUsageDescription": "A câmera fotografa a folha da redação e a questão que você quer tirar dúvida.",
+        "NSPhotoLibraryUsageDescription": "A galeria serve para escolher a foto da redação ou da questão."
+      }
+    },
+    "android": {
+      "package": "br.com.midnightmentor.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icone.png",
+        "backgroundColor": "#2A3B63"
+      },
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/icone.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "A câmera fotografa a folha da redação e a questão que você quer tirar dúvida."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "A galeria serve para escolher a foto da redação ou da questão."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

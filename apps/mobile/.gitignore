@@ -1,0 +1,14 @@
+# Gerados pelo Expo (prebuild/CNG): o código nativo nasce do app.json e
+# dos config plugins. Versionar estas pastas faria o app.json mentir.
+.expo/
+# expo-env.d.ts fica versionado: sem ele o tsc do CI não conhece os tipos
+# do Expo (require de imagem, process.env).
+dist/
+web-build/
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
