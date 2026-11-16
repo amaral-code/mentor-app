@@ -12,7 +12,7 @@ import { useLayout } from '../../ui/layout';
 /* Um passo por aba, na ordem da barra. O balão aponta para a aba pelo
    índice: no celular a barra é embaixo; no notebook, na lateral. */
 const PASSOS = [
-  { aba: 0, rota: '/', titulo: 'Central', texto: 'Seu plano do dia em árvores. Entre na toca, faça a tarefa e ganhe XP.' },
+  { aba: 0, rota: '/', titulo: 'Central', texto: 'Seu plano do dia em árvores. Cada uma guarda uma missão de quiz que vale XP.' },
   { aba: 1, rota: '/mentor', titulo: 'Mentor', texto: 'Tire dúvida de qualquer matéria. Dá para mandar foto da questão.' },
   { aba: 2, rota: '/quiz', titulo: 'Quiz', texto: 'Questões no seu nível. Cada quiz marca sozinho quando revisar.' },
   { aba: 3, rota: '/ligas', titulo: 'Ligas', texto: 'Estude com a turma: metas, chat e ranking.' },

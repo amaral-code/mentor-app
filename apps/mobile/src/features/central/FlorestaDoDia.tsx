@@ -21,8 +21,6 @@ import {
   duracaoDaFase,
   formasDaArvore,
   montarFloresta,
-  passosDaToca,
-  podeComprovar,
   proximaFase,
   rotuloDaArvore,
   type Arvore,
@@ -30,12 +28,28 @@ import {
   type Fase,
 } from '@mentor/core/florestaDoDia';
 import { DURACAO_DA_ENTRADA, INICIO_DO_ZOOM, MOVIMENTOS, ZOOM_FINAL, trajetoDaEntrada, trajetoDaEscalada } from '@mentor/core/animacaoSagui';
-import { anunciar } from '../../ui/acessibilidade';
+import { anunciar, vibrar } from '../../ui/acessibilidade';
 import { Botao } from '../../ui/Botao';
 import { imagemSagui } from '../../ui/sagui';
 import { Texto } from '../../ui/Texto';
 import { cor, raio } from '../../ui/tema';
-import { Comprovacao } from './Comprovacao';
+import { acertoPorMateria, registrarComprovacao } from '@mentor/core/painelAluno';
+import { safeGet, safeSet } from '@mentor/core/safeStorage';
+import { useAppStore } from '@mentor/state/appStore';
+import {
+  SOBRE_O_TIPO,
+  TIPO_DA_ESPECIE,
+  acertos,
+  avancar,
+  materiaDaArvore,
+  montarMissao,
+  novaRodada,
+  passou,
+  precisaAcertar,
+  responder,
+  type Rodada,
+} from '@mentor/core/missaoDaArvore';
+import { useCoresSinal } from '../../ui/preferenciasAcessibilidade';
 
 /*
  * Floresta do dia no app: o mesmo desenho e a mesma ordem de fases do web
@@ -227,25 +241,175 @@ function SaguiAterrissando() {
   );
 }
 
+/**
+ * Missão de quiz dentro da árvore (ver o web): o formato da árvore decide
+ * o tipo, a resposta vale no primeiro toque e 60% de acerto conclui.
+ */
+function MissaoQuiz({
+  arvore,
+  materia,
+  feita,
+  aoConcluir,
+  aoSair,
+}: {
+  arvore: Arvore;
+  materia: string;
+  feita: boolean;
+  aoConcluir: (t: MicroTask, resultado: { acertos: number; total: number }) => void;
+  aoSair: () => void;
+}) {
+  const sinal = useCoresSinal();
+  const tipo = TIPO_DA_ESPECIE[arvore.especie];
+  const sobre = SOBRE_O_TIPO[tipo];
+  const [rodada, setRodada] = useState<Rodada>(() => novaRodada(montarMissao(tipo, materia)));
+  const concluiu = useRef(false);
+  const item = rodada.itens[rodada.indice];
+  const total = rodada.itens.length;
+  const certas = acertos(rodada);
+
+  useEffect(() => {
+    if (rodada.terminou && passou(rodada) && !concluiu.current && !feita) {
+      concluiu.current = true;
+      aoConcluir(arvore.tarefa, { acertos: certas, total });
+    }
+  }, [rodada, feita, aoConcluir, arvore.tarefa, certas, total]);
+
+  const selos = (
+    <View style={estilos.selos}>
+      <View style={[estilos.seloMissao, { backgroundColor: 'rgba(245,158,11,0.25)' }]}>
+        <Texto variante="rotulo" cor={cor.ambar100}>
+          {sobre.nome}
+        </Texto>
+      </View>
+      <View style={[estilos.seloMissao, { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
+        <Texto variante="rotulo" cor={cor.ambar100}>
+          {materia}
+        </Texto>
+      </View>
+    </View>
+  );
+
+  if (feita && !rodada.terminou) {
+    return (
+      <View style={{ gap: 12 }}>
+        {selos}
+        <View style={estilos.concluida}>
+          <Ionicons name="checkmark-circle" size={20} color={cor.branco} />
+          <Texto negrito cor={cor.branco}>
+            Missão já cumprida hoje
+          </Texto>
+        </View>
+        <Botao titulo="Sair e ir para a próxima árvore" aoTocar={aoSair} />
+      </View>
+    );
+  }
+
+  if (rodada.terminou) {
+    const ok = passou(rodada);
+    return (
+      <View style={{ gap: 12 }}>
+        {selos}
+        <View style={[estilos.passo, ok ? estilos.passoFeito : null, { alignItems: 'center' }]} accessibilityLiveRegion="polite">
+          <Texto variante="numero">
+            {certas} de {total}
+          </Texto>
+          <Texto negrito cor={ok ? sinal.acerto : '#78350F'} centro>
+            {ok ? `Missão cumprida! +${XP_DA_TAREFA} XP` : `Faltou pouco: precisa de ${precisaAcertar(total)} acertos.`}
+          </Texto>
+        </View>
+        {ok ? (
+          <Botao titulo="Sair e ir para a próxima árvore" aoTocar={aoSair} />
+        ) : (
+          <Botao titulo="Tentar de novo com outras questões" variante="ambar" aoTocar={() => setRodada(novaRodada(montarMissao(tipo, materia)))} />
+        )}
+      </View>
+    );
+  }
+
+  const respondida = rodada.escolhida !== null;
+  const acertou = respondida && rodada.escolhida === item.correta;
+  const binario = item.opcoes.length === 2;
+  return (
+    <View style={{ gap: 12 }}>
+      {selos}
+      <View style={{ flexDirection: 'row', gap: 6 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {rodada.itens.map((it, i) => {
+          const feitaAqui = i < rodada.indice || (i === rodada.indice && respondida);
+          const fundo = feitaAqui ? (rodada.respostas[i] === it.correta ? '#34D399' : '#F87171') : i === rodada.indice ? '#FCD34D' : 'rgba(255,255,255,0.2)';
+          return <View key={i} style={{ flex: 1, height: 10, borderRadius: 5, backgroundColor: fundo }} />;
+        })}
+      </View>
+      <View style={estilos.passo}>
+        <Texto variante="rotulo" cor="#92400E">
+          Questão {rodada.indice + 1} de {total}
+        </Texto>
+        <Texto negrito cor={cor.tinta900} style={{ marginTop: 4 }}>
+          {item.enunciado}
+        </Texto>
+        {item.respostaProposta ? (
+          <View style={estilos.proposta}>
+            <Texto negrito cor={cor.tinta900}>
+              Resposta proposta: {item.respostaProposta}
+            </Texto>
+          </View>
+        ) : null}
+        <View style={{ marginTop: 10, gap: 8, flexDirection: binario ? 'row' : 'column' }} accessibilityRole="radiogroup">
+          {item.opcoes.map((op, i) => {
+            const certa = respondida && i === item.correta;
+            const errada = respondida && i === rodada.escolhida && !certa;
+            return (
+              <Pressable
+                key={i}
+                onPress={() => setRodada((r) => responder(r, i))}
+                disabled={respondida}
+                accessibilityRole="button"
+                accessibilityLabel={`${op}${certa ? ', correta' : errada ? ', sua resposta, errada' : ''}`}
+                style={[
+                  estilos.opcao,
+                  binario ? { flex: 1, alignItems: 'center' } : null,
+                  certa ? { backgroundColor: sinal.acerto, borderColor: sinal.acerto } : errada ? { backgroundColor: sinal.erro, borderColor: sinal.erro } : respondida ? { opacity: 0.5 } : null,
+                ]}
+              >
+                <Texto negrito cor={certa || errada ? cor.branco : cor.tinta900} centro={binario}>
+                  {op}
+                </Texto>
+              </Pressable>
+            );
+          })}
+        </View>
+        {respondida ? (
+          <View style={{ marginTop: 10, gap: 8 }} accessibilityLiveRegion="polite">
+            <Texto negrito cor={acertou ? sinal.acerto : sinal.erro}>
+              {acertou ? 'Mandou bem!' : 'Quase lá!'}
+            </Texto>
+            <Texto cor={cor.tinta700}>{item.explicacao}</Texto>
+            <Botao titulo={rodada.indice >= total - 1 ? 'Ver resultado' : 'Próxima'} aoTocar={() => setRodada((r) => avancar(r))} />
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 function DentroDaToca({
   arvore,
   total,
   origem,
-  aoComprovar,
+  materia,
+  aoConcluir,
   aoSair,
 }: {
   arvore: Arvore;
   total: number;
   origem: { x: number; y: number };
-  aoComprovar: () => void;
+  materia: string;
+  aoConcluir: (t: MicroTask, resultado: { acertos: number; total: number }) => void;
   aoSair: () => void;
 }) {
   const reduzido = useReducedMotion();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [marcados, setMarcados] = useState<Set<string>>(() => new Set(arvore.tarefa.completed ? ['entender', 'fazer'] : []));
   const feita = arvore.tarefa.completed;
-  const passos = passosDaToca(arvore.tarefa);
 
   // A toca abre num círculo que cresce a partir do buraco do tronco.
   const raioFinal = Math.hypot(width, height);
@@ -257,20 +421,12 @@ function DentroDaToca({
     conteudo.value = withTiming(1, { duration: 500 });
   }, [reduzido, abre, conteudo]);
   useEffect(() => {
-    anunciar(`Dentro da toca: ${arvore.tarefa.titulo}`);
+    anunciar(`Missão: ${arvore.tarefa.titulo}`);
   }, [arvore.tarefa.titulo]);
 
   const circulo = useAnimatedStyle(() => ({ transform: [{ scale: Math.max(0.001, abre.value) }] }));
   const aparecer = useAnimatedStyle(() => ({ opacity: conteudo.value, transform: [{ translateY: (1 - conteudo.value) * 16 }] }));
 
-  function alternar(id: string) {
-    setMarcados((atual) => {
-      const novo = new Set(atual);
-      if (novo.has(id)) novo.delete(id);
-      else novo.add(id);
-      return novo;
-    });
-  }
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={aoSair} statusBarTranslucent>
@@ -310,59 +466,7 @@ function DentroDaToca({
             </View>
             <SaguiAterrissando />
 
-            {passos.map((p, i) => {
-              const marcado = marcados.has(p.id) || (p.daXp && feita);
-              const liberado = !p.daXp || podeComprovar(marcados);
-              return (
-                <View key={p.id} style={[estilos.passo, marcado ? estilos.passoFeito : null]}>
-                  <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <View style={[estilos.numero, { backgroundColor: marcado ? cor.esmeralda700 : '#B45309' }]}>
-                      {marcado ? <Ionicons name="checkmark" size={20} color={cor.branco} /> : <Texto negrito cor={cor.branco}>{i + 1}</Texto>}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Texto negrito cor={cor.tinta900}>
-                        {p.titulo}
-                      </Texto>
-                      <Texto cor={cor.tinta700}>{p.texto}</Texto>
-                    </View>
-                  </View>
-                  {!p.daXp ? (
-                    <Botao
-                      titulo={marcados.has(p.id) ? 'Feito' : p.id === 'entender' ? 'Entendi' : 'Terminei'}
-                      variante="secundario"
-                      compacto
-                      desabilitado={feita}
-                      aoTocar={() => alternar(p.id)}
-                      estilo={{ marginTop: 10 }}
-                    />
-                  ) : feita ? (
-                    <View style={estilos.concluida} accessibilityLiveRegion="polite">
-                      <Ionicons name="checkmark-circle" size={20} color={cor.branco} />
-                      <Texto negrito cor={cor.branco}>
-                        Tarefa concluída · +{XP_DA_TAREFA} XP
-                      </Texto>
-                    </View>
-                  ) : (
-                    <>
-                      <Botao
-                        titulo={`Comprovar · +${XP_DA_TAREFA} XP`}
-                        variante="ambar"
-                        icone={liberado ? 'flash' : 'lock-closed'}
-                        desabilitado={!liberado}
-                        aoTocar={aoComprovar}
-                        estilo={{ marginTop: 10 }}
-                      />
-                      {!liberado ? (
-                        <Texto variante="legenda" cor="#78350F" style={{ marginTop: 6 }}>
-                          Marque os dois passos de cima para liberar.
-                        </Texto>
-                      ) : null}
-                    </>
-                  )}
-                </View>
-              );
-            })}
-            {feita ? <Botao titulo="Sair e ir para a próxima árvore" aoTocar={aoSair} /> : null}
+            <MissaoQuiz arvore={arvore} materia={materia} feita={feita} aoConcluir={aoConcluir} aoSair={aoSair} />
           </ScrollView>
         </Animated.View>
       </View>
@@ -382,7 +486,17 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
   const indiceSagui = escolhida !== null && floresta.arvores[escolhida] ? escolhida : floresta.indiceAtual >= 0 ? floresta.indiceAtual : total - 1;
   const [fase, setFase] = useState<Fase>('subindo');
   const disparar = useCallback((ev: Evento) => setFase((f) => proximaFase(f, ev)), []);
-  const [comprovando, setComprovando] = useState(false);
+  /* Matéria de cada árvore: as que o aluno mais erra vêm primeiro. */
+  const quizResults = useAppStore((st) => st.quizResults);
+  const historico = useMemo(() => acertoPorMateria(quizResults), [quizResults]);
+  const materiaDe = (indice: number) => materiaDaArvore(indice, historico);
+  /* Só a missão aprovada conclui a tarefa e dá o XP. */
+  const concluirMissao = useCallback((t: MicroTask, r: { acertos: number; total: number }) => {
+    registrarComprovacao(t.id, { texto: `Missão de quiz: ${r.acertos} de ${r.total}`, temFoto: false }, (k) => safeGet(k), (k, v) => void safeSet(k, v));
+    useAppStore.getState().completeTask(t.id);
+    void vibrar('acerto');
+    anunciar(`${t.titulo} concluída. Mais ${XP_DA_TAREFA} XP.`);
+  }, []);
   const tocas = useRef<(ComponentRef<typeof View> | null)[]>([]);
   const [origem, setOrigem] = useState({ x: width / 2, y: 300 });
 
@@ -463,6 +577,9 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
               >
                 {a.tarefa.titulo}
               </Texto>
+              <Texto variante="legenda" style={{ textAlign: a.lado === 'esquerda' ? 'left' : 'right' }}>
+                {SOBRE_O_TIPO[TIPO_DA_ESPECIE[a.especie]].nome} · {materiaDe(a.indice)}
+              </Texto>
               {comSagui && a.estado !== 'feita' ? (
                 <Botao
                   titulo="Iniciar missão"
@@ -488,18 +605,17 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
         </Texto>
       </View>
 
-      {fase === 'dentro' && arvoreDoSagui && !comprovando ? (
+      {fase === 'dentro' && arvoreDoSagui ? (
         <DentroDaToca
           key={arvoreDoSagui.tarefa.id}
           arvore={arvoreDoSagui}
           total={total}
           origem={origem}
-          aoComprovar={() => setComprovando(true)}
+          materia={materiaDe(arvoreDoSagui.indice)}
+          aoConcluir={concluirMissao}
           aoSair={() => disparar('fechar')}
         />
       ) : null}
-      {/* A comprovação é a mesma de antes; ao fechar, volta para dentro da toca. */}
-      {comprovando && arvoreDoSagui ? <Comprovacao tarefa={arvoreDoSagui.tarefa} aoFechar={() => setComprovando(false)} /> : null}
     </View>
   );
 }
@@ -537,7 +653,10 @@ const estilos = StyleSheet.create({
   saguiDentro: { width: 112, height: 112, resizeMode: 'contain', alignSelf: 'center' },
   passo: { backgroundColor: '#FFFBEB', borderRadius: raio.lg, borderWidth: 2, borderColor: '#FDE68A', padding: 14 },
   passoFeito: { backgroundColor: '#ECFDF5', borderColor: cor.esmeralda700 },
-  numero: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  selos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  seloMissao: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  proposta: { marginTop: 10, padding: 10, borderRadius: raio.md, borderWidth: 2, borderStyle: 'dashed', borderColor: '#FCD34D', backgroundColor: cor.branco },
+  opcao: { minHeight: 48, paddingHorizontal: 12, paddingVertical: 10, borderRadius: raio.md, borderWidth: 2, borderColor: cor.cinza300, backgroundColor: cor.branco, justifyContent: 'center' },
   concluida: {
     marginTop: 10,
     minHeight: 46,

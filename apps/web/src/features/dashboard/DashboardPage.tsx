@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState, memo, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
-import { BarChart3, BookOpen, Camera, Frown, Moon, Target, Timer, X } from 'lucide-react';
+import { BarChart3, BookOpen, Frown, Moon, Target, Timer } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { FADIGA_ZERADA } from '@mentor/core/burnoutModel';
 import { getSSCColor, getSSCLabel } from '@mentor/core/sscCalculator';
-import { MicroTask, QuizResult } from '@mentor/core/types';
+import { QuizResult } from '@mentor/core/types';
 import { calcLevel, getToday, MOOD_LABEL, MOOD_COLOR } from '@mentor/core/utils';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { safeSet } from '@mentor/core/safeStorage';
@@ -15,112 +15,6 @@ import { BurnoutCard } from './BurnoutCard';
 import { CartaoDicaSagui, CartaoLigas, CartaoOfensiva } from '../../app/PainelLateral';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 import { FlorestaDoDia } from './FlorestaDoDia';
-
-/* ====================================================================
-   COMPROVAÇÃO DE TAREFA — modal anti-clique-fácil.
-   ====================================================================
-   Clicar no checkbox NÃO conclui mais: abre este modal exigindo prova —
-   foto (câmera/upload, só prévia local) OU parágrafo de 30+ caracteres
-   contando o que aprendeu. Estado 100% interno e memorizado: digitar o
-   parágrafo não re-renderiza o Dashboard (o plano tem tick de XP e o
-   checkbox não pode engasgar).
-   A prova em texto é auditável no aparelho (mm_comprovacoes); a foto
-   ainda não sobe ao servidor (exigiria migration do bucket) — por isso
-   a prévia é descartada ao fechar, sem prometer o que não persiste.
-   ==================================================================== */
-const MIN_PARAGRAFO = 30;
-
-const ComprovacaoModal = memo(function ComprovacaoModal({
-  tarefa,
-  onFechar,
-  onConfirmar,
-}: {
-  tarefa: MicroTask;
-  onFechar: () => void;
-  onConfirmar: (prova: { texto: string; temFoto: boolean }) => void;
-}) {
-  const [texto, setTexto] = useState('');
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
-  const inputFoto = useRef<HTMLInputElement>(null);
-  const fotoUrlRef = useRef<string | null>(null);
-
-  function revogarFoto() {
-    if (fotoUrlRef.current) {
-      URL.revokeObjectURL(fotoUrlRef.current);
-      fotoUrlRef.current = null;
-    }
-  }
-
-  useEffect(() => revogarFoto, []);
-
-  function aoEscolherFoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const arquivo = e.target.files?.[0];
-    e.target.value = '';
-    if (!arquivo || !arquivo.type.startsWith('image/')) return;
-    revogarFoto();
-    fotoUrlRef.current = URL.createObjectURL(arquivo);
-    setFotoUrl(fotoUrlRef.current);
-  }
-
-  function fechar() {
-    revogarFoto();
-    setFotoUrl(null);
-    onFechar();
-  }
-
-  const pronto = !!fotoUrl || texto.trim().length >= MIN_PARAGRAFO;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Comprovar tarefa">
-      <button aria-label="Fechar" tabIndex={-1} onClick={fechar} className="absolute inset-0 bg-tinta-900/40" />
-      <div className="relative w-full max-w-sm cartao p-6 animate-fade-up max-h-[calc(100dvh-3rem)] overflow-y-auto">
-        <button onClick={fechar} aria-label="Fechar comprovação" className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-tinta-900">
-          <X size={16} />
-        </button>
-        <p className="text-xs text-amber-600 uppercase tracking-widest font-extrabold">Comprovação</p>
-        <h2 className="text-xl font-black text-tinta-900 mt-1 pr-8">{tarefa.titulo}</h2>
-        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-          Clicar não basta: mostre que fez. Envie uma <strong className="text-slate-700">foto</strong> ou
-          escreva <strong className="text-slate-700">o que aprendeu</strong> (mín. {MIN_PARAGRAFO} letras).
-        </p>
-
-        <input ref={inputFoto} type="file" accept="image/*" capture="environment" onChange={aoEscolherFoto} className="hidden" aria-hidden="true" tabIndex={-1} />
-        {fotoUrl ? (
-          <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 relative">
-            <img src={fotoUrl} alt="Comprovação da tarefa" className="w-full h-auto max-h-48 object-cover" />
-            <button onClick={() => { revogarFoto(); setFotoUrl(null); }} className="absolute top-2 right-2 text-xs font-bold px-2.5 py-1 rounded-lg bg-white border-2 border-slate-200 text-tinta-900">
-              Trocar foto
-            </button>
-          </div>
-        ) : (
-          <button onClick={() => inputFoto.current?.click()} className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-slate-300 text-sm font-bold text-ceu-600 hover:border-ceu-500 hover:bg-ceu-50 transition-colors min-h-[52px]">
-            <Camera size={16} /> Tirar foto / enviar imagem
-          </button>
-        )}
-
-        <textarea
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder="Ex.: aprendi que razão é divisão entre grandezas e usei regra de três em 3 questões…"
-          rows={3}
-          aria-label="O que você aprendeu"
-          className="mt-3"
-        />
-        <p className={`text-[11px] mt-1 tabular-nums ${texto.trim().length >= MIN_PARAGRAFO ? 'text-emerald-600' : 'text-slate-400'}`}>
-          {texto.trim().length}/{MIN_PARAGRAFO} letras
-        </p>
-
-        <button
-          onClick={() => { const t = texto.trim(); revogarFoto(); onConfirmar({ texto: t, temFoto: !!fotoUrl }); }}
-          disabled={!pronto}
-          className="btn-ambar w-full h-12 mt-4 uppercase"
-        >
-          Confirmar conclusão • +20 XP
-        </button>
-      </div>
-    </div>
-  );
-});
 
 export function DashboardPage() {
   const reduzir = useReducedMotion();
@@ -142,24 +36,17 @@ export function DashboardPage() {
 
   /** Id da tarefa que acabou de ganhar XP: posiciona o "+20 XP" flutuante. */
   const [xpVoando, setXpVoando] = useState<string | null>(null);
-  /** Tarefa aguardando comprovação no modal (null = modal fechado). */
-  const [tarefaAlvo, setTarefaAlvo] = useState<MicroTask | null>(null);
-
-  // Checkbox abre o modal de comprovação; SÓ o confirmar do modal chama
-  // completeTask. Sem prova, sem XP — fim do "cliquei, ganhei".
-  const pedirComprovacao = useCallback((task: MicroTask) => {
-    if (!task.completed) setTarefaAlvo(task);
-  }, []);
-
-  const confirmarComprovacao = useCallback((taskId: string, prova: { texto: string; temFoto: boolean }) => {
+  /* A tarefa conclui pela missão de quiz dentro da árvore (decisão do
+     dono: quiz no lugar da escrita). Só a missão aprovada, com 60% de
+     acerto, chama completeTask. */
+  const concluirMissao = useCallback((taskId: string, resultado: { acertos: number; total: number }) => {
     // Auditoria local: o que valeu o XP fica registrado no aparelho.
     try {
       const bruto = localStorage.getItem('mm_comprovacoes');
       const lista = bruto ? JSON.parse(bruto) : [];
-      lista.push({ taskId, data: getToday(), ...prova, em: Date.now() });
+      lista.push({ taskId, data: getToday(), quiz: resultado, em: Date.now() });
       safeSet('mm_comprovacoes', JSON.stringify(lista.slice(-60)));
     } catch { /* aparelho sem storage: o XP segue valendo */ }
-    setTarefaAlvo(null);
     completeTask(taskId);
     setXpVoando(taskId);
     window.setTimeout(() => setXpVoando(null), 1000);
@@ -271,7 +158,7 @@ export function DashboardPage() {
         </div>
 
         {tarefas.length > 0 ? (
-          <FlorestaDoDia tarefas={tarefas} xpVoando={xpVoando} reduzir={reduzir === true} onComprovar={pedirComprovacao} />
+          <FlorestaDoDia tarefas={tarefas} xpVoando={xpVoando} reduzir={reduzir === true} onConcluir={(t, r) => concluirMissao(t.id, r)} />
         ) : (
           <div className="text-center py-8 flex flex-col items-center">
             <img
@@ -335,14 +222,6 @@ export function DashboardPage() {
         </div>
       </aside>
 
-      {/* Modal de comprovação: fora da lista, montado só com tarefa-alvo */}
-      {tarefaAlvo && (
-        <ComprovacaoModal
-          tarefa={tarefaAlvo}
-          onFechar={() => setTarefaAlvo(null)}
-          onConfirmar={(prova) => confirmarComprovacao(tarefaAlvo.id, prova)}
-        />
-      )}
     </div>
   );
 }

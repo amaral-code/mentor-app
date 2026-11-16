@@ -11,7 +11,7 @@ Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
 ```bash
 npm run dev      # app web na porta 5180 (já inclui o back-end /api)
 npm run build    # turbo: tsc -b && vite build do @mentor/web
-npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 966 testes
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 975 testes
 npm run lint     # oxlint (barra APIs de navegador em packages/*)
 npm run typecheck       # turbo: tsc em todos os workspaces
 npm run gen:types       # regera os tipos do banco a partir das migrations
@@ -306,16 +306,22 @@ principal, regra de permissão. Mais recente no topo.
 - Pedido do dono: as bolinhas do Plano do Dia viraram **árvores**, uma
   por tarefa. O sagui sobe o tronco até a toca; "Entrar na toca" faz ele
   entrar, e a toca abre num círculo a partir do buraco, com a tarefa em
-  três passos (entender, fazer, comprovar). Web (`dashboard/FlorestaDoDia`)
+  a missão. Web (`dashboard/FlorestaDoDia`)
   e app (`central/FlorestaDoDia`) leem o mesmo desenho e a mesma ordem
   de fases de `@mentor/core/florestaDoDia`.
-- **XP não mudou**: só a comprovação conclui, e tarefa feita continua
-  travada. "Entendi" e "Terminei" são marcação do aluno, sem XP.
+- **Dentro da árvore é quiz, não escrita** (decisão do dono, substitui a
+  comprovação por foto ou parágrafo na Central). O formato da árvore
+  decide a missão (`@mentor/core/missaoDaArvore`): redonda é múltipla
+  escolha, pinheiro é verdadeiro ou falso, nuvem é "uma ou outra". As
+  três saem do banco embutido de questões; a matéria começa pela que o
+  aluno mais erra. **A tarefa só conclui com 60% de acerto**; abaixo
+  disso, tenta de novo com outras questões. É isso que segura o XP agora:
+  chutar não passa. Tarefa feita continua travada.
 - A toca prende o sagui na árvore enquanto está aberta: ao comprovar, a
   primeira tarefa aberta vira a seguinte, e sem a trava a toca trocava de
   árvore com o aluno lá dentro.
 - Movimento reduzido: sem subida nem círculo, a toca só aparece.
-- Mobile: `TrilhaDoDia.tsx` virou `Comprovacao.tsx` (só o modal ficou).
+- O modal de comprovação saiu do web e do app (`Comprovacao.tsx` apagado).
 - **Animação do sagui** (`@mentor/core/animacaoSagui`): um movimento por
   pose (26), só com transformação da arte original, sem desenho novo. A
   escalada alterna "pulando" com o espelho dela (um braço de cada vez);

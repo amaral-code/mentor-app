@@ -8,10 +8,9 @@ import type { MicroTask } from './types';
  * e o app desenham a mesma floresta e a mesma sequência de animação; só o
  * traço muda de plataforma.
  *
- * A regra de XP NÃO mudou: só a comprovação (foto ou parágrafo) conclui a
- * tarefa, e tarefa concluída continua travada. Os dois primeiros passos da
- * toca são marcação do próprio aluno, sem XP: marcar e desmarcar não pode
- * render nada, senão volta o XP infinito que a trilha fechou.
+ * Dentro de cada árvore há uma missão de quiz (@mentor/core/missaoDaArvore);
+ * só a missão aprovada conclui a tarefa e dá XP, e tarefa concluída
+ * continua travada (o ciclo marcar e desmarcar dava XP infinito).
  */
 
 export type EstadoArvore = 'feita' | 'atual' | 'esperando';
@@ -116,33 +115,7 @@ export function duracaoDaFase(fase: Fase, reduzido: boolean): number {
 
 /* ------------------------------------------------------------------ */
 
-export interface PassoDaToca {
-  id: 'entender' | 'fazer' | 'comprovar';
-  titulo: string;
-  texto: string;
-  /** Só o último passo dá XP, e só pela comprovação. */
-  daXp: boolean;
-}
-
 export const XP_DA_TAREFA = 20;
-
-/** O que o aluno encontra dentro da toca: a tarefa quebrada em três passos. */
-export function passosDaToca(tarefa: MicroTask): PassoDaToca[] {
-  return [
-    { id: 'entender', titulo: 'Entenda o desafio', texto: tarefa.descricao || tarefa.titulo, daXp: false },
-    { id: 'fazer', titulo: 'Faça a tarefa', texto: 'Separe um tempo sem distração e faça agora. Marque quando terminar.', daXp: false },
-    { id: 'comprovar', titulo: 'Comprove o que aprendeu', texto: 'Uma foto ou um parágrafo contando o que você aprendeu.', daXp: true },
-  ];
-}
-
-/**
- * O passo de comprovar só abre depois dos dois anteriores marcados. Não
- * vale como trava de segurança (a comprovação é que vale); serve para
- * guiar quem entrou na toca sem saber por onde começar.
- */
-export function podeComprovar(marcados: ReadonlySet<string>): boolean {
-  return marcados.has('entender') && marcados.has('fazer');
-}
 
 /**
  * Rótulo para leitor de tela. Tocar na árvore só leva o sagui até ela;

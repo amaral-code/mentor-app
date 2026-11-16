@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, m, type TargetAndTransition, type Transition } from 'motion/react';
-import { Check, Lock, LogOut, Play, Trophy, Zap } from 'lucide-react';
+import { Check, LogOut, Play, Trophy } from 'lucide-react';
 import type { MicroTask } from '@mentor/core/types';
+import { acertoPorMateria } from '@mentor/core/painelAluno';
+import { useAppStore } from '@mentor/state/appStore';
 import {
   QUADRO_ARVORE,
   XP_DA_TAREFA,
@@ -9,8 +11,6 @@ import {
   duracaoDaFase,
   formasDaArvore,
   montarFloresta,
-  passosDaToca,
-  podeComprovar,
   proximaFase,
   rotuloDaArvore,
   type Arvore,
@@ -27,6 +27,19 @@ import {
   trajetoDaEscalada,
   type Ponto,
 } from '@mentor/core/animacaoSagui';
+import {
+  SOBRE_O_TIPO,
+  TIPO_DA_ESPECIE,
+  acertos,
+  avancar,
+  materiaDaArvore,
+  montarMissao,
+  novaRodada,
+  passou,
+  precisaAcertar,
+  responder,
+  type Rodada,
+} from '@mentor/core/missaoDaArvore';
 
 /*
  * Floresta do dia: no lugar das bolinhas do Duolingo, uma árvore por
@@ -176,12 +189,179 @@ function SaguiNoTronco({ fase, larguraArvore, alturaToca, reduzir, todasFeitas }
 
 /* ------------------------------------------------------------------ */
 
+/**
+ * A missão de quiz dentro da árvore. O tipo vem do formato da árvore
+ * (@mentor/core/missaoDaArvore); a resposta vale no primeiro toque e a
+ * explicação aparece logo depois. Passou dos 60%, a tarefa conclui e dá o
+ * XP; não passou, tenta de novo com outras questões.
+ */
+function MissaoQuiz({
+  arvore,
+  materia,
+  reduzir,
+  feita,
+  onConcluir,
+  onSair,
+}: {
+  arvore: Arvore;
+  materia: string;
+  reduzir: boolean;
+  feita: boolean;
+  onConcluir: (t: MicroTask, resultado: { acertos: number; total: number }) => void;
+  onSair: () => void;
+}) {
+  const tipo = TIPO_DA_ESPECIE[arvore.especie];
+  const sobre = SOBRE_O_TIPO[tipo];
+  const [rodada, setRodada] = useState<Rodada>(() => novaRodada(montarMissao(tipo, materia)));
+  const concluiu = useRef(false);
+  const item = rodada.itens[rodada.indice];
+  const total = rodada.itens.length;
+  const certas = acertos(rodada);
+
+  // Passou: conclui a tarefa uma vez só (o XP sai daqui, e só daqui).
+  useEffect(() => {
+    if (rodada.terminou && passou(rodada) && !concluiu.current && !feita) {
+      concluiu.current = true;
+      onConcluir(arvore.tarefa, { acertos: certas, total });
+    }
+  }, [rodada, feita, onConcluir, arvore.tarefa, certas, total]);
+
+  const cabecalho = (
+    <p className="flex flex-wrap items-center justify-center gap-2 text-xs font-extrabold uppercase tracking-wide text-amber-100">
+      <span className="px-2.5 py-1 rounded-full bg-amber-500/25 border border-amber-300/40">{sobre.nome}</span>
+      <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/20">{materia}</span>
+    </p>
+  );
+
+  if (feita && !rodada.terminou) {
+    return (
+      <div className="space-y-4 text-center">
+        {cabecalho}
+        <p className="flex items-center justify-center gap-1.5 h-12 rounded-xl bg-emerald-700 text-white font-extrabold" role="status">
+          <Check size={18} strokeWidth={3} /> Missão já cumprida hoje
+        </p>
+        <button type="button" onClick={onSair} className="btn-primary w-full h-12 uppercase">
+          Sair e ir para a próxima árvore
+        </button>
+      </div>
+    );
+  }
+
+  if (rodada.terminou) {
+    const ok = passou(rodada);
+    return (
+      <m.div className="space-y-4 text-center" initial={reduzir ? false : { opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+        {cabecalho}
+        <div className={`rounded-[20px] border-2 p-5 ${ok ? 'bg-emerald-50 border-emerald-600' : 'bg-amber-50 border-amber-300'}`} role="status">
+          <p className="text-3xl font-black text-tinta-900 tabular-nums">
+            {certas} de {total}
+          </p>
+          <p className={`mt-1 font-extrabold ${ok ? 'text-emerald-800' : 'text-amber-900'}`}>
+            {ok ? `Missão cumprida! +${XP_DA_TAREFA} XP` : `Faltou pouco: precisa de ${precisaAcertar(total)} acertos.`}
+          </p>
+        </div>
+        {ok ? (
+          <button type="button" onClick={onSair} className="btn-primary w-full h-12 uppercase">
+            Sair e ir para a próxima árvore
+          </button>
+        ) : (
+          <button type="button" onClick={() => setRodada(novaRodada(montarMissao(tipo, materia)))} className="btn-ambar w-full h-12 uppercase">
+            Tentar de novo com outras questões
+          </button>
+        )}
+      </m.div>
+    );
+  }
+
+  const respondida = rodada.escolhida !== null;
+  const acertou = respondida && rodada.escolhida === item.correta;
+  const binario = item.opcoes.length === 2;
+  return (
+    <div className="space-y-3">
+      {cabecalho}
+      <div className="flex items-center gap-2" aria-hidden="true">
+        {rodada.itens.map((_, i) => (
+          <span
+            key={i}
+            className={`h-2.5 flex-1 rounded-full ${
+              i < rodada.indice || (i === rodada.indice && respondida)
+                ? rodada.respostas[i] === rodada.itens[i].correta
+                  ? 'bg-emerald-400'
+                  : 'bg-red-400'
+                : i === rodada.indice
+                  ? 'bg-amber-300'
+                  : 'bg-white/20'
+            }`}
+          />
+        ))}
+      </div>
+      <m.div
+        key={item.id}
+        initial={reduzir ? false : { opacity: 0, x: 24 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: rodada.indice === 0 && !reduzir ? 0.9 : 0 }}
+        className="rounded-[20px] border-2 border-amber-200 bg-amber-50 p-4"
+      >
+        <p className="text-xs font-extrabold uppercase tracking-wide text-amber-800">
+          Questão {rodada.indice + 1} de {total}
+        </p>
+        <p className="mt-1 font-bold text-tinta-900 leading-relaxed">{item.enunciado}</p>
+        {item.respostaProposta && (
+          <p className="mt-3 rounded-xl bg-white border-2 border-dashed border-amber-300 px-3 py-2 font-extrabold text-tinta-900">
+            Resposta proposta: {item.respostaProposta}
+          </p>
+        )}
+        <div className={`mt-3 grid gap-2 ${binario ? 'grid-cols-2' : 'grid-cols-1'}`} role="group" aria-label="Alternativas">
+          {item.opcoes.map((op, i) => {
+            const certa = respondida && i === item.correta;
+            const errada = respondida && i === rodada.escolhida && !certa;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setRodada((r) => responder(r, i))}
+                disabled={respondida}
+                aria-label={`${op}${certa ? ', correta' : errada ? ', sua resposta, errada' : ''}`}
+                className={`min-h-12 px-3 py-2.5 rounded-xl border-2 font-extrabold text-left transition-transform active:translate-y-0.5 ${
+                  binario ? 'text-center' : ''
+                } ${
+                  certa
+                    ? 'bg-emerald-600 border-emerald-700 text-white'
+                    : errada
+                      ? 'bg-red-600 border-red-700 text-white'
+                      : respondida
+                        ? 'bg-white border-slate-200 text-slate-400'
+                        : 'bg-white border-slate-300 text-tinta-900 hover:border-ceu-500 hover:bg-ceu-50'
+                }`}
+              >
+                {op}
+              </button>
+            );
+          })}
+        </div>
+        {respondida && (
+          <m.div initial={reduzir ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-3 space-y-3" role="status">
+            <p className={`font-black ${acertou ? 'text-emerald-800' : 'text-red-700'}`}>{acertou ? 'Mandou bem!' : 'Quase lá!'}</p>
+            <p className="text-sm font-semibold text-slate-700 leading-relaxed">{item.explicacao}</p>
+            <button type="button" onClick={() => setRodada((r) => avancar(r))} className="btn-primary w-full h-12 uppercase">
+              {rodada.indice >= total - 1 ? 'Ver resultado' : 'Próxima'}
+            </button>
+          </m.div>
+        )}
+      </m.div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
 interface TocaProps {
   arvore: Arvore;
   total: number;
   origem: { x: number; y: number };
   reduzir: boolean;
-  onComprovar: (t: MicroTask) => void;
+  materia: string;
+  onConcluir: (t: MicroTask, resultado: { acertos: number; total: number }) => void;
   onSair: () => void;
 }
 
@@ -190,11 +370,9 @@ interface TocaProps {
  * tronco. É um diálogo de verdade (foco, Esc, aria-modal), porque cobre a
  * tela inteira.
  */
-function DentroDaToca({ arvore, total, origem, reduzir, onComprovar, onSair }: TocaProps) {
+function DentroDaToca({ arvore, total, origem, reduzir, materia, onConcluir, onSair }: TocaProps) {
   const idTitulo = useId();
   const titulo = useRef<HTMLHeadingElement>(null);
-  const [marcados, setMarcados] = useState<Set<string>>(() => new Set(arvore.tarefa.completed ? ['entender', 'fazer'] : []));
-  const passos = passosDaToca(arvore.tarefa);
   const feita = arvore.tarefa.completed;
 
   useEffect(() => {
@@ -206,14 +384,6 @@ function DentroDaToca({ arvore, total, origem, reduzir, onComprovar, onSair }: T
     return () => window.removeEventListener('keydown', aoTeclar);
   }, [onSair]);
 
-  function alternar(id: string) {
-    setMarcados((atual) => {
-      const novo = new Set(atual);
-      if (novo.has(id)) novo.delete(id);
-      else novo.add(id);
-      return novo;
-    });
-  }
 
   // Raio em px nas duas pontas: misturar unidades (0px e vmax) não anima.
   const raioFinal = typeof window !== 'undefined' ? Math.hypot(window.innerWidth, window.innerHeight) : 2000;
@@ -272,74 +442,7 @@ function DentroDaToca({ arvore, total, origem, reduzir, onComprovar, onSair }: T
           style={{ transformOrigin: '50% 100%' }}
         />
 
-        <ol className="space-y-3">
-          {passos.map((p, i) => {
-            const marcado = marcados.has(p.id) || (p.daXp && feita);
-            const liberado = !p.daXp || podeComprovar(marcados);
-            return (
-              <m.li
-                key={p.id}
-                initial={reduzir ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduzir ? 0 : 0.9 + i * 0.14 }}
-                className={`rounded-[20px] border-2 p-4 ${
-                  marcado ? 'bg-emerald-50 border-emerald-600' : liberado ? 'bg-amber-50 border-amber-200' : 'bg-amber-50/70 border-amber-200/60'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <span
-                    className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-black ${
-                      marcado ? 'bg-emerald-700 text-white' : 'bg-amber-700 text-white'
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {marcado ? <Check size={20} strokeWidth={3.5} /> : i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-extrabold text-tinta-900">{p.titulo}</p>
-                    <p className="text-sm font-semibold text-slate-700 mt-0.5 leading-relaxed">{p.texto}</p>
-                  </div>
-                </div>
-                {!p.daXp ? (
-                  <button
-                    type="button"
-                    aria-pressed={marcados.has(p.id)}
-                    onClick={() => alternar(p.id)}
-                    disabled={feita}
-                    className={`mt-3 w-full h-11 rounded-xl border-2 font-extrabold text-sm ${
-                      marcados.has(p.id) ? 'border-emerald-700 text-emerald-800 bg-white' : 'border-amber-700 text-amber-900 bg-white hover:bg-amber-100'
-                    } disabled:opacity-70`}
-                  >
-                    {marcados.has(p.id) ? 'Feito' : p.id === 'entender' ? 'Entendi' : 'Terminei'}
-                  </button>
-                ) : feita ? (
-                  <p className="mt-3 flex items-center justify-center gap-1.5 h-11 rounded-xl bg-emerald-700 text-white font-extrabold" role="status">
-                    <Check size={18} strokeWidth={3} /> Tarefa concluída · +{XP_DA_TAREFA} XP
-                  </p>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => onComprovar(arvore.tarefa)}
-                      disabled={!liberado}
-                      className="btn-ambar mt-3 w-full h-12 uppercase flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {liberado ? <Zap size={16} fill="currentColor" /> : <Lock size={16} />}
-                      Comprovar e concluir · +{XP_DA_TAREFA} XP
-                    </button>
-                    {!liberado && <p className="mt-2 text-xs font-bold text-amber-900">Marque os dois passos de cima para liberar.</p>}
-                  </>
-                )}
-              </m.li>
-            );
-          })}
-        </ol>
-
-        {feita && (
-          <button type="button" onClick={onSair} className="btn-primary mt-5 w-full h-12 uppercase">
-            Sair e ir para a próxima árvore
-          </button>
-        )}
+        <MissaoQuiz arvore={arvore} materia={materia} reduzir={reduzir} feita={feita} onConcluir={onConcluir} onSair={onSair} />
       </div>
     </m.div>
   );
@@ -351,14 +454,18 @@ export function FlorestaDoDia({
   tarefas,
   reduzir,
   xpVoando,
-  onComprovar,
+  onConcluir,
 }: {
   tarefas: MicroTask[];
   reduzir: boolean;
   xpVoando: string | null;
-  onComprovar: (t: MicroTask) => void;
+  onConcluir: (t: MicroTask, resultado: { acertos: number; total: number }) => void;
 }) {
   const floresta = useMemo(() => montarFloresta(tarefas), [tarefas]);
+  /* Matéria de cada árvore: as que o aluno mais erra vêm primeiro. */
+  const quizResults = useAppStore((st) => st.quizResults);
+  const historico = useMemo(() => acertoPorMateria(quizResults), [quizResults]);
+  const materiaDe = (indice: number) => materiaDaArvore(indice, historico);
   const total = floresta.arvores.length;
   /* Árvore escolhida pelo toque; sem escolha, o sagui fica na primeira aberta. */
   const [escolhida, setEscolhida] = useState<number | null>(null);
@@ -496,6 +603,9 @@ export function FlorestaDoDia({
               <div className={`flex-1 min-w-0 ${esquerda ? 'text-left' : 'text-right'}`}>
                 <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Árvore {a.indice + 1}</p>
                 <p className={`font-extrabold leading-tight ${a.estado === 'feita' ? 'text-slate-400 line-through' : 'text-tinta-900'}`}>{a.tarefa.titulo}</p>
+                <p className="mt-0.5 text-xs font-bold text-slate-600">
+                  {SOBRE_O_TIPO[TIPO_DA_ESPECIE[a.especie]].nome} · {materiaDe(a.indice)}
+                </p>
                 {comSagui && a.estado !== 'feita' && (
                   <button
                     type="button"
@@ -534,7 +644,8 @@ export function FlorestaDoDia({
             total={total}
             origem={origem}
             reduzir={reduzir}
-            onComprovar={onComprovar}
+            materia={materiaDe(arvoreDoSagui.indice)}
+            onConcluir={onConcluir}
             onSair={sair}
           />
         )}

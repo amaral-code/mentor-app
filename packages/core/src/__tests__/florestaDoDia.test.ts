@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MicroTask } from '../types';
-import { centroDaToca, duracaoDaFase, formasDaArvore, montarFloresta, passosDaToca, podeComprovar, proximaFase, rotuloDaArvore, type Fase } from '../florestaDoDia';
+import { centroDaToca, duracaoDaFase, formasDaArvore, montarFloresta, proximaFase, rotuloDaArvore, type Fase } from '../florestaDoDia';
 
 const tarefa = (id: string, completed = false): MicroTask => ({ id, titulo: `Tarefa ${id}`, descricao: `Faça ${id}`, icon: 'book', completed });
 
@@ -75,20 +75,7 @@ describe('proximaFase', () => {
   });
 });
 
-describe('passos da toca', () => {
-  it('três passos, só a comprovação dá XP', () => {
-    const p = passosDaToca(tarefa('a'));
-    expect(p.map((x) => x.id)).toEqual(['entender', 'fazer', 'comprovar']);
-    expect(p.filter((x) => x.daXp).map((x) => x.id)).toEqual(['comprovar']);
-    expect(p[0].texto).toBe('Faça a');
-  });
-
-  it('comprovar só abre depois de entender e fazer', () => {
-    expect(podeComprovar(new Set())).toBe(false);
-    expect(podeComprovar(new Set(['entender']))).toBe(false);
-    expect(podeComprovar(new Set(['entender', 'fazer']))).toBe(true);
-  });
-
+describe('rótulo da árvore', () => {
   it('rótulo diz a posição, o estado e a ação', () => {
     const f = montarFloresta([tarefa('a', true), tarefa('b')]);
     expect(rotuloDaArvore(f.arvores[0], 2)).toBe('Árvore 1 de 2: Tarefa a. Concluída.');
