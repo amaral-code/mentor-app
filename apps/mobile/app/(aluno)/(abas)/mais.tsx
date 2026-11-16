@@ -41,6 +41,7 @@ export default function Mais() {
           </Cartao>
         ))}
       </View>
+      {__DEV__ ? <Botao titulo="Catálogo de componentes" variante="fantasma" icone="color-palette-outline" aoTocar={() => router.push('/catalogo')} /> : null}
       <Botao titulo="Sair da conta" variante="secundario" icone="log-out-outline" aoTocar={() => void sair()} />
     </Tela>
   );

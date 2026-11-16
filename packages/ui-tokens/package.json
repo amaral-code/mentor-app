@@ -1,0 +1,18 @@
+{
+  "name": "@mentor/ui-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tokens do visual lúdico (cores, espaço, raio, lábio), lidos pelo Tailwind do web e pelo app Expo.",
+  "exports": {
+    "./tokens": {
+      "types": "./src/tokens.d.ts",
+      "default": "./src/tokens.js"
+    },
+    "./contraste": "./src/contraste.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  }
+}

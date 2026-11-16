@@ -5,68 +5,74 @@
  * do M2 (#30) decidir entre NativeWind e StyleSheet. Os nomes seguem o
  * Tailwind (`azul600`, `ceu500`) para a troca ser mecânica.
  */
+import { alvoToque, branco, espaco as espacoTokens, labio, paletas as p, raio as raioTokens, superficie } from '@mentor/ui-tokens/tokens';
+
+/* Os valores vêm de @mentor/ui-tokens (a mesma fonte do Tailwind do web
+   e do NativeWind daqui). Este objeto só dá nomes curtos para o StyleSheet. */
 export const cor = {
-  tinta900: '#0B0F19',
-  tinta700: '#1E2538',
-  tinta500: '#475569',
-  cinza400: '#94A3B8',
-  cinza300: '#CBD5E1',
-  cinza200: '#E2E8F0',
-  cinza100: '#F1F5F9',
-  branco: '#FFFFFF',
-  superficie: '#F4F7FB',
+  tinta900: p.tinta[900],
+  tinta700: p.tinta[700],
+  tinta500: p.tinta[500],
+  cinza400: p.cinza[400],
+  cinza300: p.cinza[300],
+  cinza200: p.cinza[200],
+  cinza100: p.cinza[100],
+  branco,
+  superficie,
 
-  azul50: '#F3F6FC',
-  azul100: '#E6ECF7',
-  azul200: '#CCD7EC',
-  azul500: '#3A5088',
-  azul600: '#2A3B63',
-  azul700: '#1E2538',
+  azul50: p.azul[50],
+  azul100: p.azul[100],
+  azul200: p.azul[200],
+  azul500: p.azul[500],
+  azul600: p.azul[600],
+  azul700: p.azul[700],
 
-  ceu50: '#F0F6FF',
-  ceu100: '#E3EEFF',
-  ceu500: '#4C8DF6',
-  ceu600: '#2F6FDB',
-  ceu700: '#1E56B8',
+  ceu50: p.ceu[50],
+  ceu100: p.ceu[100],
+  ceu500: p.ceu[500],
+  ceu600: p.ceu[600],
+  ceu700: p.ceu[700],
 
-  ambar50: '#FFFBEB',
-  ambar100: '#FEF3C7',
-  ambar500: '#F59E0B',
-  ambar600: '#D97706',
-  ambar700: '#B45309',
+  ambar50: p.ambar[50],
+  ambar100: p.ambar[100],
+  ambar500: p.ambar[500],
+  ambar600: p.ambar[600],
+  ambar700: p.ambar[700],
 
-  esmeralda50: '#ECFDF5',
-  esmeralda500: '#10B981',
-  esmeralda600: '#059669',
-  esmeralda700: '#047857',
+  esmeralda50: p.esmeralda[50],
+  esmeralda500: p.esmeralda[500],
+  esmeralda600: p.esmeralda[600],
+  esmeralda700: p.esmeralda[700],
 
-  vermelho50: '#FEF2F2',
-  vermelho500: '#EF4444',
-  vermelho600: '#DC2626',
+  vermelho50: p.vermelho[50],
+  vermelho500: p.vermelho[500],
+  vermelho600: p.vermelho[600],
+  vermelho700: p.vermelho[700],
 
-  violeta600: '#7C3AED',
-  violeta800: '#5B21B6',
-  laranja600: '#EA580C',
+  violeta600: p.violeta[600],
+  violeta800: p.violeta[800],
+  laranja600: p.laranja[600],
 } as const;
 
-export const espaco = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const raio = { sm: 10, md: 16, lg: 20, xl: 24, pilula: 999 } as const;
+export const espaco = espacoTokens;
+export const raio = raioTokens;
 
 /** Lábio do botão/cartão adesivo: borda inferior sólida de 4px. */
-export const LABIO = 4;
+export const LABIO = labio;
 
 /** Alvo de toque mínimo (WCAG 2.5.5 e guias da Apple/Google). */
-export const ALVO_TOQUE = 48;
+export const ALVO_TOQUE = alvoToque;
 
 export type CorFaixa = 'azul' | 'ceu' | 'ambar' | 'esmeralda' | 'violeta';
 
-/* Tons FORTES de propósito: com o 500, o título branco fica abaixo do
-   contraste AA (mesma decisão do CabecalhoPagina do web). */
+/* Tons escolhidos pelo teste de contraste do @mentor/ui-tokens: o
+   subtítulo da faixa é texto normal (14 px) e precisa de 4,5:1 com o
+   branco. Âmbar e esmeralda 600 davam 3,2 e 3,8; foram para o 700. */
 export const FAIXA: Record<CorFaixa, { fundo: string; labio: string }> = {
   azul: { fundo: cor.azul600, labio: cor.azul700 },
   ceu: { fundo: cor.ceu600, labio: cor.ceu700 },
-  ambar: { fundo: cor.ambar600, labio: cor.ambar700 },
-  esmeralda: { fundo: cor.esmeralda600, labio: cor.esmeralda700 },
+  ambar: { fundo: cor.ambar700, labio: '#92400E' },
+  esmeralda: { fundo: cor.esmeralda700, labio: '#065F46' },
   violeta: { fundo: cor.violeta600, labio: cor.violeta800 },
 };
 

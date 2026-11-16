@@ -1,3 +1,5 @@
+import { paletas } from '@mentor/ui-tokens/tokens';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -7,9 +9,10 @@ export default {
           /* Tema lúdico claro (Figma "Midnight Mentor · Visual Lúdico").
              O azul-noite do Mentor virou cor de TINTA e de ação; o fundo
              agora é papel branco, como no Duolingo. */
-          tinta: { 900: '#0B0F19', 700: '#1E2538', 500: '#475569' },
-          azul: { 50: '#F3F6FC', 100: '#E6ECF7', 200: '#CCD7EC', 500: '#3A5088', 600: '#2A3B63', 700: '#1E2538' },
-          ceu: { 50: '#F0F6FF', 100: '#E3EEFF', 200: '#C7DCFD', 500: '#4C8DF6', 600: '#2F6FDB', 700: '#1E56B8' },
+          /* Vêm de @mentor/ui-tokens: o app Expo usa os mesmos. */
+          tinta: paletas.tinta,
+          azul: paletas.azul,
+          ceu: paletas.ceu,
           superficie: '#F4F7FB',
           midnight: {
             950: '#060911',

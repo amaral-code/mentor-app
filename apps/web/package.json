@@ -12,9 +12,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mentor/state": "*",
     "@mentor/api": "*",
     "@mentor/core": "*",
+    "@mentor/state": "*",
+    "@mentor/ui-tokens": "*",
     "@supabase/supabase-js": "^2.110.8",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.5.1",

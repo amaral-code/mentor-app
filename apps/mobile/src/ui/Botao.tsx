@@ -10,9 +10,11 @@ const VARIANTES: Record<VarianteBotao, { fundo: string; labio: string; texto: st
   primario: { fundo: cor.azul600, labio: cor.azul700, texto: cor.branco },
   secundario: { fundo: cor.branco, labio: cor.cinza300, texto: cor.azul600, borda: cor.cinza200 },
   ambar: { fundo: cor.ambar500, labio: cor.ambar600, texto: cor.tinta900 },
-  sucesso: { fundo: cor.esmeralda500, labio: cor.esmeralda600, texto: cor.branco },
-  ceu: { fundo: cor.ceu500, labio: cor.ceu600, texto: cor.branco },
-  perigo: { fundo: cor.vermelho500, labio: cor.vermelho600, texto: cor.branco },
+  /* 700, e não 500: branco sobre esmeralda, céu ou vermelho 500 fica entre
+     2,5 e 3,8:1, abaixo do AA (teste em @mentor/ui-tokens). */
+  sucesso: { fundo: cor.esmeralda700, labio: '#065F46', texto: cor.branco },
+  ceu: { fundo: cor.ceu700, labio: '#1A4594', texto: cor.branco },
+  perigo: { fundo: cor.vermelho700, labio: '#991B1B', texto: cor.branco },
   fantasma: { fundo: 'transparent', labio: 'transparent', texto: cor.azul600 },
 };
 
