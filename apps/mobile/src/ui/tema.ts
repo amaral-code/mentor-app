@@ -18,6 +18,7 @@ export const cor = {
 
   azul50: '#F3F6FC',
   azul100: '#E6ECF7',
+  azul200: '#CCD7EC',
   azul500: '#3A5088',
   azul600: '#2A3B63',
   azul700: '#1E2538',
