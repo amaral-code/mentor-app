@@ -8,6 +8,7 @@ import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { calcLevel } from '@mentor/core/utils';
 import { AcessibilidadePanel } from '../../shared/ui/AcessibilidadePanel';
 import { SecaoResponsaveis } from './SecaoResponsaveis';
+import { PreferenciasNotificacoes } from '../../shared/ui/PreferenciasNotificacoes';
 import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { hasProxy, testGeneration, getAIProviderInfo } from '@mentor/core/aiService';
@@ -66,6 +67,7 @@ export function ProfilePage() {
     { id: 'secao-escola', rotulo: 'Escola e códigos' },
     { id: 'secao-responsaveis', rotulo: 'Responsáveis' },
     { id: 'secao-psicologo', rotulo: 'Psicólogo' },
+    { id: 'secao-notificacoes', rotulo: 'Notificações' },
     { id: 'secao-acessibilidade', rotulo: 'Acessibilidade' },
     { id: 'secao-ia', rotulo: 'IA' },
   ];
@@ -276,6 +278,8 @@ export function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <PreferenciasNotificacoes perfil="aluno" />
 
       {/* Acessibilidade: fonte, contraste, movimento, daltonismo */}
       <AcessibilidadePanel />

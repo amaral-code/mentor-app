@@ -40,6 +40,8 @@ export interface RecursosBackend {
   gemini: boolean;
   tts: boolean;
   email: boolean;
+  /** Web Push configurado no servidor (par VAPID). */
+  push?: boolean;
   pagamento: string;
 }
 
@@ -53,6 +55,8 @@ export interface ConfigPublica {
   n8nWebhookUrl: string;
   backendIA: boolean;
   recursos: RecursosBackend;
+  /** Chave pública do Web Push. Vazia sem push configurado. */
+  vapidPublicKey: string;
 }
 
 /** Resposta de `/api/config`. Null enquanto nao carregou (ou sem back-end). */
@@ -115,6 +119,9 @@ export const temBackendIA = (): boolean => doServidor?.backendIA === true || aiB
 
 /** O back-end e a rota `/api` deste mesmo dominio? */
 export const backendMesmaOrigem = (): boolean => doServidor?.backendIA === true && !aiBaseUrl();
+
+/** Chave pública VAPID para `pushManager.subscribe`. Vazia sem push no servidor. */
+export const vapidPublicKey = (): string => preferir(doServidor?.vapidPublicKey, doBuild('VITE_VAPID_PUBLIC_KEY'));
 
 export const recursosBackend = (): RecursosBackend =>
   doServidor?.recursos ?? { deepseek: false, gemini: false, tts: false, email: false, pagamento: 'simulado' };

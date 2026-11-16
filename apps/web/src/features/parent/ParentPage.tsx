@@ -1,3 +1,4 @@
+import { PreferenciasNotificacoes } from '../../shared/ui/PreferenciasNotificacoes';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '@mentor/state/appStore';
 import { BellRing, GraduationCap, HeartHandshake, LogOut, Moon, UserPlus } from 'lucide-react';
@@ -193,6 +194,9 @@ export function ParentPage() {
               <section className="max-w-5xl mx-auto px-4 md:px-8 pb-10 space-y-5">
                 <AcessoPsicologo aluno={aluno} papel="responsavel" />
                 {session && <CaixaMensagens meuId={session.uid} psicologos={psicologosDoFilho} />}
+                {/* O alerta de bem-estar sai por push (#61). É aqui, na aba
+                    de cuidado, que o responsável liga o aviso no celular. */}
+                <PreferenciasNotificacoes perfil="responsavel" />
               </section>
             </>
           ) : (

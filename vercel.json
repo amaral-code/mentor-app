@@ -47,8 +47,12 @@
   ],
   "crons": [
     {
-      "path": "/api/notify/drain",
+      "path": "/api/notify/drain?lembretes=revisao",
       "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/notify/drain?lembretes=ofensiva",
+      "schedule": "0 22 * * *"
     }
   ]
 }

@@ -865,6 +865,7 @@ export type Database = {
           enviada_em: string | null
           tentativas: number
           criado_em: string
+          descartada: string | null
         }
         Insert: {
           id?: string
@@ -878,6 +879,7 @@ export type Database = {
           enviada_em?: string | null
           tentativas?: number
           criado_em?: string
+          descartada?: string | null
         }
         Update: {
           id?: string
@@ -891,6 +893,7 @@ export type Database = {
           enviada_em?: string | null
           tentativas?: number
           criado_em?: string
+          descartada?: string | null
         }
         Relationships: []
       }
@@ -1043,6 +1046,33 @@ export type Database = {
           desafio_tutorial?: boolean
           persona_ativa_id?: string | null
           mudo?: boolean
+          atualizado_em?: string
+        }
+        Relationships: []
+      }
+      preferencias_notificacao: {
+        Row: {
+          user_id: string
+          tipos: Json
+          silencio_inicio: number
+          silencio_fim: number
+          limite_diario: number
+          atualizado_em: string
+        }
+        Insert: {
+          user_id: string
+          tipos?: Json
+          silencio_inicio?: number
+          silencio_fim?: number
+          limite_diario?: number
+          atualizado_em?: string
+        }
+        Update: {
+          user_id?: string
+          tipos?: Json
+          silencio_inicio?: number
+          silencio_fim?: number
+          limite_diario?: number
           atualizado_em?: string
         }
         Relationships: []
@@ -1215,6 +1245,39 @@ export type Database = {
           auth?: string
           user_agent?: string | null
           criado_em?: string
+        }
+        Relationships: []
+      }
+      push_inscricoes: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent: string | null
+          criado_em: string
+          ultimo_uso_em: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          user_agent?: string | null
+          criado_em?: string
+          ultimo_uso_em?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          endpoint?: string
+          p256dh?: string
+          auth?: string
+          user_agent?: string | null
+          criado_em?: string
+          ultimo_uso_em?: string | null
         }
         Relationships: []
       }
@@ -1764,6 +1827,12 @@ export type Database = {
         }
         Returns: Database["public"]["Tables"]["agendamentos"]["Row"]
       }
+      chave_preferencia_notificacao: {
+        Args: {
+          p_tipo: string
+        }
+        Returns: string
+      }
       comprar_item: {
         Args: {
           p_item_id: string
@@ -1819,6 +1888,10 @@ export type Database = {
           moedas_creditadas: number
           minutos: number
         }[]
+      }
+      dia_de_brasilia: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       docentes_da_escola: {
         Args: Record<PropertyKey, never>
@@ -1922,6 +1995,12 @@ export type Database = {
           p_turma: string
         }
         Returns: boolean
+      }
+      lembretes_do_dia: {
+        Args: {
+          p_tipo: string
+        }
+        Returns: number
       }
       limpar_demonstracao: {
         Args: Record<PropertyKey, never>
@@ -2121,6 +2200,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      pushes_para_enviar: {
+        Args: {
+          p_limite?: number
+        }
+        Returns: {
+          id: string
+          user_id: string
+          tipo: string
+          titulo: string
+          corpo: string
+          payload: Json
+        }[]
+      }
       quem_autoriza: {
         Args: {
           p_aluno: string
@@ -2262,6 +2354,24 @@ export type Database = {
       sair_sala_foco: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      salvar_inscricao_push: {
+        Args: {
+          p_endpoint: string
+          p_p256dh: string
+          p_auth: string
+          p_user_agent?: string
+        }
+        Returns: string
+      }
+      salvar_preferencias_notificacao: {
+        Args: {
+          p_tipos: Json
+          p_silencio_inicio: number
+          p_silencio_fim: number
+          p_limite_diario: number
+        }
+        Returns: Database["public"]["Tables"]["preferencias_notificacao"]["Row"]
       }
       salvar_relatorio_semanal: {
         Args: {

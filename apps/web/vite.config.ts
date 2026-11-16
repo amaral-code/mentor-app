@@ -76,6 +76,9 @@ export default defineConfig(({ mode }) => {
            * cada aluno, em rede movel.
            */
           globIgnores: ['mascot/**', 'mascot*.png', 'mascot-*.png'],
+          // Recebe e mostra os push (#55). Arquivo próprio em public/: o
+          // Workbox gera o resto do service worker, e só isto é nosso.
+          importScripts: ['sw-push.js'],
           // Mascotes do shell passam de 2 MiB (limite padrao do workbox):
           // sem este teto eles ficariam fora do precache e o offline
           // quebraria imagens da UI. Continua so App Shell, sem rede.

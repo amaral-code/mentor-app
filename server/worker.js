@@ -46,6 +46,7 @@ import {
   limparTextoLivre,
   MODO_PADRAO,
 } from './chatPrompt.js';
+import { enviarPush, pushConfigurado } from './webPush.js';
 import {
   ESQUEMA_CORRECAO,
   promptCorrecaoFoto,
@@ -205,6 +206,18 @@ async function supabasePatch(env, caminho, corpo) {
     body: JSON.stringify(corpo),
   });
   if (!resposta.ok) throw new Error(`patch ${caminho}: ${resposta.status}`);
+}
+
+async function supabaseDelete(env, caminho) {
+  const resposta = await fetch(`${env.SUPABASE_URL}/rest/v1/${caminho}`, {
+    method: 'DELETE',
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      Prefer: 'return=minimal',
+    },
+  });
+  if (!resposta.ok) throw new Error(`delete ${caminho}: ${resposta.status}`);
 }
 
 async function supabaseInsert(env, tabela, linha) {
@@ -590,7 +603,52 @@ async function esvaziarFila(env) {
     );
     if (ok) enviadas++;
   }
-  return { pendentes: pendentes.length, enviadas };
+  const push = await esvaziarPush(env);
+  return { pendentes: pendentes.length, enviadas, push };
+}
+
+/**
+ * Envia os push que podem sair agora.
+ *
+ * QUEM DECIDE é o banco (`pushes_para_enviar`, migration 032): tipo
+ * desligado, horário silencioso, limite diário e validade. Aqui só se
+ * entrega e se registra o resultado. Inscrição que o navegador cancelou
+ * (404/410) é apagada, senão cada rodada tentaria de novo para sempre.
+ */
+async function esvaziarPush(env) {
+  if (!pushConfigurado(env)) return { configurado: false };
+  const lista = await supabaseRpc(env, 'pushes_para_enviar', { p_limite: 100 });
+  let entregues = 0;
+  for (const n of Array.isArray(lista) ? lista : []) {
+    const inscricoes = await supabaseSelect(
+      env,
+      `push_inscricoes?user_id=eq.${encodeURIComponent(n.user_id)}&select=id,endpoint,p256dh,auth`,
+    );
+    const mensagem = {
+      titulo: n.titulo,
+      corpo: n.corpo,
+      tipo: n.tipo,
+      url: typeof n.payload?.url === 'string' && n.payload.url.startsWith('/') ? n.payload.url : '/',
+      urgente: String(n.tipo).startsWith('alerta'),
+    };
+    let algum = false;
+    for (const i of inscricoes) {
+      try {
+        const r = await enviarPush(i, mensagem, env);
+        if (r.ok) algum = true;
+        if (r.expirada) await supabaseDelete(env, `push_inscricoes?id=eq.${encodeURIComponent(i.id)}`);
+      } catch (err) {
+        console.warn('push nao entregue:', err && err.message);
+      }
+    }
+    await supabasePatch(
+      env,
+      `notificacoes?id=eq.${encodeURIComponent(n.id)}`,
+      algum ? { enviada_em: new Date().toISOString() } : { tentativas: 3, descartada: 'falha na entrega' },
+    );
+    if (algum) entregues++;
+  }
+  return { configurado: true, entregues };
 }
 
 /** Mesma coisa, para quem nao pode falhar por causa de e-mail. */
@@ -1313,8 +1371,19 @@ export default {
       }
 
       try {
+        /*
+         * Lembretes do dia (revisão vencida, ofensiva em risco): só pelo
+         * cron, que entra com segredo. Usuário logado só esvazia a fila.
+         * Na Vercel o plano gratuito tem cron diário, então são dois: um
+         * de manhã para a revisão e um à noite para a ofensiva.
+         */
+        const lembrete = url.searchParams.get('lembretes');
+        let lembretes = 0;
+        if (porSegredo && (lembrete === 'revisao' || lembrete === 'ofensiva')) {
+          lembretes = Number(await supabaseRpc(env, 'lembretes_do_dia', { p_tipo: lembrete })) || 0;
+        }
         const resultado = await esvaziarFila(env);
-        return json({ ok: true, ...resultado }, 200, corsHeaders);
+        return json({ ok: true, lembretes, ...resultado }, 200, corsHeaders);
       } catch (err) {
         return json({ error: 'drain_falhou', message: String(err && err.message) }, 502, corsHeaders);
       }

@@ -64,7 +64,7 @@ async function chamar(caminho, { metodo = 'POST', corpo, cabecalhos = {}, env = 
   const rotas = respostas ?? mundo();
   vi.stubGlobal('fetch', async (url, init = {}) => {
     const u = String(url);
-    saidas.push({ url: u, method: init.method || 'GET', body: init.body ? JSON.parse(init.body) : null });
+    saidas.push({ url: u, method: init.method || 'GET', headers: init.headers || {}, body: typeof init.body === 'string' ? JSON.parse(init.body) : init.body ?? null });
     for (const [padrao, resposta] of rotas) if (u.includes(padrao)) return resposta();
     // Sessao valida por padrao: as rotas de IA passaram a exigir login,
     // e a maioria dos testes prova outra coisa. Quem testa "sem sessao"
@@ -326,6 +326,54 @@ describe('/notify/drain', () => {
     const r = await chamar('/notify/drain', { metodo: 'GET', env, semSessao: true, cabecalhos: { Authorization: 'Bearer cron' } });
     expect(r.status).toBe(200);
     expect((await chamar('/notify/drain', { metodo: 'GET', env, semSessao: true, cabecalhos: { Authorization: 'Bearer errado' } })).status).toBe(401);
+  });
+
+  describe('push', () => {
+    async function envPush() {
+      const par = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+      const pub = new Uint8Array(await crypto.subtle.exportKey('raw', par.publicKey));
+      const b64 = (b) => btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const nav = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+      const navPub = new Uint8Array(await crypto.subtle.exportKey('raw', nav.publicKey));
+      return {
+        env: { ...ENV, CRON_SECRET: 'cron', VAPID_PUBLIC_KEY: b64(pub), VAPID_PRIVATE_KEY: (await crypto.subtle.exportKey('jwk', par.privateKey)).d },
+        inscricao: (id, endpoint) => ({ id, endpoint, p256dh: b64(navPub), auth: b64(crypto.getRandomValues(new Uint8Array(16))) }),
+      };
+    }
+
+    it('entrega o que o banco liberou e apaga a inscricao que o navegador cancelou', async () => {
+      const { env, inscricao } = await envPush();
+      const respostas = [
+        ['/rest/v1/rpc/pushes_para_enviar', () => json([{ id: 'p1', user_id: USUARIO, tipo: 'revisao', titulo: 'Hora de revisar', corpo: '2 revisões', payload: { url: '/?aba=calendario' } }])],
+        ['/rest/v1/push_inscricoes?user_id', () => json([inscricao('i1', 'https://push.exemplo/viva'), inscricao('i2', 'https://push.exemplo/morta')])],
+        ['push.exemplo/viva', () => new Response(null, { status: 201 })],
+        ['push.exemplo/morta', () => new Response(null, { status: 410 })],
+        ...mundo(),
+      ];
+      const r = await chamar('/notify/drain', { env, respostas });
+      expect(r.dados.push).toEqual({ configurado: true, entregues: 1 });
+      const envio = saidaPara(r, 'push.exemplo/viva');
+      expect(envio.headers['Content-Encoding']).toBe('aes128gcm');
+      expect(envio.headers.Authorization).toMatch(/^vapid t=.+, k=/);
+      expect(r.saidas.find((s) => s.url.includes('push_inscricoes?id=eq.i2')).method).toBe('DELETE');
+      const marcou = r.saidas.find((s) => s.url.includes('notificacoes?id=eq.p1'));
+      expect(Object.keys(marcou.body)).toEqual(['enviada_em']);
+    });
+
+    it('lembrete do dia so pelo cron; usuario logado so esvazia a fila', async () => {
+      const { env } = await envPush();
+      const respostas = [['/rest/v1/rpc/lembretes_do_dia', () => json(3)], ['/rest/v1/rpc/pushes_para_enviar', () => json([])], ...mundo()];
+      const cron = await chamar('/notify/drain?lembretes=ofensiva', { metodo: 'GET', env, semSessao: true, cabecalhos: { Authorization: 'Bearer cron' }, respostas });
+      expect(cron.dados.lembretes).toBe(3);
+      expect(saidaPara(cron, 'lembretes_do_dia').body).toEqual({ p_tipo: 'ofensiva' });
+      const aluno = await chamar('/notify/drain?lembretes=ofensiva', { env, respostas });
+      expect(saidaPara(aluno, 'lembretes_do_dia')).toBeUndefined();
+    });
+
+    it('sem par VAPID o push nem e tentado', async () => {
+      const r = await chamar('/notify/drain');
+      expect(r.dados.push).toEqual({ configurado: false });
+    });
   });
 
   it('sem provedor de e-mail nao quebra a fila', async () => {
