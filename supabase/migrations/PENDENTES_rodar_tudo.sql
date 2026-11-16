@@ -4,7 +4,7 @@
 -- Verificado por API em 13/08: o banco tem 003 e 004. As cinco abaixo
 -- NAO estao aplicadas, mesmo que o SQL Editor tenha sido aberto antes.
 -- Se nada acontecer ao rodar, confira se a aba esta no projeto
--- bxidxlcismcvryznpomh e se o resultado foi "Success".
+-- SEU_PROJETO e se o resultado foi "Success".
 --
 -- Cada bloco abre e fecha a propria transacao: se um falhar, os
 -- anteriores permanecem e o erro aponta o bloco exato.
