@@ -10,7 +10,7 @@ import { useAppStore } from '@mentor/state/appStore';
 import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { CartaoFadiga } from '../../../src/features/central/CartaoFadiga';
 import { CheckinSSC } from '../../../src/features/central/CheckinSSC';
-import { TrilhaDoDia } from '../../../src/features/central/TrilhaDoDia';
+import { FlorestaDoDia } from '../../../src/features/central/FlorestaDoDia';
 import { recarregarTudo, useEstadoCarga } from '../../../src/sessao/carga';
 import { Barra, Esqueleto, Selo, Vazio } from '../../../src/ui/Basicos';
 import { Cartao } from '../../../src/ui/Cartao';
@@ -108,7 +108,7 @@ export default function Central() {
           ))}
         </View>
       ) : tarefas.length > 0 ? (
-        <TrilhaDoDia tarefas={tarefas} />
+        <FlorestaDoDia tarefas={tarefas} />
       ) : (
         <Vazio titulo="Diz como você está hoje." texto="O sagui monta o plano a partir daí." />
       )}

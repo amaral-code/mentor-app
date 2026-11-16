@@ -14,7 +14,7 @@ import { TabId } from '@mentor/core/types';
 
 /* Dica fixa por aba: curta, sem traço (regra de escrita do produto). */
 const DICAS: Partial<Record<TabId, string>> = {
-  dashboard: 'Uma bolinha por vez. Terminar o plano do dia vale mais que maratonar.',
+  dashboard: 'Uma árvore por vez. Terminar o plano do dia vale mais que maratonar.',
   quiz: 'Errou? Peça a explicação do tutor. É no erro que a matéria gruda.',
   profile: 'Entregue seu código só para quem você confia acompanhar seus estudos.',
   ranking: 'Cada quiz e cada tarefa concluída sobem o seu XP no ranking.',
@@ -96,11 +96,11 @@ export function CartaoMetaDoDia({ comBotao = true }: { comBotao?: boolean }) {
           ? 'Diga como você está na Central e o sagui monta o plano.'
           : feitas === tarefas.length
             ? 'Plano do dia completo. Mandou bem!'
-            : `Faltam ${tarefas.length - feitas} tarefa${tarefas.length - feitas === 1 ? '' : 's'} na trilha.`}
+            : `Faltam ${tarefas.length - feitas} tarefa${tarefas.length - feitas === 1 ? '' : 's'} na floresta.`}
       </p>
       {comBotao && (
         <button type="button" onClick={() => setActiveTab('dashboard')} className="btn-secondary w-full h-11 mt-4 uppercase text-xs">
-          Ir para a trilha
+          Ir para a floresta
         </button>
       )}
     </section>

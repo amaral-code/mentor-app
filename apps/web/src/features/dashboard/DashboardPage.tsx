@@ -1,8 +1,7 @@
-import { Fragment, useEffect, useMemo, useState, useSyncExternalStore, memo, useRef, useCallback } from 'react';
-import { m, useReducedMotion } from 'motion/react';
-import { listContainer, listItem } from '../../shared/lib/motionPresets';
+import { useEffect, useMemo, useState, memo, useRef, useCallback } from 'react';
+import { useReducedMotion } from 'motion/react';
 import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
-import { BarChart3, BookOpen, Camera, Check, Frown, Moon, Target, Timer, Trophy, X, Zap } from 'lucide-react';
+import { BarChart3, BookOpen, Camera, Frown, Moon, Target, Timer, X } from 'lucide-react';
 import { useAppStore } from '@mentor/state/appStore';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { FADIGA_ZERADA } from '@mentor/core/burnoutModel';
@@ -11,10 +10,11 @@ import { MicroTask, QuizResult } from '@mentor/core/types';
 import { calcLevel, getToday, MOOD_LABEL, MOOD_COLOR } from '@mentor/core/utils';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { safeSet } from '@mentor/core/safeStorage';
-import { AppIcon, MoodIcon } from '../../shared/ui/AppIcon';
+import { MoodIcon } from '../../shared/ui/AppIcon';
 import { BurnoutCard } from './BurnoutCard';
 import { CartaoDicaSagui, CartaoLigas, CartaoOfensiva } from '../../app/PainelLateral';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
+import { FlorestaDoDia } from './FlorestaDoDia';
 
 /* ====================================================================
    COMPROVAÇÃO DE TAREFA — modal anti-clique-fácil.
@@ -186,9 +186,6 @@ export function DashboardPage() {
 
   const tarefas = dailyPlan?.tasks ?? [];
   const feitas = tarefas.filter((t) => t.completed).length;
-  /* A "bolinha atual" da trilha é a primeira tarefa ainda aberta. */
-  const idAtual = tarefas.find((t) => !t.completed)?.id ?? null;
-  const tarefaAtual = tarefas.find((t) => t.id === idAtual) ?? null;
 
   return (
     <div className="animate-fade-up xl:grid xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-8 xl:items-start space-y-5 xl:space-y-0">
@@ -274,14 +271,7 @@ export function DashboardPage() {
         </div>
 
         {tarefas.length > 0 ? (
-          <TrilhaDoDia
-            tarefas={tarefas}
-            idAtual={idAtual}
-            tarefaAtual={tarefaAtual}
-            xpVoando={xpVoando}
-            reduzir={reduzir === true}
-            onTocar={pedirComprovacao}
-          />
+          <FlorestaDoDia tarefas={tarefas} xpVoando={xpVoando} reduzir={reduzir === true} onComprovar={pedirComprovacao} />
         ) : (
           <div className="text-center py-8 flex flex-col items-center">
             <img
@@ -365,161 +355,6 @@ function BarraGrossa({ pct, cor }: { pct: number; cor: string }) {
       <div className="h-full rounded-full relative xp-bar" style={{ width: `${largura}%`, backgroundColor: cor }}>
         {largura > 8 && <span className="absolute left-2 right-2 top-1 h-1 rounded-full bg-white/35" aria-hidden="true" />}
       </div>
-    </div>
-  );
-}
-
-/*
- * Trilha do dia (o "caminho" do Duolingo), feita com as MESMAS tarefas do
- * Plano do Dia. Cada bolinha é um botão: tocar abre a comprovação, igual ao
- * checkbox de antes. Tarefa concluída não volta atrás: era o ciclo
- * marcar/desmarcar que dava XP infinito.
- */
-const ZIGUEZAGUE = [0, 56, 84, 56, 0, -56, -84, -56];
-
-/* Poses do sagui que aparecem ao longo da trilha no computador. */
-const POSES_TRILHA = ['pulando', 'meditando', 'aprovacao'];
-
-/* Tela larga (lg+): no computador a trilha abre mais o zigue-zague e cresce,
-   senão ela ficava uma fila fina no meio de uma coluna enorme. Sem
-   matchMedia (testes em jsdom), vale o tamanho do celular. */
-function useTelaLarga(): boolean {
-  const consulta = '(min-width: 1024px)';
-  return useSyncExternalStore(
-    (avisar) => {
-      if (typeof window === 'undefined' || !window.matchMedia) return () => {};
-      const mq = window.matchMedia(consulta);
-      mq.addEventListener('change', avisar);
-      return () => mq.removeEventListener('change', avisar);
-    },
-    () => (typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(consulta).matches),
-    () => false,
-  );
-}
-
-function TrilhaDoDia({
-  tarefas,
-  idAtual,
-  tarefaAtual,
-  xpVoando,
-  reduzir,
-  onTocar,
-}: {
-  tarefas: MicroTask[];
-  idAtual: string | null;
-  tarefaAtual: MicroTask | null;
-  xpVoando: string | null;
-  reduzir: boolean;
-  onTocar: (t: MicroTask) => void;
-}) {
-  const larga = useTelaLarga();
-  const fator = larga ? 1.7 : 1;
-  const todasFeitas = tarefas.length > 0 && tarefas.every((t) => t.completed);
-  return (
-    <div className="relative py-2 lg:py-4">
-      {/* O sagui acompanha a trilha, do lado oposto ao primeiro "S". */}
-      <img
-        src="/assets/sagui_estudando_2.png"
-        alt=""
-        width={120}
-        height={120}
-        loading="lazy"
-        className="absolute left-0 sm:left-4 lg:left-6 top-24 lg:top-20 w-24 sm:w-28 lg:w-36 h-auto pointer-events-none select-none motion-safe:animate-float-suave"
-      />
-      <m.ol
-        className="relative flex flex-col items-center gap-2"
-        variants={reduzir ? undefined : listContainer}
-        initial={reduzir ? false : 'inicial'}
-        animate={reduzir ? undefined : 'animar'}
-      >
-        {tarefas.map((task, i) => {
-          const atual = task.id === idAtual;
-          const deslocamento = ZIGUEZAGUE[i % ZIGUEZAGUE.length] * fator;
-          /* A cada três tarefas, outro sagui do lado oposto da curva. */
-          const poseExtra = larga && i % 3 === 2 ? POSES_TRILHA[Math.floor(i / 3) % POSES_TRILHA.length] : null;
-          return (
-            <Fragment key={task.id}>
-            <m.li
-              variants={reduzir ? undefined : listItem}
-              className="relative flex flex-col items-center w-44 lg:w-52"
-              /* `x` (e não style.transform): a animação de entrada também
-                 escreve transform, e apagava o deslocamento do zigue-zague. */
-              style={{ x: deslocamento }}
-            >
-              {atual && (
-                <span className="mb-2 px-3 py-1.5 rounded-xl bg-white border-2 border-slate-200 text-sm font-extrabold uppercase tracking-wide text-azul-600 motion-safe:animate-float-suave" aria-hidden="true">
-                  Começar
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => onTocar(task)}
-                disabled={task.completed}
-                aria-label={task.completed ? `Concluída: ${task.titulo}` : `Comprovar e concluir: ${task.titulo}`}
-                className={`relative w-[76px] h-[70px] lg:w-[100px] lg:h-[92px] rounded-full flex items-center justify-center transition-transform active:translate-y-1 active:shadow-none disabled:cursor-default disabled:active:translate-y-0 ${
-                  task.completed
-                    ? 'bg-amber-500 shadow-lip-ambar text-white disabled:shadow-lip-ambar'
-                    : atual
-                      ? 'bg-azul-600 shadow-lip-azul text-amber-300 ring-[6px] ring-ceu-100'
-                      : 'bg-azul-100 shadow-lip text-azul-600 hover:bg-azul-200'
-                }`}
-              >
-                <span className="lg:scale-[1.3] flex">
-                  {task.completed
-                    ? <Check size={34} strokeWidth={3.5} />
-                    : <AppIcon name={task.icon} size={30} />}
-                </span>
-              </button>
-              {poseExtra && (
-                <img
-                  src={`/assets/sagui_${poseExtra}_2.png`}
-                  alt=""
-                  width={128}
-                  height={128}
-                  loading="lazy"
-                  className={`absolute top-0 w-32 h-32 object-contain pointer-events-none select-none motion-safe:animate-float-suave ${deslocamento >= 0 ? '-left-40' : '-right-40'}`}
-                />
-              )}
-              {/* Recompensa na hora: o XP sobe da própria bolinha concluída. */}
-              {xpVoando === task.id && (
-                <span className="pointer-events-none absolute -right-2 top-0 text-base font-black text-amber-600 motion-safe:animate-fade-up-out">
-                  +20 XP
-                </span>
-              )}
-              <span className={`mt-2 text-xs lg:text-sm font-extrabold text-center leading-tight ${task.completed ? 'text-slate-400 risco risco--feito' : 'text-tinta-900'}`}>
-                {task.titulo}
-              </span>
-            </m.li>
-            {/* O detalhe da tarefa atual abre logo abaixo da bolinha dela. */}
-            {atual && tarefaAtual && (
-              <li className="relative z-10 w-full max-w-md my-3 rounded-[20px] border-2 border-ceu-500 bg-azul-50 shadow-lip-ceu p-4 space-y-3">
-                <p className="text-sm font-semibold text-slate-600 leading-relaxed">{tarefaAtual.descricao}</p>
-                <p className="flex items-center gap-1 text-sm font-extrabold text-amber-600">
-                  <Zap size={16} fill="currentColor" /> +20 XP
-                </p>
-                <button type="button" onClick={() => onTocar(tarefaAtual)} className="btn-ambar w-full h-12 uppercase">
-                  Comprovar e concluir
-                </button>
-              </li>
-            )}
-            </Fragment>
-          );
-        })}
-        {/* Fim do caminho: o troféu acende quando o plano do dia fecha.
-            Só visual; não dá XP nem libera nada a mais. */}
-        <li className="hidden lg:flex flex-col items-center mt-4" aria-label={todasFeitas ? 'Plano do dia completo' : 'Fim da trilha de hoje'}>
-          <span
-            className={`w-[112px] h-[104px] rounded-[28px] flex items-center justify-center ${
-              todasFeitas ? 'bg-amber-500 shadow-lip-ambar text-white' : 'bg-slate-200 shadow-lip text-slate-400'
-            }`}
-          >
-            <Trophy size={52} strokeWidth={2.5} />
-          </span>
-          <span className={`mt-2 text-sm font-extrabold ${todasFeitas ? 'text-amber-600' : 'text-slate-400'}`}>
-            {todasFeitas ? 'Plano do dia completo!' : 'Termine a trilha para fechar o dia'}
-          </span>
-        </li>
-      </m.ol>
     </div>
   );
 }

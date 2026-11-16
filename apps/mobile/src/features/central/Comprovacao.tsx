@@ -8,19 +8,15 @@ import { useAppStore } from '@mentor/state/appStore';
 import { anunciar, vibrar } from '../../ui/acessibilidade';
 import { Botao } from '../../ui/Botao';
 import { Campo } from '../../ui/Basicos';
-import { IconeApp } from '../../ui/IconeApp';
 import { Texto } from '../../ui/Texto';
-import { cor, LABIO, raio } from '../../ui/tema';
-
-/* Mesmo zigue-zague do web (o "caminho" do Duolingo). */
-const ZIGUEZAGUE = [0, 48, 72, 48, 0, -48, -72, -48];
+import { cor, raio } from '../../ui/tema';
 
 /**
- * Comprovação: tocar na bolinha NÃO conclui. Pede uma foto ou um
+ * Comprovação: entrar na toca NÃO conclui. Pede uma foto ou um
  * parágrafo de 30 letras contando o que aprendeu; sem prova, sem XP (o
  * "cliquei, ganhei" do web foi fechado e continua fechado aqui).
  */
-function Comprovacao({ tarefa, aoFechar }: { tarefa: MicroTask; aoFechar: () => void }) {
+export function Comprovacao({ tarefa, aoFechar }: { tarefa: MicroTask; aoFechar: () => void }) {
   const [texto, setTexto] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
   const pronto = !!foto || texto.trim().length >= MIN_PARAGRAFO_COMPROVACAO;
@@ -89,85 +85,7 @@ function Comprovacao({ tarefa, aoFechar }: { tarefa: MicroTask; aoFechar: () => 
   );
 }
 
-/**
- * Trilha do dia: as tarefas do Plano do Dia como bolinhas em zigue-zague.
- * Tarefa concluída fica travada: o ciclo marcar/desmarcar dava XP infinito.
- */
-export function TrilhaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
-  const [alvo, setAlvo] = useState<MicroTask | null>(null);
-  const atual = tarefas.find((t) => !t.completed) ?? null;
-
-  return (
-    <View style={estilos.trilha} accessibilityRole="list">
-      {tarefas.map((t, i) => {
-        const ehAtual = t.id === atual?.id;
-        const fundo = t.completed ? cor.ambar500 : ehAtual ? cor.azul600 : cor.azul100;
-        const labio = t.completed ? cor.ambar600 : ehAtual ? cor.azul700 : cor.cinza300;
-        const corIcone = t.completed ? cor.branco : ehAtual ? cor.ambar100 : cor.azul600;
-        return (
-          <View key={t.id} style={[estilos.item, { transform: [{ translateX: ZIGUEZAGUE[i % ZIGUEZAGUE.length] }] }]}>
-            {ehAtual ? (
-              <View style={estilos.comecar}>
-                <Texto variante="rotulo" cor={cor.azul600}>
-                  Começar
-                </Texto>
-              </View>
-            ) : null}
-            <Pressable
-              onPress={() => !t.completed && setAlvo(t)}
-              disabled={t.completed}
-              accessibilityRole="button"
-              accessibilityLabel={t.completed ? `Concluída: ${t.titulo}` : `Comprovar e concluir: ${t.titulo}`}
-              accessibilityHint={t.completed ? undefined : t.descricao}
-              accessibilityState={{ disabled: t.completed }}
-              style={({ pressed }) => [
-                estilos.bolinha,
-                { backgroundColor: fundo, borderBottomColor: labio },
-                ehAtual ? estilos.anel : null,
-                pressed ? { transform: [{ translateY: LABIO }], borderBottomWidth: 0 } : null,
-              ]}
-            >
-              {t.completed ? <Ionicons name="checkmark" size={34} color={cor.branco} /> : <IconeApp nome={t.icon} tamanho={30} cor={corIcone} />}
-            </Pressable>
-            <Texto
-              variante="legenda"
-              centro
-              style={[estilos.titulo, t.completed ? estilos.feito : null]}
-              cor={t.completed ? cor.cinza400 : cor.tinta900}
-            >
-              {t.titulo}
-            </Texto>
-          </View>
-        );
-      })}
-      {alvo ? <Comprovacao tarefa={alvo} aoFechar={() => setAlvo(null)} /> : null}
-    </View>
-  );
-}
-
 const estilos = StyleSheet.create({
-  trilha: { alignItems: 'center', gap: 6, paddingVertical: 8 },
-  item: { alignItems: 'center', width: 170 },
-  comecar: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: cor.cinza200,
-    backgroundColor: cor.branco,
-    marginBottom: 6,
-  },
-  bolinha: {
-    width: 76,
-    height: 70,
-    borderRadius: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: LABIO,
-  },
-  anel: { borderWidth: 5, borderColor: cor.ceu100, borderBottomWidth: LABIO + 5 },
-  titulo: { marginTop: 6, fontWeight: '800' },
-  feito: { textDecorationLine: 'line-through' },
   fundoModal: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(11,15,25,0.4)' },
   folha: {
     backgroundColor: cor.branco,

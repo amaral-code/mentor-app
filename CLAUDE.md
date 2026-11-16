@@ -11,7 +11,7 @@ Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
 ```bash
 npm run dev      # app web na porta 5180 (já inclui o back-end /api)
 npm run build    # turbo: tsc -b && vite build do @mentor/web
-npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 937 testes
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 953 testes
 npm run lint     # oxlint (barra APIs de navegador em packages/*)
 npm run typecheck       # turbo: tsc em todos os workspaces
 npm run gen:types       # regera os tipos do banco a partir das migrations
@@ -302,6 +302,21 @@ compatível com esse padrão.
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
 
+### 2026-11-16 (4) — Floresta do dia no lugar da trilha
+- Pedido do dono: as bolinhas do Plano do Dia viraram **árvores**, uma
+  por tarefa. O sagui sobe o tronco até a toca; "Entrar na toca" faz ele
+  entrar, e a toca abre num círculo a partir do buraco, com a tarefa em
+  três passos (entender, fazer, comprovar). Web (`dashboard/FlorestaDoDia`)
+  e app (`central/FlorestaDoDia`) leem o mesmo desenho e a mesma ordem
+  de fases de `@mentor/core/florestaDoDia`.
+- **XP não mudou**: só a comprovação conclui, e tarefa feita continua
+  travada. "Entendi" e "Terminei" são marcação do aluno, sem XP.
+- A toca prende o sagui na árvore enquanto está aberta: ao comprovar, a
+  primeira tarefa aberta vira a seguinte, e sem a trava a toca trocava de
+  árvore com o aluno lá dentro.
+- Movimento reduzido: sem subida nem círculo, a toca só aparece.
+- Mobile: `TrilhaDoDia.tsx` virou `Comprovacao.tsx` (só o modal ficou).
+
 ### 2026-11-16 (3) — M2: app base Expo (Android, iOS e notebook)
 - **Design system** (#30): `@mentor/ui-tokens` é a fonte única das cores;
   o `tailwind.config.js` do web e o `tema.ts` do app leem dela. Teste de
@@ -451,7 +466,7 @@ principal, regra de permissão. Mais recente no topo.
   virou **barra superior** (ofensiva, XP, nível) + **barra inferior**
   (Central, Mentor, Quiz, Ligas, Mais); "Mais" abre uma folha com as outras
   abas, com o mesmo `data-tab` que o tour procura.
-- **Central em trilha**: as tarefas do Plano do Dia viram bolinhas em
+- **Central em trilha** (substituída pela floresta em 2026-11-16): as tarefas do Plano do Dia viram bolinhas em
   zigue-zague (`TrilhaDoDia`). Tocar na bolinha abre a MESMA comprovação de
   antes; tarefa concluída continua travada (anti XP infinito).
 - **Login numa tela só**: escolher o perfil apenas seleciona; "Entrar" usa
