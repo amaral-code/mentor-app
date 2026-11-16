@@ -293,6 +293,19 @@ compatível com esse padrão.
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
 
+### 2026-11-16 (2) — Revisão de código
+- **Migration 030 — rodar no Supabase.** O teto diário de moedas do foco
+  virava o dia às 21h de Brasília (o `::date::timestamptz` da 011 volta a
+  data no fuso UTC) e somava pelo início da sessão: estudar à noite
+  furava as 500 moedas. Agora soma por `criado_em` (hora do pagamento) a
+  partir da meia-noite real de Brasília. Teste novo prova a virada.
+- Lint zerado (23 avisos). Dependências de `useEffect`: ações de store
+  entram no array; os que omitem de propósito (AudioPlayer, relatório
+  semanal) têm exceção com o motivo. `PainelCuidado` assinava a store do
+  marketplace inteira e re-renderizava a cada mudança: agora usa seletores.
+- DOMPurify 3.4.13 → 3.4.18 (vulnerabilidade crítica de XSS, via Mermaid).
+- Mais 11 consultas dos repositórios tipadas com os tipos gerados.
+
 ### 2026-11-16 — M1: monorepo e núcleo compartilhado
 - **Monorepo** (npm workspaces + Turborepo). O app Vite foi para
   `apps/web`; `api/`, `server/` e `supabase/` ficaram na raiz porque a
@@ -577,10 +590,10 @@ principal, regra de permissão. Mais recente no topo.
 - A chave **`service_role` do Supabase** que estava em 18 scripts de `tools/`
   saiu do código (2026-11-15), mas continua no histórico do git, válida até
   2036. Precisa ser **rotacionada no painel do Supabase** (issue #18).
-- Muitos warnings de `react-hooks/exhaustive-deps` (`npm run lint`). Alguns são
-  intencionais, outros causam estado velho — avaliar caso a caso.
-- **Teto diário de moedas do foco vira o dia às 21h de Brasília** (migration
-  011, `creditar_moedas_foco`): `(now() at time zone 'America/Sao_Paulo')::date::timestamptz`
-  converte a data de volta no fuso da sessão (UTC no Supabase), e a soma do
-  dia filtra por `inicio` da sessão. O teste "respeita o teto diario" falha
-  quando roda entre ~21h e ~1h de Brasília. Não corrigido: é regra de produto.
+- **KaTeX com vulnerabilidade baixa** (GHSA-238p-pmpm-9mq7), dependência do
+  Mermaid 11. A correção só vem com o Mermaid 12 (versão maior). Atualizar
+  junto com uma revisão dos mapas mentais do Caderno.
+- 9 consultas em `packages/api` ainda tipam a linha com `any` porque o
+  formato não bate com a linha crua (select com `perfis(nome)` embutido, ou
+  linha única tratada à parte). Ex.: `vincular_por_codigo` devolve
+  `parentesco` nulo, mas `VinculoResponsavel.parentesco` é `string`.
