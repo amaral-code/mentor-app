@@ -11,7 +11,7 @@ Monorepo (npm workspaces + Turborepo). Rode tudo da raiz:
 ```bash
 npm run dev      # app web na porta 5180 (já inclui o back-end /api)
 npm run build    # turbo: tsc -b && vite build do @mentor/web
-npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 886 testes
+npm test         # turbo (vitest de cada workspace) + testes da raiz (worker e migrations): 937 testes
 npm run lint     # oxlint (barra APIs de navegador em packages/*)
 npm run typecheck       # turbo: tsc em todos os workspaces
 npm run gen:types       # regera os tipos do banco a partir das migrations
@@ -41,6 +41,7 @@ apps/web/                 app Vite (@mentor/web)
 packages/core/            @mentor/core: tipos e engines sem DOM (é onde fica a lógica e os testes)
 packages/api/             @mentor/api: cliente Supabase, repositórios, tipos do banco gerados
 packages/state/           @mentor/state: stores Zustand (appStore é o principal)
+packages/ui-tokens/       @mentor/ui-tokens: cores, espaço e raio do web e do app (com teste de contraste AA)
 server/worker.js          BACK-END ÚNICO (ver abaixo)
 api/                      Vercel Functions
 supabase/                 migrations + bancoLocal.mjs (PGlite para testes e tipos)
@@ -300,6 +301,35 @@ compatível com esse padrão.
 
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
+
+### 2026-11-16 (3) — M2: app base Expo (Android, iOS e notebook)
+- **Design system** (#30): `@mentor/ui-tokens` é a fonte única das cores;
+  o `tailwind.config.js` do web e o `tema.ts` do app leem dela. Teste de
+  contraste AA (texto branco em botão e faixa foi para os tons 700).
+  NativeWind configurado; catálogo de componentes em Mais (só em dev).
+- **Rotas por papel** (#31): `@mentor/core/rotasPorPapel` decide grupo e
+  destino; família, professor, secretaria e psicólogo têm grupo próprio
+  com `Stack.Protected`. Rota de outro papel cai no `+not-found`, que
+  redireciona. `sairDaConta` limpa stores, cache e chaves `mm_*`.
+- **Entrada social** (#32): link mágico por e-mail, Google (navegador do
+  sistema, PKCE) e Apple nativo no iOS. Deep link `midnightmentor://entrar`.
+  **Precisa configurar no Supabase**: provedores Google e Apple e o
+  redirect `midnightmentor://entrar` (passo a passo em `apps/mobile/README.md`).
+- **Primeiro acesso completo** (#33) e tour das abas. **Migration 033 —
+  rodar no Supabase depois da 032**: `perfis.curso_desejado`,
+  `universidade_desejada` e `data_prova`, com validação. A Central mostra
+  quantos dias faltam para a prova.
+- **Acessibilidade** (#34): alto contraste (do app e do sistema) e cores
+  de acerto e erro para daltonismo (`@mentor/core/acessibilidadeCores`),
+  na mesma chave do web. Roteiro manual de TalkBack e VoiceOver em
+  `docs/acessibilidade-mobile.md`.
+- **Responsivo** (#35): `@mentor/core/layoutResponsivo` (390, 820, 1366).
+  Barra lateral a partir do tablet. O conteúdo media pela janela e
+  passava por baixo da barra; agora desconta. Quiz no teclado (1 a 5,
+  A a E, Enter), anel de foco e hover nos botões e cartões.
+- **EAS** (#36): `eas.json` (development, preview, production),
+  `app.config.js` com variante por perfil, workflow `eas.yml`. **Falta
+  rodar `eas init`** e cadastrar `EXPO_TOKEN` e `EAS_PROJECT_ID` no GitHub.
 
 ### 2026-11-16 (2) — M3: funcionalidades do aluno no app nativo
 - **`apps/mobile`** (Expo SDK 58, Expo Router), com o mínimo do M2 que o
@@ -622,6 +652,8 @@ principal, regra de permissão. Mais recente no topo.
 - **App nativo nunca rodou num aparelho**: o FocusShield (Kotlin/Swift),
   o áudio em segundo plano e a câmera precisam de um development build
   (EAS, #36). Roteiro em `apps/mobile/modules/focus-shield/README.md`.
+- Login com Google e Apple no app depende de configurar os provedores e o
+  redirect no Supabase; o primeiro build depende de `eas init` (#32, #36).
 - Texto do overlay de crise do app nativo precisa de revisão de psicólogo
   antes das lojas (#46). Revisão das denúncias de chat é do painel da
   escola (M6): hoje a mensagem só some com 3 denúncias.
