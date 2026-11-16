@@ -445,6 +445,28 @@ describe('escudo de dopamina', () => {
     expect(carteira.total_ganho).toBeLessThanOrEqual(500);
   });
 
+  it('o dia do teto vira a meia-noite de Brasilia, contando pelo pagamento (030)', async () => {
+    // Antes da 030 o dia virava a meia-noite UTC (21h de Brasilia) e a
+    // soma olhava o inicio da sessao: estudar a noite furava o teto.
+    // Aqui o "estranho" ganhou 500 moedas 1 minuto ANTES da meia-noite
+    // de Brasilia (ontem) e 480 moedas 1 minuto DEPOIS (hoje).
+    const meiaNoiteSp = `date_trunc('day', now() at time zone 'America/Sao_Paulo') at time zone 'America/Sao_Paulo'`;
+    await db.query(
+      `insert into public.sessoes_offline (user_id, inicio, fim, minutos_offline, moedas_creditadas, criado_em)
+       values ($1, ${meiaNoiteSp} - interval '3 hours', ${meiaNoiteSp} - interval '1 minute', 179, 500,
+               ${meiaNoiteSp} - interval '1 minute'),
+              ($1, ${meiaNoiteSp} - interval '2 hours', least(now(), ${meiaNoiteSp} + interval '1 minute'), 120, 480,
+               least(now(), ${meiaNoiteSp} + interval '1 minute'))`,
+      [estranho],
+    );
+
+    // Uma sessao de 25 min valeria 31 moedas; sobram so 20 para hoje.
+    // As 500 de ontem nao contam.
+    const r = await primeira(estranho,
+      `select * from public.creditar_moedas_foco(now() - interval '25 minutes', now(), 0, 'enem')`);
+    expect(r.moedas_creditadas).toBe(20);
+  });
+
   it('nao deixa gastar mais do que tem nem escrever o saldo direto', async () => {
     await expect(
       comoUsuario(aluno, `select public.gastar_moedas_foco(99999,'teste')`),

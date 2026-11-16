@@ -48,6 +48,7 @@ export const MIGRACOES = [
   '027_psicologo_consentimento_prontuario.sql',
   '028_conta_demonstracao.sql',
   '029_corrige_insights_escala.sql',
+  '030_teto_moedas_fuso.sql',
 ];
 
 /** Cria o banco e aplica as migrations. Devolve a instancia do PGlite. */
