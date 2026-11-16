@@ -44,3 +44,7 @@ SESSAO-*.md
 
 # Turborepo
 .turbo/
+
+# Saída do Playwright (E2E, #64)
+test-results/
+playwright-report/

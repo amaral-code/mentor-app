@@ -67,28 +67,38 @@ async function escreverResposta(res, resposta) {
  * entao nenhuma chave usada aqui pode vazar para o front.
  */
 export function apiDevPlugin(env) {
+  const middleware = async (req, res, next) => {
+    const caminho = (req.url || '').split('?')[0];
+    if (!caminho.startsWith('/api/') && caminho !== '/api') return next();
+
+    try {
+      const requisicao = paraRequestWeb(req);
+      const resposta =
+        caminho === '/api/config' ? await configGet(requisicao) : await tratarRequisicao(requisicao, env);
+      await escreverResposta(res, resposta);
+    } catch (erro) {
+      /* Erro do back-end nunca derruba o dev server: vira 500 com a
+         mensagem, do mesmo jeito que a Vercel reportaria. */
+      console.error('[api-dev] falha em', caminho, erro);
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(JSON.stringify({ error: 'dev_api_falhou', message: String(erro?.message || erro) }));
+    }
+  };
+
   return {
     name: 'midnight-mentor:api-dev',
-    apply: 'serve',
     configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
-        const caminho = (req.url || '').split('?')[0];
-        if (!caminho.startsWith('/api/') && caminho !== '/api') return next();
-
-        try {
-          const requisicao = paraRequestWeb(req);
-          const resposta =
-            caminho === '/api/config' ? await configGet(requisicao) : await tratarRequisicao(requisicao, env);
-          await escreverResposta(res, resposta);
-        } catch (erro) {
-          /* Erro do back-end nunca derruba o dev server: vira 500 com a
-             mensagem, do mesmo jeito que a Vercel reportaria. */
-          console.error('[api-dev] falha em', caminho, erro);
-          res.statusCode = 500;
-          res.setHeader('Content-Type', 'application/json; charset=utf-8');
-          res.end(JSON.stringify({ error: 'dev_api_falhou', message: String(erro?.message || erro) }));
-        }
-      });
+      server.middlewares.use(middleware);
+    },
+    /*
+     * Também no `vite preview` (build de produção servido localmente):
+     * é onde rodam os testes E2E (#64), com service worker de verdade.
+     * No `vite dev` não há service worker, e o Vite recarrega a página
+     * quando descobre dependência nova, o que derrubava o teste offline.
+     */
+    configurePreviewServer(server) {
+      server.middlewares.use(middleware);
     },
   };
 }

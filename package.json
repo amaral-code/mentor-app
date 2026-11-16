@@ -21,10 +21,12 @@
     "deploy:worker:prod": "npx --yes wrangler@4 deploy --env production",
     "db:migrate": "bash scripts/migrar.sh",
     "gen:types": "npm run gen:types --workspace @mentor/api",
-    "check:types": "npm run check:types --workspace @mentor/api"
+    "check:types": "npm run check:types --workspace @mentor/api",
+    "test:e2e": "playwright test -c e2e/playwright.config.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.7",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.2",
     "oxlint": "^1.71.0",
     "playwright": "^1.62.1",

@@ -56,3 +56,26 @@ jobs:
         run: npx turbo run test --cache-dir=.turbo/cache && npm run test:raiz
       - name: Build
         run: npm run build -- --cache-dir=.turbo/cache
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # O config faz o build e sobe o `vite preview` sozinho. Supabase e IA
+      # são simulados pelas rotas do teste: nenhum segredo entra aqui.
+      - name: Percursos principais (computador e celular)
+        run: npm run test:e2e -- --trace off
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-falhas
+          path: test-results/
+          retention-days: 7
