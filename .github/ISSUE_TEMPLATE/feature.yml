@@ -1,0 +1,42 @@
+name: ✨ Funcionalidade
+description: Proponha uma melhoria ou funcionalidade nova
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema isso resolve?
+      description: Para quem (aluno, educador, pais, psicólogo) e em que situação.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: Como deveria funcionar.
+    validations:
+      required: true
+  - type: textarea
+    id: tarefas
+    attributes:
+      label: Tarefas
+      value: |
+        - [ ]
+  - type: textarea
+    id: aceite
+    attributes:
+      label: Critérios de aceite
+      description: Como saberemos que está pronto.
+      value: |
+        -
+    validations:
+      required: true
+  - type: dropdown
+    id: plataforma
+    attributes:
+      label: Plataformas
+      multiple: true
+      options:
+        - Android
+        - iOS
+        - Notebook / navegador
