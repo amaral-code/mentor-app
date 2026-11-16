@@ -51,6 +51,7 @@ export const MIGRACOES = [
   '030_teto_moedas_fuso.sql',
   '031_ofensiva_brasilia_teto_xp_trava_nascimento.sql',
   '032_push_preferencias.sql',
+  '033_fila_offline.sql',
 ];
 
 /** Cria o banco e aplica as migrations. Devolve a instancia do PGlite. */

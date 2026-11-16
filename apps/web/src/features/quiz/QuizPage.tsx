@@ -5,6 +5,9 @@ import { atrasoDoItem, avancar, springTap } from '../../shared/lib/motionPresets
 import { BarraProgresso } from '../../shared/ui/AnimatedNumber';
 import { BarChart3, BookOpen, Check, Lightbulb, Target, TriangleAlert, Volume2, X } from 'lucide-react';
 import { useAppStore, persistir } from '@mentor/state/appStore';
+import { registrarOperacao } from '@mentor/state/sincronizacaoStore';
+import { getRandomQuestions } from '@mentor/core/quizBank';
+import { plataforma } from '@mentor/core/plataforma';
 import { Dificuldade, QuizQuestion, QuizResult } from '@mentor/core/types';
 import { generateQuizStructured, aiAvailable, NivelQuiz, explicarErroComTutor } from '@mentor/core/aiService';
 import { QUIZ_LOTES_SIMULTANEOS, emParalelo } from '@mentor/core/quizLotes';
@@ -235,8 +238,30 @@ export function QuizPage() {
        botao antes do primeiro lote novo chegar. */
     setProgressoGeracao('');
     mascotStore.getState().setState('loading', 'Gerando suas questões com a IA');
+    /*
+     * Sem internet (#56): o quiz segue com o banco de questões que vem no
+     * próprio app. O resultado e o XP entram na fila offline e sincronizam
+     * quando a conexão volta. O banco local é pequeno (3 a 6 questões por
+     * matéria); a tela diz isso em vez de prometer a quantidade pedida.
+     */
+    const comBancoLocal = (motivo: string): boolean => {
+      const locais = getRandomQuestions(mat, qtd);
+      if (locais.length === 0) return false;
+      setQuestions(locais.map(q => ({ ...q, materia: mat })));
+      setCurrentIndex(0); setSelectedAlt(null); setShowExplanation(false); setShowDica(false); setAcertos(0); setResult(null);
+      setRespostas({}); setShowGabarito(false); setTutorTexto({}); setTutorLoading(null);
+      setModoQuiz('quiz'); setSimuladoFimEm(null); setRascunhoDisponivel(null);
+      finalizadoRef.current = false;
+      setStage('playing');
+      setGenerating(false);
+      setToast(`${motivo} Usando ${locais.length} questões do banco do app; o resultado sincroniza depois.`, 'info');
+      mascotStore.getState().setState('idle', 'Sem internet, mas dá para treinar mesmo assim.');
+      return true;
+    };
+    if (plataforma().online() === false && comBancoLocal('Sem internet.')) return;
     try {
       if (!aiAvailable(apiKey)) {
+        if (comBancoLocal('IA indisponível no momento.')) return;
         setToast('IA indisponível no momento. Confira a configuração no Perfil.', 'error');
         setGenerating(false);
         mascotStore.getState().setState('error', 'Preciso da IA configurada no Perfil para criar as questões!');
@@ -321,6 +346,8 @@ export function QuizPage() {
         mascotStore.getState().setState('error', 'Não consegui gerar as questões. Tenta outros tópicos!');
       }
     } catch (e: any) {
+      // Rede caiu no meio da geração: ainda dá para treinar com o banco local.
+      if (/rede|conex|internet|fetch|fora do ar/i.test(String(e?.message)) && comBancoLocal('A IA não respondeu.')) return;
       setToast(e?.message || 'Erro ao gerar questões', 'error');
       setStage('topics');
       mascotStore.getState().setState('error', 'Ops! Algo deu errado ao gerar as questões.');
@@ -709,16 +736,9 @@ export function QuizPage() {
      * RPC por questao, com a materia DE CADA questao (no simulado misto,
      * questions carrega varias materias). Agrupadas num unico aviso.
      */
-    const placar = questions.map((q, i) => {
-      const r = respostas[i];
-      return supabaseRepository.registrarDesempenhoTopico(
-        q.materia || materia,
-        q.topico ?? '',
-        r === q.correta,
-      );
-    });
-    persistir(Promise.all(placar).then(() => undefined), {
-      mensagem: 'O placar por tópico não foi salvo.',
+    // Pela fila offline (#56): sem internet o placar espera no aparelho.
+    questions.forEach((q, i) => {
+      registrarOperacao('desempenho_topico', { materia: q.materia || materia, topico: q.topico ?? '', acertou: respostas[i] === q.correta });
     });
 
     // Simulado encerrado: rascunho e deadline saem de cena.

@@ -897,6 +897,27 @@ export type Database = {
         }
         Relationships: []
       }
+      operacoes_sincronizadas: {
+        Row: {
+          user_id: string
+          chave: string
+          tipo: string
+          aplicada_em: string
+        }
+        Insert: {
+          user_id: string
+          chave: string
+          tipo: string
+          aplicada_em?: string
+        }
+        Update: {
+          user_id?: string
+          chave?: string
+          tipo?: string
+          aplicada_em?: string
+        }
+        Relationships: []
+      }
       perfis: {
         Row: {
           id: string
@@ -1773,6 +1794,15 @@ export type Database = {
           p_alerta?: string
         }
         Returns: Database["public"]["Tables"]["agendamentos"]["Row"]
+      }
+      aplicar_operacao: {
+        Args: {
+          p_chave: string
+          p_tipo: string
+          p_dados: Json
+          p_feita_em?: string
+        }
+        Returns: Json
       }
       atende_paciente: {
         Args: {

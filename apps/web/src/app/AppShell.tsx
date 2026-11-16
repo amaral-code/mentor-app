@@ -1,3 +1,4 @@
+import { IndicadorConexao } from '../shared/ui/IndicadorConexao';
 import { BrasaoNivel, EstrelaCadente, LuaOfensiva } from '../shared/ui/IconesMentor';
 import { lazy, memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
@@ -587,6 +588,8 @@ export function AppShell() {
           <span aria-live="polite" aria-atomic="true" className="sr-only">
             {TABS.find((t) => t.id === activeTab)?.label ?? 'Central'}
           </span>
+          {/* Sem internet ou com atividade esperando: avisa no topo (#56). */}
+          <div className="mb-3 empty:hidden"><IndicadorConexao /></div>
           {/* mode="wait": a pagina que sai termina antes de a nova entrar. */}
           <AnimatePresence mode="wait" initial={false}>
             {/* Com movimento reduzido a transicao troca de forma (so

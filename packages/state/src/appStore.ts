@@ -22,6 +22,7 @@ import { generatePlan, XP_PER_TASK } from '@mentor/core/plannerEngine';
 import { userRepository } from '@mentor/api/UserRepository';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { safeSet } from '@mentor/core/safeStorage';
+import { aoConfirmarXp, registrarOperacao } from './sincronizacaoStore';
 import { calcLevel, diaDeBrasilia, getToday } from '@mentor/core/utils';
 
 interface AppState {
@@ -483,16 +484,13 @@ export const useAppStore = create<AppState>((set, get) => ({
      * Nao da para desfazer sem piorar (tirar XP da tela parece punicao),
      * entao o minimo honesto e contar o que aconteceu.
      */
-    persistir(
-      supabaseRepository.registrarXp(entry.type, entry.description, xp).then((g) => {
-        /* Pela updateGamification: o nivel e SEMPRE recalculado do XP via
-           calcLevel, nunca confiado no campo level do servidor (a formula
-           plana antiga da migration 003 ainda pode estar valendo no banco
-           de quem nao rodou a 008). */
-        if (g) get().updateGamification(g);
-      }),
-      { mensagem: 'Este XP não foi registrado. Ele não vai contar no seu total.' },
-    );
+    /*
+     * Pela fila offline (#56): sem internet o XP espera no aparelho e sai
+     * quando a conexão volta, uma vez só (chave única no banco). O valor
+     * confirmado pelo servidor volta por `aoConfirmarXp`, registrado no
+     * fim deste arquivo.
+     */
+    registrarOperacao('xp', { tipo: entry.type, descricao: entry.description, xp });
   },
 
   setDailyPlan: (plan) => set({ dailyPlan: plan }),
@@ -620,9 +618,9 @@ export const useAppStore = create<AppState>((set, get) => ({
      * apagar o que ele acabou de conquistar. O XP vai por addLog, que tem
      * o proprio caminho no servidor; o que se perde aqui e o historico.
      */
-    persistir(supabaseRepository.saveQuizResult(r), {
-      mensagem: 'O resultado do quiz não entrou no seu histórico.',
-    });
+    // Fila offline (#56): quiz feito em modo avião entra no histórico
+    // quando a conexão volta, com a hora em que foi feito.
+    registrarOperacao('quiz_resultado', { materia: r.materia, acertos: r.acertos, total: r.total, xpGanho: r.xpGanho });
   },
   setNotas: (notas) => set({ notas }),
   addNota: (nota) => {
@@ -716,3 +714,8 @@ export function persistir<T>(
       );
   });
 }
+
+/* XP confirmado pelo servidor depois da sincronização. Pela
+   updateGamification: o nível é SEMPRE recalculado do XP via calcLevel,
+   nunca confiado no campo level do servidor. */
+aoConfirmarXp((g) => useAppStore.getState().updateGamification(g));

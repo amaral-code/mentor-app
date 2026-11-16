@@ -11,6 +11,7 @@ import { carregarConfigRuntime } from '@mentor/core/runtimeConfig';
 import { registrarPWA } from './pwa';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 import { registrarDescargaAoSair } from '@mentor/state/bemEstarStore';
+import { iniciarSincronizacao } from '@mentor/state/sincronizacaoStore';
 
 // Acessibilidade antes da primeira pintura: fonte, contraste, movimento
 // e daltonismo valem já no login, sem sessão.
@@ -23,6 +24,10 @@ registrarPWA();
 // esconde. Antes isso era registrado no topo da store; agora a store é
 // compartilhada com o celular e quem sabe o que é "sair" é a plataforma.
 registrarDescargaAoSair();
+
+// Fila offline (#56): envia o que ficou guardado ao abrir, quando a
+// conexão volta e a cada 30 s enquanto houver pendente.
+iniciarSincronizacao();
 
 /*
  * Configuração de runtime ANTES da primeira renderização.
