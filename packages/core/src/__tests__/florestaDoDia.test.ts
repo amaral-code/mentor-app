@@ -129,3 +129,18 @@ describe('formasDaArvore', () => {
     expect(formas[formas.length - 1]).toMatchObject({ forma: 'elipse', cx: 80, cy: centroDaToca(0.5).y + 2 });
   });
 });
+
+describe('caminho entre as árvores', () => {
+  it('liga todos os pontos, começando no primeiro', async () => {
+    const { caminhoEntreArvores } = await import('../florestaDoDia');
+    const d = caminhoEntreArvores([{ x: 10, y: 0 }, { x: 90, y: 100 }, { x: 10, y: 200 }]);
+    expect(d.startsWith('M10 0')).toBe(true);
+    expect(d.match(/C/g)).toHaveLength(2);
+    expect(d.endsWith('10 200')).toBe(true);
+  });
+
+  it('um ponto só não desenha nada', async () => {
+    const { caminhoEntreArvores } = await import('../florestaDoDia');
+    expect(caminhoEntreArvores([{ x: 1, y: 1 }])).toBe('');
+  });
+});

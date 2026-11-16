@@ -24,11 +24,35 @@ export const TIPO_DA_ESPECIE: Record<Especie, TipoMissao> = {
   nuvem: 'umaOuOutra',
 };
 
-export const SOBRE_O_TIPO: Record<TipoMissao, { nome: string; explicacao: string; quantidade: number }> = {
-  escolha: { nome: 'Múltipla escolha', explicacao: 'Escolha a alternativa certa entre quatro.', quantidade: 3 },
-  verdadeiroFalso: { nome: 'Verdadeiro ou falso', explicacao: 'Veja a resposta proposta e diga se está certa.', quantidade: 4 },
-  umaOuOutra: { nome: 'Uma ou outra', explicacao: 'Duas respostas, só uma é a certa.', quantidade: 4 },
+/**
+ * `tom` é a cor do selo do tipo (céu, violeta, laranja da paleta do
+ * produto): o aluno reconhece a missão pela cor antes de ler o nome.
+ */
+export const SOBRE_O_TIPO: Record<TipoMissao, { nome: string; explicacao: string; quantidade: number; tom: 'ceu' | 'violeta' | 'laranja' }> = {
+  escolha: { nome: 'Múltipla escolha', explicacao: 'Escolha a alternativa certa entre quatro.', quantidade: 3, tom: 'ceu' },
+  verdadeiroFalso: { nome: 'Verdadeiro ou falso', explicacao: 'Veja a resposta proposta e diga se está certa.', quantidade: 4, tom: 'violeta' },
+  umaOuOutra: { nome: 'Uma ou outra', explicacao: 'Duas respostas, só uma é a certa.', quantidade: 4, tom: 'laranja' },
 };
+
+/** O que o sagui diz ao abrir a missão: o que vem e quanto precisa acertar. */
+export function falaDeAbertura(tipo: TipoMissao, materia: string, total: number): string {
+  const precisa = precisaAcertar(total);
+  const oque =
+    tipo === 'verdadeiroFalso'
+      ? `${total} respostas de ${materia} para você julgar`
+      : tipo === 'umaOuOutra'
+        ? `${total} perguntas de ${materia}, cada uma com duas saídas`
+        : `${total} questões de ${materia}`;
+  return `Bora! São ${oque}. Acerte ${precisa} e a missão é sua.`;
+}
+
+/** O que o sagui diz no fim, conforme o resultado. */
+export function falaDoFim(acertos: number, total: number): string {
+  if (acertos === total) return 'Gabaritou! Nem eu faria melhor.';
+  if (acertos >= precisaAcertar(total)) return 'Missão cumprida! Bora para a próxima árvore.';
+  if (acertos === 0) return 'Essa foi difícil. Lê as explicações com calma e tenta de novo.';
+  return 'Foi por pouco. Mais uma rodada e você pega.';
+}
 
 export const MINIMO_PARA_PASSAR = 0.6;
 

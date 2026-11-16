@@ -110,3 +110,20 @@ describe('rodada', () => {
     expect(precisaAcertar(4)).toBe(3);
   });
 });
+
+describe('falas do sagui', () => {
+  it('a abertura diz a matéria, quantas e quanto precisa acertar', async () => {
+    const { falaDeAbertura } = await import('../missaoDaArvore');
+    const f = falaDeAbertura('verdadeiroFalso', 'Química', 4);
+    expect(f).toContain('Química');
+    expect(f).toContain('Acerte 3');
+  });
+
+  it('o fim muda com o resultado', async () => {
+    const { falaDoFim } = await import('../missaoDaArvore');
+    expect(falaDoFim(4, 4)).toContain('Gabaritou');
+    expect(falaDoFim(3, 4)).toContain('cumprida');
+    expect(falaDoFim(2, 4)).toContain('por pouco');
+    expect(falaDoFim(0, 4)).toContain('difícil');
+  });
+});

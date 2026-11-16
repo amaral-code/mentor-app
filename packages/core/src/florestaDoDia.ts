@@ -336,3 +336,22 @@ export function formasDaArvore(a: Pick<Arvore, 'especie' | 'estado' | 'alturaToc
   );
   return formas;
 }
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * Caminho de terra que liga o pé de uma árvore ao da seguinte, em curva
+ * (as árvores alternam de lado, então sai um "S" suave). Os pontos vêm da
+ * tela, em pixels; o web e o app desenham a mesma curva.
+ */
+export function caminhoEntreArvores(pontos: { x: number; y: number }[]): string {
+  if (pontos.length < 2) return '';
+  let d = `M${pontos[0].x} ${pontos[0].y}`;
+  for (let i = 1; i < pontos.length; i++) {
+    const a = pontos[i - 1];
+    const b = pontos[i];
+    const meio = (a.y + b.y) / 2;
+    d += ` C${a.x} ${meio} ${b.x} ${meio} ${b.x} ${b.y}`;
+  }
+  return d;
+}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -17,6 +17,7 @@ import type { MicroTask } from '@mentor/core/types';
 import {
   QUADRO_ARVORE,
   XP_DA_TAREFA,
+  caminhoEntreArvores,
   centroDaToca,
   duracaoDaFase,
   formasDaArvore,
@@ -40,6 +41,8 @@ import {
   SOBRE_O_TIPO,
   TIPO_DA_ESPECIE,
   acertos,
+  falaDeAbertura,
+  falaDoFim,
   avancar,
   materiaDaArvore,
   montarMissao,
@@ -241,6 +244,69 @@ function SaguiAterrissando() {
   );
 }
 
+const ICONE_DO_TIPO = { escolha: 'list', verdadeiroFalso: 'checkmark-done', umaOuOutra: 'git-compare' } as const;
+const TOM_DO_SELO = {
+  ceu: { fundo: '#E3EEFF', borda: '#C7DCFD', texto: '#1E56B8' },
+  violeta: { fundo: '#EDE9FE', borda: '#DDD6FE', texto: '#5B21B6' },
+  laranja: { fundo: '#FFEDD5', borda: '#FED7AA', texto: '#9A3412' },
+} as const;
+
+/** Selo do tipo de missão: cor e ícone por formato de árvore, e a matéria. */
+function SeloDoTipo({ especie, materia }: { especie: Arvore['especie']; materia: string }) {
+  const tipo = TIPO_DA_ESPECIE[especie];
+  const sobre = SOBRE_O_TIPO[tipo];
+  const tom = TOM_DO_SELO[sobre.tom];
+  return (
+    <View style={{ marginTop: 6, gap: 4 }}>
+      <View style={[estilos.seloTipo, { backgroundColor: tom.fundo, borderColor: tom.borda }]}>
+        <Ionicons name={ICONE_DO_TIPO[tipo]} size={12} color={tom.texto} />
+        <Texto style={{ fontSize: 11, fontWeight: '800', color: tom.texto }}>{sobre.nome}</Texto>
+      </View>
+      <Texto variante="legenda">{materia}</Texto>
+    </View>
+  );
+}
+
+/** Céu atrás da floresta: degradê, sol e nuvens. Só cenário. */
+function CeuDaFloresta({ largura, altura }: { largura: number; altura: number }) {
+  if (!largura || !altura) return null;
+  return (
+    <Svg pointerEvents="none" width={largura} height={altura} style={{ position: 'absolute', left: 0, top: 0 }}>
+      <Defs>
+        <LinearGradient id="ceuFloresta" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#E0F2FE" />
+          <Stop offset="0.3" stopColor="#F0F9FF" />
+          <Stop offset="0.72" stopColor="#F7FEE7" />
+          <Stop offset="1" stopColor="#DCFCE7" />
+        </LinearGradient>
+      </Defs>
+      <Rect x={0} y={0} width={largura} height={altura} rx={26} fill="url(#ceuFloresta)" />
+      <Circle cx={largura - 46} cy={40} r={20} fill="#FDE68A" />
+      <Circle cx={largura - 46} cy={40} r={30} fill="#FDE68A" opacity={0.35} />
+      <Ellipse cx={largura * 0.18} cy={40} rx={30} ry={11} fill="#FFFFFF" />
+      <Ellipse cx={largura * 0.24} cy={32} rx={19} ry={12} fill="#FFFFFF" />
+      <Ellipse cx={largura * 0.58} cy={70} rx={24} ry={8} fill="#FFFFFF" />
+    </Svg>
+  );
+}
+
+/** Estrela que sai do centro quando a missão é cumprida. */
+function EstrelaDeFesta({ angulo, atraso }: { angulo: number; atraso: number }) {
+  const k = useSharedValue(0);
+  useEffect(() => {
+    k.value = withSequence(withTiming(0, { duration: atraso }), withTiming(1, { duration: 1100, easing: Easing.out(Easing.quad) }));
+  }, [k, atraso]);
+  const estilo = useAnimatedStyle(() => ({
+    opacity: 1 - k.value,
+    transform: [{ translateX: Math.cos(angulo) * 120 * k.value }, { translateY: Math.sin(angulo) * 80 * k.value }, { scale: 0.3 + k.value * 0.7 }],
+  }));
+  return (
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 60, alignSelf: 'center' }, estilo]}>
+      <Ionicons name="star" size={18} color={cor.ambar500} />
+    </Animated.View>
+  );
+}
+
 /**
  * Missão de quiz dentro da árvore (ver o web): o formato da árvore decide
  * o tipo, a resposta vale no primeiro toque e 60% de acerto conclui.
@@ -262,6 +328,8 @@ function MissaoQuiz({
   const tipo = TIPO_DA_ESPECIE[arvore.especie];
   const sobre = SOBRE_O_TIPO[tipo];
   const [rodada, setRodada] = useState<Rodada>(() => novaRodada(montarMissao(tipo, materia)));
+  const [comecou, setComecou] = useState(false);
+  const reduzido = useReducedMotion();
   const concluiu = useRef(false);
   const item = rodada.itens[rodada.indice];
   const total = rodada.itens.length;
@@ -304,18 +372,51 @@ function MissaoQuiz({
     );
   }
 
+  if (!comecou && !rodada.terminou) {
+    return (
+      <View style={{ gap: 14 }}>
+        {selos}
+        {/* O sagui fala: o que vem e quanto precisa acertar. */}
+        <View style={estilos.balao}>
+          <View style={estilos.pontaBalao} />
+          <Texto negrito centro cor={cor.tinta900}>
+            {falaDeAbertura(tipo, materia, total)}
+          </Texto>
+          <Texto variante="legenda" centro>
+            {sobre.explicacao}
+          </Texto>
+        </View>
+        <Botao titulo="Começar" icone="play" variante="ambar" aoTocar={() => setComecou(true)} />
+      </View>
+    );
+  }
+
   if (rodada.terminou) {
     const ok = passou(rodada);
     return (
       <View style={{ gap: 12 }}>
         {selos}
-        <View style={[estilos.passo, ok ? estilos.passoFeito : null, { alignItems: 'center' }]} accessibilityLiveRegion="polite">
-          <Texto variante="numero">
+        <View style={[estilos.passo, ok ? estilos.passoFeito : null, { alignItems: 'center', gap: 4 }]} accessibilityLiveRegion="polite">
+          {ok && !reduzido ? Array.from({ length: 10 }, (_, i) => <EstrelaDeFesta key={i} angulo={(i / 10) * Math.PI * 2} atraso={(i % 3) * 50} />) : null}
+          <Image source={imagemSagui(ok ? 'pose_17' : 'meditando')} style={{ width: 96, height: 96, resizeMode: 'contain' }} accessible={false} />
+          <Texto variante="numero" style={{ fontSize: 36 }}>
             {certas} de {total}
           </Texto>
           <Texto negrito cor={ok ? sinal.acerto : '#78350F'} centro>
-            {ok ? `Missão cumprida! +${XP_DA_TAREFA} XP` : `Faltou pouco: precisa de ${precisaAcertar(total)} acertos.`}
+            {falaDoFim(certas, total)}
           </Texto>
+          {ok ? (
+            <View style={estilos.pilulaXp}>
+              <Ionicons name="flash" size={14} color="#451A03" />
+              <Texto negrito cor="#451A03">
+                +{XP_DA_TAREFA} XP
+              </Texto>
+            </View>
+          ) : (
+            <Texto variante="legenda" cor="#78350F">
+              Precisa de {precisaAcertar(total)} acertos.
+            </Texto>
+          )}
         </View>
         {ok ? (
           <Botao titulo="Sair e ir para a próxima árvore" aoTocar={aoSair} />
@@ -536,13 +637,56 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
   const alturaArvore = QUADRO_ARVORE.altura * escala;
   const arvoreDoSagui = floresta.arvores[indiceSagui];
 
+  /* Caminho de terra pelos pés das árvores, medido pelo layout de cada
+     linha (a árvore fica centrada na altura da linha, à esquerda ou à
+     direita conforme o lado). */
+  const [larguraLista, setLarguraLista] = useState(0);
+  const [alturaLista, setAlturaLista] = useState(0);
+  // O SVG precisa do tamanho em número: em porcentagem ele não cobria a
+  // área inteira no web do Expo.
+  const [tamanhoCena, setTamanhoCena] = useState({ w: 0, h: 0 });
+  const [linhas, setLinhas] = useState<Record<number, { y: number; altura: number }>>({});
+  const caminho = useMemo(() => {
+    if (!larguraLista) return '';
+    const pontos = floresta.arvores
+      .filter((a) => linhas[a.indice])
+      .map((a) => {
+        const l = linhas[a.indice];
+        const x = a.lado === 'esquerda' ? largura / 2 : larguraLista - largura / 2;
+        return { x, y: l.y + (l.altura - alturaArvore) / 2 + alturaArvore - 10 };
+      });
+    return pontos.length === floresta.arvores.length ? caminhoEntreArvores(pontos) : '';
+  }, [floresta.arvores, linhas, larguraLista, largura, alturaArvore]);
+
   return (
-    <View style={estilos.floresta} accessibilityRole="list">
+    <View style={estilos.cena} onLayout={(e) => setTamanhoCena({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      <CeuDaFloresta largura={tamanhoCena.w} altura={tamanhoCena.h} />
+      <View
+        style={estilos.floresta}
+        accessibilityRole="list"
+        onLayout={(e) => {
+          setLarguraLista(e.nativeEvent.layout.width);
+          setAlturaLista(e.nativeEvent.layout.height);
+        }}
+      >
+      {caminho ? (
+        <Svg pointerEvents="none" width={larguraLista} height={alturaLista} style={{ position: 'absolute', left: 0, top: 0 }}>
+          <Path d={caminho} fill="none" stroke="#E9D5B5" strokeWidth={22} strokeLinecap="round" />
+          <Path d={caminho} fill="none" stroke="#FFF7E8" strokeWidth={4} strokeLinecap="round" strokeDasharray="2 16" />
+        </Svg>
+      ) : null}
       {floresta.arvores.map((a) => {
         const comSagui = a.indice === indiceSagui;
         const toca = centroDaToca(a.alturaToca);
         return (
-          <View key={a.tarefa.id} style={[estilos.linha, { flexDirection: a.lado === 'esquerda' ? 'row' : 'row-reverse', zIndex: comSagui && fase !== 'pronto' ? 10 : 0 }]}>
+          <View
+            key={a.tarefa.id}
+            onLayout={(e) => {
+              const { y, height } = e.nativeEvent.layout;
+              setLinhas((atual) => ({ ...atual, [a.indice]: { y, altura: height } }));
+            }}
+            style={[estilos.linha, { flexDirection: a.lado === 'esquerda' ? 'row' : 'row-reverse', zIndex: comSagui && fase !== 'pronto' ? 10 : 0 }]}
+          >
             <ArvoreComZoom fase={fase} ativo={comSagui} origem={{ x: toca.x * escala, y: toca.y * escala }} largura={largura} altura={alturaArvore}>
               <Pressable
                 onPress={() => levarSaguiAte(a.indice)}
@@ -568,7 +712,13 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
                 </View>
               ) : null}
             </ArvoreComZoom>
-            <View style={{ flex: 1, alignItems: a.lado === 'esquerda' ? 'flex-start' : 'flex-end' }}>
+            <View
+              style={[
+                estilos.cartaoArvore,
+                comSagui && a.estado !== 'feita' ? estilos.cartaoDaVez : null,
+                { alignItems: a.lado === 'esquerda' ? 'flex-start' : 'flex-end' },
+              ]}
+            >
               <Texto variante="rotulo">Árvore {a.indice + 1}</Texto>
               <Texto
                 negrito
@@ -577,19 +727,26 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
               >
                 {a.tarefa.titulo}
               </Texto>
-              <Texto variante="legenda" style={{ textAlign: a.lado === 'esquerda' ? 'left' : 'right' }}>
-                {SOBRE_O_TIPO[TIPO_DA_ESPECIE[a.especie]].nome} · {materiaDe(a.indice)}
-              </Texto>
+              <SeloDoTipo especie={a.especie} materia={materiaDe(a.indice)} />
               {comSagui && a.estado !== 'feita' ? (
                 <Botao
-                  titulo="Iniciar missão"
+                  /* "Iniciar" e não "Iniciar missão": no cartão estreito do
+                     celular o texto quebrava em duas linhas dentro do botão.
+                     O leitor de tela ouve o nome inteiro. */
+                  titulo="Iniciar"
                   icone="play"
                   variante="ambar"
                   aoTocar={() => iniciarMissao(a.indice)}
                   desabilitado={fase === 'entrando' || fase === 'dentro'}
                   rotuloAcessivel={`Iniciar missão: ${a.tarefa.titulo}`}
-                  estilo={{ marginTop: 8 }}
+                  compacto
+                  estilo={{ marginTop: 8, alignSelf: 'stretch' }}
                 />
+              ) : null}
+              {a.estado === 'feita' ? (
+                <Texto variante="legenda" negrito cor={cor.esmeralda700}>
+                  Missão cumprida
+                </Texto>
               ) : null}
             </View>
           </View>
@@ -603,6 +760,7 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
         <Texto negrito cor={floresta.todasFeitas ? cor.ambar700 : cor.tinta500}>
           {floresta.todasFeitas ? 'Plano do dia completo!' : 'Termine as árvores para fechar o dia'}
         </Texto>
+      </View>
       </View>
 
       {fase === 'dentro' && arvoreDoSagui ? (
@@ -623,7 +781,35 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
 const TERRA = '#5A341A';
 
 const estilos = StyleSheet.create({
+  cena: { borderRadius: 28, borderWidth: 2, borderColor: '#E0F2FE', overflow: 'visible', paddingHorizontal: 10, paddingTop: 20, paddingBottom: 12 },
   floresta: { gap: 4, paddingVertical: 8, width: '100%', maxWidth: 480, alignSelf: 'center' },
+  cartaoArvore: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderRadius: raio.lg,
+    borderWidth: 2,
+    borderColor: cor.cinza200,
+    borderBottomWidth: 6,
+    borderBottomColor: cor.cinza300,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  cartaoDaVez: { borderColor: '#FCD34D', borderBottomColor: '#D97706' },
+  seloTipo: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
+  balao: { backgroundColor: cor.branco, borderRadius: raio.lg, borderWidth: 2, borderColor: '#FDE68A', padding: 14, gap: 4 },
+  pontaBalao: {
+    position: 'absolute',
+    top: -9,
+    alignSelf: 'center',
+    width: 16,
+    height: 16,
+    backgroundColor: cor.branco,
+    borderLeftWidth: 2,
+    borderTopWidth: 2,
+    borderColor: '#FDE68A',
+    transform: [{ rotate: '45deg' }],
+  },
+  pilulaXp: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FBBF24', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, marginTop: 6 },
   linha: { alignItems: 'center', gap: 12 },
   selo: {
     position: 'absolute',

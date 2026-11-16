@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, m, type TargetAndTransition, type Transition } from 'motion/react';
-import { Check, LogOut, Play, Trophy } from 'lucide-react';
+import { BadgeCheck, Check, ListChecks, LogOut, Play, Split, Star, Trophy, Zap } from 'lucide-react';
 import type { MicroTask } from '@mentor/core/types';
 import { acertoPorMateria } from '@mentor/core/painelAluno';
 import { useAppStore } from '@mentor/state/appStore';
 import {
   QUADRO_ARVORE,
   XP_DA_TAREFA,
+  caminhoEntreArvores,
   centroDaToca,
   duracaoDaFase,
   formasDaArvore,
@@ -31,6 +32,8 @@ import {
   SOBRE_O_TIPO,
   TIPO_DA_ESPECIE,
   acertos,
+  falaDeAbertura,
+  falaDoFim,
   avancar,
   materiaDaArvore,
   montarMissao,
@@ -187,6 +190,70 @@ function SaguiNoTronco({ fase, larguraArvore, alturaToca, reduzir, todasFeitas }
   );
 }
 
+/** Estrelas que saem do centro quando a missão é cumprida. */
+function Estrelas() {
+  const n = 10;
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute inset-0">
+      {Array.from({ length: n }, (_, i) => {
+        const ang = (i / n) * Math.PI * 2;
+        return (
+          <m.span
+            key={i}
+            className="absolute left-1/2 top-1/3 text-amber-400"
+            initial={{ x: 0, y: 0, scale: 0.2, opacity: 1 }}
+            animate={{ x: Math.cos(ang) * 130, y: Math.sin(ang) * 90, scale: 1, opacity: 0 }}
+            transition={{ duration: 1.1, ease: 'easeOut', delay: 0.05 * (i % 3) }}
+          >
+            <Star size={18} fill="currentColor" />
+          </m.span>
+        );
+      })}
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+const ICONE_DO_TIPO = { escolha: ListChecks, verdadeiroFalso: BadgeCheck, umaOuOutra: Split } as const;
+const CLASSE_DO_TOM = {
+  ceu: 'bg-ceu-100 text-ceu-700 border-ceu-200',
+  violeta: 'bg-violet-100 text-violet-800 border-violet-200',
+  laranja: 'bg-orange-100 text-orange-800 border-orange-200',
+} as const;
+
+/** Selo do tipo de missão: cor e ícone por formato de árvore, e a matéria. */
+function SeloDoTipo({ especie, materia, alinharDireita }: { especie: Arvore['especie']; materia: string; alinharDireita?: boolean }) {
+  const tipo = TIPO_DA_ESPECIE[especie];
+  const sobre = SOBRE_O_TIPO[tipo];
+  const Icone = ICONE_DO_TIPO[tipo];
+  return (
+    <p className={`mt-1.5 flex flex-wrap items-center gap-1.5 ${alinharDireita ? 'justify-end' : ''}`}>
+      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-extrabold ${CLASSE_DO_TOM[sobre.tom]}`}>
+        <Icone size={12} strokeWidth={3} aria-hidden="true" /> {sobre.nome}
+      </span>
+      <span className="text-[11px] font-bold text-slate-600">{materia}</span>
+    </p>
+  );
+}
+
+/** Céu atrás da floresta: sol e nuvens, só cenário. */
+function CenarioDoCeu() {
+  return (
+    <svg aria-hidden="true" className="absolute inset-x-0 top-0 w-full h-40 pointer-events-none" viewBox="0 0 400 160" preserveAspectRatio="xMidYMin slice">
+      <circle cx="350" cy="38" r="22" fill="#FDE68A" />
+      <circle cx="350" cy="38" r="32" fill="#FDE68A" opacity="0.35" />
+      <g fill="#FFFFFF" opacity="0.95">
+        <ellipse cx="70" cy="40" rx="34" ry="12" />
+        <ellipse cx="92" cy="32" rx="22" ry="14" />
+        <ellipse cx="56" cy="34" rx="16" ry="10" />
+        <ellipse cx="230" cy="70" rx="28" ry="9" />
+        <ellipse cx="246" cy="63" rx="16" ry="10" />
+      </g>
+    </svg>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 
 /**
@@ -213,6 +280,7 @@ function MissaoQuiz({
   const tipo = TIPO_DA_ESPECIE[arvore.especie];
   const sobre = SOBRE_O_TIPO[tipo];
   const [rodada, setRodada] = useState<Rodada>(() => novaRodada(montarMissao(tipo, materia)));
+  const [comecou, setComecou] = useState(false);
   const concluiu = useRef(false);
   const item = rodada.itens[rodada.indice];
   const total = rodada.itens.length;
@@ -247,18 +315,54 @@ function MissaoQuiz({
     );
   }
 
+  if (!comecou && !rodada.terminou) {
+    return (
+      <div className="space-y-4">
+        {cabecalho}
+        {/* O sagui fala: o que vem e quanto precisa acertar. */}
+        <m.div
+          initial={reduzir ? false : { opacity: 0, y: 10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: reduzir ? 0 : 0.95 }}
+          className="relative rounded-[20px] border-2 border-amber-200 bg-white p-4 text-center shadow-lip"
+        >
+          <span aria-hidden="true" className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-white border-l-2 border-t-2 border-amber-200" />
+          <p className="font-extrabold text-tinta-900 leading-relaxed">{falaDeAbertura(tipo, materia, total)}</p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{sobre.explicacao}</p>
+        </m.div>
+        <m.button
+          type="button"
+          onClick={() => setComecou(true)}
+          initial={reduzir ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: reduzir ? 0 : 1.1 }}
+          className="btn-ambar w-full h-14 uppercase text-base inline-flex items-center justify-center gap-2"
+        >
+          <Play size={18} fill="currentColor" /> Começar
+        </m.button>
+      </div>
+    );
+  }
+
   if (rodada.terminou) {
     const ok = passou(rodada);
     return (
       <m.div className="space-y-4 text-center" initial={reduzir ? false : { opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
         {cabecalho}
-        <div className={`rounded-[20px] border-2 p-5 ${ok ? 'bg-emerald-50 border-emerald-600' : 'bg-amber-50 border-amber-300'}`} role="status">
-          <p className="text-3xl font-black text-tinta-900 tabular-nums">
+        <div className={`relative rounded-[20px] border-2 p-5 ${ok ? 'bg-emerald-50 border-emerald-600' : 'bg-amber-50 border-amber-300'}`} role="status">
+          {ok && !reduzir && <Estrelas />}
+          <img src={`/mascot/512/${ok ? 'pose_17' : 'meditando'}.png`} alt="" width={96} height={96} className="relative w-24 h-24 mx-auto object-contain" />
+          <p className="relative text-4xl font-black text-tinta-900 tabular-nums">
             {certas} de {total}
           </p>
-          <p className={`mt-1 font-extrabold ${ok ? 'text-emerald-800' : 'text-amber-900'}`}>
-            {ok ? `Missão cumprida! +${XP_DA_TAREFA} XP` : `Faltou pouco: precisa de ${precisaAcertar(total)} acertos.`}
-          </p>
+          <p className={`relative mt-1 font-extrabold ${ok ? 'text-emerald-800' : 'text-amber-900'}`}>{falaDoFim(certas, total)}</p>
+          {ok ? (
+            <p className="relative mt-3 inline-flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 font-black text-amber-950">
+              <Zap size={16} fill="currentColor" /> +{XP_DA_TAREFA} XP
+            </p>
+          ) : (
+            <p className="relative mt-2 text-sm font-bold text-amber-900">Precisa de {precisaAcertar(total)} acertos.</p>
+          )}
         </div>
         {ok ? (
           <button type="button" onClick={onSair} className="btn-primary w-full h-12 uppercase">
@@ -299,13 +403,12 @@ function MissaoQuiz({
         key={item.id}
         initial={reduzir ? false : { opacity: 0, x: 24 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: rodada.indice === 0 && !reduzir ? 0.9 : 0 }}
         className="rounded-[20px] border-2 border-amber-200 bg-amber-50 p-4"
       >
         <p className="text-xs font-extrabold uppercase tracking-wide text-amber-800">
           Questão {rodada.indice + 1} de {total}
         </p>
-        <p className="mt-1 font-bold text-tinta-900 leading-relaxed">{item.enunciado}</p>
+        <p className="mt-1 text-lg font-extrabold text-tinta-900 leading-snug">{item.enunciado}</p>
         {item.respostaProposta && (
           <p className="mt-3 rounded-xl bg-white border-2 border-dashed border-amber-300 px-3 py-2 font-extrabold text-tinta-900">
             Resposta proposta: {item.respostaProposta}
@@ -525,21 +628,60 @@ export function FlorestaDoDia({
   }
 
   const sair = useCallback(() => disparar('fechar'), [disparar]);
+
+  /* Pés das árvores medidos na tela, para o caminho de terra passar por
+     eles. Mede de novo quando a lista muda de tamanho (fonte maior, giro
+     do tablet, tarefa nova). */
+  const listaRef = useRef<HTMLOListElement>(null);
+  const arvoreRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [caminho, setCaminho] = useState('');
+  useEffect(() => {
+    const lista = listaRef.current;
+    if (!lista) return;
+    const medir = () => {
+      const base = lista.getBoundingClientRect();
+      const pontos = arvoreRefs.current
+        .slice(0, floresta.arvores.length)
+        .filter((el): el is HTMLDivElement => !!el)
+        .map((el) => ({ x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight - 10 }));
+      if (base.width > 0) setCaminho(caminhoEntreArvores(pontos));
+    };
+    medir();
+    if (typeof ResizeObserver === 'undefined') return;
+    const obs = new ResizeObserver(medir);
+    obs.observe(lista);
+    return () => obs.disconnect();
+  }, [floresta.arvores.length, largura]);
   const arvoreDoSagui = floresta.arvores[indiceSagui];
   const alturaArvore = (largura * QUADRO_ARVORE.altura) / QUADRO_ARVORE.largura;
 
   return (
-    <div className="relative py-2">
-      <ol className="relative max-w-md mx-auto flex flex-col gap-1">
+    <div
+      className="relative rounded-[28px] border-2 border-sky-100 px-3 pt-6 pb-4"
+      style={{ background: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 30%, #F7FEE7 72%, #DCFCE7 100%)' }}
+    >
+      <CenarioDoCeu />
+      <ol ref={listaRef} className="relative max-w-md mx-auto flex flex-col gap-1">
+        {/* Caminho de terra entre os pés das árvores, atrás de tudo. */}
+        {caminho && (
+          <svg aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none overflow-visible" style={{ zIndex: 0 }}>
+            <path d={caminho} fill="none" stroke="#E9D5B5" strokeWidth={22} strokeLinecap="round" />
+            <path d={caminho} fill="none" stroke="#D6B98F" strokeWidth={22} strokeLinecap="round" strokeDasharray="1 0" opacity={0.35} />
+            <path d={caminho} fill="none" stroke="#FFF7E8" strokeWidth={4} strokeLinecap="round" strokeDasharray="2 16" />
+          </svg>
+        )}
         {floresta.arvores.map((a) => {
           const comSagui = a.indice === indiceSagui;
           const esquerda = a.lado === 'esquerda';
           const toca = centroDaToca(a.alturaToca);
           const escala = largura / QUADRO_ARVORE.largura;
           return (
-            <li key={a.tarefa.id} className={`relative flex items-center gap-3 ${esquerda ? 'flex-row' : 'flex-row-reverse'}`}>
+            <li key={a.tarefa.id} className={`flex items-center gap-3 ${esquerda ? 'flex-row' : 'flex-row-reverse'}`}>
               <m.div
-                className={`relative shrink-0 ${comSagui && (fase === 'entrando' || fase === 'dentro' || fase === 'saindo') ? 'z-30' : ''}`}
+                ref={(el: HTMLDivElement | null) => {
+                  arvoreRefs.current[a.indice] = el;
+                }}
+                className={`relative shrink-0 ${comSagui && (fase === 'entrando' || fase === 'dentro' || fase === 'saindo') ? 'z-30' : 'z-[1]'}`}
                 style={{ width: largura, height: alturaArvore, transformOrigin: `${toca.x * escala}px ${toca.y * escala}px` }}
                 /* Câmera: depois do mergulho, a árvore cresce em volta do
                    buraco até o escuro da toca encher a tela; na saída,
@@ -600,23 +742,26 @@ export function FlorestaDoDia({
                 )}
               </m.div>
 
-              <div className={`flex-1 min-w-0 ${esquerda ? 'text-left' : 'text-right'}`}>
+              <div
+                className={`relative z-[2] flex-1 min-w-0 rounded-2xl border-2 bg-white/95 px-3 py-2.5 ${
+                  comSagui && a.estado !== 'feita' ? 'border-amber-300 shadow-lip-ambar' : 'border-slate-200 shadow-lip'
+                } ${esquerda ? 'text-left' : 'text-right'}`}
+              >
                 <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Árvore {a.indice + 1}</p>
                 <p className={`font-extrabold leading-tight ${a.estado === 'feita' ? 'text-slate-400 line-through' : 'text-tinta-900'}`}>{a.tarefa.titulo}</p>
-                <p className="mt-0.5 text-xs font-bold text-slate-600">
-                  {SOBRE_O_TIPO[TIPO_DA_ESPECIE[a.especie]].nome} · {materiaDe(a.indice)}
-                </p>
+                <SeloDoTipo especie={a.especie} materia={materiaDe(a.indice)} alinharDireita={!esquerda} />
                 {comSagui && a.estado !== 'feita' && (
                   <button
                     type="button"
                     onClick={() => iniciarMissao(a.indice)}
                     disabled={fase === 'entrando' || fase === 'dentro'}
-                    className="btn-ambar mt-2 h-12 px-5 uppercase text-sm inline-flex items-center gap-1.5 motion-safe:animate-float-suave disabled:opacity-60"
+                    className="btn-ambar mt-2.5 w-full h-12 px-4 uppercase text-sm inline-flex items-center justify-center gap-1.5 disabled:opacity-60"
                     aria-label={`Iniciar missão: ${a.tarefa.titulo}`}
                   >
                     <Play size={16} fill="currentColor" /> Iniciar missão
                   </button>
                 )}
+                {a.estado === 'feita' && <p className="mt-1 text-xs font-extrabold text-emerald-700">Missão cumprida</p>}
               </div>
             </li>
           );
