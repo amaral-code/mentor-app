@@ -145,7 +145,7 @@ export function correctEssay(text: string, tema?: string): EssayCorrection {
     if (!hasFinalidade) pontosMelhorar.push('Apontar a finalidade/efeito da proposta de intervenção');
   }
 
-  if (wordCount < 150) pontosMelhorar.push('Texto muito curto - mínimo recomendado: 150 palavras');
+  if (wordCount < 150) pontosMelhorar.push('Texto muito curto. Mínimo recomendado: 150 palavras');
 
   return {
     competencia1: Math.round(c1),
@@ -178,6 +178,6 @@ export async function correctEssayAI(text: string, apiKey: string, tema?: string
     };
   } catch {
     const fallback = correctEssay(text, tema);
-    return { ...fallback, pontosFortes: ['Correção IA não disponível - usado fallback offline', ...fallback.pontosFortes] };
+    return { ...fallback, pontosFortes: ['Correção por IA indisponível. Usamos a correção offline', ...fallback.pontosFortes] };
   }
 }

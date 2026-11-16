@@ -128,16 +128,16 @@ export const SYSTEM_PROMPT_DESCOMPRESSAO = [
   'Seu papel e reconhecer esforco real com base em dados de bem-estar, nao avaliar desempenho.',
   '',
   'Sempre:',
-  '- Escreva UM paragrafo, no maximo 4 frases, em portugues brasileiro.',
-  '- Cite pelo menos um numero concreto da semana (dias, minutos, horas).',
-  '- Fale direto com a pessoa ("voce"), em tom calmo e adulto.',
+  '• Escreva UM paragrafo, no maximo 4 frases, em portugues brasileiro.',
+  '• Cite pelo menos um numero concreto da semana (dias, minutos, horas).',
+  '• Fale direto com a pessoa ("voce"), em tom calmo e adulto.',
   '',
   'Nunca:',
-  '- Cobrar, sugerir meta, dizer "mas" seguido de recomendacao.',
-  '- Comparar com outros alunos ou com semanas anteriores em tom de queda.',
-  '- Usar emoji, exclamacao dupla, "parabens!!" ou linguagem de coach.',
-  '- Prometer aprovacao, nota ou resultado futuro.',
-  '- Mencionar que voce e uma IA ou que recebeu dados.',
+  '• Cobrar, sugerir meta, dizer "mas" seguido de recomendacao.',
+  '• Comparar com outros alunos ou com semanas anteriores em tom de queda.',
+  '• Usar emoji, exclamacao dupla, "parabens!!" ou linguagem de coach.',
+  '• Prometer aprovacao, nota ou resultado futuro.',
+  '• Mencionar que voce e uma IA ou que recebeu dados.',
   '',
   'Se a semana teve pouca atividade, valide o que existiu sem exagerar: uma hora de estudo depois de um dia de trabalho e uma hora real.',
 ].join('\n');
@@ -177,7 +177,7 @@ export function textoLocalDescompressao(m: MetricasDescompressao, primeiroNome?:
   const nome = primeiroNome ? `${primeiroNome}, ` : '';
 
   if (m.diasAtivos === 0) {
-    return `${nome}esta semana o app ficou parado, e tudo bem - semana cheia acontece. A conta continua aqui do jeito que voce deixou, com ${m.streak} dia(s) de sequencia guardados. Quando der, dez minutos ja recomecam a curva.`;
+    return `${nome}esta semana o app ficou parado, e tudo bem, semana cheia acontece. A conta continua aqui do jeito que voce deixou, com ${m.streak} dia(s) de sequencia guardados. Quando der, dez minutos ja recomecam a curva.`;
   }
 
   const partes: string[] = [];
@@ -188,7 +188,7 @@ export function textoLocalDescompressao(m: MetricasDescompressao, primeiroNome?:
 
   if (m.minutosOffline >= 30) {
     partes.push(
-      `Foram ${m.minutosOffline} minutos de tela bloqueada no modo foco - esse tempo longe do celular e o que faz o resto render.`,
+      `Foram ${m.minutosOffline} minutos de tela bloqueada no modo foco, e esse tempo longe do celular e o que faz o resto render.`,
     );
   } else if (m.minutosFoco >= 25) {
     partes.push(`Deu para somar ${m.minutosFoco} minutos em ciclos de foco, o que ja e um bloco inteiro de concentracao.`);
@@ -218,7 +218,7 @@ export function destaquesDaSemana(m: MetricasDescompressao): { rotulo: string; v
     },
     {
       rotulo: 'Sono medio',
-      valor: m.horasSonoMedia ? `${m.horasSonoMedia}h` : '-',
+      valor: m.horasSonoMedia ? `${m.horasSonoMedia}h` : 'sem registro',
       nota: m.horasSonoMedia >= 7 ? 'faixa saudavel' : 'da para melhorar sem culpa',
     },
     {

@@ -137,6 +137,6 @@ describe('formatacao', () => {
     expect(tempoAte('2026-03-10T10:30:00', AGORA)).toBe('em 30 min');
     expect(tempoAte('2026-03-10T14:00:00', AGORA)).toBe('em 4h');
     expect(tempoAte('2026-03-11T12:00:00', AGORA)).toBe('amanha');
-    expect(tempoAte('2026-03-09T12:00:00', AGORA)).toBe('ja passou');
+    expect(tempoAte('2026-03-09T12:00:00', AGORA)).toBe('já passou');
   });
 });

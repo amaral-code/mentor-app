@@ -12,7 +12,6 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "check:secrets": "node scripts/verificar-segredos.mjs",
-    "build:staging": "tsc -b && vite build --mode staging",
     "deploy:worker:staging": "npx --yes wrangler@4 deploy --env staging",
     "deploy:worker:prod": "npx --yes wrangler@4 deploy --env production",
     "db:migrate": "bash scripts/migrar.sh"

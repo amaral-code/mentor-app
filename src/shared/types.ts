@@ -41,6 +41,11 @@ export interface Session {
   tempoDiarioEstudo?: string | null;
   /** Turno principal do passo 3 ("manha" | "tarde" | "noite"). */
   turnoEstudo?: string | null;
+  /**
+   * Regra dos 16 anos do consentimento (migration 024). Nulo = idade
+   * desconhecida, e o app trata como menor.
+   */
+  dataNascimento?: string | null;
 }
 
 export type RolePage = 'dashboard' | 'educator-dashboard' | 'parent-dashboard';
@@ -335,6 +340,8 @@ export interface CommunityChatFilter {
 export type TabId =
   | 'dashboard' | 'chat' | 'essay' | 'notebook' | 'quiz' | 'profile' | 'ranking'
   | 'foco' | 'comunidade' | 'store'
+  // Sala de Foco (body doubling, migration 023)
+  | 'sala'
   // Modulo de bem-estar (migracoes 010/011)
   | 'escudo' | 'audio' | 'calendario' | 'cuidado'
   // Agenda de consultas com psicologos (marketplace)
@@ -365,6 +372,8 @@ export interface Psicologo {
   fotoUrl?: string | null;
   aceitaNovos: boolean;
   notaMedia: number;
+  /** Zero = nunca avaliado. Sem isto a média padrão (5,0) parecia elogio. */
+  totalAvaliacoes: number;
   totalAtendimentos: number;
 }
 
@@ -430,6 +439,22 @@ export interface VinculoResponsavel {
   parentesco: string;
   status: StatusVinculo;
   criadoEm: string;
+}
+
+/**
+ * Linha de `meus_responsaveis()`: quem acompanha o aluno logado.
+ *
+ * Traz nome e email de proposito - quem ja tem acesso aos dados do aluno
+ * nao pode ser anonimo para ele.
+ */
+export interface ResponsavelVinculado {
+  /** Id do VINCULO (nao do responsavel): e o que `revogar_vinculo` recebe. */
+  id: string;
+  nome: string;
+  email: string;
+  parentesco: string;
+  status: string;
+  desde: string | null;
 }
 
 export interface Notificacao {

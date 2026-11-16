@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div
           className="min-h-screen flex items-center justify-center p-4"
-          style={{ background: '#0b1120' }}
+          style={{ background: '#ffffff' }}
           role="alert"
         >
           <div className="w-full max-w-sm glass rounded-2xl p-7 text-center animate-fade-up">
@@ -59,10 +59,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className="w-24 h-24 object-contain mx-auto mb-4"
             />
-            <h1 className="text-lg font-extrabold text-white">
+            <h1 className="text-lg font-extrabold text-tinta-900">
               O sagui tropeçou aqui
             </h1>
-            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+            <p className="text-sm text-slate-500 mt-2 leading-relaxed">
               Esta parte travou, mas seus dados estão salvos. Recarregue para
               voltar ao normal.
             </p>

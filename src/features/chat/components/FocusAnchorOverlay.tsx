@@ -38,17 +38,17 @@ export function FocusAnchorOverlay({ open, onClose }: Props) {
       aria-label="Pomodoro de 25 minutos"
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 p-6 text-center"
     >
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-300">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
         <BookOpen size={24} />
       </span>
-      <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-300">
+      <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-700">
         Guarde o celular e foque no caderno. Eu fico aqui marcando o tempo.
       </p>
-      <p className="mt-6 font-mono text-6xl font-black text-white tabular-nums" aria-live="off">
+      <p className="mt-6 font-mono text-6xl font-black text-tinta-900 tabular-nums" aria-live="off">
         {mm}:{ss}
       </p>
       <div
-        className="mt-6 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/10"
+        className="mt-6 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-100"
         role="progressbar"
         aria-valuenow={Math.round(progresso * 100)}
         aria-valuemin={0}
@@ -65,7 +65,7 @@ export function FocusAnchorOverlay({ open, onClose }: Props) {
       </p>
       <button
         onClick={onClose}
-        className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-300 transition-all hover:bg-white/10 active:scale-95"
+        className="mt-8 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 active:scale-95"
       >
         <X size={15} />
         Cancelar

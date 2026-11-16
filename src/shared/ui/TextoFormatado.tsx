@@ -21,14 +21,14 @@ function formatarLinha(linha: string, chave: string): ReactNode {
   return partes.map((parte, i) => {
     const k = `${chave}-${i}`;
     if (parte.startsWith('**') && parte.endsWith('**')) {
-      return <strong key={k} className="font-semibold text-white">{parte.slice(2, -2)}</strong>;
+      return <strong key={k} className="font-extrabold">{parte.slice(2, -2)}</strong>;
     }
     if (parte.startsWith('*') && parte.endsWith('*')) {
       return <em key={k}>{parte.slice(1, -1)}</em>;
     }
     if (parte.startsWith('`') && parte.endsWith('`')) {
       return (
-        <code key={k} className="px-1 py-0.5 rounded bg-white/10 text-[0.92em] font-mono">
+        <code key={k} className="px-1 py-0.5 rounded bg-slate-100 text-[0.92em] font-mono">
           {parte.slice(1, -1)}
         </code>
       );

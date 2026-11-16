@@ -18,6 +18,17 @@ const AGENDAMENTO = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 const USUARIO = '11111111-2222-3333-4444-555555555555';
 
 const ENV = {
+  /*
+   * Provedor DECLARADO de proposito.
+   *
+   * Os testes deste arquivo exercitam os caminhos do Gemini (ferramentas
+   * de busca, badges de fonte, lista de modelos permitidos) e antes
+   * dependiam de o padrao do worker ser Gemini. O padrao virou DeepSeek -
+   * o mesmo que o wrangler.toml, o README e o api/config.js sempre
+   * declararam - entao o provedor passa a ser dito aqui em vez de
+   * herdado. O que cada teste prova continua identico.
+   */
+  AI_PROVIDER: 'gemini',
   GEMINI_API_KEY: 'chave-gemini',
   SUPABASE_URL: 'https://projeto.supabase.co',
   SUPABASE_SERVICE_KEY: 'service-role-secreta',

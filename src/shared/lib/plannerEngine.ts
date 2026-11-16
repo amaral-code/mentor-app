@@ -98,12 +98,12 @@ const STRATEGIES: Strategy[] = [
       },
       {
         titulo: 'Meta Ridícula',
-        descricao: 'Estude por apenas 2 minutos - depois pode parar se quiser',
+        descricao: 'Estude por apenas 2 minutos. Depois pode parar, se quiser',
         icon: 'trofeu',
       },
       {
         titulo: 'Registre o Progresso',
-        descricao: 'Tire print do que já estudou esta semana - você fez mais do que lembra',
+        descricao: 'Tire print do que já estudou esta semana: você fez mais do que lembra',
         icon: 'brilho',
       },
     ],

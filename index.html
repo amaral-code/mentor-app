@@ -3,15 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <!--
-      Viewport travado no mobile: sem maximum-scale/user-scalable=no, o
-      duplo toque da zoom e o Safari impõe o atraso de 300ms no clique
-      (botao "morto"). viewport-fit=cover estende sob o notch/Dynamic
-      Island; as safe-areas ja sao tratadas nas classes safe-area-*.
-      Nota de acessibilidade: o zoom por pinca e compensado pelo controle
-      de tamanho de fonte em Perfil > Acessibilidade (aplicado antes da
-      primeira pintura em main.tsx).
+      O zoom por pinca fica LIBERADO.
+
+      Antes havia `maximum-scale=1.0, user-scalable=no` aqui, para evitar o
+      atraso de 300ms no clique ("botao morto"). Essa premissa envelheceu:
+      os navegadores moveis removeram esse atraso quando a pagina declara
+      `width=device-width` - Chrome desde 2013, Safari desde o iOS 9.3.
+      Ou seja, o bloqueio nao comprava mais nada, e custava caro.
+
+      Custava porque travar o zoom e falha de acessibilidade (WCAG 1.4.4):
+      quem enxerga pouco perde o unico recurso universal de ampliacao. O
+      controle de fonte em Perfil > Acessibilidade nao substitui: ele
+      aumenta TEXTO, e nada resolve para ampliar um grafico do painel ou a
+      foto da redacao manuscrita - justamente o conteudo que mais pede
+      aproximacao neste app.
+
+      viewport-fit=cover estende a area util sob o notch/Dynamic Island. Em
+      troca, o respiro precisa vir das safe-areas: classes safe-area-*, e
+      `env(safe-area-inset-*)` no respiro do <main>, no Modal e na altura do
+      Mentor. Sem este cover, aqueles env() valeriam zero.
     -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!--
       Content Security Policy.
@@ -54,14 +66,14 @@
       Um @import dentro da folha de estilo so comeca a baixar depois que o
       CSS chega: e um round-trip encadeado que atrasa a primeira pintura.
       Com preconnect o handshake acontece em paralelo, e display=swap deixa
-      o texto aparecer na fonte do sistema enquanto a Plus Jakarta Sans
-      carrega. JetBrains Mono cobre trechos de codigo e gabaritos.
+      o texto aparecer na fonte do sistema enquanto a Nunito carrega
+      (visual lúdico: redonda e grossa, no lugar da Plus Jakarta Sans). JetBrains Mono cobre trechos de codigo e gabaritos.
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
     />
     <title>Midnight Mentor: Mentor ENEM</title>
 
@@ -74,20 +86,20 @@
     <link
       rel="icon"
       type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b1120'/%3E%3Cpath d='M21.5 20.2a7.2 7.2 0 0 1-9.7-9.7 7.6 7.6 0 1 0 9.7 9.7z' fill='%23f59e0b'/%3E%3Ccircle cx='23' cy='9.5' r='1.3' fill='%23fbbf24'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232A3B63'/%3E%3Cpath d='M21.5 20.2a7.2 7.2 0 0 1-9.7-9.7 7.6 7.6 0 1 0 9.7 9.7z' fill='%23f59e0b'/%3E%3Ccircle cx='23' cy='9.5' r='1.3' fill='%23fbbf24'/%3E%3C/svg%3E"
     />
     <!--
       PWA (equivale ao metadata do layout.tsx no Next.js: aqui o <head>
       vive no index.html, unica pagina do SPA).
 
       manifest.json + theme-color + apple-touch-icon. O status bar
-      translucido combina com o fundo midnight (#020617) em fullscreen.
+      padrao (texto escuro) combina com o fundo branco do visual ludico.
     -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#020617" />
+    <meta name="theme-color" content="#FFFFFF" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Mentor" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   </head>

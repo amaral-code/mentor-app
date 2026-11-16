@@ -71,7 +71,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden" style={{ background: 'rgba(11, 17, 32, 0.72)', backdropFilter: 'blur(10px)' }}>
+    <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden" style={{ background: 'rgba(11, 15, 25, 0.45)', backdropFilter: 'blur(10px)' }}>
       {/* Brilho ambiente esmeralda */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -87,7 +87,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
           speech={false}
           message=""
         />
-        <p className="text-xs text-emerald-300/80 tracking-widest uppercase font-semibold">Meditação guiada</p>
+        <p className="text-xs text-emerald-600 tracking-widest uppercase font-semibold">Meditação guiada</p>
       </div>
 
       {/* Coluna direita: guia + círculo de respiração + timer */}
@@ -99,8 +99,8 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
             style={ringStyle}
           />
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border border-emerald-400/20 flex flex-col items-center justify-center">
-            <span className="text-3xl font-extrabold tabular-nums text-white">{remaining}s</span>
-            <span className="text-[10px] text-emerald-300/70 mt-1 tracking-wider uppercase">{Math.round(progress * 100)}%</span>
+            <span className="text-3xl font-extrabold tabular-nums text-tinta-900">{remaining}s</span>
+            <span className="text-[10px] text-emerald-600 mt-1 tracking-wider uppercase">{Math.round(progress * 100)}%</span>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
             <span
               key={p}
               className={`mm-breath-phase text-xs md:text-sm font-bold tracking-widest uppercase px-3 py-1.5 rounded-full ${
-                i === phase ? 'text-emerald-300 bg-emerald-500/15 border border-emerald-400/30' : 'text-gray-600 border border-white/5'
+                i === phase ? 'text-emerald-600 bg-emerald-500/15 border border-emerald-400/30' : 'text-slate-400 border border-slate-200'
               }`}
             >
               {p === 'INSPIRA' ? ' Inspira' : p === 'EXPIRA' ? ' Expira' : p}
@@ -119,19 +119,19 @@ export function MeditationOverlay({ open, onClose, onComplete, durationSec = DEF
         </div>
 
         {/* Barra de progresso da sessão */}
-        <div className="w-64 h-1.5 rounded-full bg-white/5 overflow-hidden">
+        <div className="w-64 h-1.5 rounded-full bg-slate-50 overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-[width] duration-300 ease-linear"
             style={{ width: `${progress * 100}%` }}
           />
         </div>
 
-        <p className="text-xs text-gray-500 max-w-xs leading-relaxed"> Inspire pelo nariz em 4s, segure, e expire pela boca em 4s.
+        <p className="text-xs text-slate-500 max-w-xs leading-relaxed"> Inspire pelo nariz em 4s, segure, e expire pela boca em 4s.
           Deixe o sagui te guiar no ritmo da respiração. 
         </p>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="btn-ghost text-xs text-gray-400 hover:text-gray-200"> Sair
+          <button onClick={onClose} className="btn-ghost text-xs text-slate-600 hover:text-tinta-700"> Sair
           </button>
           <button
             onClick={() => { completedRef.current = true; onComplete(remaining); }}

@@ -3,7 +3,6 @@ import { LazyMotion } from 'motion/react';
 import { useAppStore, persistir } from './stores/appStore';
 import { userRepository } from './shared/storage/UserRepository';
 import { supabaseRepository } from './shared/storage/SupabaseRepository';
-import { isSupabaseConfigured } from './shared/lib/supabase';
 import { comTimeout, TIMEOUT_BOOT_MS } from './shared/lib/comTimeout';
 import { safeGet } from './shared/lib/safeStorage';
 import { AuthPage } from './features/auth/AuthPage';
@@ -20,6 +19,9 @@ import { PageSkeleton } from './shared/ui/Skeleton';
 const EducatorPage = lazy(() =>
   import('./features/educator/EducatorPage').then((m) => ({ default: m.EducatorPage })),
 );
+const ProfessorPage = lazy(() =>
+  import('./features/educator/ProfessorPage').then((m) => ({ default: m.ProfessorPage })),
+);
 const ParentPage = lazy(() =>
   import('./features/parent/ParentPage').then((m) => ({ default: m.ParentPage })),
 );
@@ -31,11 +33,11 @@ import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
+import { precisaOnboarding } from './shared/lib/onboardingLocal';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
 import { mascotStore } from './stores/mascotStore';
-import { GamificationState, ChatPersona } from './shared/types';
-import { getToday } from './shared/lib/utils';
+import { getToday, proximoStreak } from './shared/lib/utils';
 
 /*
  * Carregamento tardio das features de animação.
@@ -73,11 +75,13 @@ export default function App() {
   // precisam dela, e ela so muda em ganho de XP — nao a cada mensagem.
   const gamification = useAppStore((s) => s.gamification);
   const session = useAppStore((s) => s.session);
-  const logs = useAppStore((s) => s.logs);
   // Assinatura minima do store de bem-estar: so o que dispara o efeito
   // do relatorio semanal, para nao re-renderizar o App a cada telemetria.
   const relatoriosCarregados = useBemEstarStore((s) => s.carregado);
   const prevLevel = useRef(gamification.level);
+  /* Qual usuario ja teve os dados carregados. Evita refazer o boot a
+     cada TOKEN_REFRESHED (ou seja, a cada volta para a aba). */
+  const uidCarregadoRef = useRef<string | null>(null);
   const [levelUp, setLevelUp] = useState<number | null>(null);
 
   /**
@@ -186,6 +190,7 @@ export default function App() {
     // interno vira null = tela de login), entao este then e seguro.
     userRepository.getSession().then((s) => {
       if (s) {
+        uidCarregadoRef.current = s.uid;
         setSession(s);
         /*
          * Se a carga inicial falhar, o app abre com anotacoes, XP e
@@ -203,8 +208,28 @@ export default function App() {
       }
     });
 
-    // Login/logout/refresh, inclusive vindos de outra aba
+    /*
+     * Login/logout/refresh, inclusive vindos de outra aba.
+     *
+     * SO REAGE A TROCA DE USUARIO.
+     *
+     * O Supabase dispara este callback tambem em TOKEN_REFRESHED, que
+     * acontece sozinho e, na pratica, toda vez que a aba volta a ter
+     * foco. Sem o guarda de uid, cada volta para a aba custava:
+     *
+     *   1. as 11 consultas do boot outra vez, sem nada ter mudado;
+     *   2. um setSession com o perfil relido do banco - que SOBRESCREVIA
+     *      o estado local. Era isso que devolvia o aluno ao wizard de
+     *      onboarding quando o banco nao conseguia guardar a flag.
+     *
+     * Mesmo usuario = nada mudou = nada a refazer. Trocou de usuario
+     * (login, logout, outra conta em outra aba), recarrega tudo.
+     */
     const cancelar = userRepository.onAuthChange((s) => {
+      const uidNovo = s?.uid ?? null;
+      if (uidNovo !== null && uidNovo === uidCarregadoRef.current) return;
+      uidCarregadoRef.current = uidNovo;
+
       setSession(s);
       if (s) {
         hidratarCache({ perfil: { uid: s.uid, nome: s.nome, email: s.email, escolaId: s.escolaId ?? undefined, turmaId: s.turmaId ?? undefined } });
@@ -223,7 +248,10 @@ export default function App() {
    */
   useEffect(() => {
     // Precedencia: chave digitada em Perfil > IA (localStorage) vence o
-    // padrao do ambiente (VITE_GEMINI_API_KEY no .env). Sem nenhuma, a
+    // padrao do build (VITE_GEMINI_API_KEY). Este e o unico VITE_* de
+    // chave que sobrou: e a chave PESSOAL do usuario para o modo Gemini
+    // direto, sem back-end. A chave do servidor (GEMINI_API_KEY, sem
+    // prefixo) vive so dentro de /api e nunca chega aqui. Sem nenhuma, a
     // correcao de redacao pede a chave em vez de falhar muda.
     const savedApiKey = safeGet('mm_api_key');
     const envApiKey = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim();
@@ -231,24 +259,31 @@ export default function App() {
     else if (envApiKey) setApiKey(envApiKey);
   }, []);
 
-  // Streak check (only for students)
+  /*
+   * Streak diário (só aluno).
+   *
+   * As dependências precisam incluir os campos LIDOS. Sem elas o efeito
+   * rodava uma única vez, no instante em que `isAuthenticated` vira true —
+   * ou seja, ANTES de `carregarDados` trazer a gamificação do servidor.
+   * Como o padrão de `lastAccessDate` já é hoje, a comparação dava igual,
+   * o efeito não fazia nada e nunca mais rodava: o streak jamais avançava
+   * de um dia para o outro, por mais que o aluno entrasse todo dia.
+   *
+   * Com as deps, o efeito roda de novo quando o valor real chega e faz a
+   * conta certa. Não há laço: a gravação deixa `lastAccessDate` igual a
+   * hoje, e a reexecução seguinte cai no `if` e para.
+   */
   useEffect(() => {
     if (!isAuthenticated || userRole !== 'student') return;
     const today = getToday();
     const lastAccess = gamification.lastAccessDate;
-    let streak = gamification.streak;
-    if (lastAccess !== today) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-      if (lastAccess === yesterdayStr) {
-        streak = gamification.streak + 1;
-      } else {
-        streak = 1;
-      }
-      updateGamification({ lastAccessDate: today, streak });
-    }
-  }, [isAuthenticated, userRole]);
+    if (lastAccess === today) return;
+
+    updateGamification({
+      lastAccessDate: today,
+      streak: proximoStreak(lastAccess, gamification.streak),
+    });
+  }, [isAuthenticated, userRole, gamification.lastAccessDate, gamification.streak, updateGamification]);
 
   /*
    * Relatorio de descompressao: abre sozinho na sexta.
@@ -319,7 +354,8 @@ export default function App() {
   // Primeiro acesso: wizard exclusivo em tela cheia. Sem sidebar, sem
   // painel, sem dados — o recorrente (flag true) cai direto na interface
   // padrão abaixo. A troca de senha vem antes por segurança.
-  if (session && !session.onboardingCompleted) {
+  // Só para estudante: ver `precisaOnboarding`.
+  if (precisaOnboarding(session)) {
     return (
       <ErrorBoundary nome="onboarding">
         <OnboardingFlow />
@@ -342,7 +378,10 @@ export default function App() {
             </div>
           }
         >
-          <EducatorPage />
+          {/* Secretaria e professor tinham a MESMA tela. O professor via
+              upload de planilha de matricula e troca de codigo, coisas
+              que o servidor nem deixa ele fazer. Cada um tem a sua. */}
+          {userRole === 'teacher' ? <ProfessorPage /> : <EducatorPage />}
         </Suspense>
         <Toast />
       </LazyMotion>

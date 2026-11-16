@@ -1,12 +1,17 @@
 import { ChatPersona, Dificuldade, QuizQuestion } from '../types';
-import { montarBlocoAntirrepeticao } from './quizHistory';
+import { montarBlocoAntirrepeticao, hashEnunciado } from './quizHistory';
+import {
+  QUIZ_LOTES_SIMULTANEOS,
+  emParalelo,
+  objetosJsonCompletos,
+  planoDeLotes,
+  tokensParaLote,
+} from './quizLotes';
 import { StudentMonthlyRecord } from './dropoutRisk';
 import { promptRoteiroAudio, montarPedidoTTS } from './audioPills';
 import { SYSTEM_PROMPT_DESCOMPRESSAO, promptDescompressao } from './decompressionReport';
 import type { MetricasDescompressao } from '../types';
 import {
-  AI_MODEL,
-  AI_PROVIDER,
   DEEPSEEK_DEV_PROXY_PATH,
   DEEPSEEK_TIMEOUT_MS,
   GEMINI_CHAT_CONFIG,
@@ -18,33 +23,41 @@ import {
   geminiGenConfigToDeepSeek,
   isDeepSeekProvider,
   mensagemErroRede,
+  modeloAtual,
+  provedorAtual,
   sinalComTimeout,
   toChatCompletionsMessages,
   wrapAsGeminiResponse,
 } from './aiProvider';
+import { aiProxyToken, destinoBackendIA, temBackendIA, urlBackendIA } from './runtimeConfig';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 const MAX_RETRIES = 3;
 
 /* ============================================================
- PROXY SERVERLESS (grátis - a chave fica no servidor)
- Defina no.env:
- VITE_AI_BASE_URL = URL do seu Worker/Function
- (ex.: https://midnight-mentor-ia.workers.dev)
- VITE_AI_PROXY_TOKEN = token opcional de autenticação
- Quando VITE_AI_BASE_URL está definido, o app usa o proxy e o
- usuário NÃO precisa informar chave. Caso contrário, cai no
- Gemini direto (chave do usuário).
- ============================================================ */
-const PROXY_URL = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
-const PROXY_TOKEN = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
-const PROXY_MODEL = ((import.meta.env.VITE_AI_MODEL as string) || '').trim() || AI_MODEL;
+ BACK-END DE IA (a chave fica no servidor, nunca no navegador)
 
-/** Proxy configurado? (modo "sem chave do usuário"). */
-export const hasProxy = () => PROXY_URL.length > 0;
+ Por padrao o back-end e a rota `/api/*` DESTE MESMO dominio
+ (Vercel Functions rodando server/worker.js). Nesse arranjo:
+
+   - DEEPSEEK_API_KEY / GEMINI_API_KEY sao Environment Variables do
+     projeto, SEM prefixo VITE_ - logo nunca entram no bundle;
+   - nao ha CORS nem preflight (mesma origem);
+   - AI_PROXY_TOKEN e dispensavel, porque nao existe origem terceira
+     para barrar.
+
+ Definir AI_BASE_URL aponta o app de volta para um Cloudflare Worker
+ externo, com o mesmo contrato de rotas.
+
+ Tudo isto e lido por FUNCAO (runtimeConfig), nunca por constante de
+ modulo: constante congelaria o valor antes de /api/config responder.
+ ============================================================ */
+
+/** Back-end de IA alcancavel? (modo "sem chave do usuário"). */
+export const hasProxy = () => temBackendIA();
 
 /** Provedor/modelo efetivos (para UI, diagnostico e testes). */
-export const getAIProviderInfo = () => ({ provider: AI_PROVIDER, model: PROXY_MODEL });
+export const getAIProviderInfo = () => ({ provider: provedorAtual(), model: modeloAtual() });
 
 /** Mensagem de chave invalida conforme o provedor ativo. */
 function mensagemChaveInvalida(): string {
@@ -120,7 +133,7 @@ async function fetchViaWorker(url: string, init: RequestInit, signal?: AbortSign
     const combinado = sinalComTimeout(signal, DEEPSEEK_TIMEOUT_MS);
     return await fetchGemini(url, { ...init, signal: combinado }, combinado);
   } catch (e) {
-    const diag = diagnosticarErroRede(PROXY_URL || 'worker', e, !!signal?.aborted);
+    const diag = diagnosticarErroRede(destinoBackendIA(), e, !!signal?.aborted);
     console.debug('[ia] falha de rede (worker)', { ...diag });
     throw new Error(mensagemErroRede(diag), { cause: e });
   }
@@ -133,8 +146,32 @@ async function fetchViaWorker(url: string, init: RequestInit, signal?: AbortSign
  * permitido (worker publicado ou proxy local do Vite dev). body e
  * resposta mantem o envelope Gemini; a conversao para chat completions
  * acontece no back-end (worker) ou antes do envio (proxy local). */
+/**
+ * Regra de escrita do produto, aplicada a TODA chamada de IA.
+ *
+ * O texto que o modelo devolve e lido pelo aluno, pelo responsavel e
+ * pelo professor como texto do app: questao de quiz, devolutiva de
+ * redacao, resumo da semana, resposta do Mentor. Se a regra vale para a
+ * interface, vale para ele.
+ *
+ * Fica aqui, e nao repetida em cada prompt, porque ja sao mais de dez
+ * pontos de chamada: em cada um deles e questao de tempo ate alguem
+ * criar o proximo e esquecer da linha.
+ */
+const REGRA_PONTUACAO =
+  'PONTUAÇÃO (obrigatório): nunca use travessão (—), meia-risca (–) nem hífen solto para separar ideias. Use vírgula, dois-pontos ou ponto final.';
+
+/** Acrescenta a regra sem apagar a instrucao que o chamador montou. */
+function comRegraDeEscrita<T extends { systemInstruction?: { parts: { text: string }[] } }>(body: T): T {
+  const partes = body.systemInstruction?.parts ?? [];
+  return {
+    ...body,
+    systemInstruction: { parts: [...partes, { text: REGRA_PONTUACAO }] },
+  };
+}
+
 async function sendToAI(
-  body: {
+  bodyOriginal: {
     systemInstruction?: { parts: { text: string }[] };
     contents: { parts: any[] }[];
     generationConfig: Record<string, unknown>;
@@ -142,17 +179,19 @@ async function sendToAI(
   apiKey: string,
   signal?: AbortSignal,
 ): Promise<RetryResult> {
+  const body = comRegraDeEscrita(bodyOriginal);
   if (hasProxy()) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+    const token = aiProxyToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     return fetchViaWorker(
-      `${PROXY_URL}/generate`,
+      urlBackendIA('/generate'),
       {
         method: 'POST',
         headers,
         // O worker decide o upstream (Gemini x DeepSeek) por este campo.
         // Os prompts (systemInstruction/contents) viajam intactos.
-        body: JSON.stringify({ provider: AI_PROVIDER, model: PROXY_MODEL, ...body }),
+        body: JSON.stringify({ provider: provedorAtual(), model: modeloAtual(), ...body }),
       },
       signal,
     );
@@ -200,13 +239,14 @@ async function sendToDeepSeekViaBackend(
 
   if (backend === 'worker') {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+    const token = aiProxyToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     return fetchViaWorker(
-      `${PROXY_URL}/generate`,
+      urlBackendIA('/generate'),
       {
         method: 'POST',
         headers,
-        body: JSON.stringify({ provider: 'deepseek', model: PROXY_MODEL, ...body }),
+        body: JSON.stringify({ provider: 'deepseek', model: modeloAtual(), ...body }),
       },
       signal,
     );
@@ -231,12 +271,12 @@ async function sendToDeepSeekViaBackend(
             // SEM Authorization de proposito: a chave e injetada pelo Vite no
             // servidor (vite.config.ts). Nada de segredo no navegador.
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: PROXY_MODEL, messages, ...gen }),
+            body: JSON.stringify({ model: modeloAtual(), messages, ...gen }),
           },
           {
             sinalUsuario: signal,
             rotuloDestino: 'proxy local (/deepseek-api)',
-            contexto: { model: PROXY_MODEL, mensagens: messages.length, via: 'aiService-devProxy' },
+            contexto: { model: modeloAtual(), mensagens: messages.length, via: 'aiService-devProxy' },
           },
         );
       } catch (e) {
@@ -436,6 +476,24 @@ export function parseQuizJson(raw: string, materia: string): QuizQuestion[] {
     const m = texto.match(/\[[\s\S]*\]/);
     if (m) arr = tentar(m[0]);
   }
+  /*
+   * RESGATE DE RESPOSTA CORTADA.
+   *
+   * Passando daqui, o texto nao e JSON valido - e o caso mais comum e a
+   * resposta ter sido truncada no limite de tokens, deixando o array sem
+   * o `]` final. Antes isso virava lista VAZIA: o aluno pedia 20 questoes
+   * e recebia "nao foi possivel gerar", mesmo com 15 questoes inteiras
+   * dentro da resposta.
+   *
+   * Aqui os objetos completos sao extraidos um a um e o pedaco incompleto
+   * do fim e descartado. Entregar 15 de 20 e melhor que entregar nada.
+   */
+  if (!Array.isArray(arr)) {
+    const resgatados = objetosJsonCompletos(texto)
+      .map((t) => { try { return JSON.parse(t); } catch { return null; } })
+      .filter((o) => o && typeof o === 'object');
+    if (resgatados.length > 0) arr = resgatados;
+  }
   if (!Array.isArray(arr)) return [];
 
   const out: QuizQuestion[] = [];
@@ -482,11 +540,19 @@ export interface OpcoesQuiz {
   dificuldade?: NivelQuiz;
   /** Previews de enunciados ja aplicados (antirrepeticao por conta). */
   historico?: string[];
+  /**
+   * Avisa a cada lote concluido.
+   *
+   * Espera longa com spinner so diz "aguarde"; com "12 de 30 questoes
+   * prontas" o usuario sabe que ha avanco e quanto falta. So e chamado
+   * quando ha mais de um lote - num pedido pequeno nao ha o que informar.
+   */
+  onProgresso?: (prontas: number, total: number) => void;
 }
 
 const TEXTO_NIVEL: Record<NivelQuiz, string> = {
   facil: 'FÁCIL: conceitos diretos em uma etapa, sem pegadinha, linguagem simples.',
-  media: 'MÉDIO: padrão ENEM - interpretação de texto/gráfico com uma etapa de raciocínio.',
+  media: 'MÉDIO: padrão ENEM, interpretação de texto/gráfico com uma etapa de raciocínio.',
   dificil: 'DIFÍCIL: múltiplas etapas, interpretação fina e distratores fortes, nível FUVEST/UNICAMP segunda fase.',
 };
 
@@ -501,11 +567,12 @@ const TEXTO_NIVEL: Record<NivelQuiz, string> = {
  * "inédita, estilo <banca>" e NUNCA se apresenta como oficial - inventar
  * enunciado, ano ou número de questão é proibido.
  */
-export async function generateQuizStructured(
+/** Um lote: UMA chamada a IA. O orquestrador esta em generateQuizStructured. */
+async function gerarLoteQuiz(
   subject: string,
   topic: string,
   apiKey: string,
-  count: number = 10,
+  count: number,
   opcoes: OpcoesQuiz = {},
 ): Promise<QuizEstruturado> {
   const systemInstruction =
@@ -531,7 +598,17 @@ export async function generateQuizStructured(
 
   const gen: Record<string, unknown> = {
     temperature: 0.45,
-    maxOutputTokens: Math.max(4096, count * 500),
+    /*
+     * `tokensParaLote` NUNCA passa do teto de 8192 do back-end.
+     *
+     * A conta anterior era `Math.max(4096, count * 500)`, que estourava
+     * o teto a partir de 17 questoes (8.500 > 8.192) e chegava a 15.000
+     * no maximo da tela (30). O servidor cortava em silencio, o JSON
+     * voltava pela metade e o app mostrava "nao foi possivel gerar" -
+     * com mais frequencia em questao dificil, que e mais longa. Era o
+     * "as vezes nao gera dependendo das questoes".
+     */
+    maxOutputTokens: tokensParaLote(count),
     topP: 0.9,
     topK: 20,
     // So o caminho DeepSeek recebe: modo JSON estrito da API.
@@ -555,6 +632,83 @@ export async function generateQuizStructured(
 
   const raw = extractGeminiText(res.data) || '';
   return { questions: parseQuizJson(raw, subject), raw };
+}
+
+/**
+ * Gera as questoes do quiz, em LOTES PARALELOS quando o pedido e grande.
+ *
+ * ------------------------------------------------------------------
+ * POR QUE NAO UMA CHAMADA SO
+ * ------------------------------------------------------------------
+ * Pedir 30 questoes de uma vez tinha dois problemas somados: estourava o
+ * teto de saida do back-end (e o JSON voltava cortado) e era lento por
+ * natureza, porque o modelo escreve token a token e nao ha paralelismo
+ * DENTRO de uma chamada.
+ *
+ * Em lotes de 8, cada chamada cabe folgada no teto e as chamadas correm
+ * ao mesmo tempo: o tempo total passa a ser o do lote mais lento em vez
+ * da soma de todos. A concorrencia e limitada porque disparar tudo junto
+ * convida o 429 do provedor - e o retry devolveria a lentidao.
+ *
+ * TOLERA FALHA PARCIAL: um lote que falhe nao derruba os outros. So
+ * lanca se TODOS falharem, caso em que o erro do primeiro e propagado
+ * para a tela poder explicar o que aconteceu.
+ */
+export async function generateQuizStructured(
+  subject: string,
+  topic: string,
+  apiKey: string,
+  count: number = 10,
+  opcoes: OpcoesQuiz = {},
+): Promise<QuizEstruturado> {
+  const lotes = planoDeLotes(count);
+
+  // Pedido pequeno: uma chamada, sem orquestracao nenhuma.
+  if (lotes.length <= 1) return gerarLoteQuiz(subject, topic, apiKey, count, opcoes);
+
+  /*
+   * O progresso e contado em QUESTOES, nao em lotes: "18 de 30" diz mais
+   * ao aluno que "lote 3 de 4". Em paralelo os lotes nao terminam em
+   * ordem, entao o que se conta e o que ja chegou.
+   */
+  let prontas = 0;
+  const resultados = await emParalelo(lotes, QUIZ_LOTES_SIMULTANEOS, async (n) => {
+    const lote = await gerarLoteQuiz(subject, topic, apiKey, n, opcoes);
+    prontas += lote.questions.length;
+    opcoes.onProgresso?.(Math.min(prontas, count), count);
+    return lote;
+  });
+
+  /*
+   * Os lotes correm em paralelo e recebem o MESMO bloco de
+   * antirrepeticao, entao nenhum sabe o que o outro gerou: dois lotes
+   * podem produzir a mesma questao. A deduplicacao usa o hash do
+   * enunciado normalizado, o mesmo critério do historico por conta.
+   */
+  const vistos = new Set<string>();
+  const questions: QuizQuestion[] = [];
+  const brutos: string[] = [];
+  let primeiroErro: unknown = null;
+
+  for (const r of resultados) {
+    if (r.erro !== undefined) {
+      primeiroErro ??= r.erro;
+      continue;
+    }
+    if (!r.valor) continue;
+    brutos.push(r.valor.raw);
+    for (const q of r.valor.questions) {
+      const hash = hashEnunciado(q.enunciado);
+      if (vistos.has(hash)) continue;
+      vistos.add(hash);
+      questions.push(q);
+    }
+  }
+
+  // Nada aproveitavel em lote nenhum: a tela precisa do erro real.
+  if (questions.length === 0 && primeiroErro !== null) throw primeiroErro;
+
+  return { questions: questions.slice(0, count), raw: brutos.join('\n') };
 }
 
 /* ============================================================
@@ -749,7 +903,7 @@ export async function explicarErroComTutor(
 ): Promise<string> {
   // Acerto nao precisa de diagnostico: economiza a chamada.
   if (erro.escolhida === erro.correta) {
-    return 'Resposta certa - nenhum erro conceitual para diagnosticar. Siga assim!';
+    return 'Resposta certa, nenhum erro conceitual para diagnosticar. Siga assim!';
   }
 
   const { system, user } = montarPromptTutorPosErro(erro);
@@ -864,8 +1018,8 @@ export const QUIZ_TOPICS_CACHE_KEY = 'mm_quiz_topics_cache';
 
 const SAGUI_SYSTEM_PROMPT = [
   'Você é o Sagui, mentor educacional do projeto The Midnight Mentor, conversando com um estudante brasileiro do ensino médio noturno que se prepara para o ENEM.',
-  'TOM (obrigatório, sempre): empático, acolhedor e encorajador — como um professor particular amigo que acredita no aluno. Celebre o esforço ("boa, você veio estudar hoje, isso já conta"), nunca seja seco, frio ou robótico. Sem jargão, sem emoji.',
-  'RITMO CIRCADIANO: respeite o relógio do aluno sem comentar o horário. À noite/madrugada (19h–05h), respostas mais curtas e diretas — um conceito por vez, frase curtíssima — porque ele provavelmente veio do trabalho e está cansado. De dia, pode desenvolver um pouco mais. Acolher o cansaço vem antes do conteúdo, em qualquer horário.',
+  'TOM (obrigatório, sempre): empático, acolhedor e encorajador, como um professor particular amigo que acredita no aluno. Celebre o esforço ("boa, você veio estudar hoje, isso já conta"), nunca seja seco, frio ou robótico. Sem jargão, sem emoji.',
+  'RITMO CIRCADIANO: respeite o relógio do aluno sem comentar o horário. À noite e de madrugada (das 19h às 5h), respostas mais curtas e diretas, um conceito por vez, em frases curtíssimas, porque ele provavelmente veio do trabalho e está cansado. De dia, pode desenvolver um pouco mais. Acolher o cansaço vem antes do conteúdo, em qualquer horário.',
   'Cansaço, ansiedade e medo da prova nunca são fora de assunto: acolha em uma frase antes de voltar à matéria.',
   'Responda em português brasileiro, parágrafos curtos.',
 ].join('\n');
@@ -1123,7 +1277,12 @@ export async function analyzeStudentData(
   }));
 
   const prompt = [
-    'Analise os dados recentes de frequência e notas deste aluno do ensino médio noturno. Com base nesses dados, gere uma previsão de risco de evasão (Baixo, Médio, Alto) para os próximos 4 meses e escreva uma recomendação de apenas 2 frases para os pais.',
+    /* O prompt dizia "notas". Nao ha nota escolar neste banco: o numero
+       que chega e a proporcao de acerto nos exercicios do app. Com o
+       painel em dado real, descrever isso como boletim faria a IA
+       escrever para os pais uma frase sobre a escola que ninguem mediu. */
+    'Analise o uso recente do aplicativo de estudos por este aluno do ensino médio noturno. `notaMedia` é a PROPORÇÃO DE ACERTO (0-100) nos exercícios DO APLICATIVO no mês, e não nota escolar, porque o app não recebe boletim. `horasDeUso` é o tempo de estudo no app. Com base nisso, estime o risco de evasão (Baixo, Médio, Alto) para os próximos 4 meses e escreva uma recomendação de apenas 2 frases para os pais.',
+    'Fale do que os números mostram (constância, ritmo, acerto no app). Não afirme nada sobre notas da escola, frequência às aulas ou diagnóstico de saúde.',
     '',
     'Responda APENAS com um objeto JSON válido, sem markdown e sem comentários, no formato:',
     '{ "riscoEvasao": "Baixo"| "Médio"| "Alto", "recomendacao": "<recomendação de 2 frases para os pais>"}',
@@ -1137,7 +1296,7 @@ export async function analyzeStudentData(
       systemInstruction: {
         parts: [
           {
-            text: 'Você é um cientista de dados educacional especializado em evasão escolar do ensino médio noturno brasileiro. Responda apenas com o JSON solicitado.',
+            text: 'Você é um cientista de dados educacional especializado em evasão escolar do ensino médio noturno brasileiro. Você só tem dados de uso de um aplicativo de estudos, não da escola. Responda apenas com o JSON solicitado.',
           },
         ],
       },
@@ -1234,13 +1393,16 @@ export async function sintetizarAudio(
   opcoes: { voz?: string; velocidade?: number; signal?: AbortSignal } = {},
 ): Promise<AudioSintetizado> {
   if (!hasProxy()) {
-    throw new Error('TTS indisponivel: configure VITE_AI_BASE_URL para usar as vozes neurais.');
+    throw new Error(
+      'TTS indisponível: o back-end de IA não respondeu. Defina GOOGLE_TTS_KEY nas Environment Variables do projeto para usar as vozes neurais.',
+    );
   }
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+  const token = aiProxyToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const resposta = await fetch(`${PROXY_URL}/tts`, {
+  const resposta = await fetch(urlBackendIA('/tts'), {
     method: 'POST',
     headers,
     signal: opcoes.signal,
@@ -1277,18 +1439,18 @@ export async function gerarIntervencaoDoomscroll(
   signal?: AbortSignal,
 ): Promise<IntervencaoEmpatica> {
   const prompt = [
-    'Um estudante do ensino medio noturno esta ha alguns minutos rolando os menus do app de estudos sem clicar em nada - sinal de duvida, cansaco ou paralisia por analise.',
+    'Um estudante do ensino medio noturno esta ha alguns minutos rolando os menus do app de estudos sem clicar em nada, sinal de dúvida, cansaco ou paralisia por analise.',
     '',
     `Contexto: ${contexto.segundosVagando} segundos navegando sem escolher nada; agora sao ${contexto.horaLocal}h; materia sugerida pelo historico: ${contexto.materiaSugerida}.` +
       (contexto.humor ? ` Humor recente relatado: ${contexto.humor}.` : ''),
     '',
     'Escreva uma intervencao empatica com TRES campos e nada mais.',
     'Regras:',
-    '- "titulo": no maximo 6 palavras, sem julgamento, reconhecendo o momento (ex: "Voce parece na duvida.").',
-    '- "convite": UMA proposta pequena e concreta, no maximo 20 palavras, que termine em pergunta. Sempre uma tarefa minima com fim claro (ex: 3 questoes e parar por hoje).',
-    '- "acao": texto do botao, no maximo 4 palavras, no infinitivo.',
-    '- Nao use emoji, nao use exclamacao, nao motive, nao pergunte como a pessoa esta.',
-    '- Nao ofereca mais de uma opcao: escolher e exatamente o que ela nao esta conseguindo fazer agora.',
+    '• "titulo": no maximo 6 palavras, sem julgamento, reconhecendo o momento (ex: "Voce parece na duvida.").',
+    '• "convite": UMA proposta pequena e concreta, no maximo 20 palavras, que termine em pergunta. Sempre uma tarefa minima com fim claro (ex: 3 questoes e parar por hoje).',
+    '• "acao": texto do botao, no maximo 4 palavras, no infinitivo.',
+    '• Nao use emoji, nao use exclamacao, nao motive, nao pergunte como a pessoa esta.',
+    '• Nao ofereca mais de uma opcao: escolher e exatamente o que ela nao esta conseguindo fazer agora.',
     '',
     'Responda APENAS com JSON: {"titulo": "...", "convite": "...", "acao": "...", "materia": "..."}',
   ].join('\n');
@@ -1370,12 +1532,12 @@ export async function gerarAlertaParaResponsavel(
     `Indice de fadiga detectado pelo app: ${dados.score}/100. Sinais que pesaram: ${dados.motivos.join('; ') || 'padrao de estudo irregular'}.`,
     '',
     'Regras:',
-    '- Duas ou tres frases, portugues brasileiro, tom calmo.',
-    '- Explique o que foi observado em termos de PADRAO (horario, ritmo, cansaco), nunca de conteudo privado.',
-    '- Sugira conversa antes de qualquer outra medida.',
-    '- Mencione que o painel permite agendar um atendimento com psicologo se fizer sentido, sem pressionar.',
-    '- Nao diagnostique, nao use termos clinicos, nao alarme.',
-    '- Sem emoji, sem lista.',
+    '• Duas ou tres frases, portugues brasileiro, tom calmo.',
+    '• Explique o que foi observado em termos de PADRAO (horario, ritmo, cansaco), nunca de conteudo privado.',
+    '• Sugira conversa antes de qualquer outra medida.',
+    '• Mencione que o painel permite agendar um atendimento com psicologo se fizer sentido, sem pressionar.',
+    '• Nao diagnostique, nao use termos clinicos, nao alarme.',
+    '• Sem emoji, sem lista.',
   ].join('\n');
 
   const res = await sendToAI(

@@ -56,15 +56,15 @@ export const PremiumInput = memo(function PremiumInput({
 }: PremiumInputProps) {
   return (
     <footer
-      className="relative z-20 w-full flex justify-center bg-gradient-to-t from-[#060913] via-[#060913]/90 to-transparent pt-3 pb-1 shrink-0"
+      className="relative z-20 w-full flex justify-center bg-superficie px-2 md:px-3 pt-2 pb-2 md:pb-3 shrink-0"
       data-purpose="chat-input-container"
     >
       <div
-        className={`w-full max-w-4xl p-[1.5px] rounded-2xl cyber-input-wrap shadow-[0_10px_45px_rgba(0,0,0,0.7)] ${flashKey > 0 ? 'input-flash' : ''}`}
+        className={`w-full max-w-4xl rounded-[20px] ${flashKey > 0 ? 'motion-safe:animate-scale-in' : ''}`}
         key={flashKey}
         id="inputWrapperBox"
       >
-        <div className="w-full bg-[#0b101c]/95 backdrop-blur-2xl rounded-[15px] p-3 transition-all focus-within:ring-2 focus-within:ring-amber-500/50 focus-within:shadow-[0_0_25px_rgba(245,158,11,0.25)]">
+        <div className="w-full bg-white rounded-[20px] border-2 border-slate-200 shadow-lip p-2.5 transition-colors focus-within:border-ceu-500">
           <div className="flex items-center gap-2 px-1">
             <textarea
               ref={inputRef}
@@ -72,9 +72,9 @@ export const PremiumInput = memo(function PremiumInput({
               value={input}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Digite sua dúvida do ENEM, cole um enunciado ou peça um macete..."
+              placeholder="Digite sua dúvida do ENEM"
               rows={1}
-              className="w-full bg-transparent border-0 resize-none text-slate-100 placeholder-slate-400 text-sm focus:ring-0 focus:outline-none py-2 px-1 leading-relaxed max-h-32 font-sans transition-all"
+              className="w-full !bg-transparent !border-0 resize-none text-tinta-900 placeholder-slate-400 text-base font-semibold focus:ring-0 focus:outline-none py-2 px-1 leading-relaxed max-h-32 !min-h-0 transition-all"
             />
             <input
               ref={fileInputRef}
@@ -90,22 +90,22 @@ export const PremiumInput = memo(function PremiumInput({
               onClick={onCamera}
               title="Digitalizar questão / OCR"
               aria-label="Enviar foto de questão"
-              className="w-8 h-8 rounded-xl text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-400/30 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 flex-shrink-0 shadow-sm"
+              className="w-11 h-11 rounded-2xl bg-azul-100 text-azul-600 hover:bg-azul-200 flex items-center justify-center transition-colors active:scale-95 flex-shrink-0"
             >
-              <Camera size={16} />
+              <Camera size={22} strokeWidth={2.5} />
             </button>
             <button
               onClick={onVoice}
               title="Gravar áudio"
               aria-label={isListening ? 'Parar gravação' : 'Gravar dúvida por áudio'}
               aria-pressed={isListening}
-              className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 flex-shrink-0 shadow-sm ${
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors active:scale-95 flex-shrink-0 ${
                 isListening
-                  ? 'bg-red-500/15 text-red-400 border-red-400/30'
-                  : 'text-slate-300 hover:text-amber-300 hover:bg-amber-500/10 border-transparent hover:border-amber-400/30'
+                  ? 'bg-red-100 text-red-600'
+                  : 'bg-azul-100 text-azul-600 hover:bg-azul-200'
               }`}
             >
-              <Mic size={16} className={isListening ? 'animate-pulse' : ''} />
+              <Mic size={22} strokeWidth={2.5} className={isListening ? 'animate-pulse' : ''} />
             </button>
             <button
               onClick={onSend}
@@ -113,18 +113,18 @@ export const PremiumInput = memo(function PremiumInput({
               title="Enviar pergunta"
               aria-label="Enviar pergunta"
               id="sendBtn"
-              className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-midnight-950 font-black flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.65)] hover:shadow-[0_0_28px_rgba(245,158,11,0.9)] hover:scale-110 active:scale-95 transition-all flex-shrink-0 cursor-pointer disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed"
+              className="w-11 h-11 rounded-2xl bg-azul-600 text-white flex items-center justify-center shadow-lip-azul active:translate-y-1 active:shadow-none transition-transform flex-shrink-0 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
             >
-              <Send size={14} />
+              <Send size={20} strokeWidth={2.5} />
             </button>
           </div>
 
-          <div className="mt-2.5 pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-slate-400 font-sans">
+          <div className="mt-2 pt-2 border-t-2 border-slate-100 flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-slate-600">
             <div className="flex items-center gap-2">
-              <span className="font-medium">Modo:</span>
+              <span className="font-extrabold">Modo:</span>
               <div
                 ref={modeContainerRef}
-                className="relative flex items-center bg-[#070b14] p-0.5 rounded-xl border border-white/10 shadow-inner"
+                className="relative flex items-center bg-slate-100 p-0.5 rounded-xl"
                 role="group"
                 aria-label="Modo de resposta"
               >
@@ -139,11 +139,11 @@ export const PremiumInput = memo(function PremiumInput({
                       onClick={() => onTrocarModo(m.id)}
                       title={m.desc}
                       aria-pressed={ativo}
-                      className={`relative z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] transition-all cursor-pointer ${
-                        ativo ? 'text-amber-200 font-bold' : 'text-slate-400 hover:text-white font-medium'
+                      className={`relative z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer font-extrabold ${
+                        ativo ? 'text-ceu-600' : 'text-slate-500 hover:text-tinta-900'
                       }`}
                     >
-                      <Icone size={10} className={ativo ? 'text-amber-400' : ''} />
+                      <Icone size={13} />
                       <span>{m.label}</span>
                     </button>
                   );
@@ -152,16 +152,16 @@ export const PremiumInput = memo(function PremiumInput({
                   id="modeIndicatorPill"
                   aria-hidden="true"
                   style={{ left: modePill.left, width: modePill.width || undefined }}
-                  className="absolute top-0.5 bottom-0.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-amber-600/20 border border-amber-400/40 shadow-[0_0_8px_rgba(245,158,11,0.3)] mode-slider-pill pointer-events-none"
+                  className="absolute top-0.5 bottom-0.5 rounded-lg bg-white border-2 border-ceu-500 mode-slider-pill pointer-events-none"
                 />
               </div>
-              <span className="text-[10px] text-slate-400 hidden sm:inline font-medium">
+              <span className="text-[10px] text-slate-600 hidden sm:inline font-medium">
                 {modoResposta === 'explicativo' ? '• Passo a passo didático formal' : '• Resposta direta e macetes práticos'}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-[10px] text-slate-400 ml-auto">
+            <div className="flex items-center gap-3 text-[10px] text-slate-600 ml-auto">
               <span className="hidden md:inline">
-                <kbd className="font-mono bg-slate-800/90 border border-white/10 px-1.5 py-0.5 rounded text-slate-300 font-semibold">Ctrl + Enter</kbd>
+                <kbd className="font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-700 font-semibold">Ctrl + Enter</kbd>
                 {' '}para enviar
               </span>
               <span className="hidden md:inline font-medium text-slate-500">Midnight Mentor IA © 2025</span>

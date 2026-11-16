@@ -1,8 +1,6 @@
 import { getSupabase } from './supabase';
 import { sinalComTimeout, DEEPSEEK_TIMEOUT_MS } from './aiProvider';
-
-const PROXY_URL = ((import.meta.env.VITE_AI_BASE_URL as string) || '').replace(/\/+$/, '');
-const PROXY_TOKEN = (import.meta.env.VITE_AI_PROXY_TOKEN as string) || '';
+import { aiProxyToken, temBackendIA, urlBackendIA } from './runtimeConfig';
 const GEMINI_VISION_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
@@ -66,18 +64,19 @@ export async function transcreverManuscrito(
 ): Promise<ResultadoOcr> {
   const base64 = imageBase64.includes(',') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
 
-  if (PROXY_URL) {
+  if (temBackendIA()) {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (PROXY_TOKEN) headers['Authorization'] = `Bearer ${PROXY_TOKEN}`;
+    const token = aiProxyToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     // Foto de material escolar de menor: worker exige o JWT.
     try {
-      const { data } = await getSupabase()!.auth.getSession();
+      const { data } = (await getSupabase()?.auth.getSession()) ?? { data: { session: null } };
       const jwt = data.session?.access_token;
       if (jwt) headers['X-Supabase-Auth'] = jwt;
     } catch {
       /* sem sessao o worker devolve 401 acionavel */
     }
-    const res = await fetch(`${PROXY_URL}/api/ocr-process`, {
+    const res = await fetch(urlBackendIA('/api/ocr-process'), {
       method: 'POST',
       headers,
       signal: sinalComTimeout(opts.signal, DEEPSEEK_TIMEOUT_MS),
@@ -93,7 +92,7 @@ export async function transcreverManuscrito(
   // Sem worker: Gemini Vision direto (chave do aluno, como no chat direto).
   const apiKey = (opts.apiKey || '').trim();
   if (!apiKey) {
-    throw new Error('Configure o worker (VITE_AI_BASE_URL) ou informe sua chave da IA no Perfil.');
+    throw new Error('OCR indisponível: defina GEMINI_API_KEY nas Environment Variables do projeto, ou informe sua chave da IA no Perfil.');
   }
   const match = base64.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/s);
   const mimeType = match ? match[1] : 'image/jpeg';

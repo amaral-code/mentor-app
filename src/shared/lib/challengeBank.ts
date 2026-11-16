@@ -16,15 +16,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'O estigma associado às doenças mentais na sociedade brasileira',
     coletanea: [
       {
-        titulo: 'Texto I - Dados da OMS',
+        titulo: 'Texto I: Dados da OMS',
         texto: 'Segundo a Organização Mundial da Saúde (OMS), cerca de 11% da população brasileira sofre de transtornos de ansiedade e depressão. Apesar da alta prevalência, grande parte das pessoas evita buscar ajuda por medo do julgamento social.',
       },
       {
-        titulo: 'Texto II - Pensador',
+        titulo: 'Texto II: Pensador',
         texto: 'O filósofo Michel Foucault, em "História da Loucura", mostra como as sociedades modernas historicamente isolaram e silenciaram aqueles que consideravam "diferentes", influenciando preconceitos que persistem até hoje.',
       },
       {
-        titulo: 'Texto III - Pesquisa',
+        titulo: 'Texto III: Pesquisa',
         texto: 'Pesquisa da USP aponta que 64% dos brasileiros não conversariam abertamente sobre saúde mental em ambiente de trabalho, revelando o quanto o tabu ainda limita o acolhimento e o tratamento.',
       },
     ],
@@ -35,15 +35,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'A valorização dos povos e comunidades tradicionais no Brasil',
     coletanea: [
       {
-        titulo: 'Texto I - Constituição',
+        titulo: 'Texto I: Constituição',
         texto: 'A Constituição Federal de 1988 reconhece o direito dos povos indígenas e comunidades tradicionais às suas terras, culturas e modos de vida, ainda que na prática esses direitos sejam frequentemente desrespeitados.',
       },
       {
-        titulo: 'Texto II - Dados',
+        titulo: 'Texto II: Dados',
         texto: 'Segundo o Censo do IBGE, mais de 1,6 milhão de pessoas se reconhecem como indígenas no Brasil, distribuídas em cerca de 300 etnias que falam mais de 270 línguas.',
       },
       {
-        titulo: 'Texto III - Reflexão',
+        titulo: 'Texto III: Reflexão',
         texto: 'O sociólogo Darcy Ribeiro defendia que a identidade brasileira é resultado do encontro de matrizes indígenas, africanas e europeias, e que desvalorizar esses povos é negar parte da nossa própria história.',
       },
     ],
@@ -54,15 +54,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'Os impactos do uso excessivo das redes sociais na saúde e na sociabilidade',
     coletanea: [
       {
-        titulo: 'Texto I - Dados',
+        titulo: 'Texto I: Dados',
         texto: 'O Brasil é um dos países com maior tempo de uso de redes sociais no mundo: em média, os brasileiros passam mais de 3 horas e meia por dia conectados, segundo a consultoria DataReportal.',
       },
       {
-        titulo: 'Texto II - Pesquisa',
+        titulo: 'Texto II: Pesquisa',
         texto: 'Estudo da Universidade Federal de São Paulo (Unifesp) associou o uso intenso de telas ao aumento de sintomas de ansiedade, depressão e dificuldades de sono em jovens.',
       },
       {
-        titulo: 'Texto III - Pensador',
+        titulo: 'Texto III: Pensador',
         texto: 'O sociólogo Zygmunt Bauman, com o conceito de "modernidade líquida", aponta que as relações contemporâneas se tornaram frágeis e descartáveis, fenômeno intensificado pela cultura digital.',
       },
     ],
@@ -73,15 +73,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'A democratização do acesso à cultura no Brasil',
     coletanea: [
       {
-        titulo: 'Texto I - Dados',
+        titulo: 'Texto I: Dados',
         texto: 'A pesquisa "Retratos da Leitura no Brasil" mostra que cerca de metade da população brasileira não lê regularmente, e o acesso a cinemas, teatros e museus se concentra nas grandes capitais.',
       },
       {
-        titulo: 'Texto II - Legislação',
+        titulo: 'Texto II: Legislação',
         texto: 'O artigo 215 da Constituição Federal garante a todos o pleno exercício dos direitos culturais, determinando ao Estado o apoio e incentivo à valorização e difusão das manifestações culturais.',
       },
       {
-        titulo: 'Texto III - Pensador',
+        titulo: 'Texto III: Pensador',
         texto: 'O educador Paulo Freire defendia que a cultura é uma dimensão fundamental da formação do ser humano e que o acesso à arte é uma forma de conscientização e libertação.',
       },
     ],
@@ -92,15 +92,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'Os desafios para a valorização da profissão docente no Brasil',
     coletanea: [
       {
-        titulo: 'Texto I - Dados',
+        titulo: 'Texto I: Dados',
         texto: 'Segundo dados da OCDE, o salário inicial de professores no Brasil é um dos mais baixos entre os países avaliados, e a carreira docente atrai cada vez menos jovens.',
       },
       {
-        titulo: 'Texto II - Pesquisa',
+        titulo: 'Texto II: Pesquisa',
         texto: 'Pesquisa do Instituto Península revelou que mais da metade dos professores brasileiros considera abandonar a profissão, citando baixa remuneração, sobrecarga e falta de reconhecimento.',
       },
       {
-        titulo: 'Texto III - Pensador',
+        titulo: 'Texto III: Pensador',
         texto: 'O educador Anísio Teixeira defendia a valorização do magistério como condição essencial para a qualidade da educação pública e para o desenvolvimento nacional.',
       },
     ],
@@ -111,15 +111,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'O desafio de combater a desigualdade de gênero no mercado de trabalho brasileiro',
     coletanea: [
       {
-        titulo: 'Texto I - Dados',
+        titulo: 'Texto I: Dados',
         texto: 'Dados do IBGE mostram que as mulheres ganham, em média, cerca de 20% menos que os homens para funções equivalentes e ocupam menos de 40% dos cargos de liderança nas empresas.',
       },
       {
-        titulo: 'Texto II - Pesquisa',
+        titulo: 'Texto II: Pesquisa',
         texto: 'Pesquisa da FGV aponta que a divisão desigual das tarefas domésticas e de cuidado é um dos principais obstáculos para a permanência e ascensão das mulheres no trabalho.',
       },
       {
-        titulo: 'Texto III - Pensador',
+        titulo: 'Texto III: Pensador',
         texto: 'A filósofa Simone de Beauvoir, em "O Segundo Sexo", analisa como construções sociais atribuem papéis distintos a homens e mulheres, influenciando desigualdades que atravessam a vida profissional.',
       },
     ],
@@ -130,15 +130,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'A preservação e valorização das línguas indígenas no Brasil',
     coletanea: [
       {
-        titulo: 'Texto I - Dados',
+        titulo: 'Texto I: Dados',
         texto: 'O Brasil possui mais de 270 línguas indígenas faladas, mas pesquisadores estimam que muitas delas correm risco de extinção nas próximas décadas por falta de registro e transmissão.',
       },
       {
-        titulo: 'Texto II - Legislação',
+        titulo: 'Texto II: Legislação',
         texto: 'A Constituição Federal reconhece o direito dos povos indígenas à sua identidade, cultura e formas de organização social, incluindo a proteção de suas línguas como patrimônio cultural.',
       },
       {
-        titulo: 'Texto III - Pesquisa',
+        titulo: 'Texto III: Pesquisa',
         texto: 'Estudos da Universidade de Brasília mostram que o ensino bilíngue em escolas indígenas fortalece a autoestima das comunidades e contribui para a preservação do idioma materno.',
       },
     ],
@@ -149,15 +149,15 @@ export const CHALLENGE_THEMES: ChallengeTheme[] = [
     tema: 'A importância do repertório sociocultural na formação do estudante',
     coletanea: [
       {
-        titulo: 'Texto I - Pensador',
+        titulo: 'Texto I: Pensador',
         texto: 'O sociólogo Pierre Bourdieu desenvolveu o conceito de "capital cultural", mostrando que o acesso a livros, arte e conhecimento desde cedo influencia diretamente o desempenho escolar e social.',
       },
       {
-        titulo: 'Texto II - Dados',
+        titulo: 'Texto II: Dados',
         texto: 'A pesquisa "Juventudes e Leitura" indica que estudantes que convivem com livros e frequentam bibliotecas e espaços culturais apresentam melhor desempenho em provas como o ENEM.',
       },
       {
-        titulo: 'Texto III - Reflexão',
+        titulo: 'Texto III: Reflexão',
         texto: 'No ENEM, a redação que cita autores, obras, filmes e dados reais de forma pertinente alcança notas mais altas na competência 3, que avalia a seleção de repertórios socioculturais produtivos.',
       },
     ],

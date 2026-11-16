@@ -82,11 +82,16 @@ describe('backdrop-filter sobrevive a minificacao', () => {
     ).toEqual([]);
   });
 
-  it('mantem o desfoque nas superficies de vidro do tema', () => {
-    // Se alguem remover o filtro de .glass, o glassmorphism do brief morre
-    // sem nenhum teste reclamar. Esta e a asserção que reclama.
+  it('mantem .glass como cartao adesivo do visual ludico (sem vidro)', () => {
+    // O visual ludico (estilo Duolingo, decisao do dono em 2026-11) trocou o
+    // glassmorphism por cartao chapado: papel branco, borda grossa e o
+    // "labio" de sombra solida. Desfoque por cima do branco nao mostra nada
+    // e so custa pintura no celular. Se alguem trouxer o vidro de volta sem
+    // decidir isso, este teste reclama.
     const glass = CSS.match(/\.glass\s*\{([^}]*)\}/);
     expect(glass, 'a classe .glass sumiu do CSS').not.toBeNull();
-    expect(glass![1]).toMatch(/(^|[\s;])backdrop-filter:\s*blur\(/);
+    expect(glass![1]).not.toMatch(/backdrop-filter/);
+    expect(glass![1]).toMatch(/background:\s*#fff/i);
+    expect(glass![1]).toMatch(/border:\s*2px solid/);
   });
 });

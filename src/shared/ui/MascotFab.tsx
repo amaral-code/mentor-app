@@ -7,7 +7,7 @@ import { mascotStore } from '../../stores/mascotStore';
 const FAB_TIPS = [
   ' Tente encher a barra de XP com um quiz rápido!',
   ' Mantenha seu streak acessando todos os dias.',
-  ' A redação vale até 1000 pontos - não pule!',
+  ' A redação vale até 1000 pontos. Não pule!',
   ' Um plano de estudo focado rende mais que horas soltas.',
   ' Modo Foco te ajuda a render melhor no Pomodoro.',
   ' Está cansado? Priorize descanso e retome amanhã.',

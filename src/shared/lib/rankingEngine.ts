@@ -191,9 +191,9 @@ function gerarRankingMock(
   const userEntry: RankingEntry = {
     posicao: 0,
     nome: userProfile.nome || 'Você',
-    turma: turmas.find((t) => t.id === userProfile.turmaId)?.nome || '-',
+    turma: turmas.find((t) => t.id === userProfile.turmaId)?.nome || 'sem turma',
     turmaId: userProfile.turmaId || '',
-    escola: escolas.find((e) => e.id === userProfile.escolaId)?.nome || '-',
+    escola: escolas.find((e) => e.id === userProfile.escolaId)?.nome || 'sem escola',
     escolaId: userProfile.escolaId || '',
     xp: userXp,
     level: nivelPorXp(userXp),
@@ -260,9 +260,9 @@ async function gerarRankingSupabase(
       // Apelido anonimo para os colegas: o ranking nao precisa expor o
       // nome real de ninguem para funcionar.
       nome: eu ? userProfile.nome || 'Você' : gerarNickname(seedFromString(r.id || `${idx}`)),
-      turma: r.turma_nome || '-',
+      turma: r.turma_nome || 'sem turma',
       turmaId: r.turma_id || '',
-      escola: r.escola_nome || '-',
+      escola: r.escola_nome || 'sem escola',
       escolaId: r.escola_id || '',
       xp: r.xp ?? 0,
       level: r.level ?? 1,

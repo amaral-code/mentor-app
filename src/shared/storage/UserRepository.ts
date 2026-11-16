@@ -2,6 +2,7 @@ import type { Session as SbSession, Subscription } from '@supabase/supabase-js';
 import { Session, User, UserRole } from '../types';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 import { comTimeout, TIMEOUT_AUTH_MS } from '../lib/comTimeout';
+import { onboardingConcluidoLocal } from '../lib/onboardingLocal';
 
 /**
  * Autenticacao - exclusivamente Supabase Auth.
@@ -35,6 +36,13 @@ export interface DadosOnboarding {
   metas: string[];
   tempoDiario: string;
   turno: string;
+  /**
+   * Opcional de proposito: quem prefere nao dizer segue no app. A regra
+   * de consentimento trata ausencia como menor de 16, que e o lado
+   * conservador - ninguem fica de fora, so passa a precisar do
+   * responsavel para liberar o psicologo.
+   */
+  dataNascimento?: string | null;
 }
 
 export class UserRepository {
@@ -43,13 +51,14 @@ export class UserRepository {
     const sb = getSupabase();
     if (!sb) return null;
 
-    // Colunas do onboarding (migration 021). Banco ainda sem a migration:
+    // Colunas do onboarding (021) e a data de nascimento (024). Banco
+    // ainda sem a migration:
     // o select completo falha e o fallback legado mantem o login de pe,
     // marcando primeiro-acesso para o wizard aparecer de qualquer forma.
     const { data, error } = await comTimeout(
       sb
         .from('perfis')
-        .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha, onboarding_completed, metas_estudo, tempo_diario_estudo, turno_estudo')
+        .select('id, email, nome, papel, escola_id, turma_id, deve_trocar_senha, onboarding_completed, metas_estudo, tempo_diario_estudo, turno_estudo, data_nascimento')
         .eq('id', uid)
         .maybeSingle(),
       TIMEOUT_AUTH_MS,
@@ -65,10 +74,14 @@ export class UserRepository {
         escolaId: data.escola_id,
         turmaId: data.turma_id,
         deveTrocarSenha: !!data.deve_trocar_senha,
-        onboardingCompleted: !!data.onboarding_completed,
+        /* A marca local vale como "ja fez": sem ela, um update barrado
+           (RLS) ou uma coluna ausente devolvia o aluno ao wizard a cada
+           refresh de token. */
+        onboardingCompleted: !!data.onboarding_completed || onboardingConcluidoLocal(uid),
         metasEstudo: Array.isArray(data.metas_estudo) ? data.metas_estudo : [],
         tempoDiarioEstudo: data.tempo_diario_estudo ?? null,
         turnoEstudo: data.turno_estudo ?? null,
+        dataNascimento: data.data_nascimento ?? null,
       };
     }
 
@@ -91,7 +104,14 @@ export class UserRepository {
       escolaId: d.escola_id,
       turmaId: d.turma_id,
       deveTrocarSenha: !!d.deve_trocar_senha,
-      onboardingCompleted: false,
+      /*
+       * Caminho legado: o banco AINDA NAO TEM as colunas da migration
+       * 021, entao o select completo acima falhou. Antes isto era um
+       * `false` fixo, e o resultado era um laco sem saida - o wizard
+       * aparecia, o aluno respondia, o banco nao tinha onde guardar, e
+       * na volta para a aba tudo se repetia. A marca local quebra o laco.
+       */
+      onboardingCompleted: onboardingConcluidoLocal(uid),
       metasEstudo: [],
       tempoDiarioEstudo: null,
       turnoEstudo: null,
@@ -247,7 +267,26 @@ export class UserRepository {
         metas_estudo: dados.metas,
         tempo_diario_estudo: dados.tempoDiario,
         turno_estudo: dados.turno,
+        // Sem data informada o campo nem entra no update: gravar null
+        // apagaria uma data que o perfil ja tivesse.
+        ...(dados.dataNascimento ? { data_nascimento: dados.dataNascimento } : {}),
       })
+      .eq('id', auth.user.id);
+    return !error;
+  }
+
+  /**
+   * Usada pelo Perfil, para quem pulou a pergunta no onboarding ou
+   * digitou errado. `false` quando o banco recusou (offline, RLS).
+   */
+  async salvarDataNascimento(iso: string): Promise<boolean> {
+    const sb = getSupabase();
+    if (!sb) return false;
+    const { data: auth } = await sb.auth.getUser();
+    if (!auth.user) return false;
+    const { error } = await sb
+      .from('perfis')
+      .update({ data_nascimento: iso })
       .eq('id', auth.user.id);
     return !error;
   }

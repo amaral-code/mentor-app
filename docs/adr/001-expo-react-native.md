@@ -6,7 +6,7 @@
 
 ## Contexto
 
-Hoje o Midnight Mentor é um app web (React 19 + Vite + Tailwind, PWA) com backend Supabase e worker de IA na Cloudflare. Para virar produto, ele precisa:
+Hoje o Midnight Mentor é um app web (React 19 + Vite + Tailwind, PWA) com backend Supabase e back-end de IA (`server/worker.js`) rodando como funções serverless na Vercel. Para virar produto, ele precisa:
 
 1. **Estar nas lojas** (Google Play e App Store). É lá que os adolescentes procuram apps.
 2. **Usar recursos nativos** que o navegador não oferece direito:
@@ -42,7 +42,7 @@ packages/
   core/       engines puras (SRS, SSC, burnout, quiz, redação, ranking...) sem DOM
   api/        cliente Supabase + repositories
   ui-tokens/  cores, tipografia e espaçamento
-server/       worker Cloudflare (sem mudança)
+server/       back-end de IA: Vercel /api/* ou Cloudflare Worker (sem mudança)
 supabase/     migrations (sem mudança)
 ```
 

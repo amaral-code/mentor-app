@@ -178,14 +178,14 @@ export function AudioPlayer({
         />
       )}
 
-      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
         <div
           className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-[width] duration-500"
           style={{ width: `${progresso}%` }}
         />
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-gray-500 tabular-nums">
+      <div className="flex items-center justify-between text-[11px] text-slate-500 tabular-nums">
         <span>{formatarTempo(posicao)}</span>
         <span>{formatarTempo(duracao)}</span>
       </div>
@@ -194,7 +194,7 @@ export function AudioPlayer({
         <button
           onClick={() => pular(-15)}
           aria-label="Voltar 15 segundos"
-          className="tap-target text-gray-400 hover:text-white"
+          className="tap-target text-slate-600 hover:text-tinta-900"
         >
           <RotateCcw size={20} />
         </button>
@@ -210,7 +210,7 @@ export function AudioPlayer({
         <button
           onClick={() => pular(15)}
           aria-label="Avancar 15 segundos"
-          className="tap-target text-gray-400 hover:text-white"
+          className="tap-target text-slate-600 hover:text-tinta-900"
         >
           <RotateCw size={20} />
         </button>
@@ -225,7 +225,7 @@ export function AudioPlayer({
               if (audioRef.current) audioRef.current.playbackRate = v;
             }}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-medium ${
-              velocidade === v ? 'bg-violet-500/15 text-violet-300' : 'text-gray-500 hover:text-gray-300'
+              velocidade === v ? 'bg-violet-500/15 text-violet-600' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             {v}x
@@ -234,7 +234,7 @@ export function AudioPlayer({
       </div>
 
       {usandoVozNativa && (
-        <p className="text-[11px] text-amber-400/70 text-center leading-snug">
+        <p className="text-[11px] text-amber-600 text-center leading-snug">
           Voz feminina do próprio aparelho (automática): funciona sem internet, mas para se a tela apagar.
           Com o servidor de audio configurado, a pilula vira mp3 e continua no bolso.
         </p>

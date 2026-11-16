@@ -199,7 +199,7 @@ export function montarBlocoAntirrepeticao(previews: string[]): string {
   const lista = (previews ?? []).map((p) => String(p || '').trim()).filter(Boolean).slice(0, 20);
   if (lista.length === 0) return '';
   return [
-    `QUESTÕES JÁ APLICADAS A ESTE ALUNO (${lista.length} abaixo): não repita nenhuma e não reformule nenhuma com outros números ou palavras - cada questão nova precisa de cenário e cobrança diferentes.`,
+    `QUESTÕES JÁ APLICADAS A ESTE ALUNO (${lista.length} abaixo): não repita nenhuma e não reformule nenhuma com outros números ou palavras: cada questão nova precisa de cenário e cobrança diferentes.`,
     ...lista.map((p, i) => `${i + 1}. ${p.slice(0, 160)}`),
   ].join('\n');
 }

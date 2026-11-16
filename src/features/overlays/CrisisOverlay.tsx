@@ -47,18 +47,18 @@ export function CrisisOverlay() {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-xl">
       <div className="text-center max-w-sm px-8 animate-scale-in space-y-6">
-        <div className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-amber-500/5 to-orange-600/5 border border-amber-500/20 flex items-center justify-center animate-breathe shadow-[0_0_60px_rgba(245,158,11,0.05)]">
+        <div className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-amber-500/5 to-orange-600/5 border border-amber-500/20 flex items-center justify-center animate-breathe ">
           <span className="text-5xl">{phase === 'inicio' ? '' : phase === 'respirando' ? '' : ''}</span>
         </div>
 
         {phase === 'inicio' && (
           <div className="space-y-5">
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">Sobrecarga Detectada</h2>
-              <p className="text-sm text-gray-400 leading-relaxed">Seu índice de estresse está alto. Que tal uma pausa?</p>
+              <h2 className="text-xl font-bold text-tinta-900">Sobrecarga Detectada</h2>
+              <p className="text-sm text-slate-600 leading-relaxed">Seu índice de estresse está alto. Que tal uma pausa?</p>
             </div>
             <div className="flex flex-col gap-3">
-              <button onClick={() => { startBreathing(); playClick(); }} className="btn-primary w-full"><Wind size={16} className="inline-block align-[-0.15em] text-cyan-400" /> Respiração Guiada 4-7-8</button>
+              <button onClick={() => { startBreathing(); playClick(); }} className="btn-primary w-full"><Wind size={16} className="inline-block align-[-0.15em] text-cyan-700" /> Respiração Guiada 4-7-8</button>
               <button onClick={() => { setShowCrisisOverlay(false); playClick(); }} className="btn-secondary w-full">Estou melhor agora</button>
             </div>
           </div>
@@ -67,15 +67,15 @@ export function CrisisOverlay() {
         {phase === 'respirando' && (
           <div className="space-y-5">
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-tinta-900">
                 {breathPhase === 'inspira' && 'Inspire '}
                 {breathPhase === 'segura' && 'Segure '}
                 {breathPhase === 'expira' && 'Expire ‍'}
               </h2>
-              <p className="text-6xl font-extrabold text-amber-400 tabular-nums animate-pulse-subtle">{timeLeft}</p>
-              <p className="text-xs text-gray-600">Siga o ritmo da respiração</p>
+              <p className="text-6xl font-extrabold text-amber-600 tabular-nums animate-pulse-subtle">{timeLeft}</p>
+              <p className="text-xs text-slate-400">Siga o ritmo da respiração</p>
             </div>
-            <div className="w-16 h-1 mx-auto rounded-full bg-white/5 overflow-hidden">
+            <div className="w-16 h-1 mx-auto rounded-full bg-slate-50 overflow-hidden">
               <div className="h-full rounded-full bg-amber-500/50 xp-bar" style={{ width: `${((4 - timeLeft) / 4) * 100}%` }} />
             </div>
           </div>
@@ -84,8 +84,8 @@ export function CrisisOverlay() {
         {phase === 'melhor' && (
           <div className="space-y-5">
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">Como está agora?</h2>
-              <p className="text-sm text-gray-400 leading-relaxed">Espero que esteja se sentindo melhor. Respire fundo sempre que precisar.</p>
+              <h2 className="text-xl font-bold text-tinta-900">Como está agora?</h2>
+              <p className="text-sm text-slate-600 leading-relaxed">Espero que esteja se sentindo melhor. Respire fundo sempre que precisar.</p>
             </div>
             <div className="flex flex-col gap-3">
               <button onClick={() => { setShowCrisisOverlay(false); playClick(); }} className="btn-primary w-full">Sim, estou melhor </button>

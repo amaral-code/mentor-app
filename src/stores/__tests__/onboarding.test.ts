@@ -49,3 +49,24 @@ describe('concluirOnboardingLocal', () => {
     expect(useAppStore.getState().session).toBeNull();
   });
 });
+
+describe('quem passa pelo wizard de primeiro acesso', () => {
+  it('estudante sem onboarding passa', async () => {
+    const { precisaOnboarding } = await import('../../shared/lib/onboardingLocal');
+    expect(precisaOnboarding({ role: 'student', onboardingCompleted: false })).toBe(true);
+  });
+
+  /* O caso que motivou a regra: o psicologo, no primeiro login, respondia
+     "O que voce quer conquistar? Passar no ENEM" antes do proprio painel. */
+  it('nenhum outro papel passa, mesmo com a flag do banco em false', async () => {
+    const { precisaOnboarding } = await import('../../shared/lib/onboardingLocal');
+    for (const role of ['psychologist', 'parent', 'teacher', 'educator', 'admin']) {
+      expect(precisaOnboarding({ role, onboardingCompleted: false })).toBe(false);
+    }
+  });
+
+  it('sem sessao, nao ha wizard', async () => {
+    const { precisaOnboarding } = await import('../../shared/lib/onboardingLocal');
+    expect(precisaOnboarding(null)).toBe(false);
+  });
+});

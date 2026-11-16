@@ -15,25 +15,33 @@
  * `systemInstruction.parts[0].text` do Gemini. So o envelope HTTP muda.
  */
 
+import { aiProvider, aiModel, deepseekBaseUrl, temBackendIA, destinoBackendIA } from './runtimeConfig';
+
 export type AIProvider = 'gemini' | 'deepseek';
 
 /** Modelo padrao quando o provedor e DeepSeek (identificador exigido). */
 export const DEEPSEEK_DEFAULT_MODEL = 'deepseek-v4-flash';
 
-const providerRaw = ((import.meta.env.VITE_AI_PROVIDER as string) || '').trim().toLowerCase();
+/*
+ * Provedor e modelo sao FUNCOES, nao constantes de modulo.
+ *
+ * Como constante, o valor era lido no instante do import - antes de
+ * `/api/config` responder - e ficava congelado com o que estivesse no
+ * bundle. Trocar VITE_AI_PROVIDER no painel da Vercel nao tinha efeito
+ * ate o proximo build. Lendo por chamada, a config de runtime vale.
+ */
 
-export const AI_PROVIDER: AIProvider = providerRaw === 'deepseek' ? 'deepseek' : 'gemini';
+/** Provedor efetivo (Environment Variables em runtime, reserva no build). */
+export const provedorAtual = (): AIProvider => aiProvider();
 
-export const AI_MODEL: string =
-  ((import.meta.env.VITE_AI_MODEL as string) || '').trim() ||
-  (AI_PROVIDER === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : 'gemini-2.0-flash');
+/** Modelo efetivo do provedor atual. */
+export const modeloAtual = (): string =>
+  aiModel() || (provedorAtual() === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : 'gemini-2.0-flash');
 
 /** Base da API DeepSeek (padrao oficial, compativel OpenAI). */
-export const DEEPSEEK_BASE_URL: string =
-  (((import.meta.env.VITE_DEEPSEEK_BASE_URL as string) || 'https://api.deepseek.com').trim() ||
-    'https://api.deepseek.com').replace(/\/+$/, '');
+export const baseDeepSeek = (): string => deepseekBaseUrl();
 
-export const isDeepSeekProvider = (): boolean => AI_PROVIDER === 'deepseek';
+export const isDeepSeekProvider = (): boolean => provedorAtual() === 'deepseek';
 
 /* ============================================================
  * BACK-END DO DEEPSEEK (nunca direto do navegador)
@@ -43,13 +51,14 @@ export const isDeepSeekProvider = (): boolean => AI_PROVIDER === 'deepseek';
  * third-party/adblock ("Failed to fetch" sem resposta HTTP).
  *
  * Dois back-ends, mesmo contrato:
- *   worker   -> VITE_AI_BASE_URL publicado (producao). Protocolo do
- *               worker: envelope Gemini + {provider, model}; a chave
- *               (DEEPSEEK_API_KEY) e secret do provedor.
- *   devProxy -> /deepseek-api do Vite dev (desenvolvimento local).
- *               Same-origin, sem CORS; o Vite injeta o Authorization no
- *               servidor a partir de DEEPSEEK_API_KEY (sem VITE_, nunca vai
- *               para o bundle). So existe com a chave no .env + restart.
+ *   worker   -> `/api/*` na MESMA ORIGEM (Vercel Functions, o caso
+ *               normal) ou um Cloudflare Worker externo, quando
+ *               AI_BASE_URL aponta para fora. Os dois rodam o mesmo
+ *               `server/worker.js`; a chave DEEPSEEK_API_KEY e uma
+ *               Environment Variable do servidor, sem prefixo VITE_,
+ *               e por isso nunca entra no bundle.
+ *   devProxy  -> `/deepseek-api` do Vite dev. Reserva historica para
+ *               quem roda `vite dev` sem as funcoes `/api` ativas.
  * ============================================================ */
 
 /** Rota same-origin do proxy local (somente `vite dev`). */
@@ -64,17 +73,23 @@ export function tipoBackendDeepSeek(temProxy: boolean, ehDev: boolean): BackendD
   return 'nenhum';
 }
 
-/** Back-end efetivo neste ambiente. */
+/**
+ * Back-end efetivo neste ambiente.
+ *
+ * `temProxy` vem do chamador (aiService), que ja consulta o runtime; o
+ * `|| temBackendIA()` cobre quem chama sem argumento calculado.
+ */
 export function backendDeepSeekAtual(temProxy: boolean): BackendDeepSeek {
-  return tipoBackendDeepSeek(temProxy, import.meta.env.DEV);
+  return tipoBackendDeepSeek(temProxy || temBackendIA(), import.meta.env.DEV);
 }
 
 /** Erro acionavel quando nao ha back-end (nunca tenta cross-origin). */
 export function erroSemBackendDeepSeek(): Error {
   return new Error(
     'Backend de IA não configurado para DeepSeek. ' +
-      'No desenvolvimento: adicione DEEPSEEK_API_KEY ao .env (raiz, SEM prefixo VITE_) e reinicie com npm run dev. ' +
-      'Em produção: publique o worker (server/worker.js) com o secret DEEPSEEK_API_KEY e defina VITE_AI_BASE_URL.',
+      'Defina DEEPSEEK_API_KEY nas Environment Variables do projeto (SEM prefixo VITE_: ela é do servidor e não pode ir para o navegador). ' +
+      'Na Vercel: Settings > Environment Variables > DEEPSEEK_API_KEY, e refaça o deploy. ' +
+      'Localmente: a mesma variável no .env da raiz, e reinicie com npm run dev.',
   );
 }
 
@@ -93,9 +108,9 @@ export function sinalComTimeout(sinalUsuario: AbortSignal | null | undefined, ti
 }
 
 export const getAIProviderInfo = () => ({
-  provider: AI_PROVIDER,
-  model: AI_MODEL,
-  deepseekBaseUrl: DEEPSEEK_BASE_URL,
+  provider: provedorAtual(),
+  model: modeloAtual(),
+  deepseekBaseUrl: baseDeepSeek(),
 });
 
 export interface ChatCompletionMessage {
@@ -339,7 +354,7 @@ export async function fetchDeepSeek(
   } = {},
 ): Promise<Response> {
   const { timeoutMs = DEEPSEEK_TIMEOUT_MS, sinalUsuario = null, contexto = {}, rotuloDestino } = opcoes;
-  const destino = rotuloDestino ?? DEEPSEEK_BASE_URL;
+  const destino = rotuloDestino ?? destinoBackendIA();
   const controlador = new AbortController();
   let expirou = false;
 
@@ -366,7 +381,7 @@ export async function fetchDeepSeek(
     if (expirou && diag.tipo !== 'timeout') diag.tipo = 'timeout';
     // Log seguro: nenhum segredo (sem headers, sem body, sem chave).
     console.debug('[deepseek] falha de rede', {
-      endpoint: url.startsWith('http') ? url.replace(DEEPSEEK_BASE_URL, '') : url,
+      endpoint: url.startsWith('http') ? url.replace(baseDeepSeek(), '') : url,
       model: contexto.model,
       mensagens: contexto.mensagens,
       via: contexto.via,

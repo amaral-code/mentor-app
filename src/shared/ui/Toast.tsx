@@ -5,9 +5,9 @@ import { useAppStore } from '../../stores/appStore';
 import { springPainel } from '../lib/motionPresets';
 
 const ESTILO = {
-  success: 'bg-emerald-600/90 border-emerald-500/30 text-emerald-50',
-  error: 'bg-red-600/90 border-red-500/30 text-red-50',
-  info: 'bg-amber-600/90 border-amber-500/30 text-amber-50',
+  success: 'bg-emerald-600/90 border-emerald-500/30 text-emerald-600',
+  error: 'bg-red-600/90 border-red-500/30 text-red-600',
+  info: 'bg-amber-600/90 border-amber-500/30 text-amber-600',
 } as const;
 
 const ICONE = {
