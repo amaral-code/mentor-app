@@ -435,6 +435,70 @@ describe('marketplace', () => {
   });
 });
 
+describe('chat da liga, codigo e denuncia (032)', () => {
+  let liga;
+  const mandar = (uid, texto) =>
+    primeira(uid, `insert into public.mensagens_liga (liga_id, conteudo) values ($1, $2) returning id`, [liga, texto]);
+
+  beforeAll(async () => {
+    // Liga PRIVADA criada pelo aluno: só entra quem tiver o código.
+    liga = (await primeira(aluno,
+      `insert into public.ligas (nome, criador_id, privada, codigo) values ('Liga de Exatas', $1, true, 'EXA123') returning id`, [aluno])).id;
+    await comoUsuario(aluno, `insert into public.liga_membros (liga_id, user_id) values ($1, $2)`, [liga, aluno]);
+  });
+
+  it('quem nao e membro nao ve a liga privada, mas entra pelo codigo', async () => {
+    expect(await linhas(estranho, `select id from public.ligas where id = $1`, [liga])).toHaveLength(0);
+    const r = await primeira(estranho, `select public.entrar_na_liga_por_codigo(' exa123 ') as id`);
+    expect(r.id).toBe(liga);
+    expect(await linhas(estranho, `select id from public.ligas where id = $1`, [liga])).toHaveLength(1);
+    await expect(comoUsuario(estranho, `select public.entrar_na_liga_por_codigo('NAOEXISTE')`)).rejects.toThrow(/codigo invalido/);
+  });
+
+  it('membro manda e le; quem esta fora nao le nem manda', async () => {
+    const m = await mandar(aluno, 'Alguém resolveu a 12 de cálculo do cubo?');
+    expect(m.id).toBeTruthy();
+    expect(await linhas(estranho, `select conteudo from public.mensagens_liga where liga_id = $1`, [liga])).toHaveLength(1);
+    expect(await linhas(psicologo, `select conteudo from public.mensagens_liga where liga_id = $1`, [liga])).toHaveLength(0);
+    await expect(mandar(psicologo, 'oi')).rejects.toThrow();
+  });
+
+  it('palavrao e barrado no servidor, nos dois chats', async () => {
+    await expect(mandar(aluno, 'que porra de questão')).rejects.toThrow(/moderacao/);
+    await expect(
+      comoUsuario(aluno, `insert into public.mensagens_comunidade (autor_id, conteudo) values ($1, 'seu FDP')`, [aluno]),
+    ).rejects.toThrow(/moderacao/);
+  });
+
+  it('tres denuncias de pessoas diferentes escondem a mensagem; uma so nao', async () => {
+    await comoUsuario(responsavel, `select public.entrar_na_liga_por_codigo('EXA123')`);
+    await comoUsuario(psicologo, `select public.entrar_na_liga_por_codigo('EXA123')`);
+    const alvo = (await mandar(estranho, 'mensagem chata')).id;
+    const denunciar = (uid) =>
+      comoUsuario(uid, `insert into public.denuncias_mensagem (origem, mensagem_id, motivo) values ('liga', $1, 'ofensiva')`, [alvo]);
+
+    await denunciar(aluno);
+    await expect(denunciar(aluno)).rejects.toThrow(); // a mesma pessoa não conta duas vezes
+    expect(await linhas(aluno, `select id from public.mensagens_liga where id = $1`, [alvo])).toHaveLength(1);
+
+    await denunciar(responsavel);
+    await denunciar(psicologo);
+    expect(await linhas(aluno, `select id from public.mensagens_liga where id = $1`, [alvo])).toHaveLength(0);
+    // O autor ainda vê a própria mensagem (sabe que algo aconteceu).
+    expect(await linhas(estranho, `select id from public.mensagens_liga where id = $1`, [alvo])).toHaveLength(1);
+  });
+
+  it('nao denuncia o que nao consegue ver', async () => {
+    const outra = (await primeira(responsavel,
+      `insert into public.ligas (nome, criador_id, privada) values ('Liga fechada', $1, true) returning id`, [responsavel])).id;
+    await comoUsuario(responsavel, `insert into public.liga_membros (liga_id, user_id) values ($1, $2)`, [outra, responsavel]);
+    const msg = (await primeira(responsavel, `insert into public.mensagens_liga (liga_id, conteudo) values ($1, 'só nossa') returning id`, [outra])).id;
+    await expect(
+      comoUsuario(aluno, `insert into public.denuncias_mensagem (origem, mensagem_id) values ('liga', $1)`, [msg]),
+    ).rejects.toThrow();
+  });
+});
+
 describe('sessao de foco no relogio do servidor (031)', () => {
   /** Volta o início da sessão aberta, como se o aluno estivesse há `min` minutos longe da tela. */
   const envelhecer = (id, min) =>

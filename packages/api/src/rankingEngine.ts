@@ -342,3 +342,65 @@ function gerarXpMockSeed(seed: number): number {
 function gerarStreakMockSeed(seed: number): number {
   return Math.floor(seedRandom(seed) * 30) + 1;
 }
+
+/**
+ * Apelido estável de um colega (o mesmo id dá sempre o mesmo apelido).
+ * Usado no chat da liga: o aluno conversa sem expor o nome real de
+ * ninguém, como no ranking.
+ */
+export function apelidoDe(id: string): string {
+  return gerarNickname(seedFromString(id || 'colega'));
+}
+
+export const TAMANHO_PAGINA_RANKING = 20;
+
+/**
+ * Uma página do ranking, já filtrada NO BANCO pelo escopo.
+ *
+ * O `getRankingData` traz 500 linhas e filtra no aparelho, o que no
+ * celular é megabyte à toa. Aqui vem uma página por vez (`range`), e sem
+ * o ranking de mentira: se não há ninguém, a tela diz que não há.
+ */
+export async function carregarPaginaRanking(
+  filtro: RankingFilter,
+  perfil: { uid: string; nome?: string; escolaId?: string | null; turmaId?: string | null },
+  pagina: number,
+  tamanho = TAMANHO_PAGINA_RANKING,
+): Promise<{ entradas: RankingEntry[]; temMais: boolean }> {
+  const sb = getSupabase();
+  if (!sb || !isSupabaseConfigured()) return { entradas: [], temMais: false };
+  let consulta = sb
+    .from('ranking')
+    .select('id, nome, escola_id, turma_id, escola_nome, turma_nome, xp, level, streak')
+    .gt('xp', 0)
+    .order('xp', { ascending: false })
+    .order('id', { ascending: true });
+  if (filtro === 'turma' && perfil.turmaId) consulta = consulta.eq('turma_id', perfil.turmaId);
+  if (filtro === 'escola' && perfil.escolaId) consulta = consulta.eq('escola_id', perfil.escolaId);
+  const inicio = pagina * tamanho;
+  // Pede um a mais para saber se existe a próxima página sem um count(*).
+  const { data, error } = await consulta.range(inicio, inicio + tamanho);
+  if (error) {
+    console.warn('[ranking] pagina falhou:', error.message);
+    return { entradas: [], temMais: false };
+  }
+  const linhas = (data ?? []) as Array<Record<string, any>>;
+  const entradas = linhas.slice(0, tamanho).map((r, i): RankingEntry => {
+    const eu = r.id === perfil.uid;
+    return {
+      posicao: inicio + i + 1,
+      nome: eu ? perfil.nome || 'Você' : apelidoDe(String(r.id)),
+      turma: r.turma_nome || 'sem turma',
+      turmaId: r.turma_id || '',
+      escola: r.escola_nome || 'sem escola',
+      escolaId: r.escola_id || '',
+      xp: r.xp ?? 0,
+      level: r.level ?? 1,
+      streak: r.streak ?? 0,
+      avatarInicial: eu ? perfil.nome?.charAt(0)?.toUpperCase() || 'V' : '',
+      destaque: eu,
+      variacao: 0,
+    };
+  });
+  return { entradas, temMais: linhas.length > tamanho };
+}

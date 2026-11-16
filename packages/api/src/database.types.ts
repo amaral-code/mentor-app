@@ -336,6 +336,33 @@ export type Database = {
         }
         Relationships: []
       }
+      denuncias_mensagem: {
+        Row: {
+          id: number
+          origem: string
+          mensagem_id: number
+          denunciante_id: string
+          motivo: string
+          criado_em: string
+        }
+        Insert: {
+          id?: number
+          origem: string
+          mensagem_id: number
+          denunciante_id?: string
+          motivo?: string
+          criado_em?: string
+        }
+        Update: {
+          id?: number
+          origem?: string
+          mensagem_id?: number
+          denunciante_id?: string
+          motivo?: string
+          criado_em?: string
+        }
+        Relationships: []
+      }
       desafios_redacao: {
         Row: {
           id: number
@@ -780,6 +807,33 @@ export type Database = {
           motivo_mod?: string | null
           responde_a?: number | null
           curtido_por?: string[]
+        }
+        Relationships: []
+      }
+      mensagens_liga: {
+        Row: {
+          id: number
+          liga_id: string
+          autor_id: string
+          conteudo: string
+          oculta: boolean
+          criado_em: string
+        }
+        Insert: {
+          id?: number
+          liga_id: string
+          autor_id?: string
+          conteudo: string
+          oculta?: boolean
+          criado_em?: string
+        }
+        Update: {
+          id?: number
+          liga_id?: string
+          autor_id?: string
+          conteudo?: string
+          oculta?: boolean
+          criado_em?: string
         }
         Relationships: []
       }
@@ -1888,6 +1942,12 @@ export type Database = {
         }
         Returns: string
       }
+      entrar_na_liga_por_codigo: {
+        Args: {
+          p_codigo: string
+        }
+        Returns: string
+      }
       entrar_na_turma: {
         Args: {
           p_codigo: string
@@ -2124,6 +2184,13 @@ export type Database = {
         Args: {
           p_psicologo: string
           p_participante: string
+        }
+        Returns: boolean
+      }
+      pode_ver_mensagem: {
+        Args: {
+          p_origem: string
+          p_mensagem: number
         }
         Returns: boolean
       }
@@ -2380,6 +2447,12 @@ export type Database = {
           distracoes_media: number
           fracao_madrugada: number
         }[]
+      }
+      texto_ofensivo: {
+        Args: {
+          p_texto: string
+        }
+        Returns: boolean
       }
       vincular_instituicao: {
         Args: {

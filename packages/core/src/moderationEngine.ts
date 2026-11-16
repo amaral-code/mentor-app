@@ -1,23 +1,35 @@
+/*
+ * Termos bloqueados. Comparados por PALAVRA INTEIRA no texto sem acento:
+ * a versão anterior usava `includes`, e "cu" bloqueava "cálculo",
+ * "circunferência", "cubo", "curso", "cultura" e "escuta" (o aluno não
+ * conseguia perguntar de matemática no chat da liga).
+ *
+ * "crente" saiu da lista: é identidade religiosa, não palavrão. Bloquear
+ * "sou crente" é discriminar quem escreve, não proteger quem lê.
+ */
 const PALAVROES = [
-  'caralho', 'porra', 'merda', 'foda', 'fodase', 'foda-se', 'buceta', 'cu',
-  'puta', 'putaria', 'babaca', 'arrombado', 'desgraça', 'desgraca', 'vsf',
+  'caralho', 'porra', 'merda', 'foda', 'fodase', 'foda se', 'buceta', 'cu',
+  'puta', 'putaria', 'babaca', 'arrombado', 'arrombada', 'desgraca', 'vsf',
   'vai tomar no cu', 'seu merda', 'cacete', 'pqp', 'puta que pariu',
-  'filho da puta', 'fdp', 'vagabundo', 'viado', 'bixa', 'bicha',
-  'otario', 'otário', 'idiota', 'imbecil', 'retardado', 'crente',
-  'chupa', 'chupinha', 'boquete', 'bosta', 'cusão', 'cusao',
+  'filho da puta', 'fdp', 'vagabundo', 'vagabunda', 'viado', 'bixa', 'bicha',
+  'otario', 'idiota', 'imbecil', 'retardado', 'boquete', 'bosta', 'cusao',
   'pau no cu', 'pau no seu cu', 'tnc', 'vai se fuder', 'vsfd',
-  'arrombada', 'escroto', 'escrota', 'pilantra', 'trouxa',
+  'escroto', 'escrota', 'pilantra', 'trouxa',
 ];
 
+/*
+ * Agressão dirigida a alguém. Cada padrão exige o alvo ("você é",
+ * "seu/sua", "cala a boca"): solto, "vai estudar" e "some os valores"
+ * (soma, em matemática) eram lidos como bullying.
+ */
 const PADROES_BULLYING = [
-  /voce\s+[ée]\s+(um\s+)?(merda|idiota|burro|inutil|horrivel|lixo|pessimo|fracasso)/i,
-  /(cala|calado|cala\s+a\s+boca)\s*(sua|seu)?/i,
-  /(ninguem|não|nao)\s+(gosta|aguenta|suporta)\s+de\s+voce/i,
-  /(feio|feia|gordo|gorda|burro|burra|ridiculo|ridicula)\s*(demais|pra\s+caralho)?/i,
-  /vai\s+(estudar|trabalhar|morrer|sumir|embora|tomar)/i,
-  /(some|desaparece|vaza|cai\s+fora)\s*(daqui|desse\s+chat)?/i,
-  /(odeio|detesto|nojo|asco)\s+(de\s+)?voce/i,
-  /sua\s+(puta|vadia|galinha|vagabunda)/i,
+  /\b(voce|vc|tu)\s+(e|eh|es)\s+(um\s+|uma\s+|muito\s+)?(merda|idiota|burr[oa]|inutil|horrivel|lixo|pessim[oa]|fracasso|feio|feia|gord[oa]|ridicul[oa])\b/,
+  /\bcala\s+(a\s+)?boca\b/,
+  /\b(ninguem|nao)\s+(gosta|aguenta|suporta)\s+de\s+(voce|vc|ti)\b/,
+  /\bvai\s+(morrer|se\s+matar|tomar\s+no)\b/,
+  /\b(some|desaparece|vaza)\s+(daqui|desse\s+chat|da\s+liga)\b/,
+  /\b(odeio|detesto|tenho\s+nojo\s+de|tenho\s+asco\s+de)\s+(voce|vc|ti)\b/,
+  /\bsua\s+(puta|vadia|galinha|vagabunda)\b/,
 ];
 
 const URL_REGEX = /https?:\/\/[^\s]+|www\.[^\s]+|t\.me\/[^\s]+|bit\.ly\/[^\s]+/i;
@@ -28,24 +40,25 @@ export interface ModerationResult {
   textoLimpio: string;
 }
 
+/** Minúsculas, sem acento, pontuação vira espaço: "Cálculo!" -> "calculo". */
+export function normalizarParaModeracao(texto: string): string {
+  return ` ${texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()} `;
+}
+
 function contemPalavrao(texto: string): string | null {
-  const lower = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  for (const p of PALAVROES) {
-    const regex = new RegExp(`\\b${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-    if (regex.test(texto) || lower.includes(p)) {
-      return `Palavra imprópria detectada`;
-    }
-  }
-  return null;
+  const normal = normalizarParaModeracao(texto);
+  // Espaço dos dois lados: casa só palavra (ou expressão) inteira.
+  return PALAVROES.some((p) => normal.includes(` ${p} `)) ? 'Palavra imprópria detectada' : null;
 }
 
 function contemBullying(texto: string): string | null {
-  for (const padrao of PADROES_BULLYING) {
-    if (padrao.test(texto)) {
-      return `Conteúdo ofensivo/bullying detectado`;
-    }
-  }
-  return null;
+  const normal = normalizarParaModeracao(texto);
+  return PADROES_BULLYING.some((padrao) => padrao.test(normal)) ? 'Conteúdo ofensivo ou bullying detectado' : null;
 }
 
 function contemLink(texto: string): boolean {
@@ -53,12 +66,10 @@ function contemLink(texto: string): boolean {
 }
 
 function limparTexto(texto: string): string {
-  let limpo = texto;
-  for (const p of PALAVROES) {
-    const regex = new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    limpo = limpo.replace(regex, '***');
-  }
-  return limpo;
+  return texto
+    .split(/(\s+)/)
+    .map((parte) => (PALAVROES.includes(normalizarParaModeracao(parte).trim()) ? '***' : parte))
+    .join('');
 }
 
 export function moderar(texto: string): ModerationResult {
