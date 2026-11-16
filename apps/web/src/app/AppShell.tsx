@@ -3,7 +3,7 @@ import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, ChevronRight, Flame, Headphones, House, LayoutGrid, LogOut, NotebookPen, PenLine, ShieldCheck, ShoppingBag, Star, Target, Timer, Trophy, User, Users, UsersRound, X, Zap } from 'lucide-react';
 import { MoonLogo } from '../shared/ui/MoonLogo';
 import { PainelLateral } from './PainelLateral';
-import { useAppStore } from '../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { TabId } from '@mentor/core/types';
 import { CrisisOverlay } from '../features/overlays/CrisisOverlay';
 import { WeeklyReportModal } from '../features/overlays/WeeklyReportModal';

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { LazyMotion } from 'motion/react';
-import { useAppStore, persistir } from './stores/appStore';
+import { useAppStore, persistir } from '@mentor/state/appStore';
 import { userRepository } from '@mentor/api/UserRepository';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { comTimeout, TIMEOUT_BOOT_MS } from '@mentor/core/comTimeout';
@@ -36,7 +36,7 @@ import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import { precisaOnboarding } from '@mentor/core/onboardingLocal';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
-import { mascotStore } from './stores/mascotStore';
+import { mascotStore } from '@mentor/state/mascotStore';
 import { getToday, proximoStreak } from '@mentor/core/utils';
 
 /*
@@ -52,9 +52,9 @@ import { getToday, proximoStreak } from '@mentor/core/utils';
  * `layout` no ranking, que só existem no conjunto completo.
  */
 const featuresAnimacao = () => import('motion/react').then((mod) => mod.domMax);
-import { useStoreStore } from './stores/storeStore';
+import { useStoreStore } from '@mentor/state/storeStore';
 import { hidratarCache } from '@mentor/api/rankingEngine';
-import { useBemEstarStore } from './stores/bemEstarStore';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { deveGerarRelatorio } from '@mentor/core/decompressionReport';
 
 export default function App() {

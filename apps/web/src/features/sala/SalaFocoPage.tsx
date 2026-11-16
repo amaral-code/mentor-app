@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from 'react';
 import { DoorOpen, MessageSquareOff } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import {
   colegasNaSala,

@@ -6,7 +6,7 @@ import {
   MASCOT_FALLBACK,
   MASCOT_ANIM,
   MASCOT_DEFAULT_MSG,
-} from '../../stores/mascotStore';
+} from '@mentor/state/mascotStore';
 
 const CONFETTI_COLORS = ['#fbbf24', '#f59e0b', '#34d399', '#818cf8', '#f472b6', '#60a5fa', '#fb923c'];
 

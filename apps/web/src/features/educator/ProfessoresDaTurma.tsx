@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { GraduationCap, Plus, Trash2, Users } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { docenteRepository } from '@mentor/api/DocenteRepository';
 import type { DocenteDaEscola, TurmaDoDocente } from '@mentor/api/DocenteRepository';
 

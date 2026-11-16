@@ -31,6 +31,17 @@ export interface Plataforma {
   online(): boolean | null;
   /** Build de desenvolvimento (habilita proxies e mensagens de dev). */
   dev(): boolean;
+  /**
+   * Sai do app para uma URL externa (checkout do pagamento, por exemplo).
+   * Web: `location.assign`. Mobile: `Linking.openURL`.
+   */
+  abrirUrl(url: string): void;
+  /**
+   * Chama `aoSair` quando o app vai para segundo plano (aba escondida,
+   * app minimizado). Devolve a função que desfaz o registro.
+   * Web: `visibilitychange`. Mobile: `AppState`.
+   */
+  aoIrParaSegundoPlano(aoSair: () => void): () => void;
 }
 
 const PADRAO: Plataforma = {
@@ -38,6 +49,10 @@ const PADRAO: Plataforma = {
   envBuild: () => '',
   online: () => null,
   dev: () => false,
+  abrirUrl: () => {
+    throw new Error('abrirUrl sem plataforma instalada: chame configurarPlataforma no boot do app.');
+  },
+  aoIrParaSegundoPlano: () => () => {},
 };
 
 /*

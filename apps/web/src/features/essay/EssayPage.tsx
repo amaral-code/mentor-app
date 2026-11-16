@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BookMarked, Lightbulb, PenLine, Trophy } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { RedacaoFoto } from './RedacaoFoto';
 import { GlassCard } from '../../shared/ui/GlassCard';
 import { EmptyState } from '../../shared/ui/EmptyState';

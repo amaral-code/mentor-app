@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Activity, RotateCcw, ShieldAlert } from 'lucide-react';
-import { useBemEstarStore } from '../../stores/bemEstarStore';
-import { useAppStore } from '../../stores/appStore';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { COR_CLASSE, ROTULO_CLASSE, sugestaoPausa } from '@mentor/core/burnoutModel';
 
 /**

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { conteudoRepository } from '@mentor/api/ConteudoRepository';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { aiAvailable, gerarRoteiroAudio, sintetizarAudio, hasProxy } from '@mentor/core/aiService';
 import { estimarDuracaoSegundos, formatarTempo, VOZES, roteiroLocalEmergencia } from '@mentor/core/audioPills';
 import { safeGet, safeSet } from '@mentor/core/safeStorage';

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, BadgeCheck, CalendarHeart, Phone } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useAppStore } from '@mentor/state/appStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 import { tempoAte } from '@mentor/core/bookingEngine';
 import { StarfieldCanvas } from './components/StarfieldCanvas';
 import { HeroSessao } from './components/HeroSessao';

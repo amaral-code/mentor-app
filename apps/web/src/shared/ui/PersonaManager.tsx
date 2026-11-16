@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { AppIcon } from './AppIcon';
 import { Check } from 'lucide-react';
 import type { ChatPersona } from '@mentor/core/types';

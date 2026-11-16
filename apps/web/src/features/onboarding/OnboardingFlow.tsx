@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, ArrowRight, Cake, Check, Clock, MoonStar, Rocket, Sunrise, Sunset, Target } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { userRepository } from '@mentor/api/UserRepository';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { safeSet } from '@mentor/core/safeStorage';

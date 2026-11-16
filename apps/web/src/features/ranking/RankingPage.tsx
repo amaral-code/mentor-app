@@ -2,7 +2,7 @@ import { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem, MAX_STAGGER } from '../../shared/lib/motionPresets';
 import { Medal, TrendingUp, Trophy, Users } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { ListSkeleton } from '../../shared/ui/Skeleton';
 import { getRankingData } from '@mentor/api/rankingEngine';
 import { calcLevel } from '@mentor/core/utils';

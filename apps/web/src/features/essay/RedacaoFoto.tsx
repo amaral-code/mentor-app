@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, FileImage, Loader2, RefreshCw, ScanLine, TriangleAlert } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { prepararFotoRedacao, formatarBytes } from '../../shared/lib/imagePrep';
 import {
   COMPETENCIAS,

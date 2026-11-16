@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { CheckCircle2, Info, XCircle } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { springPainel } from '../lib/motionPresets';
 
 const ESTILO = {

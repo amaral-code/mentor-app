@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
 
 /**

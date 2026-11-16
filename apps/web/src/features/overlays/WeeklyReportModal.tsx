@@ -1,7 +1,7 @@
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Flame, Loader2, Moon, ShieldCheck, Sparkles } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
-import { useBemEstarStore } from '../../stores/bemEstarStore';
+import { useAppStore } from '@mentor/state/appStore';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { Modal } from '../../shared/ui/Modal';
 import {
   calcularMetricas,

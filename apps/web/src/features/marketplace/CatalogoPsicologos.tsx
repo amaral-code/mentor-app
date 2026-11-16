@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BadgeCheck, Search, Star } from 'lucide-react';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 import { formatarPreco } from '@mentor/core/bookingEngine';
 import type { Psicologo } from '@mentor/core/types';
 import { EmptyState } from '../../shared/ui/EmptyState';

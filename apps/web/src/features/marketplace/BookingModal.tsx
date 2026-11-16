@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
 import { Modal } from '../../shared/ui/Modal';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 import {
   agruparPorDia,
   formatarHora,

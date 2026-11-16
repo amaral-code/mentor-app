@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppStore, persistir } from '../../stores/appStore';
+import { useAppStore, persistir } from '@mentor/state/appStore';
 import { Nota } from '@mentor/core/types';
 import { playClick } from '../../shared/lib/sfx';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';

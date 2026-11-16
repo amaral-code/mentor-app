@@ -3,7 +3,7 @@ import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem, avancar, springTap } from '../../shared/lib/motionPresets';
 import { BarraProgresso } from '../../shared/ui/AnimatedNumber';
 import { BarChart3, BookOpen, Check, Lightbulb, Target, TriangleAlert, Volume2, X, Zap } from 'lucide-react';
-import { useAppStore, persistir } from '../../stores/appStore';
+import { useAppStore, persistir } from '@mentor/state/appStore';
 import { Dificuldade, QuizQuestion, QuizResult } from '@mentor/core/types';
 import { generateQuizStructured, aiAvailable, NivelQuiz, explicarErroComTutor } from '@mentor/core/aiService';
 import { QUIZ_LOTES_SIMULTANEOS, emParalelo } from '@mentor/core/quizLotes';
@@ -18,9 +18,9 @@ import {
 } from '@mentor/core/quizHistory';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { playCorrect, playError, playLevelUp } from '../../shared/lib/sfx';
-import { mascotStore } from '../../stores/mascotStore';
+import { mascotStore } from '@mentor/state/mascotStore';
 import { XpMilestone } from '../../shared/ui/XpMilestone';
-import { useBemEstarStore } from '../../stores/bemEstarStore';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { CabecalhoPagina, BOTAO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 type Stage = 'select' | 'topics' | 'playing' | 'result';

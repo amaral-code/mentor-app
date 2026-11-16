@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Brain, CircleAlert, Plus } from 'lucide-react';
-import { useBemEstarStore } from '../../stores/bemEstarStore';
-import { useAppStore } from '../../stores/appStore';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
+import { useAppStore } from '@mentor/state/appStore';
 import {
   ROTULO_NIVEL,
   forcaDaMemoria,

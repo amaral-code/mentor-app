@@ -5,7 +5,7 @@ import { getEmpathicPrefix } from '@mentor/core/emotionEngine';
 import { QUIZ_BANK } from '@mentor/core/quizBank';
 import { ENEM_KB } from '@mentor/core/kbEnem';
 import { ultimaMateria } from '@mentor/core/contextMemory';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 
 const CHAT_KB = [...ENEM_KB, ...buildKBFromQuiz(QUIZ_BANK)];
 

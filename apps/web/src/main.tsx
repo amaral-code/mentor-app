@@ -10,6 +10,7 @@ import { aplicarAcessibilidade } from './shared/lib/acessibilidade';
 import { carregarConfigRuntime } from '@mentor/core/runtimeConfig';
 import { registrarPWA } from './pwa';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
+import { registrarDescargaAoSair } from '@mentor/state/bemEstarStore';
 
 // Acessibilidade antes da primeira pintura: fonte, contraste, movimento
 // e daltonismo valem já no login, sem sessão.
@@ -17,6 +18,11 @@ aplicarAcessibilidade();
 
 // Service Worker do App Shell (no-op em `vite dev`, ativo no build).
 registrarPWA();
+
+// Telemetria de estudo que ainda está no buffer é gravada quando a aba
+// esconde. Antes isso era registrado no topo da store; agora a store é
+// compartilhada com o celular e quem sabe o que é "sair" é a plataforma.
+registrarDescargaAoSair();
 
 /*
  * Configuração de runtime ANTES da primeira renderização.

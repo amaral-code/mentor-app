@@ -3,7 +3,7 @@ import { KeyRound, Moon } from 'lucide-react';
 import { getSupabase } from '@mentor/api/supabase';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { userRepository } from '@mentor/api/UserRepository';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 
 /**
  * TROCA OBRIGATÓRIA DE SENHA (primeiro acesso de conta importada).

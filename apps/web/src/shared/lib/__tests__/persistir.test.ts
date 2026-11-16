@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useAppStore, persistir } from '../../../stores/appStore';
+import { useAppStore, persistir } from '@mentor/state/appStore';
 
 /**
  * Gravacao que falha precisa ser visivel.

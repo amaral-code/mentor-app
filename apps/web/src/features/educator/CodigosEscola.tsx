@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, KeyRound, RefreshCw } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { docenteRepository } from '@mentor/api/DocenteRepository';
 

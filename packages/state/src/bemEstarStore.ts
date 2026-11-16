@@ -22,6 +22,7 @@ import {
 } from '@mentor/core/burnoutModel';
 import { calcularMoedas, moedasDeHoje } from '@mentor/core/focusShield';
 import { useAppStore, persistir } from './appStore';
+import { plataforma } from '@mentor/core/plataforma';
 
 /**
  * Estado do modulo de bem-estar.
@@ -408,21 +409,23 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
 }));
 
 /**
- * Grava o que sobrou no buffer quando a aba fecha.
+ * Grava o que sobrou no buffer quando o app vai para segundo plano.
  *
  * sendBeacon nao serve aqui (o PostgREST exige cabecalho de auth), entao
- * o flush comum e disparado no visibilitychange - que, ao contrario do
- * unload, e confiavel no iOS.
+ * o flush comum e disparado quando a aba esconde (web: visibilitychange,
+ * que ao contrario do unload e confiavel no iOS; mobile: AppState).
+ *
+ * Chamado pelo boot do app, e nao no topo deste modulo: a store roda no
+ * web e no celular, e quem sabe como "ir para segundo plano" e a
+ * plataforma instalada no boot. Devolve a funcao que desfaz o registro.
  */
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      const store = useBemEstarStore.getState();
-      if (store.bufferTelemetria.length > 0) {
-        persistir(store.descarregarTelemetria(), {
-          mensagem: 'Parte do seu historico de estudo desta sessao nao foi salvo.',
-        });
-      }
+export function registrarDescargaAoSair(): () => void {
+  return plataforma().aoIrParaSegundoPlano(() => {
+    const store = useBemEstarStore.getState();
+    if (store.bufferTelemetria.length > 0) {
+      persistir(store.descarregarTelemetria(), {
+        mensagem: 'Parte do seu historico de estudo desta sessao nao foi salvo.',
+      });
     }
   });
 }

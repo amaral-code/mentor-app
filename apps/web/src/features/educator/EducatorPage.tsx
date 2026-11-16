@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { ClipboardList, Download, Info, LogOut, Moon, PenLine, Plus, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { safeGet, safeSet } from '@mentor/core/safeStorage';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';
 import { hasProxy } from '@mentor/core/aiService';

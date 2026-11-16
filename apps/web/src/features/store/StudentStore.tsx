@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { Flame, Gift, Lightbulb, Lock, Target, Zap } from 'lucide-react';
-import { useStoreStore } from '../../stores/storeStore';
+import { useStoreStore } from '@mentor/state/storeStore';
 import { SHOP_ITEMS } from '@mentor/core/storeCatalog';
 import { calcLevel } from '@mentor/core/utils';
 import { AppIcon } from '../../shared/ui/AppIcon';

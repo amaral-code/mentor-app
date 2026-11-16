@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ChevronRight, Flame, Target, Trophy, Users } from 'lucide-react';
-import { useAppStore } from '../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { TabId } from '@mentor/core/types';
 
 /*

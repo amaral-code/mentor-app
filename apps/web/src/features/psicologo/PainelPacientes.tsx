@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FileLock2, HeartPulse, Lock, NotebookPen, Users } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
 import type { NotaProntuario, Paciente, PontoBemEstar } from '@mentor/api/PsicologiaRepository';
 import { acompanhamentoRepository } from '@mentor/api/AcompanhamentoRepository';

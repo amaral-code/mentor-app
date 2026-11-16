@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, LogOut, Moon, Plus, Stethoscope, Trash2 } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
 import { getSupabase } from '@mentor/api/supabase';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
@@ -8,7 +8,7 @@ import type { JanelaDisponibilidade } from '@mentor/core/types';
 import { PainelPacientes } from './PainelPacientes';
 import { ConversasProfissional } from './ConversasProfissional';
 import { AvaliacoesRecebidas } from './AvaliacoesRecebidas';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 
 /**
  * Painel do profissional.

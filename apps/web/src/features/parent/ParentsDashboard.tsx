@@ -20,7 +20,7 @@ import { calculateDropoutRisk } from '@mentor/core/dropoutRisk';
 import type { DropoutProjection } from '@mentor/core/dropoutRisk';
 import { analyzeStudentData, aiAvailable } from '@mentor/core/aiService';
 import type { StudentRiskAnalysis } from '@mentor/core/aiService';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { acompanhamentoRepository } from '@mentor/api/AcompanhamentoRepository';
 import type { FichaAluno, MateriaResumo, ResumoMensal, ResumoSemanal } from '@mentor/api/AcompanhamentoRepository';
 import {

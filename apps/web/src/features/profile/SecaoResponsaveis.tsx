@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, RefreshCw, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
 import { userRepository } from '@mentor/api/UserRepository';
 import { ehMenorDe16, formatarCodigo, validarDataNascimento } from '@mentor/core/vinculoCodigo';

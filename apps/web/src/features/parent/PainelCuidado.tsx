@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, BellRing, HeartPulse, ShieldCheck, TriangleAlert } from 'lucide-react';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 import { bemEstarRepository } from '@mentor/api/BemEstarRepository';
 import { focoOfflineRepository } from '@mentor/api/FocoOfflineRepository';
 import { COR_CLASSE, ROTULO_CLASSE, FADIGA_ZERADA } from '@mentor/core/burnoutModel';

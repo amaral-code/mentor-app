@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { springTap } from '../lib/motionPresets';
 import { Mascot } from './Mascot';
-import { mascotStore } from '../../stores/mascotStore';
+import { mascotStore } from '@mentor/state/mascotStore';
 
 const FAB_TIPS = [
   ' Tente encher a barra de XP com um quiz rápido!',

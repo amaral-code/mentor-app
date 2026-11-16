@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PanelRightOpen } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '@mentor/core/kbSearch';
 import { getEmpathicPrefix } from '@mentor/core/emotionEngine';
 import { QUIZ_BANK } from '@mentor/core/quizBank';

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { getMoodColor } from '@mentor/core/emotionEngine';
 import { MoodType } from '@mentor/core/types';
 

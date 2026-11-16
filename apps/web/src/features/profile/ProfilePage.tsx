@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Brain, Check, CheckCircle2, ClipboardList, Eye, EyeOff, Flame, Lightbulb, Lock, Moon, Star, XCircle, Zap } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { userRepository } from '@mentor/api/UserRepository';
 import { getEscolasCadastradas, getTurmasCadastradas } from '@mentor/api/rankingEngine';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';

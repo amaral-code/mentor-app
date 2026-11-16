@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAppStore } from '../../stores/appStore';
-import { useStoreStore } from '../../stores/storeStore';
+import { useAppStore } from '@mentor/state/appStore';
+import { useStoreStore } from '@mentor/state/storeStore';
 import { getStoreItem } from '@mentor/core/storeCatalog';
 import { AppIcon } from '../../shared/ui/AppIcon';
 import { safeGet, safeSet } from '@mentor/core/safeStorage';

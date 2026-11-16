@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, Fragment, memo } from 'react';
 import { Eye, EyeOff, GraduationCap, HeartHandshake, Lock, Mail, Presentation, School, User } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { userRepository } from '@mentor/api/UserRepository';
 import { isSupabaseConfigured } from '@mentor/api/supabase';
 import { UserRole } from '@mentor/core/types';

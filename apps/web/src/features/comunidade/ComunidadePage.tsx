@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Check, Sparkles, User } from 'lucide-react';
-import { useAppStore, persistir } from '../../stores/appStore';
+import { useAppStore, persistir } from '@mentor/state/appStore';
 import { getProfile, getEscolasCadastradas, getTurmasCadastradas } from '@mentor/api/rankingEngine';
 import type { CommunityMessage, Escola, Turma } from '@mentor/core/types';
 import { createStudyLeague, joinLeague, normalizeStudyLeague, canJoinMoreLeagues, type StudyLeague } from '@mentor/core/ligasEngine';

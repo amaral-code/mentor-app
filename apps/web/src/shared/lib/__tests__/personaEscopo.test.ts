@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { montarInstrucaoDaPersona } from '@mentor/core/aiService';
-import { useAppStore } from '../../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import type { ChatPersona } from '@mentor/core/types';
 
 /**

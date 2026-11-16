@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { PenLine, Zap } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { Modal } from '../../shared/ui/Modal';
 import { GlassCard } from '../../shared/ui/GlassCard';
 import { AppIcon } from '../../shared/ui/AppIcon';

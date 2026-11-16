@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mentor/state": "*",
     "@mentor/api": "*",
     "@mentor/core": "*",
     "@supabase/supabase-js": "^2.110.8",

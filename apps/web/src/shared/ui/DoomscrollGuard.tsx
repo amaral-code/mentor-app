@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
-import { useAppStore } from '../../stores/appStore';
-import { useBemEstarStore } from '../../stores/bemEstarStore';
+import { useAppStore } from '@mentor/state/appStore';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
 import { criarRastreadorOciosidade, sugestaoLocal } from '../lib/idleTracker';
 import { aiAvailable, gerarIntervencaoDoomscroll } from '@mentor/core/aiService';
 import { MOOD_LABEL } from '@mentor/core/utils';

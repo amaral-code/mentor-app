@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { TabId } from '@mentor/core/types';
 import { Mascot } from './Mascot';
 import { AppIcon } from './AppIcon';

@@ -3,7 +3,7 @@ import { m, useReducedMotion } from 'motion/react';
 import { listContainer, listItem } from '../../shared/lib/motionPresets';
 import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
 import { BarChart3, BookOpen, Camera, Check, Frown, Moon, Target, Timer, Trophy, X, Zap } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
 import { FADIGA_ZERADA } from '@mentor/core/burnoutModel';
 import { getSSCColor, getSSCLabel } from '@mentor/core/sscCalculator';

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Coins, Lock, Smartphone, TriangleAlert } from 'lucide-react';
-import { useBemEstarStore } from '../../stores/bemEstarStore';
-import { useAppStore } from '../../stores/appStore';
+import { useBemEstarStore } from '@mentor/state/bemEstarStore';
+import { useAppStore } from '@mentor/state/appStore';
 import {
   META_MINUTOS_MODO,
   MULTIPLICADOR_MODO,

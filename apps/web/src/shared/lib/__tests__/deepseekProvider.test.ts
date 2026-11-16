@@ -70,7 +70,7 @@ describe('aiProvider (DeepSeek-V4-Flash)', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { useAppStore } = await import('../../../stores/appStore');
+    const { useAppStore } = await import('@mentor/state/appStore');
     const matematica = useAppStore.getState().personas.find((p) => p.id === 'prof_matematica')!;
     // Chave do Perfil e ignorada no modo back-end: o servidor autentica.
     const reply = await sendMessageToGemini('Resolva 2x = 8', { apiKey: '', persona: matematica });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CalendarClock, CircleCheck, Clock, Video } from 'lucide-react';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 import {
   ehLinkDeSalaValido,
   formatarDataHora,
@@ -10,7 +10,7 @@ import {
   tempoAte,
 } from '@mentor/core/bookingEngine';
 import { EmptyState } from '../../shared/ui/EmptyState';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
 import { AvaliarConsulta } from './AvaliarConsulta';
 

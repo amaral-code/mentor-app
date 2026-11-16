@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EyeOff, ShieldCheck, UserRoundCheck } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useAppStore } from '@mentor/state/appStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 import { psicologiaRepository } from '@mentor/api/PsicologiaRepository';
 import type { Consentimento } from '@mentor/api/PsicologiaRepository';
 import {

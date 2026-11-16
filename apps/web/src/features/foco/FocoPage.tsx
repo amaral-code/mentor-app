@@ -1,6 +1,6 @@
 import { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { BarChart3, Hand, ShieldAlert } from 'lucide-react';
-import { useAppStore, persistir } from '../../stores/appStore';
+import { useAppStore, persistir } from '@mentor/state/appStore';
 import { MeditationOverlay } from '../../shared/ui/MeditationOverlay';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { supabaseRepository } from '@mentor/api/SupabaseRepository';

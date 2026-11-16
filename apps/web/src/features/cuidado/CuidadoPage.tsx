@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bell, HeartHandshake, ShieldQuestion, UserCheck } from 'lucide-react';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
-import { useAppStore } from '../../stores/appStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
 import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';

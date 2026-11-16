@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { BellRing, GraduationCap, HeartHandshake, LogOut, Moon, UserPlus } from 'lucide-react';
-import { useMarketplaceStore } from '../../stores/marketplaceStore';
+import { useMarketplaceStore } from '@mentor/state/marketplaceStore';
 import { ParentsDashboard } from './ParentsDashboard';
 import { PainelCuidado } from './PainelCuidado';
 import { EntrarPorCodigo } from './EntrarPorCodigo';

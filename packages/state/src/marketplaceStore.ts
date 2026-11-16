@@ -10,6 +10,7 @@ import type {
 } from '@mentor/core/types';
 import { marketplaceRepository } from '@mentor/api/MarketplaceRepository';
 import { useAppStore } from './appStore';
+import { plataforma } from '@mentor/core/plataforma';
 
 /**
  * Estado do marketplace (catalogo, agenda, consultas, alertas, vinculos).
@@ -148,7 +149,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
 
       if (checkout.checkoutUrl) {
         // Sai do app: o provedor cuida do cartao/PIX e o webhook confirma.
-        window.location.assign(checkout.checkoutUrl);
+        plataforma().abrirUrl(checkout.checkoutUrl);
         return agendamento;
       }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Wind } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import { playClick } from '../../shared/lib/sfx';
 
 export function CrisisOverlay() {

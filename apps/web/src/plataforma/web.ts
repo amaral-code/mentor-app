@@ -21,4 +21,14 @@ configurarPlataforma({
   },
   online: () => (typeof navigator !== 'undefined' ? navigator.onLine : null),
   dev: () => import.meta.env.DEV === true,
+  abrirUrl: (url) => window.location.assign(url),
+  aoIrParaSegundoPlano: (aoSair) => {
+    if (typeof document === 'undefined') return () => {};
+    // visibilitychange, e nao unload: e o unico confiavel no iOS.
+    const ouvir = () => {
+      if (document.visibilityState === 'hidden') aoSair();
+    };
+    document.addEventListener('visibilitychange', ouvir);
+    return () => document.removeEventListener('visibilitychange', ouvir);
+  },
 });

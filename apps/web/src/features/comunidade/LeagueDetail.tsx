@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { SendHorizontal, Sparkles, Users } from 'lucide-react';
-import { useAppStore } from '../../stores/appStore';
+import { useAppStore } from '@mentor/state/appStore';
 import type { StudyLeague } from '@mentor/core/ligasEngine';
 import { postLeagueMessage } from '@mentor/core/ligasEngine';
 
