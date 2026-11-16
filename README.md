@@ -322,7 +322,7 @@ tratamento em `server/__tests__/worker.test.mjs` e `deepseek.test.mjs`.
 
 Detalhes de arquitetura e das decisões: [`docs/modulo-bem-estar.md`](docs/modulo-bem-estar.md)
 e [`docs/chat-tematico-e-redacao-por-foto.md`](docs/chat-tematico-e-redacao-por-foto.md).
-App nativo do Escudo de Dopamina: [`mobile/react-native/`](mobile/react-native/README.md).
+App nativo do Escudo de Dopamina: [`apps/mobile/modules/focus-shield/`](apps/mobile/modules/focus-shield/README.md) (Expo Module).
 
 ## Segurança
 

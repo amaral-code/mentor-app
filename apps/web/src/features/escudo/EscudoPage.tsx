@@ -351,7 +351,7 @@ export function EscudoPage() {
 
       <p className="text-center text-xs text-slate-400 leading-relaxed px-4 py-3 glass-light rounded-xl">
         No navegador o escudo mede o tempo com o app em segundo plano. No aplicativo nativo (Android/iOS)
-        ele lê o estado real da tela bloqueada. O código está em mobile/react-native.
+        ele lê o estado real da tela bloqueada.
       </p>
     </div>
   );

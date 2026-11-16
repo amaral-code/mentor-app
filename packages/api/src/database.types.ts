@@ -1509,6 +1509,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sessoes_foco_abertas: {
+        Row: {
+          id: string
+          user_id: string
+          modo: string
+          iniciada_em: string
+          encerrada_em: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          modo?: string
+          iniciada_em?: string
+          encerrada_em?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          modo?: string
+          iniciada_em?: string
+          encerrada_em?: string | null
+        }
+        Relationships: []
+      }
       sessoes_offline: {
         Row: {
           id: number
@@ -1841,6 +1865,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      encerrar_sessao_foco: {
+        Args: {
+          p_sessao: string
+          p_minutos_offline: number
+          p_interrupcoes?: number
+        }
+        Returns: {
+          saldo: number
+          moedas_creditadas: number
+          minutos: number
+        }[]
+      }
       enfileirar_notificacao: {
         Args: {
           p_user: string
@@ -1901,6 +1937,15 @@ export type Database = {
           p_motivo: string
         }
         Returns: number
+      }
+      iniciar_sessao_foco: {
+        Args: {
+          p_modo?: string
+        }
+        Returns: {
+          sessao_id: string
+          iniciada_em: string
+        }[]
       }
       insights_turma_24h: {
         Args: {

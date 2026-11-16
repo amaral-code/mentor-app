@@ -76,6 +76,18 @@ interface EstadoEscudo {
   interrupcoes: number;
   /** Minutos ja acumulados, atualizado por tick de 1 s na tela. */
   minutosDecorridos: number;
+  /**
+   * Sessao aberta no servidor (031). Null: banco sem a 031, ou sem rede
+   * no começo; aí o crédito cai no caminho antigo (ou não acontece).
+   */
+  sessaoId?: string | null;
+}
+
+/** O que o aparelho mediu, quando há módulo nativo (celular). */
+export interface MedicaoEscudo {
+  /** Minutos com a tela apagada/bloqueada, no relógio monotônico. */
+  minutosOffline: number;
+  interrupcoes: number;
 }
 
 interface BemEstarState {
@@ -112,7 +124,11 @@ interface BemEstarState {
   iniciarEscudo: (modo: ModoEscudo) => void;
   registrarInterrupcao: () => void;
   atualizarCronometro: (minutos: number) => void;
-  encerrarEscudo: () => Promise<{ moedas: number; minutos: number } | null>;
+  /**
+   * Sem medição (web), o tempo longe é o tempo da sessão. Com medição
+   * (módulo nativo), vale o que a tela ficou apagada.
+   */
+  encerrarEscudo: (medicao?: MedicaoEscudo) => Promise<{ moedas: number; minutos: number } | null>;
   cancelarEscudo: () => void;
   gastarMoedas: (quantidade: number, motivo: string) => Promise<boolean>;
   agendarRevisao: (topicoId: string, topicoNome: string, materia: string, nota: number) => Promise<void>;
@@ -270,7 +286,15 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
   // =================================================================
 
   iniciarEscudo: (modo) => {
-    set({ escudo: { ativo: true, inicio: Date.now(), modo, interrupcoes: 0, minutosDecorridos: 0 } });
+    const inicio = Date.now();
+    set({ escudo: { ativo: true, inicio, modo, interrupcoes: 0, minutosDecorridos: 0, sessaoId: null } });
+    // O servidor carimba o começo (031). A tela já está contando: a
+    // resposta só amarra o id, se a sessão ainda for a mesma.
+    void focoOfflineRepository.iniciarSessao(modo).then((sessao) => {
+      if (sessao && get().escudo.ativo && get().escudo.inicio === inicio) {
+        set((s) => ({ escudo: { ...s.escudo, sessaoId: sessao.id } }));
+      }
+    });
   },
 
   registrarInterrupcao: () => {
@@ -289,30 +313,24 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
    * A previa local (calcularMoedas) so serve para a animacao; o numero
    * exibido no fim e o que o banco devolveu.
    */
-  encerrarEscudo: async () => {
+  encerrarEscudo: async (medicao) => {
     const { escudo, sessoesOffline } = get();
     if (!escudo.ativo || !escudo.inicio) return null;
 
     const inicio = new Date(escudo.inicio);
     const fim = new Date();
-    const previa = calcularMoedas(
-      (fim.getTime() - inicio.getTime()) / 60000,
-      escudo.interrupcoes,
-      escudo.modo,
-      moedasDeHoje(sessoesOffline),
-    );
+    const minutosOffline = medicao ? medicao.minutosOffline : (fim.getTime() - inicio.getTime()) / 60000;
+    const interrupcoes = medicao ? medicao.interrupcoes : escudo.interrupcoes;
+    const previa = calcularMoedas(minutosOffline, interrupcoes, escudo.modo, moedasDeHoje(sessoesOffline));
 
-    set({ escudo: { ativo: false, inicio: null, modo: escudo.modo, interrupcoes: 0, minutosDecorridos: 0 } });
+    set({ escudo: { ativo: false, inicio: null, modo: escudo.modo, interrupcoes: 0, minutosDecorridos: 0, sessaoId: null } });
 
     if (previa.minutos < 1) return { moedas: 0, minutos: previa.minutos };
 
     try {
-      const resultado = await focoOfflineRepository.creditarSessao(
-        inicio,
-        fim,
-        escudo.interrupcoes,
-        escudo.modo,
-      );
+      const resultado = escudo.sessaoId
+        ? await focoOfflineRepository.encerrarSessao(escudo.sessaoId, minutosOffline, interrupcoes)
+        : await focoOfflineRepository.creditarSessao(inicio, fim, interrupcoes, escudo.modo);
       set((s) => ({
         carteira: { ...s.carteira, saldo: resultado.saldo, totalGanho: s.carteira.totalGanho + resultado.moedas },
         sessoesOffline: [
@@ -320,7 +338,7 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
             inicio: inicio.toISOString(),
             fim: fim.toISOString(),
             minutosOffline: resultado.minutos,
-            interrupcoes: escudo.interrupcoes,
+            interrupcoes,
             modo: escudo.modo,
             moedasCreditadas: resultado.moedas,
           },
@@ -337,7 +355,7 @@ export const useBemEstarStore = create<BemEstarState>((set, get) => ({
   },
 
   cancelarEscudo: () => {
-    set({ escudo: { ativo: false, inicio: null, modo: get().escudo.modo, interrupcoes: 0, minutosDecorridos: 0 } });
+    set({ escudo: { ativo: false, inicio: null, modo: get().escudo.modo, interrupcoes: 0, minutosDecorridos: 0, sessaoId: null } });
   },
 
   gastarMoedas: async (quantidade, motivo) => {

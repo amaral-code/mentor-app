@@ -57,6 +57,49 @@ export class FocoOfflineRepository {
   }
 
   /**
+   * Abre a sessão no relógio do SERVIDOR (migration 031).
+   *
+   * `null` quando o banco ainda não tem a 031 (o app cai no caminho
+   * antigo) ou quando não há rede. Sem rede no começo não há como provar
+   * a sessão depois: a tela avisa que, para valer moeda, ela precisa
+   * começar conectada (depois pode ir para o modo avião).
+   */
+  async iniciarSessao(modo: ModoEscudo): Promise<{ id: string; iniciadaEm: string } | null> {
+    if (!clienteAtivo()) return null;
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('iniciar_sessao_foco', { p_modo: modo });
+    if (error) {
+      falhou('iniciar_sessao_foco', error);
+      return null;
+    }
+    const row = (Array.isArray(data) ? data[0] : data) as { sessao_id?: string; iniciada_em?: string } | null;
+    return row?.sessao_id ? { id: row.sessao_id, iniciadaEm: String(row.iniciada_em ?? '') } : null;
+  }
+
+  /**
+   * Fecha a sessão aberta por `iniciarSessao` e credita. O servidor paga o
+   * MENOR entre `minutosOffline` (medido no aparelho) e o tempo que ele
+   * mesmo viu passar: mudar a hora do celular não muda nada.
+   */
+  async encerrarSessao(
+    sessaoId: string,
+    minutosOffline: number,
+    interrupcoes: number,
+  ): Promise<{ saldo: number; moedas: number; minutos: number }> {
+    if (!clienteAtivo()) return { saldo: 0, moedas: 0, minutos: 0 };
+    const sb = getSupabase()!;
+    const { data, error } = await sb.rpc('encerrar_sessao_foco', {
+      p_sessao: sessaoId,
+      p_minutos_offline: Math.max(0, minutosOffline),
+      p_interrupcoes: Math.max(0, Math.round(interrupcoes)),
+    });
+    if (error) exigir('encerrar_sessao_foco', error);
+    const row = (Array.isArray(data) ? data[0] : data) as { saldo?: number; moedas_creditadas?: number; minutos?: number } | null;
+    return { saldo: row?.saldo ?? 0, moedas: row?.moedas_creditadas ?? 0, minutos: row?.minutos ?? 0 };
+  }
+
+  /**
+   * CAMINHO ANTIGO (banco sem a 031): o aparelho diz início e fim.
    * Fecha a sessao e credita.
    *
    * Devolve o que o SERVIDOR calculou - a tela deve substituir a previa

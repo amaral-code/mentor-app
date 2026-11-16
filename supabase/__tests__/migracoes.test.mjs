@@ -42,6 +42,24 @@ async function comoUsuario(uid, sql, params = []) {
   }
 }
 
+/**
+ * Executa com auth.uid() = uid, mas com o papel do DONO das funções (sem
+ * RLS nem grants). Serve para testar a fórmula de `creditar_moedas_foco`,
+ * que desde a 031 só é chamada por dentro de `encerrar_sessao_foco`.
+ */
+async function comoDono(uid, sql, params = []) {
+  await db.exec('begin');
+  try {
+    await db.query(`select set_config('app.uid', $1, true)`, [uid]);
+    const r = await db.query(sql, params);
+    await db.exec('commit');
+    return r;
+  } catch (e) {
+    await db.exec('rollback');
+    throw e;
+  }
+}
+
 const linhas = async (uid, sql, params) => (await comoUsuario(uid, sql, params)).rows;
 const primeira = async (uid, sql, params) => (await comoUsuario(uid, sql, params)).rows[0];
 
@@ -68,6 +86,8 @@ beforeAll(async () => {
     revoke all on function public.mesmo_mundo(uuid, uuid) from authenticated;
     revoke all on function public.preparar_demonstracao(text, text, text, text, text) from authenticated;
     revoke all on function public.limpar_demonstracao() from authenticated;
+    -- 031: a porta antiga das moedas (cliente dizia início e fim) fechou.
+    revoke all on function public.creditar_moedas_foco(timestamptz, timestamptz, integer, text) from authenticated;
   `);
 
   const criar = async (email, nome) =>
@@ -415,11 +435,66 @@ describe('marketplace', () => {
   });
 });
 
+describe('sessao de foco no relogio do servidor (031)', () => {
+  /** Volta o início da sessão aberta, como se o aluno estivesse há `min` minutos longe da tela. */
+  const envelhecer = (id, min) =>
+    db.query(`update public.sessoes_foco_abertas set iniciada_em = now() - make_interval(mins => $2::int) where id = $1`, [id, min]);
+  const abrir = async (uid, modo = 'enem') =>
+    (await primeira(uid, `select * from public.iniciar_sessao_foco($1)`, [modo])).sessao_id;
+  const fechar = (uid, id, minutos, interrupcoes = 0) =>
+    primeira(uid, `select * from public.encerrar_sessao_foco($1, $2, $3)`, [id, minutos, interrupcoes]);
+
+  it('o cliente nao chama mais a porta antiga, que aceitava inicio e fim', async () => {
+    await expect(
+      comoUsuario(estranho, `select * from public.creditar_moedas_foco(now() - interval '4 hours', now(), 0, 'maratona')`),
+    ).rejects.toThrow(/permission denied/);
+  });
+
+  it('paga o menor entre o que o aparelho mediu e o que o servidor viu passar', async () => {
+    const id = await abrir(estranho);
+    await envelhecer(id, 30);
+    // O aparelho diz 240 minutos (relógio adiantado, ou mentira): vale 30.
+    const r = await fechar(estranho, id, 240);
+    expect(r.minutos).toBe(30);
+    expect(r.moedas_creditadas).toBe(37); // 30 min, faixa 1.25, modo enem
+  });
+
+  it('sessao recem aberta nao paga nada, diga o aparelho o que disser', async () => {
+    const id = await abrir(estranho);
+    const r = await fechar(estranho, id, 120);
+    expect(r.moedas_creditadas).toBe(0);
+  });
+
+  it('nao fecha duas vezes nem fecha a sessao de outro aluno', async () => {
+    const id = await abrir(estranho);
+    await envelhecer(id, 20);
+    await expect(fechar(aluno, id, 20)).rejects.toThrow(/inexistente/);
+    await fechar(estranho, id, 20);
+    await expect(fechar(estranho, id, 20)).rejects.toThrow(/inexistente/);
+  });
+
+  it('abrir outra sessao fecha a anterior sem pagar', async () => {
+    const primeiraId = await abrir(estranho);
+    await envelhecer(primeiraId, 60);
+    const segunda = await abrir(estranho);
+    expect(segunda).not.toBe(primeiraId);
+    await expect(fechar(estranho, primeiraId, 60)).rejects.toThrow(/inexistente/);
+    const abertas = await linhas(estranho, `select id from public.sessoes_foco_abertas where encerrada_em is null`);
+    expect(abertas.map((a) => a.id)).toEqual([segunda]);
+  });
+
+  it('o aluno nao abre nem altera sessao direto na tabela', async () => {
+    await expect(
+      comoUsuario(estranho, `insert into public.sessoes_foco_abertas (user_id, iniciada_em) values ($1, now() - interval '3 hours')`, [estranho]),
+    ).rejects.toThrow();
+  });
+});
+
 describe('escudo de dopamina', () => {
-  const creditar = (min, interrupcoes = 0, modo = 'enem') =>
-    primeira(aluno,
+  const creditar = async (min, interrupcoes = 0, modo = 'enem') =>
+    (await comoDono(aluno,
       `select * from public.creditar_moedas_foco(now() - make_interval(mins => $1::int), now(), $2::int, $3)`,
-      [min, interrupcoes, modo]);
+      [min, interrupcoes, modo])).rows[0];
 
   it('a formula do banco bate com a de focusShield.ts', async () => {
     expect((await creditar(25)).moedas_creditadas).toBe(31);
@@ -428,14 +503,14 @@ describe('escudo de dopamina', () => {
   });
 
   it('recalcula os minutos pelo relogio do servidor', async () => {
-    const r = await primeira(aluno,
-      `select * from public.creditar_moedas_foco(now() - interval '10 minutes', now(), 0, 'maratona')`);
+    const r = (await comoDono(aluno,
+      `select * from public.creditar_moedas_foco(now() - interval '10 minutes', now(), 0, 'maratona')`)).rows[0];
     expect(r.minutos).toBe(10);
   });
 
   it('recusa sessao no futuro', async () => {
     await expect(
-      comoUsuario(aluno, `select * from public.creditar_moedas_foco(now(), now() + interval '2 hours', 0, 'enem')`),
+      comoDono(aluno, `select * from public.creditar_moedas_foco(now(), now() + interval '2 hours', 0, 'enem')`),
     ).rejects.toThrow();
   });
 

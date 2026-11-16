@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["FocusShieldModule"]
+  },
+  "android": {
+    "modules": ["br.com.midnightmentor.focusshield.FocusShieldModule"]
+  }
+}

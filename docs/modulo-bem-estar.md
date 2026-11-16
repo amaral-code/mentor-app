@@ -118,7 +118,7 @@ gaveta durante a aula vira farm).
 
 **Web:** Page Visibility API — mede a aba, não a tela; acerta o caso
 principal e erra quando o aluno troca para outro app.
-**Nativo:** `mobile/react-native/` lê o estado real —
+**Nativo:** `apps/mobile/modules/focus-shield/` (Expo Module) lê o estado real —
 `ACTION_SCREEN_OFF`/`USER_PRESENT` no Android (com serviço em primeiro
 plano, porque o Android 8+ mata processos em background em minutos) e
 `protectedDataWillBecomeUnavailable` no iOS. Contagem com relógio
