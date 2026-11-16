@@ -1,8 +1,8 @@
 import type { Session as SbSession, Subscription } from '@supabase/supabase-js';
-import { Session, User, UserRole } from '../types';
+import { Session, User, UserRole } from '@mentor/core/types';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
-import { comTimeout, TIMEOUT_AUTH_MS } from '../lib/comTimeout';
-import { onboardingConcluidoLocal } from '../lib/onboardingLocal';
+import { comTimeout, TIMEOUT_AUTH_MS } from '@mentor/core/comTimeout';
+import { onboardingConcluidoLocal } from '@mentor/core/onboardingLocal';
 
 /**
  * Autenticacao - exclusivamente Supabase Auth.

@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { ChevronRight, CloudUpload, History, PenLine, Plus, Search, Trash2 } from 'lucide-react';
-import type { Conversa } from '../../../shared/types';
+import type { Conversa } from '@mentor/core/types';
 
 interface HistoryPanelProps {
   aberto: boolean;

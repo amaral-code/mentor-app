@@ -1,4 +1,4 @@
-import type { ClasseBurnout, EventoTelemetria } from '../types';
+import type { ClasseBurnout, EventoTelemetria } from './types';
 
 /**
  * MOTOR DE PREDICAO DE FADIGA - regressao logistica em JS puro.

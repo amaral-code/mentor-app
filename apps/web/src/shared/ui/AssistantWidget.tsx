@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SendHorizontal, X } from 'lucide-react';
-import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '../lib/kbSearch';
-import { getEmpathicPrefix } from '../lib/emotionEngine';
-import { QUIZ_BANK } from '../lib/quizBank';
-import { ENEM_KB } from '../lib/kbEnem';
-import { ultimaMateria } from '../lib/contextMemory';
+import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '@mentor/core/kbSearch';
+import { getEmpathicPrefix } from '@mentor/core/emotionEngine';
+import { QUIZ_BANK } from '@mentor/core/quizBank';
+import { ENEM_KB } from '@mentor/core/kbEnem';
+import { ultimaMateria } from '@mentor/core/contextMemory';
 import { useAppStore } from '../../stores/appStore';
 
 const CHAT_KB = [...ENEM_KB, ...buildKBFromQuiz(QUIZ_BANK)];

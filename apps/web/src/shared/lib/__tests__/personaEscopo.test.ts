@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { montarInstrucaoDaPersona } from '../aiService';
+import { montarInstrucaoDaPersona } from '@mentor/core/aiService';
 import { useAppStore } from '../../../stores/appStore';
-import type { ChatPersona } from '../../types';
+import type { ChatPersona } from '@mentor/core/types';
 
 /**
  * O professor de materia precisa FICAR na materia.
@@ -165,7 +165,7 @@ describe('o que chega ao modelo', () => {
     vi.stubEnv('VITE_AI_PROVIDER', 'gemini');
     vi.stubEnv('VITE_AI_MODEL', 'gemini-2.0-flash');
     vi.stubEnv('VITE_AI_BASE_URL', '');
-    const { sendMessageToGemini } = await import('../aiService');
+    const { sendMessageToGemini } = await import('@mentor/core/aiService');
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true, status: 200,
       json: async () => ({ candidates: [{ content: { parts: [{ text: 'x = 4' }] } }] }),
@@ -189,7 +189,7 @@ describe('o que chega ao modelo', () => {
     vi.stubEnv('VITE_AI_PROVIDER', 'gemini');
     vi.stubEnv('VITE_AI_MODEL', 'gemini-2.0-flash');
     vi.stubEnv('VITE_AI_BASE_URL', '');
-    const { sendMessageToGemini } = await import('../aiService');
+    const { sendMessageToGemini } = await import('@mentor/core/aiService');
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true, status: 200,
       json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok' }] } }] }),

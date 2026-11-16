@@ -3,8 +3,8 @@ import { LazyMotion } from 'motion/react';
 import { useAppStore, persistir } from './stores/appStore';
 import { userRepository } from './shared/storage/UserRepository';
 import { supabaseRepository } from './shared/storage/SupabaseRepository';
-import { comTimeout, TIMEOUT_BOOT_MS } from './shared/lib/comTimeout';
-import { safeGet } from './shared/lib/safeStorage';
+import { comTimeout, TIMEOUT_BOOT_MS } from '@mentor/core/comTimeout';
+import { safeGet } from '@mentor/core/safeStorage';
 import { AuthPage } from './features/auth/AuthPage';
 import { AppShell } from './app/AppShell';
 import { PageSkeleton } from './shared/ui/Skeleton';
@@ -33,11 +33,11 @@ import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
-import { precisaOnboarding } from './shared/lib/onboardingLocal';
+import { precisaOnboarding } from '@mentor/core/onboardingLocal';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
 import { mascotStore } from './stores/mascotStore';
-import { getToday, proximoStreak } from './shared/lib/utils';
+import { getToday, proximoStreak } from '@mentor/core/utils';
 
 /*
  * Carregamento tardio das features de animação.
@@ -55,7 +55,7 @@ const featuresAnimacao = () => import('motion/react').then((mod) => mod.domMax);
 import { useStoreStore } from './stores/storeStore';
 import { hidratarCache } from './shared/lib/rankingEngine';
 import { useBemEstarStore } from './stores/bemEstarStore';
-import { deveGerarRelatorio } from './shared/lib/decompressionReport';
+import { deveGerarRelatorio } from '@mentor/core/decompressionReport';
 
 export default function App() {
   // Seletores atomicos: o App monta TODAS as telas; assinar o store inteiro

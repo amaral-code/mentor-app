@@ -4,9 +4,9 @@ import { atrasoDoItem, avancar, springTap } from '../../shared/lib/motionPresets
 import { BarraProgresso } from '../../shared/ui/AnimatedNumber';
 import { BarChart3, BookOpen, Check, Lightbulb, Target, TriangleAlert, Volume2, X, Zap } from 'lucide-react';
 import { useAppStore, persistir } from '../../stores/appStore';
-import { Dificuldade, QuizQuestion, QuizResult } from '../../shared/types';
-import { generateQuizStructured, aiAvailable, NivelQuiz, explicarErroComTutor } from '../../shared/lib/aiService';
-import { QUIZ_LOTES_SIMULTANEOS, emParalelo } from '../../shared/lib/quizLotes';
+import { Dificuldade, QuizQuestion, QuizResult } from '@mentor/core/types';
+import { generateQuizStructured, aiAvailable, NivelQuiz, explicarErroComTutor } from '@mentor/core/aiService';
+import { QUIZ_LOTES_SIMULTANEOS, emParalelo } from '@mentor/core/quizLotes';
 import {
   filtrarIneditas,
   salvarRascunhoSimulado,
@@ -15,7 +15,7 @@ import {
   formatarTempoSimulado,
   MINUTOS_POR_QUESTAO_SIMULADO,
   RascunhoSimulado,
-} from '../../shared/lib/quizHistory';
+} from '@mentor/core/quizHistory';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { playCorrect, playError, playLevelUp } from '../../shared/lib/sfx';
 import { mascotStore } from '../../stores/mascotStore';

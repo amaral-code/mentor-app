@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, BadgeCheck, CalendarHeart, Phone } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
-import { tempoAte } from '../../shared/lib/bookingEngine';
+import { tempoAte } from '@mentor/core/bookingEngine';
 import { StarfieldCanvas } from './components/StarfieldCanvas';
 import { HeroSessao } from './components/HeroSessao';
 import { Calendario, type DiaCalendario, type FeedbackDia } from './components/Calendario';

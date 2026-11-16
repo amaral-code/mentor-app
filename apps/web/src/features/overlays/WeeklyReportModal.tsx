@@ -8,11 +8,11 @@ import {
   destaquesDaSemana,
   inicioDaSemana,
   textoLocalDescompressao,
-} from '../../shared/lib/decompressionReport';
-import { aiAvailable, gerarRelatorioDescompressao } from '../../shared/lib/aiService';
+} from '@mentor/core/decompressionReport';
+import { aiAvailable, gerarRelatorioDescompressao } from '@mentor/core/aiService';
 import { bemEstarRepository } from '../../shared/storage/BemEstarRepository';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import type { MetricasDescompressao } from '../../shared/types';
+import type { MetricasDescompressao } from '@mentor/core/types';
 
 /**
  * RELATORIO DE DESCOMPRESSAO SEMANAL.

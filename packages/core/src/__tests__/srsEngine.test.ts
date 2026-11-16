@@ -9,7 +9,7 @@ import {
   revisoesDeHoje,
   somarDias,
 } from '../srsEngine';
-import type { RevisaoEspacada } from '../../types';
+import type { RevisaoEspacada } from '../types';
 
 const HOJE = new Date('2026-03-10T12:00:00');
 

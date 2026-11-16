@@ -1,4 +1,4 @@
-import type { Agendamento, JanelaDisponibilidade, SlotAgenda } from '../types';
+import type { Agendamento, JanelaDisponibilidade, SlotAgenda } from './types';
 
 /**
  * ARQUITETURA DE BOOKING - geracao e validacao de horarios.

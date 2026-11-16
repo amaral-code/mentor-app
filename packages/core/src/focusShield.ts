@@ -1,4 +1,4 @@
-import type { ModoEscudo, SessaoOffline } from '../types';
+import type { ModoEscudo, SessaoOffline } from './types';
 
 /**
  * ESCUDO DE DOPAMINA - conversao de tempo offline em moedas de foco.

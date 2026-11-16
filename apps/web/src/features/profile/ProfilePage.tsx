@@ -4,13 +4,13 @@ import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { getEscolasCadastradas, getTurmasCadastradas } from '../../shared/lib/rankingEngine';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { calcLevel } from '../../shared/lib/utils';
+import { calcLevel } from '@mentor/core/utils';
 import { AcessibilidadePanel } from '../../shared/ui/AcessibilidadePanel';
 import { SecaoResponsaveis } from './SecaoResponsaveis';
 import { AcessoPsicologo } from '../psicologia/AcessoPsicologo';
 import { AvisoMensagens } from '../psicologia/AvisoMensagens';
-import { hasProxy, testGeneration, getAIProviderInfo } from '../../shared/lib/aiService';
-import type { Escola, Turma } from '../../shared/types';
+import { hasProxy, testGeneration, getAIProviderInfo } from '@mentor/core/aiService';
+import type { Escola, Turma } from '@mentor/core/types';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 export function ProfilePage() {

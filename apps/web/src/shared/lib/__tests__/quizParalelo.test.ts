@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { QUIZ_LOTE_MAX, QUIZ_TETO_TOKENS_SERVIDOR } from '../quizLotes';
+import { QUIZ_LOTE_MAX, QUIZ_TETO_TOKENS_SERVIDOR } from '@mentor/core/quizLotes';
 
 /**
  * Orquestracao do quiz em lotes paralelos.
@@ -43,7 +43,7 @@ async function carregar() {
   vi.stubEnv('VITE_AI_MODEL', 'deepseek-v4-flash');
   vi.stubEnv('VITE_AI_BASE_URL', 'https://worker.dev');
   vi.stubEnv('VITE_AI_PROXY_TOKEN', '');
-  return import('../aiService');
+  return import('@mentor/core/aiService');
 }
 
 describe('generateQuizStructured em lotes', () => {

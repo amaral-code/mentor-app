@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { AppIcon } from './AppIcon';
 import { Check } from 'lucide-react';
-import type { ChatPersona } from '../types';
+import type { ChatPersona } from '@mentor/core/types';
 
 /* Eram 20 emojis; o script de remocao deixou 20 botoes em branco. Agora
    sao nomes do registro do AppIcon, o mesmo vocabulario do resto do app. */

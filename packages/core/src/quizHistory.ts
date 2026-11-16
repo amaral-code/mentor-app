@@ -1,3 +1,4 @@
+import { plataforma, type ArmazenamentoChaveValor } from './plataforma';
 /**
  * ANTIRREPETICAO DO QUIZ - hash, filtro e bloco de prompt.
  *
@@ -147,9 +148,9 @@ export function validarRascunhoSimulado(obj: unknown, agoraMs: number): Rascunho
   };
 }
 
-function armazenamentoLocal(): Storage | null {
+function armazenamentoLocal(): ArmazenamentoChaveValor | null {
   try {
-    return typeof localStorage !== 'undefined' ? localStorage : null;
+    return plataforma().armazenamento();
   } catch {
     return null;
   }

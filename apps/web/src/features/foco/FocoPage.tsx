@@ -7,7 +7,7 @@ import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { focusMetricsRepository, type FocusMetricRow } from '../../shared/storage/FocusMetricsRepository';
 import { useFocusTracker } from './useFocusTracker';
 import { ConsciousPauseOverlay } from './ConsciousPauseOverlay';
-import { distractionStage, formatFocusTime } from './focusLogic';
+import { distractionStage, formatFocusTime } from '@mentor/core/focusLogic';
 import { CabecalhoPagina, BOTAO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 
 type FocoState = 'idle' | 'foco' | 'pausa' | 'concluido';

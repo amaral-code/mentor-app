@@ -1,4 +1,4 @@
-import type { QuizResult, LogEntry, ChatPersona } from '../types';
+import type { QuizResult, LogEntry, ChatPersona } from './types';
 
 // =========================================================
 // MEMÓRIA DE CONTEXTO DO MENTOR

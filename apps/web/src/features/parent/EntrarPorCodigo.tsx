@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
-import { CODIGO_TAMANHO, codigoValido, normalizarCodigo, soHexadecimal } from '../../shared/lib/vinculoCodigo';
+import { CODIGO_TAMANHO, codigoValido, normalizarCodigo, soHexadecimal } from '@mentor/core/vinculoCodigo';
 
 /**
  * ENTRADA PELO CODIGO DO ESTUDANTE — lado do responsavel.

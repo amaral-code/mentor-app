@@ -1,4 +1,4 @@
-import { MoodType, MicroTask, DailyPlan } from '../types';
+import { MoodType, MicroTask, DailyPlan } from './types';
 
 /**
  * Engine de planejamento adaptativo baseado em humor.

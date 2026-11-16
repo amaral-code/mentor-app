@@ -7,7 +7,7 @@ import type {
   Psicologo,
   SlotAgenda,
   VinculoResponsavel,
-} from '../shared/types';
+} from '@mentor/core/types';
 import { marketplaceRepository } from '../shared/storage/MarketplaceRepository';
 import { useAppStore } from './appStore';
 

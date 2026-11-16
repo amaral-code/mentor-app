@@ -8,7 +8,7 @@ import {
   politicaCancelamento,
   salaEstaAberta,
   tempoAte,
-} from '../../shared/lib/bookingEngine';
+} from '@mentor/core/bookingEngine';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { useAppStore } from '../../stores/appStore';
 import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository';

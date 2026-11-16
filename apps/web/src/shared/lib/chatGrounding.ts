@@ -48,8 +48,8 @@ import {
   provedorAtual,
   sinalComTimeout,
   toChatCompletionsMessages,
-} from './aiProvider';
-import { aiProxyToken, temBackendIA, urlBackendIA } from './runtimeConfig';
+} from '@mentor/core/aiProvider';
+import { aiProxyToken, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 

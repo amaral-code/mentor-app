@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CONSCIOUS_PAUSE_SECONDS, formatFocusTime } from './focusLogic';
+import { CONSCIOUS_PAUSE_SECONDS, formatFocusTime } from '@mentor/core/focusLogic';
 
 interface ConsciousPauseOverlayProps {
   /** Controla a visibilidade (gatilho: 3 perdas de foco em 15 min). */

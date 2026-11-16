@@ -3,8 +3,8 @@ import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { useAppStore } from '../../stores/appStore';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
 import { criarRastreadorOciosidade, sugestaoLocal } from '../lib/idleTracker';
-import { aiAvailable, gerarIntervencaoDoomscroll } from '../lib/aiService';
-import { MOOD_LABEL } from '../lib/utils';
+import { aiAvailable, gerarIntervencaoDoomscroll } from '@mentor/core/aiService';
+import { MOOD_LABEL } from '@mentor/core/utils';
 
 /**
  * INTERVENCAO DE DOOMSCROLLING ACADEMICO.

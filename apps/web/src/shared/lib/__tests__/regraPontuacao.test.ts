@@ -29,6 +29,22 @@ import ts from 'typescript';
 
 const RAIZ = path.resolve(__dirname, '..', '..', '..');
 
+/*
+ * Desde o monorepo, boa parte do texto que o aluno lê (relatório de
+ * descompressão, avisos de burnout, mensagens de erro da IA) mora nos
+ * pacotes compartilhados. Varrer só apps/web/src deixaria esse texto
+ * fora da regra sem ninguém perceber.
+ */
+const MONOREPO = path.resolve(RAIZ, '..', '..', '..');
+const FONTES = [
+  RAIZ,
+  ...fs
+    .readdirSync(path.join(MONOREPO, 'packages'), { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => path.join(MONOREPO, 'packages', e.name, 'src'))
+    .filter((dir) => fs.existsSync(dir)),
+];
+
 /** Travessão e meia-risca: proibidos em qualquer texto. */
 const TRACOS = /[—–]/;
 /** Hífen solto: com espaço dos dois lados, ou sozinho no texto. */
@@ -112,15 +128,15 @@ function textosDeTela(arquivo: string): { linha: number; texto: string }[] {
 }
 
 describe('regra de escrita: sem travessão nem hífen solto no texto do usuário', () => {
-  it('nenhum texto de src/ usa travessão, meia-risca ou hífen solto', () => {
+  it('nenhum texto de src/ nem dos pacotes usa travessão, meia-risca ou hífen solto', () => {
     const infratores: string[] = [];
 
-    for (const arquivo of arquivos(RAIZ)) {
+    for (const arquivo of FONTES.flatMap((dir) => arquivos(dir))) {
       for (const { linha, texto } of textosDeTela(arquivo)) {
         if (!TRACOS.test(texto) && !HIFEN_SOLTO.test(texto)) continue;
         if (PERMITIDAS.some((p) => texto.includes(p.trecho))) continue;
         if (!TRACOS.test(texto) && ARITMETICA.test(texto)) continue;
-        infratores.push(`${path.relative(RAIZ, arquivo)}:${linha}: ${texto.slice(0, 90)}`);
+        infratores.push(`${path.relative(MONOREPO, arquivo)}:${linha}: ${texto.slice(0, 90)}`);
       }
     }
 

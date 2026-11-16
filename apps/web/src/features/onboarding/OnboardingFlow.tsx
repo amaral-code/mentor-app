@@ -3,9 +3,9 @@ import { ArrowLeft, ArrowRight, Cake, Check, Clock, MoonStar, Rocket, Sunrise, S
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { safeSet } from '../../shared/lib/safeStorage';
-import { marcarOnboardingLocal } from '../../shared/lib/onboardingLocal';
-import { validarDataNascimento } from '../../shared/lib/vinculoCodigo';
+import { safeSet } from '@mentor/core/safeStorage';
+import { marcarOnboardingLocal } from '@mentor/core/onboardingLocal';
+import { validarDataNascimento } from '@mentor/core/vinculoCodigo';
 
 /**
  * ONBOARDING INTELIGENTE — wizard de primeiro acesso (tela cheia).

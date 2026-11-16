@@ -11,7 +11,7 @@ import {
   type AmostraTreino,
   type VetorFeatures,
 } from '../burnoutModel';
-import type { EventoTelemetria } from '../../types';
+import type { EventoTelemetria } from '../types';
 
 const HORA = 3600_000;
 

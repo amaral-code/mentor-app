@@ -1,4 +1,4 @@
-import { MoodType, EmotionWord } from '../types';
+import { MoodType, EmotionWord } from './types';
 
 // Dicionário de palavras-chave em português com radicais
 const EMOTION_DICTIONARY: EmotionWord[] = [

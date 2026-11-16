@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { SendHorizontal, Sparkles, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import type { StudyLeague } from '../../shared/lib/ligasEngine';
-import { postLeagueMessage } from '../../shared/lib/ligasEngine';
+import type { StudyLeague } from '@mentor/core/ligasEngine';
+import { postLeagueMessage } from '@mentor/core/ligasEngine';
 
 interface LeagueDetailProps {
   league: StudyLeague;

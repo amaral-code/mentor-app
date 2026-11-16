@@ -1,4 +1,4 @@
-import { MoodType, SSCInput, SSCLevel } from '../types';
+import { MoodType, SSCInput, SSCLevel } from './types';
 
 /**
  * Cálculo heurístico do Índice de Sobrecarga (SSC - Stress Score Cansado).

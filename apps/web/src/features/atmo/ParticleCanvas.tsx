@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '../../stores/appStore';
-import { getMoodColor } from '../../shared/lib/emotionEngine';
-import { MoodType } from '../../shared/types';
+import { getMoodColor } from '@mentor/core/emotionEngine';
+import { MoodType } from '@mentor/core/types';
 
 interface Particle {
   x: number;

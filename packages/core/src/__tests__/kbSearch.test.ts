@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, FAQS } from '../kbSearch';
-import { QuizQuestion } from '../../types';
+import { QuizQuestion } from '../types';
 
 const mockQuestions: QuizQuestion[] = [
   {

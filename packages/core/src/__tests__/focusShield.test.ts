@@ -8,7 +8,7 @@ import {
   proximaFaixa,
   resumirSessoes,
 } from '../focusShield';
-import type { SessaoOffline } from '../../types';
+import type { SessaoOffline } from '../types';
 
 function sessao(parcial: Partial<SessaoOffline>): SessaoOffline {
   return {

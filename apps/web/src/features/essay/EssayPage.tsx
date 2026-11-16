@@ -7,10 +7,10 @@ import { EmptyState } from '../../shared/ui/EmptyState';
 import { m, useReducedMotion } from 'motion/react';
 import { atrasoDoItem } from '../../shared/lib/motionPresets';
 import { Modal } from '../../shared/ui/Modal';
-import { correctEssay, correctEssayAI } from '../../shared/lib/essayCorrector';
-import { aiAvailable } from '../../shared/lib/aiService';
-import { getRandomTheme, ChallengeTheme } from '../../shared/lib/challengeBank';
-import { EssayCorrection, ChallengeResult } from '../../shared/types';
+import { correctEssay, correctEssayAI } from '@mentor/core/essayCorrector';
+import { aiAvailable } from '@mentor/core/aiService';
+import { getRandomTheme, ChallengeTheme } from '@mentor/core/challengeBank';
+import { EssayCorrection, ChallengeResult } from '@mentor/core/types';
 import { playCorrect, playError } from '../../shared/lib/sfx';
 import { CabecalhoPagina, SELO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 

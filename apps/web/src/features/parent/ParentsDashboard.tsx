@@ -16,10 +16,10 @@ import { Bar, Line } from 'react-chartjs-2';
 import { BarChart3, Brain, PartyPopper, TriangleAlert } from 'lucide-react';
 import { AppIcon } from '../../shared/ui/AppIcon';
 
-import { calculateDropoutRisk } from '../../shared/lib/dropoutRisk';
-import type { DropoutProjection } from '../../shared/lib/dropoutRisk';
-import { analyzeStudentData, aiAvailable } from '../../shared/lib/aiService';
-import type { StudentRiskAnalysis } from '../../shared/lib/aiService';
+import { calculateDropoutRisk } from '@mentor/core/dropoutRisk';
+import type { DropoutProjection } from '@mentor/core/dropoutRisk';
+import { analyzeStudentData, aiAvailable } from '@mentor/core/aiService';
+import type { StudentRiskAnalysis } from '@mentor/core/aiService';
 import { useAppStore } from '../../stores/appStore';
 import { acompanhamentoRepository } from '../../shared/storage/AcompanhamentoRepository';
 import type { FichaAluno, MateriaResumo, ResumoMensal, ResumoSemanal } from '../../shared/storage/AcompanhamentoRepository';

@@ -11,7 +11,7 @@ import {
   rotuloMateria,
   totalColegas,
   type PresencaSala,
-} from '../../shared/lib/salaFoco';
+} from '@mentor/core/salaFoco';
 import { useSalaFoco } from './useSalaFoco';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 

@@ -8,7 +8,7 @@ import type {
   RelatorioSemanal,
   RevisaoEspacada,
   SessaoOffline,
-} from '../shared/types';
+} from '@mentor/core/types';
 import { bemEstarRepository } from '../shared/storage/BemEstarRepository';
 import { focoOfflineRepository } from '../shared/storage/FocoOfflineRepository';
 import { conteudoRepository } from '../shared/storage/ConteudoRepository';
@@ -19,8 +19,8 @@ import {
   FADIGA_ZERADA,
   PREVISAO_ZERADA,
   type PrevisaoBurnout,
-} from '../shared/lib/burnoutModel';
-import { calcularMoedas, moedasDeHoje } from '../shared/lib/focusShield';
+} from '@mentor/core/burnoutModel';
+import { calcularMoedas, moedasDeHoje } from '@mentor/core/focusShield';
 import { useAppStore, persistir } from './appStore';
 
 /**

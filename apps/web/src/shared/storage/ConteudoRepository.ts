@@ -1,5 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
-import type { ModuloAudio, ProgressoAudio, RevisaoEspacada } from '../types';
+import type { ModuloAudio, ProgressoAudio, RevisaoEspacada } from '@mentor/core/types';
 
 /**
  * CONTEUDO ADAPTATIVO - pilulas de audio e revisao espacada.

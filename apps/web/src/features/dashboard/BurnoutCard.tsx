@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Activity, RotateCcw, ShieldAlert } from 'lucide-react';
 import { useBemEstarStore } from '../../stores/bemEstarStore';
 import { useAppStore } from '../../stores/appStore';
-import { COR_CLASSE, ROTULO_CLASSE, sugestaoPausa } from '../../shared/lib/burnoutModel';
+import { COR_CLASSE, ROTULO_CLASSE, sugestaoPausa } from '@mentor/core/burnoutModel';
 
 /**
  * Indice de fadiga no painel do aluno.

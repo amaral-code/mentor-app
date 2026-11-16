@@ -1,6 +1,6 @@
 import { memo, type RefObject } from 'react';
 import { BadgeCheck, Bookmark, Lightbulb, Link2, TriangleAlert } from 'lucide-react';
-import type { ChatMessage } from '../../../shared/types';
+import type { ChatMessage } from '@mentor/core/types';
 import { TextoFormatado } from '../../../shared/ui/TextoFormatado';
 
 interface ChatMessagesProps {

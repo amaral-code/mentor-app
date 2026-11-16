@@ -4,15 +4,15 @@ import { BarChart3, BookMarked, CalendarDays, CalendarHeart, ChevronLeft, Chevro
 import { MoonLogo } from '../shared/ui/MoonLogo';
 import { PainelLateral } from './PainelLateral';
 import { useAppStore } from '../stores/appStore';
-import { TabId } from '../shared/types';
+import { TabId } from '@mentor/core/types';
 import { CrisisOverlay } from '../features/overlays/CrisisOverlay';
 import { WeeklyReportModal } from '../features/overlays/WeeklyReportModal';
 import { NotebookStudioModal } from '../features/overlays/NotebookStudioModal';
 import { FocusCompanion } from '../features/foco/FocusCompanion';
 import { DoomscrollGuard } from '../shared/ui/DoomscrollGuard';
 import { PageSkeleton } from '../shared/ui/Skeleton';
-import { calcLevel } from '../shared/lib/utils';
-import { safeGet, safeSet } from '../shared/lib/safeStorage';
+import { calcLevel } from '@mentor/core/utils';
+import { safeGet, safeSet } from '@mentor/core/safeStorage';
 import { travarRolagem } from '../shared/lib/scrollLock';
 import { AnimatedNumber } from '../shared/ui/AnimatedNumber';
 import { pageEnter, pageEnterSuave } from '../shared/lib/motionPresets';

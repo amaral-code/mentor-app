@@ -5,7 +5,7 @@ import {
   distractionsInWindow,
   shouldTriggerConsciousPause,
   type FocusSessionMetrics,
-} from './focusLogic';
+} from '@mentor/core/focusLogic';
 
 export interface UseFocusTrackerOptions {
   /** Inicia o cronômetro ao montar. Default: true. */

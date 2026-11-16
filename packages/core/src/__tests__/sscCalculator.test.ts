@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateSSC, getSSCLevel, getSSCColor, getSSCLabel } from '../sscCalculator';
-import { MoodType, SSCInput } from '../../types';
+import { MoodType, SSCInput } from '../types';
 
 describe('calculateSSC', () => {
   it('returns base 20 for normal inputs with neutral mood', () => {

@@ -12,8 +12,8 @@ import {
   moedasDeHoje,
   proximaFaixa,
   resumirSessoes,
-} from '../../shared/lib/focusShield';
-import type { ModoEscudo } from '../../shared/types';
+} from '@mentor/core/focusShield';
+import type { ModoEscudo } from '@mentor/core/types';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { CabecalhoPagina, SELO_NA_FAIXA } from '../../shared/ui/CabecalhoPagina';
 

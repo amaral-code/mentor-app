@@ -8,8 +8,8 @@ import {
   limitarCargaDiaria,
   montarAgenda,
   proximaRevisao,
-} from '../../shared/lib/srsEngine';
-import type { RevisaoEspacada } from '../../shared/types';
+} from '@mentor/core/srsEngine';
+import type { RevisaoEspacada } from '@mentor/core/types';
 import { EmptyState } from '../../shared/ui/EmptyState';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 

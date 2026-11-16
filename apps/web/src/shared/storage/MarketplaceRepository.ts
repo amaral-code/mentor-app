@@ -1,6 +1,6 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
-import { aiProxyToken, temBackendIA, urlBackendIA } from '../lib/runtimeConfig';
-import { normalizarCodigo } from '../lib/vinculoCodigo';
+import { aiProxyToken, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
+import { normalizarCodigo } from '@mentor/core/vinculoCodigo';
 import type {
   Agendamento,
   AlertaSaudeMental,
@@ -11,7 +11,7 @@ import type {
   SlotAgenda,
   StatusAlerta,
   VinculoResponsavel,
-} from '../types';
+} from '@mentor/core/types';
 
 /**
  * MARKETPLACE DE PSICOLOGOS - acesso a dados.

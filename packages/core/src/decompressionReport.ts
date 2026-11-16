@@ -1,4 +1,4 @@
-import type { LogEntry, MetricasDescompressao, QuizResult, SessaoOffline } from '../types';
+import type { LogEntry, MetricasDescompressao, QuizResult, SessaoOffline } from './types';
 
 /**
  * RELATORIO DE DESCOMPRESSAO SEMANAL.

@@ -2,25 +2,25 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { PanelRightOpen } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { useAppStore } from '../../stores/appStore';
-import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '../../shared/lib/kbSearch';
-import { getEmpathicPrefix } from '../../shared/lib/emotionEngine';
-import { QUIZ_BANK } from '../../shared/lib/quizBank';
-import { ENEM_KB } from '../../shared/lib/kbEnem';
-import { sendMessageToGemini, aiAvailable } from '../../shared/lib/aiService';
-import { isCancelamentoUsuario } from '../../shared/lib/aiProvider';
-import { safeGet, safeSet } from '../../shared/lib/safeStorage';
+import { searchKB, matchSubject, extractKeywords, SPECIAL_RESPONSES, buildKBFromQuiz } from '@mentor/core/kbSearch';
+import { getEmpathicPrefix } from '@mentor/core/emotionEngine';
+import { QUIZ_BANK } from '@mentor/core/quizBank';
+import { ENEM_KB } from '@mentor/core/kbEnem';
+import { sendMessageToGemini, aiAvailable } from '@mentor/core/aiService';
+import { isCancelamentoUsuario } from '@mentor/core/aiProvider';
+import { safeGet, safeSet } from '@mentor/core/safeStorage';
 import {
   MODO_PADRAO,
   conversarComMentor,
 } from '../../shared/lib/chatGrounding';
-import { ChatMessage, ChatPersona } from '../../shared/types';
+import { ChatMessage, ChatPersona } from '@mentor/core/types';
 import { playClick, speak, stopSpeech } from '../../shared/lib/sfx';
-import { buildContextGreeting, ultimaMateria } from '../../shared/lib/contextMemory';
+import { buildContextGreeting, ultimaMateria } from '@mentor/core/contextMemory';
 import { PersonaManager } from '../../shared/ui/PersonaManager';
 import { FocusAnchorOverlay } from './components/FocusAnchorOverlay';
 import { TeamProgressBanner } from './components/TeamProgressBanner';
 import { ConsciousPauseModal } from './components/ConsciousPauseModal';
-import { extrairFrustracao, heuristicaFrustracao } from '../../shared/lib/frustration';
+import { extrairFrustracao, heuristicaFrustracao } from '@mentor/core/frustration';
 import { OcrUploader } from './components/OcrUploader';
 import { ChatHeader, type AbaMentor } from './components/ChatHeader';
 import { HeroWelcome } from './components/HeroWelcome';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { salaFocoRepository } from '../../shared/storage/SalaFocoRepository';
-import { PING_INTERVALO_MS, minutosDeFoco, type PresencaSala } from '../../shared/lib/salaFoco';
+import { PING_INTERVALO_MS, minutosDeFoco, type PresencaSala } from '@mentor/core/salaFoco';
 
 /** De quanto em quanto tempo a lista de colegas e relida (20s). */
 const RECARGA_MS = 20_000;

@@ -3,10 +3,10 @@ import { Activity, BellRing, HeartPulse, ShieldCheck, TriangleAlert } from 'luci
 import { useMarketplaceStore } from '../../stores/marketplaceStore';
 import { bemEstarRepository } from '../../shared/storage/BemEstarRepository';
 import { focoOfflineRepository } from '../../shared/storage/FocoOfflineRepository';
-import { COR_CLASSE, ROTULO_CLASSE, FADIGA_ZERADA } from '../../shared/lib/burnoutModel';
+import { COR_CLASSE, ROTULO_CLASSE, FADIGA_ZERADA } from '@mentor/core/burnoutModel';
 import { CatalogoPsicologos } from '../marketplace/CatalogoPsicologos';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
-import type { IndiceBurnout, RelatorioSemanal, SessaoOffline, SeveridadeAlerta } from '../../shared/types';
+import type { IndiceBurnout, RelatorioSemanal, SessaoOffline, SeveridadeAlerta } from '@mentor/core/types';
 
 /**
  * PAINEL DE CUIDADO DO RESPONSAVEL.

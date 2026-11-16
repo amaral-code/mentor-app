@@ -9,7 +9,7 @@ import {
   sugerirIntervencao,
   type NivelCalor,
   type TurmaTermometro,
-} from '../../shared/lib/termometroCognitivo';
+} from '@mentor/core/termometroCognitivo';
 
 /* Paleta do calor. Fica no componente (e nao na lib) porque classe do
    Tailwind e assunto de tela: a lib decide o NIVEL, a tela decide a cor. */

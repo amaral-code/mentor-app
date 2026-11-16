@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppStore, persistir } from '../../stores/appStore';
-import { Nota } from '../../shared/types';
+import { Nota } from '@mentor/core/types';
 import { playClick } from '../../shared/lib/sfx';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
 import { Pencil, Sparkles, Trash2, X } from 'lucide-react';

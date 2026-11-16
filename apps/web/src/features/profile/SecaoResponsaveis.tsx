@@ -3,8 +3,8 @@ import { Check, Copy, RefreshCw, ShieldCheck, Trash2, UserPlus } from 'lucide-re
 import { useAppStore } from '../../stores/appStore';
 import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
 import { userRepository } from '../../shared/storage/UserRepository';
-import { ehMenorDe16, formatarCodigo, validarDataNascimento } from '../../shared/lib/vinculoCodigo';
-import type { ResponsavelVinculado } from '../../shared/types';
+import { ehMenorDe16, formatarCodigo, validarDataNascimento } from '@mentor/core/vinculoCodigo';
+import type { ResponsavelVinculado } from '@mentor/core/types';
 
 /**
  * RESPONSAVEIS — a metade do vinculo que fica com o ALUNO.

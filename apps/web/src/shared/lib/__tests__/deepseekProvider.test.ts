@@ -9,7 +9,7 @@ import {
   mensagemErroRede,
   tipoBackendDeepSeek,
   toChatCompletionsMessages,
-} from '../aiProvider';
+} from '@mentor/core/aiProvider';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -60,7 +60,7 @@ describe('aiProvider (DeepSeek-V4-Flash)', () => {
     vi.stubEnv('VITE_AI_MODEL', 'deepseek-v4-flash');
     vi.stubEnv('VITE_DEEPSEEK_BASE_URL', 'https://api.deepseek.com');
     vi.stubEnv('VITE_AI_BASE_URL', '');
-    const { sendMessageToGemini } = await import('../aiService');
+    const { sendMessageToGemini } = await import('@mentor/core/aiService');
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -95,7 +95,7 @@ describe('aiProvider (DeepSeek-V4-Flash)', () => {
     vi.stubEnv('VITE_AI_MODEL', 'deepseek-v4-flash');
     vi.stubEnv('VITE_AI_BASE_URL', '');
     vi.stubEnv('DEV', false);
-    const { sendMessageToGemini } = await import('../aiService');
+    const { sendMessageToGemini } = await import('@mentor/core/aiService');
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
@@ -154,7 +154,7 @@ describe('aiProvider (DeepSeek-V4-Flash)', () => {
     vi.stubEnv('VITE_AI_MODEL', 'deepseek-v4-flash');
     vi.stubEnv('VITE_AI_BASE_URL', 'https://worker.dev');
     vi.stubEnv('VITE_AI_PROXY_TOKEN', '');
-    const { sendMessageToGemini } = await import('../aiService');
+    const { sendMessageToGemini } = await import('@mentor/core/aiService');
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

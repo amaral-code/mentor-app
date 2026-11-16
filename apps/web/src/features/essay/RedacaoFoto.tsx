@@ -9,7 +9,7 @@ import {
   temEndpointDeRedacao,
   type ResultadoCorrecaoFoto,
 } from '../../shared/lib/essayScan';
-import { aiAvailable } from '../../shared/lib/aiService';
+import { aiAvailable } from '@mentor/core/aiService';
 
 /**
  * CORRECAO DE REDACAO MANUSCRITA.

@@ -1,4 +1,4 @@
-import { ChatPersona, Dificuldade, QuizQuestion } from '../types';
+import { ChatPersona, Dificuldade, QuizQuestion } from './types';
 import { montarBlocoAntirrepeticao, hashEnunciado } from './quizHistory';
 import {
   QUIZ_LOTES_SIMULTANEOS,
@@ -10,7 +10,7 @@ import {
 import { StudentMonthlyRecord } from './dropoutRisk';
 import { promptRoteiroAudio, montarPedidoTTS } from './audioPills';
 import { SYSTEM_PROMPT_DESCOMPRESSAO, promptDescompressao } from './decompressionReport';
-import type { MetricasDescompressao } from '../types';
+import type { MetricasDescompressao } from './types';
 import {
   DEEPSEEK_DEV_PROXY_PATH,
   DEEPSEEK_TIMEOUT_MS,

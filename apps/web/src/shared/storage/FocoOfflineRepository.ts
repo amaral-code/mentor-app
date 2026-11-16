@@ -1,5 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase } from './supabaseHelpers';
-import type { CarteiraFoco, ModoEscudo, SessaoOffline } from '../types';
+import type { CarteiraFoco, ModoEscudo, SessaoOffline } from '@mentor/core/types';
 
 /**
  * ESCUDO DE DOPAMINA - sessoes offline e carteira de moedas.

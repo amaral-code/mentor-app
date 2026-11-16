@@ -6,7 +6,7 @@ import type {
   IntervencaoIA,
   MetricasDescompressao,
   RelatorioSemanal,
-} from '../types';
+} from '@mentor/core/types';
 
 /**
  * TELEMETRIA, BURNOUT, INTERVENCOES E RELATORIO SEMANAL.

@@ -4,7 +4,7 @@ import {
   parseMapaMental,
   parseQuizJson,
   sanitizarRotuloMermaid,
-} from '../aiService';
+} from '@mentor/core/aiService';
 
 /**
  * Quiz em JSON e mapa mental em JSON+Mermaid.
@@ -151,7 +151,7 @@ describe('generateQuizStructured (banca + antirrepeticao)', () => {
     vi.stubEnv('VITE_AI_PROVIDER', 'gemini');
     vi.stubEnv('VITE_AI_MODEL', 'gemini-2.0-flash');
     vi.stubEnv('VITE_AI_BASE_URL', '');
-    const { generateQuizStructured } = await import('../aiService');
+    const { generateQuizStructured } = await import('@mentor/core/aiService');
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true, status: 200,

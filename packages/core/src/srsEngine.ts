@@ -1,4 +1,4 @@
-import type { RevisaoEspacada } from '../types';
+import type { RevisaoEspacada } from './types';
 
 /**
  * CALENDARIO ADAPTATIVO - repeticao espacada (curva de Ebbinghaus).

@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { supabaseUrl, supabaseAnonKey } from './runtimeConfig';
+import { supabaseUrl, supabaseAnonKey } from '@mentor/core/runtimeConfig';
 
 /*
  * URL e chave vem de `runtimeConfig` (Environment Variables lidas em

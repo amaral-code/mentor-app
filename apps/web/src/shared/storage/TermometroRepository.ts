@@ -1,5 +1,5 @@
 import { clienteAtivo, falhou, getSupabase } from './supabaseHelpers';
-import type { TurmaTermometro } from '../lib/termometroCognitivo';
+import type { TurmaTermometro } from '@mentor/core/termometroCognitivo';
 
 /**
  * TERMOMETRO COGNITIVO — leitura do agregado por turma (migration 022).

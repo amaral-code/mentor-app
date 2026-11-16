@@ -1,9 +1,13 @@
+// Primeiro de tudo: instala os adaptadores web do @mentor/core
+// (localStorage, import.meta.env). Nenhum modulo do core le a plataforma
+// na importacao, mas o boot abaixo ja le config e acessibilidade.
+import './plataforma/web';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './styles/index.css';
 import { aplicarAcessibilidade } from './shared/lib/acessibilidade';
-import { carregarConfigRuntime } from './shared/lib/runtimeConfig';
+import { carregarConfigRuntime } from '@mentor/core/runtimeConfig';
 import { registrarPWA } from './pwa';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 

@@ -1,4 +1,4 @@
-import { EssayCorrection } from '../types';
+import { EssayCorrection } from './types';
 import { correctEssayWithAI as aiCorrect } from './aiService';
 
 const GIRIAS = ['tipo', 'tlgd', 'mano', 'parceiro', 'meu', 'brother', 'fml', 'tranquilo', 'suave', 'tô', 'tava', 'pra caramba', 'muito louco', 'da hora', 'legalzinho'];

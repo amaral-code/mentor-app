@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NotebookPen } from 'lucide-react';
 import { useAppStore } from '../../../stores/appStore';
-import { safeGet, safeSet } from '../../../shared/lib/safeStorage';
+import { safeGet, safeSet } from '@mentor/core/safeStorage';
 
 const CHAVE_DIARIO = 'mm_agenda_diario';
 

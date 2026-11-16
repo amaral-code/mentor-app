@@ -1,4 +1,4 @@
-import type { StatusAgendamento } from '../../shared/types';
+import type { StatusAgendamento } from '@mentor/core/types';
 
 /** Sessão pronta para exibição (derivada de Agendamento + catálogo). */
 export interface SessaoView {

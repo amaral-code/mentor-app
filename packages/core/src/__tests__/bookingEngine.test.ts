@@ -10,7 +10,7 @@ import {
   salaEstaAberta,
   tempoAte,
 } from '../bookingEngine';
-import type { Agendamento, JanelaDisponibilidade } from '../../types';
+import type { Agendamento, JanelaDisponibilidade } from '../types';
 
 // Terca-feira, 10h da manha.
 const AGORA = new Date('2026-03-10T10:00:00');

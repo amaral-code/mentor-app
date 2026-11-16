@@ -52,8 +52,8 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { MOOD_COLOR } from '../lib/utils';
-import type { MoodType } from '../types';
+import { MOOD_COLOR } from '@mentor/core/utils';
+import type { MoodType } from '@mentor/core/types';
 
 /**
  * Ponte entre dados e icones.

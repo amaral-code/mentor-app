@@ -4,7 +4,7 @@ import { useAppStore } from '../../stores/appStore';
 import { marketplaceRepository } from '../../shared/storage/MarketplaceRepository';
 import { getSupabase } from '../../shared/lib/supabase';
 import { ListaConsultas } from '../marketplace/ListaConsultas';
-import type { JanelaDisponibilidade } from '../../shared/types';
+import type { JanelaDisponibilidade } from '@mentor/core/types';
 import { PainelPacientes } from './PainelPacientes';
 import { ConversasProfissional } from './ConversasProfissional';
 import { AvaliacoesRecebidas } from './AvaliacoesRecebidas';

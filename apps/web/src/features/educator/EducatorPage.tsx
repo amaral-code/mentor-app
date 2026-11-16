@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { ClipboardList, Download, Info, LogOut, Moon, PenLine, Plus, Sparkles, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { safeGet, safeSet } from '../../shared/lib/safeStorage';
+import { safeGet, safeSet } from '@mentor/core/safeStorage';
 import { supabaseRepository } from '../../shared/storage/SupabaseRepository';
-import { hasProxy } from '../../shared/lib/aiService';
+import { hasProxy } from '@mentor/core/aiService';
 import { TermometroCognitivo } from './TermometroCognitivo';
 import { ProfessoresDaTurma } from './ProfessoresDaTurma';
 import { CodigosEscola } from './CodigosEscola';
-import { n8nWebhookUrl } from '../../shared/lib/runtimeConfig';
+import { n8nWebhookUrl } from '@mentor/core/runtimeConfig';
 import Papa from 'papaparse';
 
 interface CSVRow {

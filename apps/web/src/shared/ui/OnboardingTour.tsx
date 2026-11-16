@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAppStore } from '../../stores/appStore';
-import { TabId } from '../types';
+import { TabId } from '@mentor/core/types';
 import { Mascot } from './Mascot';
 import { AppIcon } from './AppIcon';
 import { supabaseRepository } from '../storage/SupabaseRepository';
-import { safeSet } from '../lib/safeStorage';
+import { safeSet } from '@mentor/core/safeStorage';
 
 interface Step {
   id: string;

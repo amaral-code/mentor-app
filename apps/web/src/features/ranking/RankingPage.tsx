@@ -5,8 +5,8 @@ import { Medal, TrendingUp, Trophy, Users } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { ListSkeleton } from '../../shared/ui/Skeleton';
 import { getRankingData } from '../../shared/lib/rankingEngine';
-import { calcLevel } from '../../shared/lib/utils';
-import type { RankingFilter, RankingData, RankingEntry } from '../../shared/types';
+import { calcLevel } from '@mentor/core/utils';
+import type { RankingFilter, RankingData, RankingEntry } from '@mentor/core/types';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 const FILTERS: { id: RankingFilter; label: string; icon: typeof Trophy }[] = [

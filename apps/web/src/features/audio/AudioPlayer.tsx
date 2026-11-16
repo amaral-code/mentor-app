@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw, RotateCw } from 'lucide-react';
-import { formatarTempo, estaConcluido, escolherVozNativa, VELOCIDADE_PADRAO } from '../../shared/lib/audioPills';
+import { formatarTempo, estaConcluido, escolherVozNativa, VELOCIDADE_PADRAO } from '@mentor/core/audioPills';
 
 interface AudioPlayerProps {
   /** data: URL do mp3 sintetizado, ou null para usar a voz do sistema. */

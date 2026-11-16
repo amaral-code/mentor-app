@@ -1,6 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
-import { aiProxyToken, temBackendIA, urlBackendIA } from '../lib/runtimeConfig';
-import { hashEnunciado } from '../lib/quizHistory';
+import { aiProxyToken, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
+import { hashEnunciado } from '@mentor/core/quizHistory';
 import type {
   ChallengeResult,
   ChatMessage,
@@ -15,7 +15,7 @@ import type {
   MoodType,
   Nota,
   QuizResult,
-} from '../types';
+} from '@mentor/core/types';
 
 /**
  * Acesso a dados - escrito contra o schema REAL do projeto

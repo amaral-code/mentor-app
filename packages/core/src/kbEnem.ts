@@ -1,4 +1,4 @@
-import { KBEntry } from '../types';
+import { KBEntry } from './types';
 
 export const ENEM_KB: KBEntry[] = [
   // === ENEM Geral ===

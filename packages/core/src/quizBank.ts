@@ -1,4 +1,4 @@
-import { QuizQuestion } from '../types';
+import { QuizQuestion } from './types';
 
 export const QUIZ_BANK: QuizQuestion[] = [
   // Matemática

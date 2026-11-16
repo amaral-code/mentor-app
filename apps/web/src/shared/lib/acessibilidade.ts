@@ -12,7 +12,7 @@
  *   salvarAcessibilidade(p)  — persiste + aplica
  */
 
-import { safeGet, safeSet } from './safeStorage';
+import { safeGet, safeSet } from '@mentor/core/safeStorage';
 
 export type TamanhoFonte = 'normal' | 'grande' | 'extra';
 

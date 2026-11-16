@@ -1,6 +1,6 @@
 import { getSupabase } from './supabase';
-import { sinalComTimeout, DEEPSEEK_TIMEOUT_MS } from './aiProvider';
-import { aiProxyToken, temBackendIA, urlBackendIA } from './runtimeConfig';
+import { sinalComTimeout, DEEPSEEK_TIMEOUT_MS } from '@mentor/core/aiProvider';
+import { aiProxyToken, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
 const GEMINI_VISION_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 

@@ -1,4 +1,4 @@
-import type { Escola, Turma, RankingEntry, RankingFilter, RankingData, UserProfile } from '../types';
+import type { Escola, Turma, RankingEntry, RankingFilter, RankingData, UserProfile } from '@mentor/core/types';
 import { getSupabase, isSupabaseConfigured } from './supabase';
 
 // === Escolas demo simuladas ===

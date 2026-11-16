@@ -1,4 +1,4 @@
-import { KBEntry, QuizQuestion } from '../types';
+import { KBEntry, QuizQuestion } from './types';
 
 /**
  * Mecanismo de busca em base de conhecimento local.

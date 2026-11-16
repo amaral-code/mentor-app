@@ -3,7 +3,7 @@ import { Eye, EyeOff, GraduationCap, HeartHandshake, Lock, Mail, Presentation, S
 import { useAppStore } from '../../stores/appStore';
 import { userRepository } from '../../shared/storage/UserRepository';
 import { isSupabaseConfigured } from '../../shared/lib/supabase';
-import { UserRole } from '../../shared/types';
+import { UserRole } from '@mentor/core/types';
 import { ColorBlindnessToggle } from '../../shared/ui/ColorBlindnessToggle';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

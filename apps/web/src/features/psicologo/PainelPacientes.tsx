@@ -5,9 +5,9 @@ import { psicologiaRepository } from '../../shared/storage/PsicologiaRepository'
 import type { NotaProntuario, Paciente, PontoBemEstar } from '../../shared/storage/PsicologiaRepository';
 import { acompanhamentoRepository } from '../../shared/storage/AcompanhamentoRepository';
 import { totaisDoPeriodo } from '../../shared/lib/acompanhamentoAluno';
-import { diasRestantes, rotuloEscopo } from '../../shared/lib/consentimento';
-import { COR_CLASSE } from '../../shared/lib/burnoutModel';
-import { formatarDataHora } from '../../shared/lib/bookingEngine';
+import { diasRestantes, rotuloEscopo } from '@mentor/core/consentimento';
+import { COR_CLASSE } from '@mentor/core/burnoutModel';
+import { formatarDataHora } from '@mentor/core/bookingEngine';
 
 /**
  * PACIENTES — o que o profissional vê de cada um.

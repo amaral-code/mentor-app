@@ -1,5 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase, uidAtual } from './supabaseHelpers';
-import type { FocusSessionMetrics } from '../../features/foco/focusLogic';
+import type { FocusSessionMetrics } from '@mentor/core/focusLogic';
 
 export interface FocusMetricRow extends FocusSessionMetrics {
   id: string;

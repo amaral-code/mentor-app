@@ -12,7 +12,7 @@ import {
   mensagemErroConsentimento,
   rotuloEscopo,
   type EscopoConsentimento,
-} from '../../shared/lib/consentimento';
+} from '@mentor/core/consentimento';
 
 /**
  * QUEM O PSICÓLOGO PODE VER, E ATÉ QUANDO.

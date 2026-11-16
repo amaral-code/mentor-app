@@ -31,6 +31,8 @@
  * `/api/config` responder, recriando o bug que este arquivo remove.
  */
 
+import { plataforma } from './plataforma';
+
 export type ProvedorIA = 'gemini' | 'deepseek';
 
 export interface RecursosBackend {
@@ -59,8 +61,7 @@ let emVoo: Promise<void> | null = null;
 
 /** Le uma `VITE_*` do build, ja aparada. */
 function doBuild(nome: string): string {
-  const valor = (import.meta.env as Record<string, unknown>)[nome];
-  return typeof valor === 'string' ? valor.trim() : '';
+  return plataforma().envBuild(nome).trim();
 }
 
 /** Servidor vence, mas so com valor util: string vazia cai para o build. */
@@ -146,13 +147,16 @@ export const destinoBackendIA = (): string => aiBaseUrl() || 'o servidor do app 
  * Nunca rejeita: sem back-end (front estatico puro, ou `vite build` +
  * `serve`), o app segue com os valores do build. Falhar aqui deixaria a
  * tela branca por causa de uma rota opcional.
+ *
+ * `origem`: vazio no web (mesma origem). No celular nao existe "mesma
+ * origem": o app passa a URL do site publicado (ex.: https://app.exemplo.com).
  */
-export function carregarConfigRuntime(): Promise<void> {
+export function carregarConfigRuntime(origem = ''): Promise<void> {
   if (emVoo) return emVoo;
 
   emVoo = (async () => {
     try {
-      const resposta = await fetch('/api/config', {
+      const resposta = await fetch(`${origem.replace(/\/+$/, '')}/api/config`, {
         headers: { Accept: 'application/json' },
         /* Sem teto, uma rede que engole pacotes seguraria o boot para
            sempre; 6s e mais que suficiente para uma leitura de env. */

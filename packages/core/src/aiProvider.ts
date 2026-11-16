@@ -16,6 +16,7 @@
  */
 
 import { aiProvider, aiModel, deepseekBaseUrl, temBackendIA, destinoBackendIA } from './runtimeConfig';
+import { plataforma } from './plataforma';
 
 export type AIProvider = 'gemini' | 'deepseek';
 
@@ -80,7 +81,7 @@ export function tipoBackendDeepSeek(temProxy: boolean, ehDev: boolean): BackendD
  * `|| temBackendIA()` cobre quem chama sem argumento calculado.
  */
 export function backendDeepSeekAtual(temProxy: boolean): BackendDeepSeek {
-  return tipoBackendDeepSeek(temProxy || temBackendIA(), import.meta.env.DEV);
+  return tipoBackendDeepSeek(temProxy || temBackendIA(), plataforma().dev());
 }
 
 /** Erro acionavel quando nao ha back-end (nunca tenta cross-origin). */
@@ -302,7 +303,7 @@ export function diagnosticarErroRede(destino: string, erro: unknown, canceladoPe
   const nome = erro instanceof Error ? erro.name : typeof erro;
   const mensagem = erro instanceof Error ? erro.message : String(erro);
   const causa = erro instanceof Error && erro.cause ? String((erro.cause as Error)?.message ?? erro.cause) : undefined;
-  const online = typeof navigator !== 'undefined' ? navigator.onLine : null;
+  const online = plataforma().online();
 
   let tipo: DiagnosticoRede['tipo'] = 'desconhecido';
   if (canceladoPeloUsuario) {

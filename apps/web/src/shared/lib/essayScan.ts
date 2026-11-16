@@ -1,6 +1,6 @@
 import { getSupabase } from './supabase';
-import { isDeepSeekProvider } from './aiProvider';
-import { aiProxyToken, aiVisionModel, temBackendIA, urlBackendIA } from './runtimeConfig';
+import { isDeepSeekProvider } from '@mentor/core/aiProvider';
+import { aiProxyToken, aiVisionModel, temBackendIA, urlBackendIA } from '@mentor/core/runtimeConfig';
 import {
   ESQUEMA_CORRECAO,
   COMPETENCIAS,

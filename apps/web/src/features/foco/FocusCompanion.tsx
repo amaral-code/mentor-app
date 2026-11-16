@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useStoreStore } from '../../stores/storeStore';
-import { getStoreItem } from '../../shared/lib/storeCatalog';
+import { getStoreItem } from '@mentor/core/storeCatalog';
 import { AppIcon } from '../../shared/ui/AppIcon';
-import { safeGet, safeSet } from '../../shared/lib/safeStorage';
+import { safeGet, safeSet } from '@mentor/core/safeStorage';
 
 const FOCUS_MIN = 25;
 const CYCLE_XP = 5;

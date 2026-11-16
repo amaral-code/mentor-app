@@ -8,7 +8,7 @@ import {
   turmasOcultas,
   turmasVisiveis,
   type TurmaTermometro,
-} from '../../shared/lib/termometroCognitivo';
+} from '@mentor/core/termometroCognitivo';
 import { TurmaHeatCard } from './TurmaHeatCard';
 
 const JANELAS = [

@@ -8,8 +8,8 @@ import {
   formatarPreco,
   gerarSlots,
   politicaCancelamento,
-} from '../../shared/lib/bookingEngine';
-import type { Psicologo, SlotAgenda } from '../../shared/types';
+} from '@mentor/core/bookingEngine';
+import type { Psicologo, SlotAgenda } from '@mentor/core/types';
 
 interface BookingModalProps {
   psicologo: Psicologo | null;

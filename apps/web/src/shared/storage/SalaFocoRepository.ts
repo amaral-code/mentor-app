@@ -1,5 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase } from './supabaseHelpers';
-import type { PresencaSala } from '../lib/salaFoco';
+import type { PresencaSala } from '@mentor/core/salaFoco';
 
 /**
  * SALA DE FOCO — presenca por heartbeat (migration 023).

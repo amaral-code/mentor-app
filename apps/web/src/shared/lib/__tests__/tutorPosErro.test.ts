@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { montarPromptTutorPosErro } from '../aiService';
-import type { ErroParaTutor } from '../aiService';
+import { montarPromptTutorPosErro } from '@mentor/core/aiService';
+import type { ErroParaTutor } from '@mentor/core/aiService';
 
 /**
  * Tutor pos-erro.
@@ -53,7 +53,7 @@ describe('explicarErroComTutor', () => {
     vi.stubEnv('VITE_AI_PROVIDER', 'gemini');
     vi.stubEnv('VITE_AI_MODEL', 'gemini-2.0-flash');
     vi.stubEnv('VITE_AI_BASE_URL', '');
-    return import('../aiService');
+    return import('@mentor/core/aiService');
   }
 
   it('acerto nao chama a IA (economiza a chamada)', async () => {

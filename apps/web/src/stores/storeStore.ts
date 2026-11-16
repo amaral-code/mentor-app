@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { useAppStore } from './appStore';
-import { SHOP_ITEMS } from '../shared/lib/storeCatalog';
-import { applyEquip, Inventory } from '../shared/lib/storeEngine';
+import { SHOP_ITEMS } from '@mentor/core/storeCatalog';
+import { applyEquip, Inventory } from '@mentor/core/storeEngine';
 import { supabaseRepository } from '../shared/storage/SupabaseRepository';
 
 /**

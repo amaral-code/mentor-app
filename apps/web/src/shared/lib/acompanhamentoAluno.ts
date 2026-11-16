@@ -1,5 +1,5 @@
 import type { ResumoMensal, ResumoSemanal } from '../storage/AcompanhamentoRepository';
-import type { StudentMonthlyRecord } from './dropoutRisk';
+import type { StudentMonthlyRecord } from '@mentor/core/dropoutRisk';
 
 /**
  * Do agregado do banco para o que o painel dos pais desenha.

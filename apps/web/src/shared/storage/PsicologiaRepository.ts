@@ -1,5 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase } from './supabaseHelpers';
-import type { EscopoConsentimento } from '../lib/consentimento';
+import type { EscopoConsentimento } from '@mentor/core/consentimento';
 
 /**
  * ACOMPANHAMENTO PSICOLÓGICO (migration 027).

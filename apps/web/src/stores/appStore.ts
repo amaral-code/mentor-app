@@ -14,15 +14,15 @@ import {
   UserRole,
   ChallengeResult,
   Conversa,
-} from '../shared/types';
-import { calculateSSC } from '../shared/lib/sscCalculator';
-import { detectEmotion, getMoodColor } from '../shared/lib/emotionEngine';
-import { analyzeMoodWithAI } from '../shared/lib/aiService';
-import { generatePlan, XP_PER_TASK } from '../shared/lib/plannerEngine';
+} from '@mentor/core/types';
+import { calculateSSC } from '@mentor/core/sscCalculator';
+import { detectEmotion, getMoodColor } from '@mentor/core/emotionEngine';
+import { analyzeMoodWithAI } from '@mentor/core/aiService';
+import { generatePlan, XP_PER_TASK } from '@mentor/core/plannerEngine';
 import { userRepository } from '../shared/storage/UserRepository';
 import { supabaseRepository } from '../shared/storage/SupabaseRepository';
-import { safeSet } from '../shared/lib/safeStorage';
-import { calcLevel, getToday } from '../shared/lib/utils';
+import { safeSet } from '@mentor/core/safeStorage';
+import { calcLevel, getToday } from '@mentor/core/utils';
 
 interface AppState {
   session: Session | null;

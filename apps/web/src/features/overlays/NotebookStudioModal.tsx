@@ -4,8 +4,8 @@ import { useAppStore } from '../../stores/appStore';
 import { Modal } from '../../shared/ui/Modal';
 import { GlassCard } from '../../shared/ui/GlassCard';
 import { AppIcon } from '../../shared/ui/AppIcon';
-import { QuizQuestion } from '../../shared/types';
-import { askGemini, aiAvailable, gerarMapaMental, buildMindmapMermaid, sanitizarRotuloMermaid } from '../../shared/lib/aiService';
+import { QuizQuestion } from '@mentor/core/types';
+import { askGemini, aiAvailable, gerarMapaMental, buildMindmapMermaid, sanitizarRotuloMermaid } from '@mentor/core/aiService';
 
 /*
  * mermaid entra por import dinamico.

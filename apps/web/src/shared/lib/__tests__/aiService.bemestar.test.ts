@@ -31,7 +31,7 @@ async function carregarAi(proxy = '') {
   vi.stubEnv('VITE_AI_MODEL', 'gemini-2.0-flash');
   vi.stubEnv('VITE_AI_BASE_URL', proxy);
   vi.stubEnv('VITE_AI_PROXY_TOKEN', proxy ? 'token-de-teste' : '');
-  return import('../aiService');
+  return import('@mentor/core/aiService');
 }
 
 afterEach(() => {
