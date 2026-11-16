@@ -43,6 +43,9 @@ const FONTES = [
     .filter((e) => e.isDirectory())
     .map((e) => path.join(MONOREPO, 'packages', e.name, 'src'))
     .filter((dir) => fs.existsSync(dir)),
+  /* App nativo: o aluno lê o mesmo produto no celular. As telas moram em
+     app/ (rotas do Expo Router) e os componentes em src/. */
+  ...['src', 'app'].map((d) => path.join(MONOREPO, 'apps', 'mobile', d)).filter((dir) => fs.existsSync(dir)),
 ];
 
 /** Travessão e meia-risca: proibidos em qualquer texto. */

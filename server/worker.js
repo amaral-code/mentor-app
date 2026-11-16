@@ -46,6 +46,7 @@ import {
   limparTextoLivre,
   MODO_PADRAO,
 } from './chatPrompt.js';
+import { criarFiltroFrustracao, eventoSSE, lerSSE, trechoDeepSeek, trechoGemini } from './chatStream.js';
 import {
   ESQUEMA_CORRECAO,
   promptCorrecaoFoto,
@@ -408,6 +409,121 @@ async function chamarDeepSeek(env, model, messages, generationConfig) {
   } catch {
     return { ok: false, status: 502, texto: 'resposta deepseek nao-json' };
   }
+}
+
+/**
+ * Chat em streaming (SSE). Ver server/chatStream.js para o formato.
+ *
+ * Erro ANTES do primeiro byte (chave ausente, 4xx do provedor) volta como
+ * JSON com status de erro, igual à rota sem streaming: o app trata os
+ * dois do mesmo jeito. Erro DEPOIS que o fluxo começou vira um evento
+ * `erro`, porque o status 200 já foi enviado.
+ */
+async function transmitirChat({ env, provedor, corpo, modo, systemInstruction, contents, generationConfig, corsHeaders }) {
+  let upstream;
+  let modelo;
+  let extrair;
+  let usouBusca = false;
+
+  if (provedor === 'deepseek') {
+    if (!env.DEEPSEEK_API_KEY) {
+      return json({ error: 'misconfigured', message: 'Defina DEEPSEEK_API_KEY.' }, 500, corsHeaders);
+    }
+    modelo = modeloEfetivo(corpo, env, 'deepseek');
+    const base = String(env.DEEPSEEK_BASE_URL || DEEPSEEK_DEFAULT_BASE).replace(/\/+$/, '');
+    upstream = await fetch(`${base}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.DEEPSEEK_API_KEY}` },
+      body: JSON.stringify({
+        model: modelo,
+        messages: paraMensagensOpenAI(systemInstruction, contents),
+        ...genParaDeepSeek(generationConfig),
+        stream: true,
+      }),
+    });
+    extrair = trechoDeepSeek;
+  } else {
+    if (!env.GEMINI_API_KEY) {
+      return json({ error: 'misconfigured', message: 'Defina GEMINI_API_KEY.' }, 500, corsHeaders);
+    }
+    modelo = env.GEMINI_MODEL_CHAT || MODELO_CHAT_PADRAO;
+    const chamar = (comBusca) => {
+      const payload = { systemInstruction, contents, generationConfig };
+      if (comBusca) payload.tools = ferramentasDeBusca(modelo);
+      return fetch(`${GEMINI_BASE}/${modelo}:streamGenerateContent?alt=sse&key=${env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    };
+    const querBusca = env.GROUNDING_DESLIGADO !== '1';
+    upstream = await chamar(querBusca);
+    usouBusca = querBusca;
+    // Mesma repescagem sem busca da rota sem streaming (ferramenta
+    // indisponível no modelo ou na região devolve 400).
+    if (!upstream.ok && querBusca && upstream.status === 400) {
+      upstream = await chamar(false);
+      usouBusca = false;
+    }
+    extrair = trechoGemini;
+  }
+
+  if (!upstream.ok || !upstream.body) {
+    const detalhe = await upstream.text().catch(() => '');
+    return json(
+      { error: provedor === 'deepseek' ? 'deepseek_falhou' : 'gemini_falhou', message: detalhe.slice(0, 400) },
+      upstream.status || 502,
+      corsHeaders,
+    );
+  }
+
+  const codificador = new TextEncoder();
+  const filtro = criarFiltroFrustracao();
+  let comMetadados = null;
+
+  const saida = new ReadableStream({
+    async start(controle) {
+      const enviar = (objeto) => controle.enqueue(codificador.encode(eventoSSE(objeto)));
+      try {
+        await lerSSE(upstream.body, (evento) => {
+          // As fontes da busca chegam num dos últimos pedaços do Gemini.
+          if (evento?.candidates?.[0]?.groundingMetadata) comMetadados = evento;
+          const novo = filtro.empurrar(extrair(evento));
+          if (novo) enviar({ tipo: 'delta', texto: novo });
+        });
+        const { textoLimpo, frustrationDetected } = filtro.finalizar();
+        const { fontes, consultas, groundingUsado } = comMetadados
+          ? extrairFontes(comMetadados)
+          : { fontes: [], consultas: [], groundingUsado: false };
+        enviar({
+          tipo: 'fim',
+          texto: textoLimpo,
+          frustrationDetected,
+          modo,
+          modelo,
+          fontes,
+          consultas,
+          groundingUsado: usouBusca && groundingUsado,
+          citouProva: detectarCitacaoDeProva(textoLimpo),
+        });
+      } catch (err) {
+        enviar({ tipo: 'erro', mensagem: String((err && err.message) || err) });
+      } finally {
+        controle.close();
+      }
+    },
+  });
+
+  return new Response(saida, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      // no-transform: proxy que comprime segura o fluxo até o fim.
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }
 
 /** Confere o JWT do usuário que pediu a cobrança (evita pagar pelo agendamento alheio). */
@@ -1178,6 +1294,13 @@ export default {
          mais barata do DeepSeek-V4-Flash, comportamento idêntico em
          todos os transportes. */
       const generationConfig = { temperature: 0.5, maxOutputTokens: 1000, topP: 0.9 };
+
+      // App nativo: resposta em pedaços (SSE). O web continua no JSON
+      // inteiro até ganhar o leitor de stream; os dois caminhos usam o
+      // mesmo system prompt e o mesmo filtro do bloco de frustração.
+      if (corpo.stream === true) {
+        return transmitirChat({ env, provedor: provedorChat, corpo, modo, systemInstruction, contents, generationConfig, corsHeaders });
+      }
 
       // ---- DeepSeek: mesmo system prompt, sem busca do Google ----
       if (provedorChat === 'deepseek') {
