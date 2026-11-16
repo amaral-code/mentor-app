@@ -264,9 +264,9 @@ Só é necessário se você quiser o back-end **fora** da Vercel:
 
 ```bash
 npx wrangler login
-npx wrangler deploy server/worker.js --name midnight-mentor-ia
-npx wrangler secret put DEEPSEEK_API_KEY  # chave do servidor
-npx wrangler secret put API_TOKEN         # senha anti-abuso (vai no AI_PROXY_TOKEN)
+npm run deploy:worker:prod   # usa [env.production] do wrangler.toml
+npx wrangler secret put DEEPSEEK_API_KEY --env production  # chave do servidor
+npx wrangler secret put API_TOKEN --env production         # senha anti-abuso (vai no AI_PROXY_TOKEN)
 ```
 
 Depois aponte o app para ele com `AI_BASE_URL=https://seu-worker.workers.dev`

@@ -11,7 +11,12 @@ npm run dev      # dev server na porta 5180 (já inclui o back-end /api)
 npm run build    # tsc -b && vite build
 npm test         # vitest run  (773 testes)
 npm run lint     # oxlint
+npm run typecheck       # tsc -b
+npm run check:secrets   # falha se houver chave service_role/API em arquivo versionado
 ```
+
+O CI (`.github/workflows/ci.yml`) roda tudo isso em cada PR. Fluxo de
+branch, commits e PR: `CONTRIBUTING.md`. Ambientes: `docs/ambientes.md`.
 
 Antes de dizer que terminou: `npx tsc -b`, `npm test` e `npm run build`
 precisam passar. O projeto tem baseline limpo — qualquer erro novo é seu.
@@ -269,6 +274,25 @@ compatível com esse padrão.
 Registre aqui toda alteração relevante: rota nova, schema novo, componente
 principal, regra de permissão. Mais recente no topo.
 
+### 2026-11-15 — M0: fundação e segurança do repositório
+- **18 scripts em `tools/` tinham a chave `service_role` e senhas no
+  código.** Agora leem `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` do ambiente
+  (`tools/_ambiente.mjs`) e geram senha aleatória para o usuário
+  descartável. A chave continua no histórico: **precisa ser girada** (#18).
+- `scripts/verificar-segredos.mjs` decodifica cada JWT e falha se o papel
+  não for `anon`/`authenticated` (procurar o texto em base64 não serve:
+  muda conforme o alinhamento). Roda no CI.
+- Removidos `SESSAO-RESUMO.md` e os `.zip`; ID do projeto Supabase virou
+  placeholder nos docs.
+- CI no GitHub Actions: segredos, lint, tipos, testes e build.
+- `CONTRIBUTING.md`, `SECURITY.md`, templates de issue/PR, `CODEOWNERS`,
+  `scripts/proteger-main.sh`.
+- Ambientes: dev, Preview (Vercel, aponta para o Supabase de staging) e
+  Production. `wrangler.toml` ganhou `[env.staging]`/`[env.production]`;
+  `wrangler deploy` sem `--env` não atinge mais produção.
+  `scripts/migrar.sh` aplica migrations por ambiente.
+- ADR 001 (`docs/adr/`): app mobile em Expo/React Native, proposto.
+
 ### 2026-11-05 (2) — Mais vida no computador
 - Pedido do dono: no PC as telas pareciam vazias. Só interface, celular
   quase igual (ganhou só as faixas coloridas).
@@ -510,12 +534,8 @@ principal, regra de permissão. Mais recente no topo.
 
 ## Pendências conhecidas
 
-- `tools/validar_visual.mjs` tem uma chave **`service_role` do Supabase
-  commitada** (linhas ~20-24), válida até 2036, e ela está no histórico do git.
-  Precisa ser **rotacionada no painel do Supabase** — remover do arquivo não
-  basta.
+- A chave **`service_role` do Supabase** que estava em 18 scripts de `tools/`
+  saiu do código (2026-11-15), mas continua no histórico do git, válida até
+  2036. Precisa ser **rotacionada no painel do Supabase** (issue #18).
 - Muitos warnings de `react-hooks/exhaustive-deps` (`npm run lint`). Alguns são
   intencionais, outros causam estado velho — avaliar caso a caso.
-- `SESSAO-RESUMO.md` e os `.zip` na raiz são de sessões antigas e descrevem um
-  arranjo (worker externo + proxy) que **não vale mais** desde a migração para
-  `/api`. Não siga aquele arquivo.

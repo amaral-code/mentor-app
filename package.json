@@ -9,7 +9,12 @@
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "check:secrets": "node scripts/verificar-segredos.mjs",
+    "deploy:worker:staging": "npx --yes wrangler@4 deploy --env staging",
+    "deploy:worker:prod": "npx --yes wrangler@4 deploy --env production",
+    "db:migrate": "bash scripts/migrar.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.8",

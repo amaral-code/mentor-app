@@ -32,3 +32,12 @@ dist-ssr
 
 # Arquivos grandes de backup local (imagens antigas nao usadas pelo app)
 backup-arquivos-antigos/
+
+# Pacotes de trabalho e notas de sessão (podem conter segredos/IDs de conta)
+*.zip
+SESSAO-*.md
+*-RESUMO.md
+.wrangler/
+.dev.vars
+.dev.vars.*
+!/.dev.vars.example
