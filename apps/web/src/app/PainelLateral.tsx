@@ -138,7 +138,7 @@ export function CartaoDicaSagui({ aba }: { aba: TabId }) {
   return (
     <section className="cartao p-4 flex items-end gap-2" aria-label="Dica do sagui">
       <img
-        src="/assets/sagui_aprovacao_2.png"
+        src="/assets/sagui_aprovacao_2.webp"
         alt=""
         width={88}
         height={88}

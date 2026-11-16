@@ -14,15 +14,15 @@ export type MascotState = 'idle' | 'typing' | 'loading' | 'success' | 'error';
 
 /** Sprite renderizado por estado. */
 export const MASCOT_SPRITE: Record<MascotState, string> = {
-  idle: '/assets/sagui_meditando_2.png',
-  typing: '/assets/sagui_estudando_2.png',
-  loading: '/assets/sagui_aprovacao_2.png',
-  success: '/assets/sagui_pulando_2.png',
-  error: '/assets/sagui_acenando_2.png',
+  idle: '/assets/sagui_meditando_2.webp',
+  typing: '/assets/sagui_estudando_2.webp',
+  loading: '/assets/sagui_aprovacao_2.webp',
+  success: '/assets/sagui_pulando_2.webp',
+  error: '/assets/sagui_acenando_2.webp',
 };
 
 /** Fallback caso algum sprite falhe (evita ícone quebrado). */
-export const MASCOT_FALLBACK = '/assets/sagui_meditando_2.png';
+export const MASCOT_FALLBACK = '/assets/sagui_meditando_2.webp';
 
 /** Classe de animação (keyframes) aplicada por estado. */
 export const MASCOT_ANIM: Record<MascotState, string> = {

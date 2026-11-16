@@ -45,7 +45,7 @@ export function CabecalhoPagina({ titulo, subtitulo, cor, pose, acao, className 
         {acao && <div className="mt-3 md:mt-4 flex flex-wrap items-center gap-2">{acao}</div>}
       </div>
       <img
-        src={`/assets/sagui_${pose}_2.png`}
+        src={`/assets/sagui_${pose}_2.webp`}
         alt=""
         width={176}
         height={176}

@@ -56,6 +56,9 @@ jobs:
         run: npx turbo run test --cache-dir=.turbo/cache && npm run test:raiz
       - name: Build
         run: npm run build -- --cache-dir=.turbo/cache
+      # Tela pesada importada no topo de um arquivo da abertura estoura aqui.
+      - name: Orçamento da abertura (JS, CSS e imagens)
+        run: npm run check:bundle
 
   e2e:
     name: E2E (Playwright)

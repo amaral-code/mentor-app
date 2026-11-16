@@ -12,7 +12,7 @@ import { AnimatedNumber } from '../../shared/ui/AnimatedNumber';
 import { CabecalhoPagina } from '../../shared/ui/CabecalhoPagina';
 
 // Imagem padrão do Sagui exibida como "preview" dos itens
-const SAGUI_IDLE = '/assets/sagui_meditando_2.png';
+const SAGUI_IDLE = '/assets/sagui_meditando_2.webp';
 
 export function StudentStore() {
   const gamification = useAppStore((s) => s.gamification);

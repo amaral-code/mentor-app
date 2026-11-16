@@ -320,7 +320,7 @@ export function RankingPage() {
               <div className="text-center py-12 flex flex-col items-center">
                 {/* Estado vazio com o mascote em vez de caixa cinza */}
                 <img
-                  src="/assets/sagui_meditando_2.png"
+                  src="/assets/sagui_meditando_2.webp"
                   alt=""
                   width={112}
                   height={112}

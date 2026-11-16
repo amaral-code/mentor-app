@@ -996,7 +996,7 @@ export function QuizPage() {
             destaque e três cartões com os números da sessão. */}
         <div className="text-center pt-2">
           <img
-            src={pct >= 60 ? '/assets/sagui_pulando_2.png' : '/assets/sagui_acenando_2.png'}
+            src={pct >= 60 ? '/assets/sagui_pulando_2.webp' : '/assets/sagui_acenando_2.webp'}
             alt=""
             width={176}
             height={176}
@@ -1155,7 +1155,7 @@ export function QuizPage() {
 
       {comemorando && (
         <img loading="lazy"
-          src="/assets/sagui_pulando_2.png"
+          src="/assets/sagui_pulando_2.webp"
           alt=""
           width={96}
           height={96}
@@ -1178,7 +1178,7 @@ export function QuizPage() {
             para não roubar altura da tela. */}
         <div className="mb-6 md:flex md:items-end md:gap-4">
           <img
-            src="/assets/sagui_estudando_2.png"
+            src="/assets/sagui_estudando_2.webp"
             alt=""
             width={128}
             height={128}

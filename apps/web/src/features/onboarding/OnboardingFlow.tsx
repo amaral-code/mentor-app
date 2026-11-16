@@ -134,7 +134,7 @@ export function OnboardingFlow() {
           {passo === 1 && (
             <div className="text-center">
               <img
-                src="/assets/sagui_pulando_2.png"
+                src="/assets/sagui_pulando_2.webp"
                 alt="Sagui dando boas-vindas"
                 width={128}
                 height={128}

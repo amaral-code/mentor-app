@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         >
           <div className="w-full max-w-sm glass rounded-2xl p-7 text-center animate-fade-up">
             <img
-              src="/assets/sagui_meditando_2.png"
+              src="/assets/sagui_meditando_2.webp"
               alt=""
               width={96}
               height={96}

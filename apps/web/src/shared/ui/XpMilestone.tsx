@@ -92,7 +92,7 @@ export function XpMilestone({ open, xp, acertos, total, onClose, approval = fals
             style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.35), transparent 70%)', animation: 'mmGlowPulse 1.4s ease-in-out infinite' }}
           />
           <img
-            src={approval ? '/assets/sagui_aprovacao_2.png' : '/assets/sagui_pulando_2.png'}
+            src={approval ? '/assets/sagui_aprovacao_2.webp' : '/assets/sagui_pulando_2.webp'}
             alt={approval ? 'Sagui aprovando a etapa no tablet' : 'Sagui pulando de alegria'}
             draggable={false}
             className="relative w-full h-full object-contain drop-shadow-2xl"

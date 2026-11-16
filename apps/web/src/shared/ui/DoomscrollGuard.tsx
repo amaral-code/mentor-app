@@ -113,7 +113,7 @@ export function DoomscrollGuard() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           >
             <img
-              src="/assets/sagui_meditando_2.png"
+              src="/assets/sagui_meditando_2.webp"
               alt=""
               width={96}
               height={96}

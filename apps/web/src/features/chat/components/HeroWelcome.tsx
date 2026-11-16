@@ -59,7 +59,7 @@ export const HeroWelcome = memo(function HeroWelcome({ titulo, subtitulo, onProm
     >
       {/* O sagui recebe o aluno, como o mascote do Duolingo no começo da lição. */}
       <img
-        src="/assets/sagui_acenando_2.png"
+        src="/assets/sagui_acenando_2.webp"
         alt=""
         width={128}
         height={128}

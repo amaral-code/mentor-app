@@ -608,7 +608,7 @@ export function ParentsDashboard({ aluno }: Props) {
           /* Estado de carregamento: Sagui analisando os dados */
           <div className="flex flex-col items-center justify-center py-10 text-center animate-fade-up">
             <img loading="lazy"
-              src="/assets/sagui_aprovacao_2.png"
+              src="/assets/sagui_aprovacao_2.webp"
               alt="Sagui analisando dados"
               draggable={false}
               className="w-24 h-24 object-contain mascot-anim-loading"

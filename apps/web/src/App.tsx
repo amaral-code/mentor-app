@@ -30,11 +30,15 @@ const ParentPage = lazy(() =>
 const PsicologoPage = lazy(() =>
   import('./features/psicologo/PsicologoPage').then((m) => ({ default: m.PsicologoPage })),
 );
+/* Troca de senha e questionário de primeiro acesso aparecem uma vez na
+   vida da conta. Ficavam no bundle de abertura de todo mundo (#67). */
+const TrocarSenha = lazy(() => import('./features/auth/TrocarSenha').then((m) => ({ default: m.TrocarSenha })));
+const OnboardingFlow = lazy(() =>
+  import('./features/onboarding/OnboardingFlow').then((m) => ({ default: m.OnboardingFlow })),
+);
 import { ParticleCanvas } from './features/atmo/ParticleCanvas';
-import { TrocarSenha } from './features/auth/TrocarSenha';
 import { Toast } from './shared/ui/Toast';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
-import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import { precisaOnboarding } from '@mentor/core/onboardingLocal';
 import { OnboardingTour } from './shared/ui/OnboardingTour';
 import { LevelUpOverlay } from './shared/ui/LevelUpOverlay';
@@ -371,7 +375,9 @@ export default function App() {
   if (session?.deveTrocarSenha) {
     return (
       <ErrorBoundary nome="troca-senha">
-        <TrocarSenha />
+        <Suspense fallback={<PageSkeleton />}>
+          <TrocarSenha />
+        </Suspense>
         <Toast />
       </ErrorBoundary>
     );
@@ -384,7 +390,9 @@ export default function App() {
   if (precisaOnboarding(session)) {
     return (
       <ErrorBoundary nome="onboarding">
-        <OnboardingFlow />
+        <Suspense fallback={<PageSkeleton />}>
+          <OnboardingFlow />
+        </Suspense>
       </ErrorBoundary>
     );
   }

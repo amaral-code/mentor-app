@@ -12,11 +12,11 @@ import type { ReactNode } from 'react';
 export type SaguiPose = 'meditando' | 'estudando' | 'pulando' | 'aprovacao' | 'caderno';
 
 const POSE: Record<SaguiPose, string> = {
-  meditando: '/assets/sagui_meditando_2.png',
-  estudando: '/assets/sagui_estudando_2.png',
-  pulando: '/assets/sagui_pulando_2.png',
-  aprovacao: '/assets/sagui_aprovacao_2.png',
-  caderno: '/assets/sagui_estudando_caderno_2.png',
+  meditando: '/assets/sagui_meditando_2.webp',
+  estudando: '/assets/sagui_estudando_2.webp',
+  pulando: '/assets/sagui_pulando_2.webp',
+  aprovacao: '/assets/sagui_aprovacao_2.webp',
+  caderno: '/assets/sagui_estudando_caderno_2.webp',
 };
 
 interface EmptyStateProps {
@@ -51,8 +51,8 @@ export function EmptyState({
         style={{ width: lado, height: lado }}
         className="object-contain mb-3 opacity-90 motion-safe:animate-float-suave"
         onError={(e) => {
-          if (!e.currentTarget.src.endsWith('sagui_meditando_2.png')) {
-            e.currentTarget.src = '/assets/sagui_meditando_2.png';
+          if (!e.currentTarget.src.endsWith('sagui_meditando_2.webp')) {
+            e.currentTarget.src = '/assets/sagui_meditando_2.webp';
           }
         }}
       />

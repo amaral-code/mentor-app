@@ -88,13 +88,13 @@ export const ChatMessages = memo(function ChatMessages({
           >
             <div className="relative w-10 h-10 rounded-full overflow-hidden bg-azul-100 border-2 border-white flex-shrink-0 mt-0.5">
               <img
-                src="/assets/ele_feliz_pulando.png"
+                src="/assets/ele_feliz_pulando.webp"
                 alt="Sagui"
                 width={36}
                 height={36}
                 loading="lazy"
                 draggable={false}
-                onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
+                onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.webp')) e.currentTarget.src = '/assets/sagui_pulando_2.webp'; }}
                 className="w-full h-full object-cover object-top"
               />
             </div>
@@ -165,12 +165,12 @@ export const ChatMessages = memo(function ChatMessages({
         <div className="flex items-start gap-3 self-start max-w-[90%]">
           <div className="relative w-10 h-10 rounded-full overflow-hidden bg-azul-100 border-2 border-white flex-shrink-0 mt-0.5">
             <img
-              src="/assets/ele_feliz_pulando.png"
+              src="/assets/ele_feliz_pulando.webp"
               alt="Sagui"
               width={36}
               height={36}
               draggable={false}
-              onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
+              onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.webp')) e.currentTarget.src = '/assets/sagui_pulando_2.webp'; }}
               className="w-full h-full object-cover object-top"
             />
           </div>
@@ -196,13 +196,13 @@ export const ChatMessages = memo(function ChatMessages({
         <div className="flex items-start gap-3 self-start max-w-[90%]">
           <div className="relative w-10 h-10 rounded-full overflow-hidden bg-azul-100 border-2 border-white flex-shrink-0 mt-0.5 mascot-assist-idle">
             <img
-              src="/assets/ele_feliz_pulando.png"
+              src="/assets/ele_feliz_pulando.webp"
               alt="Sagui digitando"
               width={36}
               height={36}
               loading="lazy"
               draggable={false}
-              onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.png')) e.currentTarget.src = '/assets/sagui_pulando_2.png'; }}
+              onError={(e) => { if (e.currentTarget.src.endsWith('ele_feliz_pulando.webp')) e.currentTarget.src = '/assets/sagui_pulando_2.webp'; }}
               className="w-full h-full object-cover object-top"
             />
           </div>

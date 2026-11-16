@@ -9,10 +9,10 @@ import { safeGet, safeSet } from '@mentor/core/safeStorage';
 const FOCUS_MIN = 25;
 const CYCLE_XP = 5;
 
-const SAGUI_FOCUS = '/assets/sagui_estudando_caderno_2.png';
-const SAGUI_REST = '/assets/sagui_acenando_2.png';
-const SAGUI_FOCUS_FALLBACK = '/assets/sagui_estudando_2.png';
-const SAGUI_REST_FALLBACK = '/assets/sagui_meditando_2.png';
+const SAGUI_FOCUS = '/assets/sagui_estudando_caderno_2.webp';
+const SAGUI_REST = '/assets/sagui_acenando_2.webp';
+const SAGUI_FOCUS_FALLBACK = '/assets/sagui_estudando_2.webp';
+const SAGUI_REST_FALLBACK = '/assets/sagui_meditando_2.webp';
 
 type Phase = 'idle' | 'focus' | 'rest';
 

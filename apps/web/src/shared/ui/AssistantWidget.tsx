@@ -10,8 +10,8 @@ import { useAppStore } from '@mentor/state/appStore';
 
 const CHAT_KB = [...ENEM_KB, ...buildKBFromQuiz(QUIZ_BANK)];
 
-const BOT_AVATAR = '/assets/sagui_acenando_2.png';
-const TUTOR_AVATAR = '/assets/sagui_estudando_2.png';
+const BOT_AVATAR = '/assets/sagui_acenando_2.webp';
+const TUTOR_AVATAR = '/assets/sagui_estudando_2.webp';
 
 function generateId() {
   return `_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;

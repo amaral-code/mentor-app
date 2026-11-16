@@ -286,7 +286,7 @@ export function DashboardPage() {
         ) : (
           <div className="text-center py-8 flex flex-col items-center">
             <img
-              src="/assets/sagui_meditando_2.png"
+              src="/assets/sagui_meditando_2.webp"
               alt=""
               width={96}
               height={96}
@@ -420,7 +420,7 @@ function TrilhaDoDia({
     <div className="relative py-2 lg:py-4">
       {/* O sagui acompanha a trilha, do lado oposto ao primeiro "S". */}
       <img
-        src="/assets/sagui_estudando_2.png"
+        src="/assets/sagui_estudando_2.webp"
         alt=""
         width={120}
         height={120}
@@ -473,7 +473,7 @@ function TrilhaDoDia({
               </button>
               {poseExtra && (
                 <img
-                  src={`/assets/sagui_${poseExtra}_2.png`}
+                  src={`/assets/sagui_${poseExtra}_2.webp`}
                   alt=""
                   width={128}
                   height={128}

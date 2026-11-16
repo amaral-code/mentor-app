@@ -96,7 +96,7 @@ export function LevelUpOverlay({ open, level, onClose }: LevelUpOverlayProps) {
           />
           <img
             loading="lazy"
-            src="/assets/sagui_aprovacao_2.png"
+            src="/assets/sagui_aprovacao_2.webp"
             alt="Sagui comemorando"
             width={160}
             height={160}

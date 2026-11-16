@@ -22,7 +22,9 @@
     "db:migrate": "bash scripts/migrar.sh",
     "gen:types": "npm run gen:types --workspace @mentor/api",
     "check:types": "npm run check:types --workspace @mentor/api",
-    "test:e2e": "playwright test -c e2e/playwright.config.mjs"
+    "test:e2e": "playwright test -c e2e/playwright.config.mjs",
+    "check:bundle": "node scripts/orcamento-bundle.mjs",
+    "medir:abertura": "node scripts/medir-abertura.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.7",

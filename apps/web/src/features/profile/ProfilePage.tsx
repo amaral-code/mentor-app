@@ -327,7 +327,7 @@ export function ProfilePage() {
           {/* Era gradiente roxo/azul com robozinho: o combo que a regra 5
               proibe. A identidade aqui e o sagui e o ambar da noite. */}
           <img
-            src="/assets/sagui_estudando_2.png"
+            src="/assets/sagui_estudando_2.webp"
             alt=""
             width={40}
             height={40}

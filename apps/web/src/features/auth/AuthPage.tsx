@@ -372,7 +372,7 @@ export function AuthPage() {
           <div className="flex flex-col items-center text-center">
             <div className="flex items-center gap-1 md:flex-col md:gap-4">
               <img
-                src="/assets/sagui_acenando_2.png"
+                src="/assets/sagui_acenando_2.webp"
                 alt=""
                 width={240}
                 height={240}
@@ -395,7 +395,7 @@ export function AuthPage() {
             {sucesso && (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-white rounded-3xl animate-fade-in">
                 <img loading="lazy"
-                  src="/assets/sagui_aprovacao_2.png"
+                  src="/assets/sagui_aprovacao_2.webp"
                   alt=""
                   width={128}
                   height={128}

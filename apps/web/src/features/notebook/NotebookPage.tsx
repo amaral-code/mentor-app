@@ -120,7 +120,7 @@ export function NotebookPage() {
         <div className="text-center py-14 flex flex-col items-center">
           {/* Estado vazio com o mascote: uma caixa vazia nao convida a nada */}
           <img
-            src="/assets/sagui_estudando_caderno_2.png"
+            src="/assets/sagui_estudando_caderno_2.webp"
             alt=""
             width={128}
             height={128}
