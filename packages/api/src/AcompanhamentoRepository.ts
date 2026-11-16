@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase } from './supabaseHelpers';
+import type { LinhaRpc } from './tiposBanco';
 
 /**
  * ACOMPANHAMENTO DO ESTUDANTE — o que o responsável vê (migration 025).
@@ -59,7 +60,7 @@ export class AcompanhamentoRepository {
       falhou('resumo_mensal_aluno', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'resumo_mensal_aluno'>) => ({
       mes: r.mes,
       minutos: Number(r.minutos) || 0,
       questoes: Number(r.questoes) || 0,
@@ -77,7 +78,7 @@ export class AcompanhamentoRepository {
       falhou('resumo_semanal_aluno', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'resumo_semanal_aluno'>) => ({
       semana: r.semana,
       minutos: Number(r.minutos) || 0,
       questoes: Number(r.questoes) || 0,
@@ -92,7 +93,7 @@ export class AcompanhamentoRepository {
       falhou('materias_aluno', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'materias_aluno'>) => ({
       materia: r.materia,
       questoes: Number(r.questoes) || 0,
       acertos: Number(r.acertos) || 0,
@@ -105,7 +106,7 @@ export class AcompanhamentoRepository {
     const sb = getSupabase()!;
     const { data, error } = await sb.rpc('ficha_aluno', { p_aluno: alunoId });
     if (error) exigir('ficha_aluno', error);
-    const r: any = Array.isArray(data) ? data[0] : data;
+    const r: LinhaRpc<'ficha_aluno'> | undefined = Array.isArray(data) ? data[0] : data;
     if (!r) return null;
     return { nome: r.nome, escola: r.escola ?? null, turma: r.turma ?? null, desde: r.desde ?? null };
   }

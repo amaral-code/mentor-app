@@ -19,7 +19,9 @@
     "check:secrets": "node scripts/verificar-segredos.mjs",
     "deploy:worker:staging": "npx --yes wrangler@4 deploy --env staging",
     "deploy:worker:prod": "npx --yes wrangler@4 deploy --env production",
-    "db:migrate": "bash scripts/migrar.sh"
+    "db:migrate": "bash scripts/migrar.sh",
+    "gen:types": "npm run gen:types --workspace @mentor/api",
+    "check:types": "npm run check:types --workspace @mentor/api"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.7",

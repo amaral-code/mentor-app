@@ -45,6 +45,9 @@ jobs:
           path: .turbo/cache
           key: turbo-${{ runner.os }}-${{ github.sha }}
           restore-keys: turbo-${{ runner.os }}-
+      # Migration nova sem `npm run gen:types` deixa os tipos do banco velhos.
+      - name: Tipos do banco em dia com as migrations
+        run: npm run check:types
       - name: Tipos (tsc, todos os workspaces)
         run: npm run typecheck -- --cache-dir=.turbo/cache
       # turbo roda o vitest de cada workspace; depois a raiz roda os testes

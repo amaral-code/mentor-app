@@ -1,4 +1,5 @@
 import { clienteAtivo, exigir, falhou, getSupabase } from './supabaseHelpers';
+import type { LinhaRpc } from './tiposBanco';
 
 /**
  * ESCOPO DO DOCENTE (migration 026).
@@ -37,7 +38,7 @@ export class DocenteRepository {
       falhou('minhas_turmas', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({ id: r.id, nome: r.nome }));
+    return (data ?? []).map((r: LinhaRpc<'minhas_turmas'>) => ({ id: r.id, nome: r.nome }));
   }
 
   /** Só a secretaria. Erro de permissão vira lista vazia na tela. */
@@ -49,7 +50,7 @@ export class DocenteRepository {
       falhou('docentes_da_escola', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'docentes_da_escola'>) => ({
       id: r.id,
       nome: r.nome,
       email: r.email ?? '',
@@ -65,7 +66,7 @@ export class DocenteRepository {
       falhou('professores_da_turma', error);
       return [];
     }
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: LinhaRpc<'professores_da_turma'>) => ({
       id: r.id,
       nome: r.nome,
       email: r.email ?? '',

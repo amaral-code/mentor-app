@@ -9,7 +9,9 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "gen:types": "node scripts/gerar-tipos-banco.mjs",
+    "check:types": "node scripts/gerar-tipos-banco.mjs --check"
   },
   "dependencies": {
     "@mentor/core": "*",
