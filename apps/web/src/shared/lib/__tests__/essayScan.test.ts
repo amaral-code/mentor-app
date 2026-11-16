@@ -6,7 +6,7 @@ import {
   normalizarCorrecao,
   pareceFotoIlegivel,
   promptCorrecaoFoto,
-} from '../../../../server/essaySchema.js';
+} from '../../../../../../server/essaySchema.js';
 import {
   calcularDimensoes,
   limitesDoHistograma,

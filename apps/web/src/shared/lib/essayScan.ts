@@ -9,7 +9,7 @@ import {
   promptCorrecaoFoto,
   type CorrecaoFoto,
   type ChaveCompetencia,
-} from '../../../server/essaySchema.js';
+} from '../../../../../server/essaySchema.js';
 
 export { COMPETENCIAS, pareceFotoIlegivel };
 export type { CorrecaoFoto, ChaveCompetencia };

@@ -2,7 +2,15 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 // @ts-expect-error - modulo JS puro, compartilhado com a Vercel e o worker
-import { apiDevPlugin } from './server/devMiddleware.js'
+import { apiDevPlugin } from '../../server/devMiddleware.js'
+import { fileURLToPath } from 'node:url'
+
+/*
+ * Raiz do monorepo. O .env mora la (um so para web, /api e worker), e nao
+ * em apps/web: sem isso o Vite rodando de dentro do workspace nao achava
+ * as chaves e o dev subia sem Supabase e sem IA.
+ */
+const RAIZ = fileURLToPath(new URL('../..', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -14,7 +22,7 @@ export default defineConfig(({ mode }) => {
    * no bundle do navegador (o Vite so expoe VITE_* ao cliente), entao a
    * chave jamais vaza para o front, mesmo com o proxy ativo.
    */
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, RAIZ, '')
   /*
    * O middleware de dev recebe .env E as variaveis reais do shell, na
    * mesma forma que `process.env` tem na Vercel. Assim `npm run dev` com
@@ -34,6 +42,7 @@ export default defineConfig(({ mode }) => {
     : null
 
   return {
+    envDir: RAIZ,
     plugins: [
       react(),
       /*

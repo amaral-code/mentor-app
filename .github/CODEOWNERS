@@ -18,3 +18,7 @@
 
 # Código nativo (React Native / Expo)
 /mobile/                  @amaral-code
+
+# Monorepo: pacotes compartilhados entre web e mobile
+/packages/                @amaral-code
+/apps/web/                @amaral-code

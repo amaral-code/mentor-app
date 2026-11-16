@@ -41,3 +41,6 @@ SESSAO-*.md
 .dev.vars
 .dev.vars.*
 !/.dev.vars.example
+
+# Turborepo
+.turbo/

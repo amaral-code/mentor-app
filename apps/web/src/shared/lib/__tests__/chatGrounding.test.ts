@@ -8,7 +8,7 @@ import {
   ferramentasDeBusca,
   modoValido,
   montarSystemInstructionChat,
-} from '../../../../server/chatPrompt.js';
+} from '../../../../../../server/chatPrompt.js';
 
 /**
  * O prompt do chat tematico e o contrato do produto: metodo socratico,

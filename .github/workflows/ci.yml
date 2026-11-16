@@ -38,11 +38,18 @@ jobs:
       - run: npm ci
       - name: Lint (oxlint)
         run: npm run lint
-      - name: Tipos (tsc)
-        run: npm run typecheck
-      # Inclui os testes do worker (server/__tests__) e as migrations
-      # rodadas num Postgres real com PGlite (supabase/__tests__).
+      # Cache do Turborepo entre execucoes: pacote que nao mudou nao
+      # recompila nem retesta.
+      - uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+      - name: Tipos (tsc, todos os workspaces)
+        run: npm run typecheck -- --cache-dir=.turbo/cache
+      # turbo roda o vitest de cada workspace; depois a raiz roda os testes
+      # do worker (server/__tests__) e das migrations com PGlite (supabase/__tests__).
       - name: Testes (vitest)
-        run: npm test
+        run: npx turbo run test --cache-dir=.turbo/cache && npm run test:raiz
       - name: Build
-        run: npx vite build
+        run: npm run build -- --cache-dir=.turbo/cache

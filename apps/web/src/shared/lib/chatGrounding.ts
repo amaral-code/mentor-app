@@ -9,7 +9,7 @@ import {
   montarSystemInstructionChat,
   type FonteConsultada,
   type ModoChat,
-} from '../../../server/chatPrompt.js';
+} from '../../../../../server/chatPrompt.js';
 
 export { MODOS_CHAT, MODO_PADRAO, acharModo };
 export type { FonteConsultada, ModoChat };
