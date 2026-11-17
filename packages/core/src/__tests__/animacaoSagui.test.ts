@@ -25,11 +25,11 @@ describe('animações do sagui', () => {
     }
   });
 
-  it('nenhum movimento deforma a arte além de 10%', () => {
+  it('nenhum movimento deforma a arte além de 15% (squash e stretch da escalada)', () => {
     for (const m of Object.values(MOVIMENTOS)) {
       for (const qd of m.quadros) {
-        expect(Math.abs(qd.escalaX - 1)).toBeLessThanOrEqual(0.1);
-        expect(Math.abs(qd.escalaY - 1)).toBeLessThanOrEqual(0.1);
+        expect(Math.abs(qd.escalaX - 1)).toBeLessThanOrEqual(0.15);
+        expect(Math.abs(qd.escalaY - 1)).toBeLessThanOrEqual(0.15);
       }
     }
   });

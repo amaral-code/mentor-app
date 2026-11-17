@@ -94,19 +94,29 @@ export const MOVIMENTOS: Record<Animacao, Movimento> = {
   },
   // Escalada: quatro puxadas por ciclo, alternando o braço que vai no alto.
   // Cada puxada sobe o corpo e dá um leve tranco de lado.
+  // Escalada com cara de desenho: cada agarrada tem agacha (antecipação),
+  // impulso para cima esticando, e uma pausa no topo (a mão "grudou"). O
+  // braço levantado troca a cada agarrada; o corpo balança forte para o
+  // lado da mão. As trocas de braço ficam nos quartos (0.25, 0.5, 0.72,
+  // 0.97) de propósito: é o ritmo que o teste da escalada confere.
   escalar: {
     animacao: 'escalar',
     duracaoMs: 600,
     quadros: [
-      q(0, { giro: -4 }),
-      q(0.22, { y: -0.06, giro: 3, escalaY: 1.04 }),
+      q(0, { giro: -5 }),
+      q(0.05, { giro: -7, escalaX: 1.09, escalaY: 0.91 }),
+      q(0.17, { y: -0.05, giro: 8, escalaX: 0.93, escalaY: 1.13 }),
       q(0.25, { y: -0.06, giro: 3, espelhar: true }),
-      q(0.47, { y: -0.12, giro: -3, escalaY: 1.04, espelhar: true }),
+      q(0.3, { y: -0.06, giro: 6, escalaX: 1.09, escalaY: 0.91, espelhar: true }),
+      q(0.42, { y: -0.11, giro: -8, escalaX: 0.93, escalaY: 1.13, espelhar: true }),
       q(0.5, { y: -0.12, giro: -3 }),
-      q(0.72, { y: -0.18, giro: 3, escalaY: 1.04 }),
-      q(0.75, { y: -0.18, giro: 3, espelhar: true }),
-      q(0.97, { y: -0.24, giro: -4, escalaY: 1.04, espelhar: true }),
-      q(1, { y: -0.24, giro: -4 }),
+      q(0.55, { y: -0.12, giro: -6, escalaX: 1.09, escalaY: 0.91 }),
+      q(0.67, { y: -0.17, giro: 8, escalaX: 0.93, escalaY: 1.13 }),
+      q(0.72, { y: -0.18, giro: 3, espelhar: true }),
+      q(0.78, { y: -0.18, giro: 6, escalaX: 1.09, escalaY: 0.91, espelhar: true }),
+      q(0.9, { y: -0.23, giro: -8, escalaX: 0.93, escalaY: 1.13, espelhar: true }),
+      q(0.97, { y: -0.24, giro: -3, espelhar: true }),
+      q(1, { y: -0.24 }),
     ],
   },
 };

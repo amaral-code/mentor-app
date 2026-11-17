@@ -134,8 +134,9 @@ function SaguiNoTronco({ fase, largura, alturaToca, todasFeitas }: { fase: Fase;
     if (fase === 'subindo') {
       const { pontos, duracaoMs } = trajetoDaEscalada(chao, porta.y, porta.x);
       const tempos = pontos.map((p) => p.t);
-      x.value = porta.x;
       opac.value = 1;
+      // Balanço lateral: o corpo pende para o lado da mão que agarra o tronco.
+      x.value = emSequencia(pontos.map((p) => p.x), tempos, duracaoMs);
       y.value = emSequencia(pontos.map((p) => p.y), tempos, duracaoMs, Easing.out(Easing.quad));
       ex.value = emSequencia(pontos.map((p) => p.escalaX), tempos, duracaoMs, Easing.linear);
       ey.value = emSequencia(pontos.map((p) => p.escalaY), tempos, duracaoMs);
