@@ -159,6 +159,7 @@ interface Paleta {
   troncoClaro: string;
   sombraTronco: string;
   madeiraToca: string;
+  madeiraClara: string;
 }
 const PALETAS: Record<EstadoArvore, Paleta> = {
   atual: {
@@ -170,6 +171,7 @@ const PALETAS: Record<EstadoArvore, Paleta> = {
     troncoClaro: '#A9733D',
     sombraTronco: '#6B4220',
     madeiraToca: '#C08A52',
+    madeiraClara: '#E2B47A',
   },
   feita: {
     contorno: '#14532D',
@@ -180,6 +182,7 @@ const PALETAS: Record<EstadoArvore, Paleta> = {
     troncoClaro: '#A9733D',
     sombraTronco: '#6B4220',
     madeiraToca: '#C08A52',
+    madeiraClara: '#E2B47A',
   },
   esperando: {
     contorno: '#7C9A86',
@@ -190,6 +193,7 @@ const PALETAS: Record<EstadoArvore, Paleta> = {
     troncoClaro: '#C9AD94',
     sombraTronco: '#A08064',
     madeiraToca: '#D3BBA4',
+    madeiraClara: '#E8D8C6',
   },
 };
 const FRUTA = '#F59E0B';
@@ -218,6 +222,14 @@ function copaDeBolas(bolas: { cx: number; cy: number; rx: number; ry: number }[]
   for (const b of bolas) formas.push({ forma: 'elipse', cx: b.cx, cy: b.cy, rx: b.rx, ry: b.ry, cor: c.copaSombra });
   for (const b of bolas) formas.push({ forma: 'elipse', cx: b.cx - 1, cy: b.cy - 5, rx: b.rx - 3, ry: b.ry - 4, cor: c.copa });
   for (const b of bolas) formas.push({ forma: 'elipse', cx: b.cx - b.rx * 0.35, cy: b.cy - b.ry * 0.45, rx: b.rx * 0.28, ry: b.ry * 0.2, cor: c.brilho });
+  // Folhinhas de textura: pequenas marcas na cor da sombra, em pontos
+  // fixos de cada bola (sem aleatório, para a árvore não "piscar" outra
+  // textura a cada recarga do plano).
+  for (const b of bolas) {
+    for (const [dx, dy] of [[0.3, 0.1], [-0.1, 0.4], [0.5, -0.3]] as [number, number][]) {
+      formas.push({ forma: 'elipse', cx: b.cx + b.rx * dx, cy: b.cy + b.ry * dy, rx: 3, ry: 2, cor: c.copaSombra });
+    }
+  }
   return formas;
 }
 
@@ -307,6 +319,7 @@ export function formasDaArvore(a: Pick<Arvore, 'especie' | 'estado' | 'alturaToc
     },
     { forma: 'caminho', d: `M84 ${TOPO_TRONCO} L90 ${TOPO_TRONCO} L91 150 C92 190 94 212 101 ${PE_TRONCO + 1} L88 ${PE_TRONCO + 1} C88 200 86 160 84 ${TOPO_TRONCO} Z`, cor: c.sombraTronco },
     { forma: 'caminho', d: `M72 ${TOPO_TRONCO + 4} L75 ${TOPO_TRONCO + 4} C74 150 73 190 68 ${PE_TRONCO - 4} L65 ${PE_TRONCO - 4} C69 190 71 150 72 ${TOPO_TRONCO + 4} Z`, cor: c.troncoClaro },
+    { forma: 'linha', d: `M73 ${TOPO_TRONCO + 10} C72 150 71 190 67 ${PE_TRONCO - 10}`, cor: c.madeiraClara, espessura: 2 },
     // Casca.
     { forma: 'linha', d: 'M76 126 q3 7 0 14 M84 182 q-3 7 0 13 M74 196 q2 5 0 10', cor: c.contorno, espessura: 1.8 },
     ...copa(a.especie, c),
@@ -331,8 +344,12 @@ export function formasDaArvore(a: Pick<Arvore, 'especie' | 'estado' | 'alturaToc
   formas.push(
     { forma: 'elipse', cx: toca.x, cy: toca.y, rx: 16, ry: 18, cor: c.contorno },
     { forma: 'elipse', cx: toca.x, cy: toca.y, rx: 14, ry: 16, cor: c.madeiraToca },
+    // Brilho na madeira (canto superior esquerdo) e a terra do buraco.
+    { forma: 'elipse', cx: toca.x - 3, cy: toca.y - 4, rx: 10, ry: 12, cor: c.madeiraClara },
     { forma: 'elipse', cx: toca.x, cy: toca.y + 1, rx: 11, ry: 13, cor: BORDA_TOCA },
     { forma: 'elipse', cx: toca.x, cy: toca.y + 2, rx: 9, ry: 11, cor: FUNDO_TOCA },
+    // Musgo por cima da moldura da toca.
+    { forma: 'linha', d: `M${toca.x - 15} ${toca.y - 13} q8 -9 15 -6 q7 -4 15 4`, cor: c.copaSombra, espessura: 4 },
   );
   return formas;
 }

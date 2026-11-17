@@ -124,9 +124,11 @@ describe('formasDaArvore', () => {
     }
   });
 
-  it('a toca é a última forma (fica por cima de tudo)', () => {
+  it('o buraco da toca fica por cima da árvore (penúltima forma, só o musgo depois)', () => {
     const formas = formasDaArvore({ especie: 'pinheiro', estado: 'atual', alturaToca: 0.5 });
-    expect(formas[formas.length - 1]).toMatchObject({ forma: 'elipse', cx: 80, cy: centroDaToca(0.5).y + 2 });
+    // Última forma é o musgo (traço em volta); a anterior é o buraco escuro.
+    expect(formas[formas.length - 1]).toMatchObject({ forma: 'linha' });
+    expect(formas[formas.length - 2]).toMatchObject({ forma: 'elipse', cx: 80, cy: centroDaToca(0.5).y + 2 });
   });
 });
 
