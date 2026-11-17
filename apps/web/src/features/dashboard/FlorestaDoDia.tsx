@@ -474,6 +474,16 @@ interface TocaProps {
  * tronco. É um diálogo de verdade (foco, Esc, aria-modal), porque cobre a
  * tela inteira.
  */
+/* Vaga-lumes do fundo da toca: posições fixas, tempos variados. */
+const VAGALUMES = [
+  { x: 16, y: 58, r: 5, d: 3.2, atraso: 0 },
+  { x: 82, y: 50, r: 4, d: 3.8, atraso: 0.6 },
+  { x: 30, y: 78, r: 6, d: 4.2, atraso: 0.3 },
+  { x: 70, y: 82, r: 4, d: 3.5, atraso: 1.1 },
+  { x: 52, y: 66, r: 5, d: 4.6, atraso: 0.9 },
+  { x: 90, y: 72, r: 3, d: 3.3, atraso: 0.4 },
+] as const;
+
 function DentroDaToca({ arvore, total, origem, reduzir, materia, onConcluir, onSair }: TocaProps) {
   const idTitulo = useId();
   const titulo = useRef<HTMLHeadingElement>(null);
@@ -509,7 +519,28 @@ function DentroDaToca({ arvore, total, origem, reduzir, materia, onConcluir, onS
         <path d="M30 0 Q34 40 22 70 M90 0 Q80 30 96 54 M170 0 Q176 26 162 46 M250 0 Q240 44 258 74 M330 0 Q336 30 320 52 M380 0 Q372 22 386 40" stroke="#3B2412" strokeWidth="5" fill="none" strokeLinecap="round" />
       </svg>
 
-      <div className="relative max-w-md mx-auto px-4 pt-10 pb-16 min-h-full flex flex-col">
+      {/* A boca da toca lá em cima: a árvore bonita vista de dentro, com a
+          luz do dia descendo em feixe e vaga-lumes no escuro. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 -translate-x-1/2 top-0 w-72 h-80" style={{ background: 'radial-gradient(60% 70% at 50% 0%, rgba(253,230,138,0.38), rgba(253,230,138,0) 70%)' }} />
+        <div className="absolute left-1/2 -translate-x-1/2 -top-12 w-32 h-32 rounded-full overflow-hidden border-[6px] border-[#3B2412] shadow-[inset_0_-8px_16px_rgba(0,0,0,0.35)]" style={{ background: 'linear-gradient(#E0F2FE,#F7FEE7)' }}>
+          <div className="absolute left-1/2 -translate-x-1/2 top-2" style={{ width: 118 }}>
+            <DesenhoArvore arvore={arvore} largura={118} />
+          </div>
+        </div>
+        {VAGALUMES.map((v, i) => (
+          <m.span
+            key={i}
+            className="absolute rounded-full"
+            style={{ left: `${v.x}%`, top: `${v.y}%`, width: v.r, height: v.r, background: '#FDE68A', boxShadow: '0 0 8px 2px rgba(253,230,138,0.8)' }}
+            initial={reduzir ? false : { opacity: 0.2 }}
+            animate={reduzir ? { opacity: 0.5 } : { opacity: [0.2, 1, 0.3, 0.9, 0.2], y: [0, -14, 6, -8, 0], x: [0, 8, -6, 4, 0] }}
+            transition={reduzir ? { duration: 0 } : { duration: v.d, repeat: Infinity, ease: 'easeInOut', delay: v.atraso }}
+          />
+        ))}
+      </div>
+
+      <div className="relative max-w-md mx-auto px-4 pt-24 pb-16 min-h-full flex flex-col">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-extrabold uppercase tracking-widest text-amber-300">

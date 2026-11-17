@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import Animated, {
   Easing,
   cancelAnimation,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withDelay,
   withRepeat,
   withSequence,
   withTiming,
@@ -494,6 +495,56 @@ function MissaoQuiz({
   );
 }
 
+/* Vaga-lume do fundo da toca: brilha e flutua devagar. */
+function Vagalume({ x, y, r, d, atraso, reduzido }: { x: number; y: number; r: number; d: number; atraso: number; reduzido: boolean }) {
+  const k = useSharedValue(0.2);
+  useEffect(() => {
+    if (reduzido) {
+      k.value = 0.5;
+      return;
+    }
+    k.value = withDelay(atraso, withRepeat(withSequence(withTiming(1, { duration: d / 2 }), withTiming(0.3, { duration: d / 2 })), -1, true));
+    return () => cancelAnimation(k);
+  }, [k, reduzido, d, atraso]);
+  const st = useAnimatedStyle(() => ({ opacity: k.value, transform: [{ translateY: (k.value - 0.5) * -16 }] }));
+  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: x, top: y, width: r, height: r, borderRadius: r / 2, backgroundColor: '#FDE68A' }, st]} />;
+}
+
+/**
+ * O cenário da toca: a árvore bonita vista pela boca lá em cima, a luz do
+ * dia descendo e vaga-lumes no escuro. Só enfeite, atrás do conteúdo.
+ */
+function DecoracaoDaToca({ arvore, reduzido, largura, altura, topo }: { arvore: Arvore; reduzido: boolean; largura: number; altura: number; topo: number }) {
+  const vagas = [
+    { x: largura * 0.16, y: altura * 0.55, r: 5, d: 2200, atraso: 0 },
+    { x: largura * 0.82, y: altura * 0.5, r: 4, d: 2600, atraso: 500 },
+    { x: largura * 0.3, y: altura * 0.72, r: 6, d: 3000, atraso: 300 },
+    { x: largura * 0.7, y: altura * 0.78, r: 4, d: 2400, atraso: 900 },
+    { x: largura * 0.52, y: altura * 0.64, r: 5, d: 3200, atraso: 700 },
+  ];
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Svg width={largura} height={altura} style={{ position: 'absolute', left: 0, top: 0 }}>
+        <Defs>
+          <RadialGradient id="feixeToca" cx="0.5" cy="0" r="0.6">
+            <Stop offset="0" stopColor="#FDE68A" stopOpacity={0.38} />
+            <Stop offset="1" stopColor="#FDE68A" stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect x={largura / 2 - 150} y={0} width={300} height={altura * 0.5} fill="url(#feixeToca)" />
+      </Svg>
+      <View style={[estilos.bocaToca, { top: topo - 10 }]}>
+        <View style={{ position: 'absolute', top: 2, alignSelf: 'center', width: 118 }}>
+          <DesenhoArvore arvore={arvore} largura={118} />
+        </View>
+      </View>
+      {vagas.map((v, i) => (
+        <Vagalume key={i} {...v} reduzido={reduzido} />
+      ))}
+    </View>
+  );
+}
+
 function DentroDaToca({
   arvore,
   total,
@@ -550,7 +601,8 @@ function DentroDaToca({
           ]}
         />
         <Animated.View style={[{ flex: 1 }, aparecer]}>
-          <ScrollView contentContainerStyle={[estilos.toca, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 }]}>
+          <DecoracaoDaToca arvore={arvore} reduzido={reduzido} largura={width} altura={height} topo={insets.top} />
+          <ScrollView contentContainerStyle={[estilos.toca, { paddingTop: insets.top + 120, paddingBottom: insets.bottom + 32 }]}>
             <View style={estilos.topo}>
               <View style={{ flex: 1 }}>
                 <Texto variante="rotulo" cor={cor.ambar100}>
@@ -782,6 +834,7 @@ export function FlorestaDoDia({ tarefas }: { tarefas: MicroTask[] }) {
 
 const TERRA = '#5A341A';
 
+
 const estilos = StyleSheet.create({
   cena: { borderRadius: 28, borderWidth: 2, borderColor: '#E0F2FE', overflow: 'visible', paddingHorizontal: 10, paddingTop: 20, paddingBottom: 12 },
   floresta: { gap: 4, paddingVertical: 8, width: '100%', maxWidth: 480, alignSelf: 'center' },
@@ -827,6 +880,7 @@ const estilos = StyleSheet.create({
   fim: { alignItems: 'center', gap: 8, marginTop: 12 },
   trofeu: { width: 88, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   toca: { paddingHorizontal: 16, gap: 12, width: '100%', maxWidth: 520, alignSelf: 'center' },
+  bocaToca: { position: 'absolute', alignSelf: 'center', width: 118, height: 118, borderRadius: 59, borderWidth: 6, borderColor: '#3B2412', overflow: 'hidden', backgroundColor: '#E8F3FF' },
   topo: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   sair: {
     flexDirection: 'row',

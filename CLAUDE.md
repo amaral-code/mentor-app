@@ -334,6 +334,10 @@ principal, regra de permissão. Mais recente no topo.
   entrada. Árvore redesenhada: contorno escuro no estilo adesivo dos
   botões, copa com sombra e brilho, tronco com casca e galhos, toca com
   moldura de madeira, estrelinhas na árvore da vez, frutas e flores na feita.
+- **Dentro da toca** com mais clima: a árvore bonita aparece pela boca da
+  toca lá em cima (janela com moldura de madeira), luz quente descendo em
+  feixe e vaga-lumes no escuro. O sagui cai de pé e os passos aparecem.
+  No app o feixe é `RadialGradient` do react-native-svg.
 - **Cenário da floresta**: céu em degradê com sol e nuvens, caminho de
   terra ligando os pés das árvores (`caminhoEntreArvores`, medido na
   tela), cartão adesivo com o tipo da missão em selo de cor e ícone
