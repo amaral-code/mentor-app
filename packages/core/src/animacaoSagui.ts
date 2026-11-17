@@ -210,6 +210,9 @@ export const CICLOS_DA_ESCALADA = 3;
  * cada um sobe um terço do caminho. A distância muda com o tamanho da
  * árvore, então a puxada estica para chegar exatamente na porta.
  */
+/** Quanto o corpo pende para o lado da mão que agarra o tronco, em pixels. */
+export const PENDULO_ESCALADA = 7;
+
 export function trajetoDaEscalada(yChao: number, yPorta: number, x: number): { pontos: Ponto[]; duracaoMs: number } {
   const m = MOVIMENTOS.escalar;
   const porCiclo = (yChao - yPorta) / CICLOS_DA_ESCALADA;
@@ -221,7 +224,10 @@ export function trajetoDaEscalada(yChao: number, yPorta: number, x: number): { p
       const fracao = qd.y / -SUBIDA_POR_CICLO; // 0 no início do ciclo, 1 no fim
       pontos.push({
         t: (c + qd.t) / CICLOS_DA_ESCALADA,
-        x,
+        // Pende para o lado do braço levantado: o corpo "pesa" na mão que
+        // agarrou o tronco, e isso é o que faz a subida parecer mão sobre
+        // mão em vez de flutuar ao lado da árvore.
+        x: x + (qd.espelhar ? -PENDULO_ESCALADA : PENDULO_ESCALADA),
         y: yChao - porCiclo * (c + fracao),
         escalaX: qd.espelhar ? -qd.escalaX : qd.escalaX,
         escalaY: qd.escalaY,
@@ -230,8 +236,9 @@ export function trajetoDaEscalada(yChao: number, yPorta: number, x: number): { p
       });
     }
   }
-  // Chega reto na porta, sem o tranco do último quadro.
-  pontos[pontos.length - 1] = { ...pontos[pontos.length - 1], y: yPorta, giro: 0, escalaX: 1, escalaY: 1 };
+  // Pé no chão (começo) e porta (fim) ficam centrados no tronco, sem lean.
+  pontos[0] = { ...pontos[0], x };
+  pontos[pontos.length - 1] = { ...pontos[pontos.length - 1], x, y: yPorta, giro: 0, escalaX: 1, escalaY: 1 };
   return { pontos, duracaoMs: m.duracaoMs * CICLOS_DA_ESCALADA };
 }
 

@@ -120,7 +120,8 @@ function SaguiNoTronco({ fase, larguraArvore, alturaToca, reduzir, todasFeitas }
   const tocaPx = { x: toca.x * escala, y: toca.y * escala };
 
   // Na porta: ao lado do buraco, pendurado no tronco.
-  const porta = { x: tocaPx.x + 4, y: tocaPx.y - tamanho * 0.62 };
+  // Centrado no tronco (não ao lado): o corpo fica por cima do buraco, abraçando o tronco enquanto sobe.
+  const porta = { x: tocaPx.x - tamanho / 2, y: tocaPx.y - tamanho * 0.62 };
   const chao = alturaArvore - tamanho * 0.95;
   const parado: TargetAndTransition = { x: porta.x, y: porta.y, scaleX: 1, scaleY: 1, rotate: 0, opacity: 1 };
 

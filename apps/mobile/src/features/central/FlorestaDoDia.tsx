@@ -97,7 +97,8 @@ function SaguiNoTronco({ fase, largura, alturaToca, todasFeitas }: { fase: Fase;
   const tamanho = Math.round(largura * 0.46);
   const toca = centroDaToca(alturaToca);
   const tocaPx = { x: toca.x * escala, y: toca.y * escala };
-  const porta = { x: tocaPx.x + 4, y: tocaPx.y - tamanho * 0.62 };
+  // Centrado no tronco (não ao lado): o corpo fica por cima do buraco, abraçando o tronco enquanto sobe.
+  const porta = { x: tocaPx.x - tamanho / 2, y: tocaPx.y - tamanho * 0.62 };
   const chao = alturaArvore - tamanho * 0.95;
 
   const x = useSharedValue(porta.x);

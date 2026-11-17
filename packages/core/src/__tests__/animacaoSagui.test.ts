@@ -67,6 +67,11 @@ describe('trajetos da floresta', () => {
     }
     expect(pontos.some((p) => p.escalaX < 0)).toBe(true);
     expect(pontos[pontos.length - 1].escalaX).toBe(1);
+    // Começo e fim centrados no tronco (x = base); o meio pende para os lados.
+    expect(pontos[0].x).toBe(50);
+    expect(pontos[pontos.length - 1].x).toBe(50);
+    expect(pontos.some((p) => p.x > 50)).toBe(true);
+    expect(pontos.some((p) => p.x < 50)).toBe(true);
     expect(duracaoMs).toBe(1800);
   });
 
